@@ -270,6 +270,24 @@ public class AppInstallTests
     }
 
     [Fact]
+    public void MachineUpdateWithoutTheLauncherLeavesTheRunningInstallAlone()
+    {
+        files.DeleteFile(Path.Combine(Path.GetDirectoryName(Source)!, LogonTaskDefinition.LauncherName));
+        files.Seed(Path.Combine(Machine, "winland.exe"), [8]);
+        files.Seed(Path.Combine(Machine, LogonTaskDefinition.LauncherName), [9]);
+        registry.SetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion", "0.1.0", expandable: false);
+
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            install.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0"));
+
+        Assert.Contains(LogonTaskDefinition.LauncherName, error.Message, StringComparison.Ordinal);
+        Assert.Empty(session.Operations);
+        Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
+        Assert.Equal([9], files.Read(Path.Combine(Machine, LogonTaskDefinition.LauncherName)));
+        Assert.Equal("0.1.0", Text(RegistryRoot.Machine, "DisplayVersion"));
+    }
+
+    [Fact]
     public void InstallingAgainFromTheInstalledCopyRefreshesTheTask()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");

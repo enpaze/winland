@@ -30,9 +30,4 @@
     <InternalsVisibleTo Include="Winland.Daemon.Tests" />
   </ItemGroup>
 
-  <Target Name="PublishLauncher" AfterTargets="Publish" Condition="'$(RuntimeIdentifier)' != ''">
-    <MSBuild Projects="..\Winland.Launcher\Winland.Launcher.csproj" Targets="Restore;Publish"
-             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);PublishDir=$(PublishDir);SelfContained=true" />
-  </Target>
-
 </Project>
