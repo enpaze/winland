@@ -738,9 +738,18 @@ public class ConfigTests
             document.Settings);
     }
 
+    [Fact]
+    public void FloatingLayoutDoesNotWarn()
+    {
+        var document = ConfigParser.Parse("general:layout = floating\n");
+
+        Assert.Empty(document.Warnings);
+        Assert.Equal("floating", LayoutOptions.From(document).Layout);
+    }
+
     [Theory]
-    [InlineData("floating")]
     [InlineData("tabbed")]
+    [InlineData("master")]
     public void OtherLayoutsWarnAndAreSkipped(string name)
     {
         var document = ConfigParser.Parse($"general {{\n    layout = scrolling\n    layout = {name}\n}}\n");
@@ -763,11 +772,11 @@ public class ConfigTests
     public void ExpandedLayoutNameUsesTheSameRule()
     {
         var honored = ConfigParser.Parse("$name = dwindle\ngeneral:layout = $name\n");
-        var rejected = ConfigParser.Parse("$name = floating\ngeneral:layout = $name\n");
+        var rejected = ConfigParser.Parse("$name = tabbed\ngeneral:layout = $name\n");
 
         Assert.Empty(honored.Warnings);
         Assert.Equal(new Setting("general:layout", "dwindle"), Assert.Single(honored.Settings));
-        Assert.Equal(new ConfigWarning(2, "Invalid value 'floating' for general:layout."), Assert.Single(rejected.Warnings));
+        Assert.Equal(new ConfigWarning(2, "Invalid value 'tabbed' for general:layout."), Assert.Single(rejected.Warnings));
     }
 
     [Fact]

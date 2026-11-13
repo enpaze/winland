@@ -40,6 +40,8 @@ internal abstract class TiledLayout
 
     public void NudgeFloating(int dx, int dy) => _floating.Nudge(dx, dy);
 
+    public bool IsPseudo(WindowId window) => _pseudo.IsOn(new ClientId(window.Value));
+
     public SizeLimits FloatingLimits(ClientId id) => _limits.TryGetValue(id, out var limits) ? new SizeLimits(limits.Min, limits.Max) : default;
 
     /// <summary>The tiled placements, which each Layout works out.</summary>

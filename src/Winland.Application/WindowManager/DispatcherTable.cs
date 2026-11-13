@@ -62,6 +62,7 @@ public sealed partial class WindowManager
 
             // Layouts
             ["layoutmsg"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
+            ["layout"] = new(static (m, _, a) => m.SelectLayout(a)),
             ["cyclelayout"] = new(static (m, _, a) => m.CycleWorkspaceLayout(a)),
 
             // Groups
