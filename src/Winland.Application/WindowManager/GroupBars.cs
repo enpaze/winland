@@ -55,6 +55,22 @@ public sealed partial class WindowManager
             }
         }
 
+        return MarkDrop(bars);
+    }
+
+    // While a drag holds a window over a tab bar it may join, that bar marks the place the window would join.
+    private List<GroupBar> MarkDrop(List<GroupBar> bars)
+    {
+        if (HeldForDrop() is not (WindowId window, bool wasTiled, Point pointer)
+            || BarDrop(window, wasTiled, pointer, bars) is not { Index: int index } drop)
+            return bars;
+
+        for (var i = 0; i < bars.Count; i++)
+        {
+            if (bars[i].Shown == drop.Group.Shown)
+                bars[i] = bars[i] with { Insertion = index };
+        }
+
         return bars;
     }
 

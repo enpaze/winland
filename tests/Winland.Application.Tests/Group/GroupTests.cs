@@ -101,16 +101,20 @@ public class GroupTests
 
         core.Execute("dispatch togglegroup");
         Assert.Equal("error: only one window in group", core.Execute("dispatch changegroupactive f").Text);
-        Assert.Equal("error: unsupported direction: x", core.Execute("dispatch moveintogroup x").Text);
     }
 
     [Fact]
     public void GroupDirectionsAreWholeWordsNotTheirFirstLetter()
     {
-        var core = Opened(First);
+        var core = Opened(First, Second);
+        core.Execute("dispatch focuswindow address:0x1");
         core.Execute("dispatch togglegroup");
+        core.Execute("dispatch focuswindow address:0x2");
 
-        Assert.Equal("error: unsupported direction: leftover", core.Execute("dispatch moveintogroup leftover").Text);
+        // A word that is not a direction names the destination as a window selector does: here a class nothing has.
+        Assert.Equal("error: window not found", core.Execute("dispatch moveintogroup leftover").Text);
+        Assert.Equal("error: unsupported direction: ", core.Execute("dispatch moveintogroup").Text);
+        Assert.Equal([First], Assert.Single(core.Execute("dispatch moveintogroup x").Effect.State.Groups));
     }
 
     [Fact]
@@ -146,6 +150,110 @@ public class GroupTests
         Assert.Contains(First, moved.Effect.Hide);
         Assert.Equal(2, moved.Effect.Placements.Count);
         Assert.Single(moved.Effect.Placements.Select(placement => placement.Bounds).Distinct());
+    }
+
+    [Fact]
+    public void MoveIntoGroupWithASelectorGroupsTwoPlainClients()
+    {
+        var core = Opened(First, Second);
+        core.Execute("dispatch focuswindow address:0x2");
+
+        var moved = core.Execute("dispatch moveintogroup address:0x1");
+
+        Assert.Equal("ok", moved.Text);
+        Assert.Equal(["togglegroup>>1,1", "moveintogroup>>2"], Lines(moved));
+        Assert.Equal([First, Second], Assert.Single(moved.Effect.State.Groups));
+        Assert.Equal(Second, moved.Effect.Focus);
+        Assert.Contains(First, moved.Effect.Hide);
+        Assert.Equal(["one", "two"], Assert.Single(moved.Effect.GroupBars).Tabs.Select(tab => tab.Title));
+        Assert.Single(moved.Effect.Placements.Select(placement => placement.Bounds).Distinct());
+    }
+
+    [Fact]
+    public void MoveIntoGroupWithASelectorJoinsTheGroupTheDestinationIsInAfterACommaNamesTheActingClient()
+    {
+        var core = Opened(First, Second, Third);
+        core.Execute("dispatch focuswindow address:0x2");
+        core.Execute("dispatch moveintogroup address:0x1");
+        core.Execute("dispatch focuswindow address:0x2");
+
+        // Window 1 waits hidden in the Group, and window 3 is not focused.
+        var moved = core.Execute("dispatch moveintogroup address:0x1,address:0x3");
+
+        Assert.Equal("ok", moved.Text);
+        Assert.Equal(["moveintogroup>>3"], Lines(moved));
+        Assert.Equal([First, Second, Third], Assert.Single(moved.Effect.State.Groups));
+        Assert.Equal(Third, Assert.Single(moved.Effect.GroupBars).Shown);
+        Assert.Contains(Second, moved.Effect.Hide);
+    }
+
+    [Theory]
+    [InlineData("address:0x2", "error: can't group a window with itself")]
+    [InlineData("active", "error: can't group a window with itself")]
+    [InlineData("address:0x9", "error: window not found")]
+    [InlineData("address:nine", "error: address: takes a window address, such as address:0x2a")]
+    [InlineData("address:0x3", "error: window is on another workspace")]
+    [InlineData("address:0x1", "error: a pinned window can't join a group")]
+    public void MoveIntoGroupWithASelectorThatCannotJoinChangesNothing(string selector, string error)
+    {
+        var core = Opened(First, Second, Third);
+        core.Execute("dispatch movetoworkspacesilent 2,address:0x3");
+        core.Execute("dispatch focuswindow address:0x1");
+        core.Execute("dispatch togglefloating");
+        core.Execute("dispatch pin");
+        core.Execute("dispatch focuswindow address:0x2");
+        var before = core.Execute("j/clients").Text;
+
+        var refused = core.Execute("dispatch moveintogroup " + selector);
+
+        Assert.Equal(error, refused.Text);
+        Assert.Empty(refused.Effect.State.Groups);
+        Assert.Empty(refused.Effect.Events);
+        Assert.Equal(before, core.Execute("j/clients").Text);
+    }
+
+    // Unlike a drag, the command takes a floating Client into a tiled Group, and the joined Client is tiled like it.
+    [Fact]
+    public void AFloatingClientJoiningATiledClientBySelectorIsTiledInItsGroup()
+    {
+        var core = Opened(First, Second);
+        core.Execute("dispatch focuswindow address:0x2");
+        core.Execute("dispatch togglefloating");
+
+        var moved = core.Execute("dispatch moveintogroup address:0x1");
+
+        Assert.Equal("ok", moved.Text);
+        Assert.Equal([First, Second], Assert.Single(moved.Effect.State.Groups));
+        Assert.False(ClientOf(moved.Effect, Second).Floating);
+    }
+
+    [Fact]
+    public void MoveIntoGroupInADirectionLeavesAPlainNeighbourAlone()
+    {
+        var core = Opened(First, Second);
+        core.Execute("dispatch focuswindow address:0x2");
+
+        var moved = core.Execute("dispatch moveintogroup l");
+
+        Assert.Equal("ok", moved.Text);
+        Assert.Empty(moved.Effect.State.Groups);
+        Assert.Empty(Lines(moved));
+    }
+
+    [Fact]
+    public void APinnedClientCannotJoinAGroupBySelectorEither()
+    {
+        var core = Opened(First, Second);
+        core.Execute("dispatch focuswindow address:0x1");
+        core.Execute("dispatch togglegroup");
+        core.Execute("dispatch focuswindow address:0x2");
+        core.Execute("dispatch togglefloating");
+        core.Execute("dispatch pin");
+
+        var refused = core.Execute("dispatch moveintogroup address:0x1");
+
+        Assert.Equal("error: a pinned window can't join a group", refused.Text);
+        Assert.Equal([First], Assert.Single(refused.Effect.State.Groups));
     }
 
     [Fact]

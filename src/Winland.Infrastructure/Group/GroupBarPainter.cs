@@ -91,6 +91,8 @@ internal static class GroupBarPainter
         if (bar.Style.RenderTitles)
             DrawTitles(memory, pixels, width, height, bar, titles);
 
+        MarkInsertion(pixels, bar);
+
         var size = new SIZE(width, height);
         var origin = new System.Drawing.Point(0, 0);
         var position = new System.Drawing.Point(bar.Bounds.X, bar.Bounds.Y);
@@ -161,6 +163,16 @@ internal static class GroupBarPainter
         _ = PInvoke.SelectObject(maskDc, oldMask);
         _ = PInvoke.DeleteObject(maskBitmap);
         _ = PInvoke.DeleteDC(maskDc);
+    }
+
+    /// <summary>Draws the place a held window would join, in the active indicator color, over the strip's pixels.</summary>
+    internal static void MarkInsertion(Span<uint> pixels, GroupBar bar)
+    {
+        if (bar.Insertion is null)
+            return;
+
+        var color = Shaded(bar.Style.IndicatorColor(true), 1);
+        Fill(pixels, bar.Bounds.Width, bar.Bounds.Height, bar.InsertionBounds(), (_, _) => color);
     }
 
     // Premultiplied BGRA of a color over the part of a pixel a shape covers. A pixel keeps an alpha of at least 1, so the

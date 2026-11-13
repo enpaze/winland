@@ -111,7 +111,11 @@ public sealed partial class WindowManager
     private Outcome MoveIntoGroup(string text)
     {
         if (!TryGroupDirection(text, out var direction))
-            return Rejected("error: unsupported direction: " + text);
+        {
+            return text.Length == 0
+                ? Rejected("error: unsupported direction: ")
+                : MoveIntoGroupOf(text);
+        }
 
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
@@ -126,20 +130,49 @@ public sealed partial class WindowManager
             return IntoGroupAcross(desk, there, id, across);
         }
 
-        if (desk.GroupOf(neighbor) is not WindowGroup target)
+        if (desk.GroupOf(neighbor) is null)
             return View([]);
 
-        return IntoGroup(desk, desk.Covered(), id, target);
+        return IntoGroup(desk, desk.Covered(), id, neighbor);
     }
 
-    private Outcome IntoGroup(LiveWorkspace desk, HashSet<WindowId> covered, WindowId window, WindowGroup target)
+    // moveintogroup with a window selector: the acting Client joins the Group of the Client it names, on its own
+    // Workspace, and a plain Client becomes a Group around it once the acting Client has left its place.
+    private Outcome MoveIntoGroupOf(string selector)
     {
-        if (target.Contains(window))
+        if (WindowSelector.Malformed(selector) is { } problem)
+            return Rejected("error: " + problem);
+
+        if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
+            return Rejected("error: no window found");
+
+        if (WindowSelector.Find(selector, id, EveryClient()) is not WindowId destination)
+            return Rejected("error: window not found");
+
+        if (destination == id)
+            return Rejected("error: can't group a window with itself");
+
+        if (WorkspaceContaining(destination) != desk)
+            return Rejected("error: window is on another workspace");
+
+        // A pinned Client shows on every Workspace of its Monitor, which a hidden member cannot.
+        if (_pins.IsPinned(id) || _pins.IsPinned(destination))
+            return Rejected("error: a pinned window can't join a group");
+
+        return IntoGroup(desk, desk.Covered(), id, destination);
+    }
+
+    // Joins the Group of destination, or makes one around it. The Group is made only after the window has left its place.
+    private Outcome IntoGroup(LiveWorkspace desk, HashSet<WindowId> covered, WindowId window, WindowId destination)
+    {
+        var target = desk.GroupOf(destination);
+        if (target is not null && target.Contains(window))
             return Present(desk, covered, desk.Layout.Visible());
 
         if (!TakeForGroup(desk, window, out var taken))
             return View([]);
 
+        target ??= StartGroup(desk, destination);
         var position = target.Current + 1;
         desk.Join(target, window, taken, position);
         desk.Show(target, position);

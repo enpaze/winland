@@ -37,7 +37,7 @@ public sealed partial class WindowManager
             || desk.ClientOf(window) is not { Minimized: false } client)
             return View([]);
 
-        _interaction = new NativeMove(window, client.Floating);
+        _interaction = new NativeMove(window, client.Floating) { Pointer = started.Pointer };
         if (client.Floating)
             return BeginNativeFloating(desk, client);
 
@@ -111,5 +111,8 @@ public sealed partial class WindowManager
         public bool Floating { get; } = floating;
 
         public bool Adopted { get; set; }
+
+        /// <summary>Where the pointer is while the system moves the window, from the pointer moves it reports.</summary>
+        public Point Pointer { get; set; }
     }
 }
