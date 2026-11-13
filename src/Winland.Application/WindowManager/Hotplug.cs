@@ -256,8 +256,9 @@ public sealed partial class WindowManager
             return null;
 
         // A window that opens while Winland runs opens on the focused Monitor, wherever its program put it, and a
-        // window with an owner on its owner's. One that was open when Winland started stays where it is.
-        if (appeared.Opened && !appeared.Traits.Topmost)
+        // window with an owner on its owner's. One that was open when Winland started, or that places itself, stays
+        // where it is.
+        if (appeared.Opened && !appeared.Traits.PlacesItself)
         {
             var home = appeared.Owner is WindowId owner && WorkspaceContaining(owner) is LiveWorkspace desk ? desk.Monitor : FocusedId();
             if (Match(screen => screen.Id == home) is LiveMonitor opened)

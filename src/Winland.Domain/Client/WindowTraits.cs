@@ -21,8 +21,15 @@ public readonly record struct WindowTraits(
     string? InitialTitle = null,
     string? InitialClass = null,
     bool Resizable = true,
-    bool Topmost = false)
+    bool Topmost = false,
+    bool Frameless = false)
 {
+    /// <summary>
+    /// A window its program placed on purpose, so it opens where it is: one that stays on top, or one with neither a
+    /// title bar nor a sizing border, such as a flyout a tray icon opens.
+    /// </summary>
+    public bool PlacesItself => Topmost || Frameless;
+
     public static WindowTraits Normal { get; } = new(
         Visible: true,
         Titled: true,

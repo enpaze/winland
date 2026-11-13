@@ -73,7 +73,7 @@ public sealed partial class WindowManager
         {
             placed = new Rectangle(monitor.X + Pixels(x), monitor.Y + Pixels(y), width, height);
         }
-        else if (decision.Floating && appeared.Traits.Topmost && !placement.Center)
+        else if (decision.Floating && appeared.Traits.PlacesItself && !placement.Center)
         {
             placed = desired with { Width = width, Height = height };
         }
