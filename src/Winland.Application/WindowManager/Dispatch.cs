@@ -55,7 +55,7 @@ public sealed partial class WindowManager
         arguments ??= "";
 
         if (!Table.TryGetValue(name, out var dispatcher))
-            return View([]) with { Error = "error: unknown dispatcher '" + name + "'" };
+            return View([]) with { Error = DidYouMean.After("error: unknown dispatcher '" + name + "'", name, Table.Keys) };
 
         var outcome = dispatcher.TakesWindow && arguments.IndexOf(',', StringComparison.Ordinal) is var comma and >= 0
             ? ExecuteOn(name, arguments[..comma], arguments[(comma + 1)..].Trim())

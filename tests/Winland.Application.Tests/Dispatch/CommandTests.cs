@@ -65,6 +65,18 @@ public class CommandTests
         Assert.Contains(reply.Effect.State.Clients, client => client.Window == new WindowId(2));
     }
 
+    [Theory]
+    [InlineData("dispatch killactiv", "error: unknown dispatcher 'killactiv'. Did you mean 'killactive'?")]
+    [InlineData("dispatch notadispatcher", "error: unknown dispatcher 'notadispatcher'")]
+    [InlineData("getoption general:gaps_inn", "error: no such option. Did you mean 'general:gaps_in'?")]
+    [InlineData("getoption no:such", "error: no such option")]
+    public void AnUnknownNameSuggestsTheOneNameItIsCloseTo(string line, string error)
+    {
+        var reply = new WindowManager().Execute(line);
+
+        Assert.Equal(error, reply.Text);
+    }
+
     [Fact]
     public void DispatchWithoutANameIsRejected()
     {

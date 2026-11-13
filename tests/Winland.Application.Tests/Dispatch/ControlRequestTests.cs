@@ -63,6 +63,54 @@ public class ControlRequestTests
     }
 
     [Fact]
+    public void ABareDispatchListsInOrderEveryDispatcherWinlandRuns()
+    {
+        Assert.True(ControlInvocation.TryListNames(["dispatch"], out var list));
+
+        var names = list.Split('\n');
+        Assert.Equal(names.Order(StringComparer.Ordinal), names);
+        Assert.Contains("killactive", names);
+        var core = new WindowManager();
+        Assert.All(names, name => Assert.DoesNotContain("unknown dispatcher", core.Execute("dispatch " + name).Text, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ABareGetoptionListsInOrderEveryOptionItDescribes()
+    {
+        Assert.True(ControlInvocation.TryListNames(["getoption"], out var list));
+
+        var names = list.Split('\n');
+        Assert.Equal(names.Order(StringComparer.Ordinal), names);
+        Assert.Contains("general:gaps_in", names);
+        var desk = new TestDesktop();
+        Assert.All(names, name => Assert.Equal(JsonValueKind.Object, Json(desk.Send("getoption " + name)).ValueKind));
+    }
+
+    [Theory]
+    [InlineData("dispatch")]
+    [InlineData("getoption")]
+    public void ANameListWithJIsAJsonArrayOfTheSameNames(string verb)
+    {
+        Assert.True(ControlInvocation.TryListNames([verb], out var plain));
+        Assert.True(ControlInvocation.TryListNames(["-j", verb], out var json));
+
+        Assert.Equal(plain.Split('\n'), JsonSerializer.Deserialize<string[]>(json));
+    }
+
+    [Theory]
+    [InlineData("getoption general:gaps_in")]
+    [InlineData("dispatch killactive")]
+    [InlineData("clients")]
+    public void ANamedRequestStillGoesToTheRunningWinland(string request)
+    {
+        var args = request.Split(' ');
+
+        Assert.False(ControlInvocation.TryListNames(args, out _));
+        Assert.True(ControlInvocation.TryCreate(args, out var line, out _));
+        Assert.Equal(request, line);
+    }
+
+    [Fact]
     public void DescriptionsShowCurrentValues()
     {
         var desk = new TestDesktop();
