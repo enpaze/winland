@@ -2,7 +2,6 @@ namespace Winland.Infrastructure.Tests;
 
 // The clock is process-wide, so these run with the other tests that set process-wide state.
 [Collection(DesktopCollection.Name)]
-[Trait("Category", DesktopCollection.Name)]
 public class InputClockTests
 {
     [Theory]

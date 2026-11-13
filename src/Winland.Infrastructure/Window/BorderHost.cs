@@ -13,7 +13,6 @@ namespace Winland.Infrastructure;
 /// follow the window wherever it moves, by the frame Windows reports, so a move or an animation carries the border
 /// along. The borders go away with this process.
 /// </summary>
-// Stryker disable once all : draws on the desktop; the ring's pixels are made and tested in BorderPainter.
 internal static class BorderHost
 {
     private const string ClassName = DecorationStack.BorderClass;

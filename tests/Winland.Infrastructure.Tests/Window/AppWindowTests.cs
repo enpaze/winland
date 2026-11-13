@@ -5,7 +5,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 namespace Winland.Infrastructure.Tests;
 
 [Collection(DesktopCollection.Name)]
-[Trait("Category", DesktopCollection.Name)]
 public class AppWindowTests
 {
     [DesktopFact]

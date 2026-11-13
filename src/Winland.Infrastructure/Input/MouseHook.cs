@@ -46,7 +46,6 @@ public sealed class MouseHook : IDisposable
         _callback = OnMouse;
     }
 
-    // Stryker disable all : from here to TryDrag, installing the low-level mouse hook and its callback, which need real mouse input.
     public void Start()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -298,7 +297,6 @@ public sealed class MouseHook : IDisposable
         return true;
     }
 
-    // Stryker restore all
     internal static bool TryDrag(BindDecision decision, out string dispatcher, out string arguments)
     {
         dispatcher = "";
@@ -403,7 +401,6 @@ public sealed class MouseHook : IDisposable
         return true;
     }
 
-    // Stryker disable once all : passes the event on to the next hook.
     private LRESULT Next(int code, WPARAM wParam, LPARAM lParam) =>
         PInvoke.CallNextHookEx(_hook, code, wParam, lParam);
 }

@@ -2,7 +2,6 @@ namespace Winland.Infrastructure.Tests;
 
 // One test opens real windows, so the class runs alone with the other desktop tests.
 [Collection(DesktopCollection.Name)]
-[Trait("Category", DesktopCollection.Name)]
 public class WindowIdentityTests
 {
     [Fact]

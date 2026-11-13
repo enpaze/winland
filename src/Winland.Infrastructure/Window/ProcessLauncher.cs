@@ -66,7 +66,6 @@ public static class ProcessLauncher
 
     // An elevated process inherits elevation into CreateProcess. The interactive
     // shell's token is the signed-in user without that elevation.
-    // Stryker disable once all : needs an elevated process and a desktop shell, and unit tests have neither.
     private static unsafe int StartLimited(Launch launch)
     {
         _ = Impersonating.Value;
@@ -212,7 +211,6 @@ public static class ProcessLauncher
         int processInformationLength,
         out int returnLength);
 
-    // Stryker disable once all : adjusts the privileges of an elevated process's own token.
     private static unsafe void EnablePrivilege(string name)
     {
         using var process = System.Diagnostics.Process.GetCurrentProcess();

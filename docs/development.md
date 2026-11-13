@@ -15,10 +15,7 @@ Optional: GitHub CLI (`gh`) for issues and releases.
 ```sh
 git clone https://github.com/enpaze/winland.git
 cd winland
-dotnet tool restore
 ```
-
-`dotnet tool restore` installs Stryker.NET for mutation testing.
 
 ## Run a dev build
 
@@ -60,7 +57,7 @@ A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forc
 | `WINLAND_PIPE` | Override the daemon and CLI pipe name. Give isolated tests a unique name. Unset or blank uses the session's default. |
 | `WINLAND_STATE` | Override the recovery state file path. Use a separate file for each test daemon. |
 | `WINLAND_NO_ELEVATE` | `1` opts out of automatic elevation, as `--no-elevate` does. Intended for tests. |
-| `DOTNET_ROOT` | The .NET runtime root for apphosts and Stryker when .NET is outside its usual location. `run.ps1` resolves it automatically. |
+| `DOTNET_ROOT` | The .NET runtime root for apphosts when .NET is outside its usual location. `run.ps1` resolves it automatically. |
 
 ## Commands
 
@@ -71,7 +68,6 @@ A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forc
 | `dotnet test tests/<project>` | The focused test for one project. |
 | `dotnet format Winland.slnx` | Apply the solution's formatting rules. Add `--verify-no-changes` to check without editing. |
 | `pwsh -NoProfile -File scripts/smoke.ps1` | The smoke tests, on a real desktop. |
-| `pwsh -NoProfile -File scripts/mutate.ps1` | Mutation testing (see [Mutation testing](#mutation-testing)). |
 | `pwsh -NoProfile -File scripts/install.tests.ps1` | Tests the decisions in `scripts/install.ps1`. |
 | `pwsh -NoProfile -File scripts/run.ps1` | Publishes this checkout and starts it in place of the running winland. `-Stop` stops it. |
 | `pwsh -NoProfile -File scripts/package.ps1 -Version 1.2.3 -Commit (git rev-parse HEAD).Trim()` | Build the self-contained release zip, `version.json` and `SHA256SUMS` without starting Winland. Prints the output folder. `-DisplayVersion` includes dev metadata and `-OutputDirectory` chooses a new output folder. |
@@ -84,37 +80,17 @@ The Daemon and CLI use the pipe `\\.\pipe\winland-<SessionId>` for their Windows
 
 `.github/workflows/ci.yml` builds and tests changes on Windows. Push runs also fill the NuGet cache. Newer runs cancel older runs for the same change, while release runs have a separate concurrency group.
 
-Every lane except Mutation is a step in one Windows job, because each job pays its own setup.
+Every lane is a step in one Windows job, because each job pays its own setup.
 
 | Lane | What it does | When it runs |
 | --- | --- | --- |
 | Lint | `scripts/check.ps1`, then `actionlint` on `.github/workflows/*.yml`. Docs-only PRs skip the build. | Always. |
 | Test | `scripts/test.ps1 -NoBuild` on the lint's build: every `*.Tests.csproj` under `tests/` except `*.Smoke.Tests.csproj`. | Always, except a pull request that changes only docs and repo metadata (`*.md`, `docs/`, `.github/ISSUE_TEMPLATE/`, `.github/rulesets/`, `.gitignore`, `.gitattributes`, `LICENSE*`). |
-| Mutation | One job per mutation run, then a score gate. | Before publishing a stable release, or when CI is dispatched by hand with **Release run** on. |
 
 - A test project that fails runs once more on the same build. If it passes the second time, `scripts/test.ps1` names the flaky tests in a `FLAKY:` line, and CI adds a warning and a job summary line. Fix flaky tests by waiting for a condition instead of a fixed time.
 - The unit tests that open real windows are in one xunit collection (`DesktopCollection` in `tests/Winland.Infrastructure.Tests`) that runs alone. The ones a running Winland would disturb skip while any `winland` process runs, including builds on custom pipes. Run them with the daemon stopped.
 - Smoke tests run only when someone dispatches the `Smoke tests` workflow by hand. `scripts/smoke.ps1` runs them locally. It sets `WINLAND_SMOKE=1`, without which every smoke test skips itself.
 - The Workflows workflow runs zizmor when `.github/` changes. CI also runs actionlint.
-
-### Mutation testing
-
-`scripts/mutate.ps1` runs [Stryker.NET](https://stryker-mutator.io/docs/stryker-net/introduction/), the version in `.config/dotnet-tools.json`. It has one lane per unit test project, and each lane mutates the project that test project tests. A long lane is split into shards, so every CI job fits its timeout. A lane or one shard of it is a mutation run.
-
-```powershell
-pwsh -NoProfile -File scripts/mutate.ps1                  # every run, then the gate
-pwsh -NoProfile -File scripts/mutate.ps1 -Project Daemon  # one lane, then the gate
-pwsh -NoProfile -File scripts/mutate.ps1 -List            # the run names CI makes jobs from
-pwsh -NoProfile -File scripts/mutate.ps1 -Run Domain-2    # one run and no gate, as a CI job runs it
-pwsh -NoProfile -File scripts/mutate.ps1 -Gate <folder>   # gate the run summaries under a folder
-```
-
-- The gate is `thresholds.break` in `stryker-config.json`, applied to each lane's whole score across its shards.
-- Each run writes `tests/<project>/StrykerOutput/<run>/reports/mutation-report.html`, which CI uploads as `mutation-report-<run>`.
-- A file that drives Win32 or the shell directly, with no seam a unit test can reach, is left out in the lane's `Exclude` list in `scripts/mutate.ps1`, with the reason. A Win32-only member in a file that also holds tested logic gets a `// Stryker disable once all : <reason>` comment.
-- The Windows lane leaves out the `Desktop` collection (`Category=Desktop`), because windows opened by parallel test processes fight over the foreground.
-- Stryker's test host needs `DOTNET_ROOT` when the SDK is not where .NET looks by default, for example under mise: `$env:DOTNET_ROOT = "$env:LOCALAPPDATA\mise\dotnet-root"`.
-- A new unit test project fails `scripts/mutate.ps1` until it has a lane.
 
 ## Releasing
 
@@ -124,7 +100,7 @@ The bootstrap completes per-user cleanup through the internal `winland install -
 
 The install script accepts `-NoTweaks` to leave Snap and touchpad swipes alone, including with redirected input. Without it, non-interactive installs use yes for all three questions.
 
-release-please keeps a release PR open that collects the changes merged into `main`, with the next version and its changelog. Merging that PR tags the release. CI tests the tag, including the mutation score gate, before a job builds and uploads `Winland-win-x64.zip`, `version.json`, and `SHA256SUMS` and publishes it. See [releasing.md](releasing.md).
+release-please keeps a release PR open that collects the changes merged into `main`, with the next version and its changelog. Merging that PR tags the release. CI tests the tag before a job builds and uploads `Winland-win-x64.zip`, `version.json`, and `SHA256SUMS` and publishes it. See [releasing.md](releasing.md).
 
 - **Pick the version yourself:** when merging a PR, add `Release-As: x.y.z` to the end of the squash commit message.
 - **The release PR's checks don't start:** without the `RELEASE_PLEASE_TOKEN` secret, close and reopen the release PR right before merging it.

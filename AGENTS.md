@@ -5,7 +5,7 @@ A keyboard-driven tiling window manager for Windows 11. It manages windows on to
 ## Stack
 
 - C# on .NET 10 (SDK 10.0.401, pinned in `global.json`), Windows only
-- xunit tests, and Stryker.NET 5.0.0 for mutation testing
+- xunit tests
 - PowerShell 7 for the scripts in `scripts/`
 - GitHub Actions on Windows runners, and release-please for releases
 
@@ -20,7 +20,7 @@ A keyboard-driven tiling window manager for Windows 11. It manages windows on to
 │   ├── Winland.Daemon/          # winland.exe: reads the config and wires the rest together
 │   └── Winland.Install/         # Install, update and release files
 ├── tests/                       # One *.Tests project per src project, plus smoke tests
-├── scripts/                     # check, test, run, smoke, mutate, and install
+├── scripts/                     # check, test, run, smoke, and install
 ├── docs/
 │   ├── adr/                     # Decision records
 │   ├── architecture.md          # The layers, the path an input takes, where to change things
