@@ -63,7 +63,6 @@ public static partial class ConfigParser
         private readonly HashSet<string> _openSources = new(StringComparer.OrdinalIgnoreCase);
         private string? _source;
         private string? _rootFolder;
-        private bool _suppressWarnings;
         private bool _inSubmap;
         private bool _warnedSubmaps;
 
@@ -154,9 +153,9 @@ public static partial class ConfigParser
 
         private void ParseLine(int lineNumber, string raw)
         {
-            if (ConfigDirectives.TryParseNoError(raw, out var suppress))
+            if (ConfigDirectives.IsCondition(raw))
             {
-                _suppressWarnings = suppress;
+                Warn(lineNumber, "Winland does not evaluate hyprlang conditions. The lines inside apply.");
                 return;
             }
 
@@ -397,9 +396,6 @@ public static partial class ConfigParser
 
         private void Warn(int line, string message)
         {
-            if (_suppressWarnings)
-                return;
-
             _warnings.Add(new ConfigWarning(line, message, _source));
         }
 

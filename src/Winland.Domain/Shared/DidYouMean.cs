@@ -25,6 +25,10 @@ internal static class DidYouMean
         return match is null ? "" : $" Did you mean '{match}'?";
     }
 
+    /// <summary>A pipe error, such as <c>error: no such option</c>, with the hint after it as a sentence of its own.</summary>
+    public static string After(string error, string name, IEnumerable<string> known) =>
+        For(name, known) is { Length: > 0 } hint ? error + "." + hint : error;
+
     // Levenshtein distance, row by row. Case does not count.
     private static int Distance(string a, string b)
     {

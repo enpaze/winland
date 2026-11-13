@@ -112,16 +112,22 @@ public class ConfigSyntaxTests
     }
 
     [Fact]
-    public void AnIfCommentIsOnlyAComment()
+    public void AConditionMarkerWarnsThatItIsNotEvaluatedAndEveryLineApplies()
     {
         var document = ConfigParser.Parse("""
             # hyprlang if MISSING
             general:gaps_in = 3
+            #hyprlang else # the other branch
+            general:gaps_out = 5
             # hyprlang endif
+            # hyprlang iffy
+            # Hyprlang if MISSING
+            # hyprlang noerror true
             """);
 
-        Assert.Empty(document.Warnings);
-        Assert.Equal(new Setting("general:gaps_in", "3"), Assert.Single(document.Settings));
+        const string message = "Winland does not evaluate hyprlang conditions. The lines inside apply.";
+        Assert.Equal([new ConfigWarning(1, message), new ConfigWarning(3, message), new ConfigWarning(5, message)], document.Warnings);
+        Assert.Equal([new Setting("general:gaps_in", "3"), new Setting("general:gaps_out", "5")], document.Settings);
     }
 
     [Theory]
@@ -130,18 +136,20 @@ public class ConfigSyntaxTests
     [InlineData("enable")]
     [InlineData("enabled")]
     [InlineData("set")]
-    public void NoErrorSuppressesWarningsUntilTurnedOff(string word)
+    public void ANoErrorCommentHidesNoWarning(string word)
     {
         var document = ConfigParser.Parse($"""
             # hyprlang noerror {word}
             ghostkeyword = 1
-            not a line
+            general:gaps_in = 3
             # hyprlang noerror false
             ghostkeyword = 2
             """);
 
-        Assert.Equal(new ConfigWarning(5, "Unsupported keyword 'ghostkeyword'."), Assert.Single(document.Warnings));
-        Assert.Empty(document.Settings);
+        Assert.Equal(
+            [new ConfigWarning(2, "Unsupported keyword 'ghostkeyword'."), new ConfigWarning(5, "Unsupported keyword 'ghostkeyword'.")],
+            document.Warnings);
+        Assert.Equal(new Setting("general:gaps_in", "3"), Assert.Single(document.Settings));
     }
 
     [Fact]

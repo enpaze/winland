@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Winland.Application;
 
 /// <summary>Turns <c>winland</c>'s arguments into the line it sends down the pipe.</summary>
@@ -7,6 +9,31 @@ public static class ControlInvocation
     public static string Usage { get; } =
         string.Concat(CommandProtocol.VerbForms.Select(form => "       winland " + (form == "events" ? "" : "[-j] ") + form + "\n"))
         + "       winland [-j] --batch <commands>\n";
+
+    /// <summary>
+    /// True for a bare <c>dispatch</c> or <c>getoption</c>, with or without <c>-j</c>. <paramref name="list"/> is then
+    /// every Dispatcher or Option name this binary knows, in order: one a line, or a JSON array with <c>-j</c>.
+    /// </summary>
+    public static bool TryListNames(string[] args, out string list)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        list = "";
+        var words = args.Where(arg => arg != "-j").ToArray();
+        if (words.Length != 1)
+            return false;
+
+        IEnumerable<string> names;
+        if (words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase))
+            names = WindowManager.DispatcherNames;
+        else if (words[0].Equals("getoption", StringComparison.OrdinalIgnoreCase))
+            names = OptionTable.Names;
+        else
+            return false;
+
+        var sorted = names.Order(StringComparer.Ordinal).ToArray();
+        list = words.Length < args.Length ? JsonSerializer.Serialize(sorted) : string.Join('\n', sorted);
+        return true;
+    }
 
     /// <summary>
     /// The line for <paramref name="args"/>: flags such as <c>-j</c> become <c>j/</c>, and the rest is joined with
