@@ -7,9 +7,8 @@ StrykerOutput/
 .firecrawl/
 .scratch/
 
-# Local Claude Code session files, such as review notes. The installed skills are committed.
-.claude/*
-!.claude/skills/
+# Local Claude Code session files, such as review notes.
+.claude/
 
 # Baseline
 # OS

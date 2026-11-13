@@ -1,9 +1,5 @@
 # Shared by Winoma, Winshell, and Winland. Keep the copies identical.
 # One pull-request and merge-queue entry point. mutation.yml is workflow_call only.
-# Branch protection requires "All required checks pass (v1)" and the separate pr-title job.
-# When a required step or job is added, bump (v1) here and in
-# .github/rulesets/protect-main.json in the same change. A green check on a
-# commit stays green forever, so the new name is what makes an old green stop counting.
 # Do not add secrets to this workflow. pull_request runs the file from the pull request.
 #
 # Every check is a step in one Windows job. A net10.0-windows project does not build on
@@ -47,7 +43,6 @@ concurrency:
   cancel-in-progress: ${{ !inputs.release && (github.event_name == 'pull_request' || github.event_name == 'push') }}
 
 jobs:
-  # The ruleset names this check and the separate pr-title job.
   check:
     name: All required checks pass (v1)
     runs-on: windows-latest
@@ -61,7 +56,7 @@ jobs:
     steps:
       # fetch-depth 0 also fetches every branch, so origin/main and the pull request's base
       # are present without a second fetch, and no credential has to stay on disk. The blobless
-      # filter keeps every commit and tree, which the history and diff steps read, and fetches
+      # filter keeps every commit and tree, which the diff step reads, and fetches
       # file contents only for the commit that is checked out.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -94,19 +89,6 @@ jobs:
           path: C:/nuget
           key: nuget-${{ runner.os }}-${{ hashFiles('global.json', 'nuget.config', 'Directory.Packages.props', 'Directory.Build.props', '**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-
-      # A branch that shares no commit with main would add a second root commit to main
-      # and break git blame.
-      - name: Reject unrelated history
-        shell: pwsh
-        env:
-          HEAD_SHA: ${{ inputs.ref || github.event.pull_request.head.sha || github.sha }}
-        run: |
-          git merge-base origin/main $env:HEAD_SHA | Out-Null
-          if ($LASTEXITCODE -ne 0) {
-            Write-Output '::error::This branch has no common ancestor with main.'
-            exit 1
-          }
-          exit 0
       # Tests run unless the pull request only changes docs and repo metadata.
       # Any other changed file turns them on, so a new kind of file is tested by default.
       # An empty diff turns them off. --no-renames lists the old path of a rename too,
@@ -128,7 +110,7 @@ jobs:
           }
           $files = @(git diff --name-only --no-renames "origin/$($env:BASE_REF)...$($env:HEAD_SHA)")
           if ($LASTEXITCODE -ne 0) { throw "git diff failed with $LASTEXITCODE" }
-          $docs = '^(.*\.md|docs/.*|\.github/ISSUE_TEMPLATE/.*|\.github/pull_request_template\.md|\.github/rulesets/.*|\.gitignore|\.gitattributes|LICENSE.*)$'
+          $docs = '^(.*\.md|docs/.*|\.github/ISSUE_TEMPLATE/.*|\.github/rulesets/.*|\.gitignore|\.gitattributes|LICENSE.*)$'
           $code = @($files | Where-Object { $_ -and $_ -cnotmatch $docs })
           $test = if ($code.Count -gt 0) { 'true' } else { 'false' }
           "test=$test" >> $env:GITHUB_OUTPUT

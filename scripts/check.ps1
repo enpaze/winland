@@ -1,4 +1,4 @@
-# Lint the tip the pull request will lint. One run, not one run per commit.
+# Parse scripts, check documentation, and build the solution.
 #   pwsh -NoProfile -File scripts/check.ps1
 #   pwsh -NoProfile -File scripts/check.ps1 -Ref <sha>
 #   pwsh -NoProfile -File scripts/check.ps1 -Ref <sha> -Test   also runs scripts/test.ps1 on that commit
@@ -11,7 +11,7 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($SkipBuild -and $Test) { throw '-SkipBuild cannot be combined with -Test.' }
 
-# A hook exports GIT_DIR. Clear it so git commands in this script use the checkout.
+# Clear inherited Git paths so commands in this script use the checkout.
 foreach ($name in @('GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_PREFIX')) {
     Remove-Item "Env:$name" -ErrorAction SilentlyContinue
 }
@@ -51,7 +51,7 @@ function Test-MarkdownLinks([string]$Root, [string[]]$Tracked) {
         }
     }
 
-    # A file that docs/agents/domain.md says may be missing is not an error in AGENTS.md.
+    # Domain documentation is optional in AGENTS.md.
     $optional = @('GLOSSARY.md', 'docs/adr', 'docs/adr/README.md')
     $pathExtensions = '\.(md|ps1|json|yml|yaml|props|slnx|csproj)$'
 
