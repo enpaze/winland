@@ -8,18 +8,17 @@
 - The .NET SDK version pinned in `global.json` (10.0.401, or a later feature band)
 - Publishing a release also needs Visual Studio 2022 or later with Desktop development with C++, for the NativeAOT launcher. Ordinary builds and unit tests do not need the C++ toolchain.
 
-Optional: GitHub CLI (`gh`) for issues and releases, and Node.js for `npx skills` updates.
+Optional: GitHub CLI (`gh`) for issues and releases.
 
 ## First checkout
 
 ```sh
 git clone https://github.com/enpaze/winland.git
 cd winland
-pwsh scripts/dev.ps1
 dotnet tool restore
 ```
 
-`scripts/dev.ps1` points git at the hooks in `scripts/hooks` (see [Git hooks](#git-hooks)). `dotnet tool restore` installs Stryker.NET for mutation testing.
+`dotnet tool restore` installs Stryker.NET for mutation testing.
 
 ## Run a dev build
 
@@ -67,7 +66,6 @@ A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forc
 
 | Command | What it does |
 | --- | --- |
-| `pwsh scripts/dev.ps1` | Point git at the hooks in `scripts/hooks`. Once per clone. |
 | `pwsh -NoProfile -File scripts/check.ps1` | The lint: parses the PowerShell, rejects names that differ only by case, checks markdown links and the paths `AGENTS.md` names, and builds the solution. `-SkipBuild` checks docs without a build, as docs-only PRs do in CI. |
 | `pwsh -NoProfile -File scripts/test.ps1` | Runs every unit test project side by side, as CI does. |
 | `dotnet test tests/<project>` | The focused test for one project. |
@@ -77,40 +75,27 @@ A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forc
 | `pwsh -NoProfile -File scripts/install.tests.ps1` | Tests the decisions in `scripts/install.ps1`. |
 | `pwsh -NoProfile -File scripts/run.ps1` | Publishes this checkout and starts it in place of the running winland. `-Stop` stops it. |
 | `pwsh -NoProfile -File scripts/package.ps1 -Version 1.2.3 -Commit (git rev-parse HEAD).Trim()` | Build the self-contained release zip, `version.json` and `SHA256SUMS` without starting Winland. Prints the output folder. `-DisplayVersion` includes dev metadata and `-OutputDirectory` chooses a new output folder. |
-| `npx -y skills@1.7.4 update -p` | Update the unpinned agent skills. Pinned ones (with a `ref` in `skills-lock.json`) change only when re-added with a newer `#<sha>`. |
-
-Before opening a PR, run the checks CI runs: `pwsh -NoProfile -File scripts/check.ps1`, then `pwsh -NoProfile -File scripts/test.ps1`.
 
 Warnings fail the build. `Directory.Build.props` enables `TreatWarningsAsErrors`, recommended analyzers with `AnalysisMode`, and the configured code style warnings with `EnforceCodeStyleInBuild`.
 
 The Daemon and CLI use the pipe `\\.\pipe\winland-<SessionId>` for their Windows session. Set `WINLAND_PIPE` to use a different name for both. The run script replaces Winland only in its own session. With `WINLAND_PIPE` set, it limits that to builds it started under `%LOCALAPPDATA%\winland-dev`.
 
-## Git hooks
-
-The hooks are tracked in `scripts/hooks`, and git runs them from there. `pwsh scripts/dev.ps1` sets `core.hooksPath` to `scripts/hooks` once per clone. A checkout that still points `core.hooksPath` at `.git/hooks` is fixed by running it again.
-
-| Hook | When it runs | What it does |
-| --- | --- | --- |
-| pre-push | When you push | Runs the lint, a cold build and the full unit test suite on each branch tip in a temporary worktree. Some tests open windows and take focus. A failed lint skips the tests. Tags and branch deletions are skipped. Without `pwsh` on `PATH` it says so and lets the push through. `git push --no-verify` skips it. |
-| post-merge | After a pull or merge updates `main` | Deletes a local branch whose GitHub branch is gone and whose changes are already on `main` or a `release/*` branch. It never deletes `main`, `master`, `release/*`, or a branch checked out in a worktree. |
-
 ## CI
 
-Pull requests run `.github/workflows/ci.yml`, and so do merge groups in the merge queue and the push a merge makes to `main`. The push run also fills the NuGet cache, which a pull request can read only when its own branch or the default branch saved it. A newer run of the same pull request, or of `main`, cancels the older one. Release runs have a separate concurrency group. The ruleset requires **All required checks pass (v1)** and **pr-title**. `pr-title.yml` also runs on merge groups and passes there, because the title was checked on the pull request. To change what the combined CI check covers, change `ci.yml` and `.github/rulesets/protect-main.json` in the same pull request, and bump the `(v1)`.
+`.github/workflows/ci.yml` builds and tests changes on Windows. Push runs also fill the NuGet cache. Newer runs cancel older runs for the same change, while release runs have a separate concurrency group.
 
 Every lane except Mutation is a step in one Windows job, because each job pays its own setup.
 
 | Lane | What it does | When it runs |
 | --- | --- | --- |
-| History | Fails when the branch shares no commit with `main`. | Always. |
 | Lint | `scripts/check.ps1`, then `actionlint` on `.github/workflows/*.yml`. Docs-only PRs skip the build. | Always. |
-| Test | `scripts/test.ps1 -NoBuild` on the lint's build: every `*.Tests.csproj` under `tests/` except `*.Smoke.Tests.csproj`. | Always, except a pull request that changes only docs and repo metadata (`*.md`, `docs/`, `.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md`, `.github/rulesets/`, `.gitignore`, `.gitattributes`, `LICENSE*`). |
+| Test | `scripts/test.ps1 -NoBuild` on the lint's build: every `*.Tests.csproj` under `tests/` except `*.Smoke.Tests.csproj`. | Always, except a pull request that changes only docs and repo metadata (`*.md`, `docs/`, `.github/ISSUE_TEMPLATE/`, `.github/rulesets/`, `.gitignore`, `.gitattributes`, `LICENSE*`). |
 | Mutation | One job per mutation run, then a score gate. | Before publishing a stable release, or when CI is dispatched by hand with **Release run** on. |
 
-- A test project that fails runs once more on the same build. If it passes the second time, `scripts/test.ps1` names the flaky tests in a `FLAKY:` line, and CI adds a warning and a job summary line. A flaky test is a bug. Fix it in its own pull request, usually by waiting for a condition instead of a fixed time.
+- A test project that fails runs once more on the same build. If it passes the second time, `scripts/test.ps1` names the flaky tests in a `FLAKY:` line, and CI adds a warning and a job summary line. Fix flaky tests by waiting for a condition instead of a fixed time.
 - The unit tests that open real windows are in one xunit collection (`DesktopCollection` in `tests/Winland.Infrastructure.Tests`) that runs alone. The ones a running Winland would disturb skip while any `winland` process runs, including builds on custom pipes. Run them with the daemon stopped.
 - Smoke tests run only when someone dispatches the `Smoke tests` workflow by hand. `scripts/smoke.ps1` runs them locally. It sets `WINLAND_SMOKE=1`, without which every smoke test skips itself.
-- The Workflows workflow runs zizmor when `.github/` changes. CI also runs actionlint. PR Title checks the pull request title, and Branch Name checks the branch name as a reminder only.
+- The Workflows workflow runs zizmor when `.github/` changes. CI also runs actionlint.
 
 ### Mutation testing
 
