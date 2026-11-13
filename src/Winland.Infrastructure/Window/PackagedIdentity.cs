@@ -82,6 +82,10 @@ internal static class PackagedIdentity
         return TryFindHostedChild(hwnd, processId, out _, out var childProcess) ? childProcess : 0;
     }
 
+    /// <summary>Whether <paramref name="hwnd"/> is a Store app's CoreWindow inside the frame <paramref name="root"/>.</summary>
+    internal static bool IsHostedApp(HWND hwnd, HWND root) =>
+        WindowAdapter.ClassName(hwnd) == CoreClass && WindowAdapter.ClassName(root) == FrameClass;
+
     private static bool IsFrame(string className, string exe) =>
         className == FrameClass || exe.Equals(FrameExe, StringComparison.OrdinalIgnoreCase);
 
