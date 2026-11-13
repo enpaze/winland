@@ -40,6 +40,9 @@ public closed record InstallCommand
     /// </summary>
     public sealed record Tweaks(bool Touchpad) : InstallCommand;
 
+    /// <summary>Put back the settings <see cref="Tweaks"/> recorded, and delete the record. It belongs to the same user.</summary>
+    public sealed record RestoreTweaks : InstallCommand;
+
     /// <summary>Null when the arguments are not an install, an update, a tweak or an uninstall.</summary>
     public static bool TryParse(IReadOnlyList<string> args, out InstallCommand? command, out string? error)
     {
@@ -82,7 +85,10 @@ public closed record InstallCommand
             if (args.Count == 3 && Is(args[1], "--off") && Is(args[2], "--touchpad"))
                 return new Tweaks(true);
 
-            throw new ArgumentException("usage: winland tweaks --off [--touchpad]");
+            if (args.Count == 2 && Is(args[1], "--restore"))
+                return new RestoreTweaks();
+
+            throw new ArgumentException("usage: winland tweaks --off [--touchpad] | --restore");
         }
 
         if (!Is(args[0], "install") && !Is(args[0], "uninstall"))
@@ -116,7 +122,19 @@ public closed record InstallCommand
         Remove => machineInstallPresent,
         Update => false,
         Tweaks => false,
+        RestoreTweaks => false,
         _ => false,
+    };
+
+    /// <summary>
+    /// Why an elevated process refuses this command, or null when it may run elevated. These commands change files and
+    /// settings of the user who runs them. Elevated, that can be the administrator who approved a prompt instead.
+    /// </summary>
+    public string? ElevatedRefusal => this switch
+    {
+        UserCleanup => "User cleanup must run from a normal terminal.",
+        RestoreTweaks => "winland tweaks --restore puts back your own Windows settings. Run it from a normal terminal, not as administrator.",
+        _ => null,
     };
 
     private static InstallCommand ParseInstall(IReadOnlyList<string> args)

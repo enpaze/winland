@@ -330,6 +330,7 @@ static int Usage()
     Console.Error.WriteLine("       winland update [--channel <stable|dev>]");
     Console.Error.WriteLine("       winland uninstall [--purge]");
     Console.Error.WriteLine("       winland tweaks --off [--touchpad]");
+    Console.Error.WriteLine("       winland tweaks --restore");
     Console.Error.Write(ControlInvocation.Usage);
     Console.Error.WriteLine("check reads a config as a start would, and changes nothing: 0 when clean, 1 for any warning.");
     Console.Error.WriteLine("dispatch or getoption with no name lists the names this winland knows. A running Winland can differ.");

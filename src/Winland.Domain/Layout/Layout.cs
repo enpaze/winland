@@ -90,6 +90,9 @@ internal interface Layout
     /// <summary>Toggles pseudo for a Client.</summary>
     IReadOnlyList<Placement> TogglePseudo(WindowId window);
 
+    /// <summary>True for a Client this Layout pseudotiles.</summary>
+    bool IsPseudo(WindowId window) => false;
+
     /// <summary>The Client focus moves to, in the requested direction.</summary>
     WindowId? MoveFocus(WindowId active, string arguments);
 

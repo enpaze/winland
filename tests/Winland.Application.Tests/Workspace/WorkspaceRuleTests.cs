@@ -80,6 +80,20 @@ public class WorkspaceRuleTests
     }
 
     [Fact]
+    public void ARuleCanNameTheFloatingLayout()
+    {
+        var config = "workspace = 2, layout:floating\n";
+        var core = Configured(config);
+        core.Handle(new MonitorsChanged([Display("DP-1", "One", 0, 0, 1920, 1080, 1)]));
+        core.Handle(Appeared(1, Wide));
+
+        var moved = core.Handle(new Dispatch("movetoworkspace", "2"));
+
+        Assert.Empty(ConfigParser.Parse(config).Warnings);
+        Assert.Equal("floating", Workspace(moved, "2").TiledLayout);
+    }
+
+    [Fact]
     public void AWorkspaceKeepsItsClientsWhenAReloadChangesItsLayout()
     {
         var core = Configured("workspace = 1, layout:dwindle\n");
