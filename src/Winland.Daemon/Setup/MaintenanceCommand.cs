@@ -39,12 +39,13 @@ static class MaintenanceCommand
     {
         var executable = Environment.ProcessPath
             ?? throw new InvalidOperationException("The executable path is not available.");
+        if (command.ElevatedRefusal is string refusal && Elevation.IsElevated())
+            throw new InvalidOperationException(refusal);
+
         var app = Maintenance();
         switch (command)
         {
             case InstallCommand.UserCleanup:
-                if (Elevation.IsElevated())
-                    throw new InvalidOperationException("User cleanup must run from a normal terminal.");
                 app.RemoveUserInstall();
                 return 0;
             case InstallCommand.Machine machine:
@@ -74,6 +75,11 @@ static class MaintenanceCommand
                 Console.WriteLine(tweaks.Touchpad
                     ? "Snap windows and the three- and four-finger touchpad swipes are off."
                     : "Snap windows is off.");
+                return 0;
+            case InstallCommand.RestoreTweaks:
+                Console.WriteLine(RecordedSettings().Restore()
+                    ? "The Windows settings winland tweaks --off recorded are back as they were."
+                    : "winland tweaks --off recorded no settings for this user. Nothing changed.");
                 return 0;
             default:
                 throw new InvalidOperationException("Unexpected install command.");
