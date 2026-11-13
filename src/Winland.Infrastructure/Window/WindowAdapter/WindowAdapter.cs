@@ -390,8 +390,12 @@ public sealed partial class WindowAdapter : IDisposable
                             break;
                         // Windows are created, renamed and shown hidden by the thousand, child windows among them. Only a
                         // shown top-level window can become a Client, and reading the others would hold up the next
-                        // window that opens.
-                        case VisibilityAction.Adopt when PInvoke.GetAncestor(hwnd, GET_ANCESTOR_FLAGS.GA_ROOT) != hwnd:
+                        // window that opens. A Store app's CoreWindow can join its frame after the frame was shown, as
+                        // Settings does, so a frame that hosted no app when it was offered is offered again then.
+                        case VisibilityAction.Adopt when PInvoke.GetAncestor(hwnd, GET_ANCESTOR_FLAGS.GA_ROOT) is var root && root != hwnd:
+                            var frame = new WindowId(((IntPtr)root).ToInt64());
+                            if (@event == PInvoke.EVENT_OBJECT_SHOW && PackagedIdentity.IsHostedApp(hwnd, root) && !_core.Manages(frame))
+                                AdoptHidden(root, frame);
                             break;
                         // Windows draws a window the moment it is shown, before Winland hears of it. One created hidden is
                         // made transparent now, while nothing shows it, and is held until it is adopted when shown.
