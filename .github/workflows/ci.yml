@@ -1,7 +1,7 @@
 # One pull-request and merge-queue entry point.
 # Do not add secrets to this workflow. pull_request runs the file from the pull request.
 #
-# Every check is a step in one Windows job. A net10.0-windows project does not build on
+# Every check is a step in one Windows job. A net11.0-windows project does not build on
 # Ubuntu, and each job pays its own setup, so small separate jobs cost more time than the
 # work they do. CI runs on pull requests, on merge groups in the merge queue, and on the push a
 # merge makes to main. The push run also fills the NuGet cache, because a pull request can only

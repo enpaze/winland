@@ -5,7 +5,7 @@
 - Windows 11
 - PowerShell 7 (`pwsh`)
 - Git
-- The .NET SDK version pinned in `global.json` (10.0.401, or a later feature band)
+- The .NET SDK version pinned in `global.json` (11.0.100, or a later feature band)
 - Publishing a release also needs Visual Studio 2022 or later with Desktop development with C++, for the NativeAOT launcher. Ordinary builds and unit tests do not need the C++ toolchain.
 
 Optional: GitHub CLI (`gh`) for issues and releases.

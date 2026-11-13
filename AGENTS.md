@@ -4,7 +4,7 @@ A keyboard-driven tiling window manager for Windows 11. It manages windows on to
 
 ## Stack
 
-- C# on .NET 10 (SDK 10.0.401, pinned in `global.json`), Windows only
+- C# on .NET 11 (SDK 11.0.100, pinned in `global.json`), Windows only
 - xunit tests
 - PowerShell 7 for the scripts in `scripts/`
 - GitHub Actions on Windows runners, and release-please for releases
