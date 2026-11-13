@@ -149,7 +149,12 @@ public class DispatcherRegressionTests
     public void LayoutMessagesUseTheLayoutmsgDispatcher()
     {
         var core = new WindowManager();
+        core.Handle(new WindowAppeared(new WindowId(1), Area));
+        core.Handle(new WindowAppeared(new WindowId(2), Area));
 
-        Assert.Equal("error: unknown dispatcher 'layout'", core.Handle(new Dispatch("layout", "togglesplit")).Error);
+        var refused = core.Handle(new Dispatch("layout", "togglesplit"));
+
+        Assert.Equal("error: unknown layout 'togglesplit'", refused.Error);
+        Assert.Empty(refused.Placements);
     }
 }

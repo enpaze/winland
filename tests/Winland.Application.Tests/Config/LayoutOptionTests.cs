@@ -241,7 +241,7 @@ public class LayoutOptionTests
     public void AnotherLayoutNameStillTilesWithDwindle()
     {
         var core = Configured(FlatConfig("""
-            general:layout = floating
+            general:layout = tabbed
             """));
         core.Handle(Appeared(1, Wide));
 
@@ -249,6 +249,21 @@ public class LayoutOptionTests
 
         Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
         Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
+    }
+
+    [Fact]
+    public void TheFloatingLayoutFloatsEveryNewClient()
+    {
+        var core = Configured(FlatConfig("""
+            general:layout = floating
+            """));
+        core.Handle(Appeared(1, Wide));
+
+        var outcome = core.Handle(Appeared(2, Wide));
+
+        Assert.True(Client(outcome, 1).Floating);
+        Assert.True(Client(outcome, 2).Floating);
+        Assert.Equal("floating", Assert.Single(outcome.State.Workspaces).TiledLayout);
     }
 
     [Fact]
