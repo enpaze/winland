@@ -254,9 +254,6 @@ public static partial class ConfigParser
             if (TryAnimationLine(lhs, rhs, lineNumber))
                 return;
 
-            if (lhs == "windowrulev2")
-                lhs = "windowrule";
-
             if (KeptHandlers.Contains(lhs))
             {
                 _settings.Add(new Setting(lhs, rhs));

@@ -41,8 +41,8 @@ public class ModifierReleaseBindTests
         bind = SUPER SHIFT, 0, movetoworkspace, 10
         bind = SUPER, S, togglespecialworkspace, magic
         bind = SUPER SHIFT, S, movetoworkspace, special:magic
-        bind = SUPER, mouse_down, workspace, e+1
-        bind = SUPER, mouse_up, workspace, e-1
+        bind = SUPER, mouse_down, workspace, m+1
+        bind = SUPER, mouse_up, workspace, m-1
         bindm = SUPER, mouse:272, movewindow
         bindm = SUPER, mouse:273, resizewindow
         bindel = , XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+

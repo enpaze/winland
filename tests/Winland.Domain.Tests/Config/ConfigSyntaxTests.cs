@@ -84,12 +84,14 @@ public class ConfigSyntaxTests
     }
 
     [Fact]
-    public void TheBypassBindFlagIsAcceptedWithoutChangingTheBind()
+    public void TheBypassBindFlagWarnsAndTheRepeatBindBesideItStillApplies()
     {
-        var document = ConfigParser.Parse("bindp = SUPER, Q, killactive\n");
+        var document = ConfigParser.Parse("bindp = SUPER, Q, killactive\nbinde = SUPER, L, resizeactive, 10 0\n");
 
-        Assert.Empty(document.Warnings);
-        Assert.Equal(BindFlag.None, Assert.IsType<Bind>(Assert.Single(document.Binds)).Flags);
+        var warning = Assert.Single(document.Warnings);
+        Assert.Equal(1, warning.Line);
+        Assert.Equal("Bind flag 'p' is not supported.", warning.Message);
+        Assert.Equal(BindFlag.Repeat, Assert.IsType<Bind>(Assert.Single(document.Binds)).Flags);
     }
 
     [Fact]

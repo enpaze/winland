@@ -344,13 +344,11 @@ public sealed partial class WindowManager
         if (!active.IsSpecial && active.Monitor != monitor.Value)
             active = new WorkspaceId(active.Name, monitor.Value);
 
-        var listed = _workspaces.Listed(monitor);
         return new WorkspaceAddress.Context(
             active,
             () => Previous(monitor, perMonitor: false),
             () => Previous(monitor, perMonitor: true),
-            listed,
-            listed,
+            _workspaces.Listed(monitor),
             number => _workspaces.NumberIsEmpty(number, monitor));
     }
 

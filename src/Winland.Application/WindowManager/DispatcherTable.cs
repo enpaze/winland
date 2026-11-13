@@ -55,8 +55,7 @@ public sealed partial class WindowManager
             ["togglefloating"] = new(static (m, _, a) => m.FloatWindow(a)),
             ["pin"] = new(static (m, _, a) => m.PinWindow(a)),
             ["pseudo"] = new(static (m, _, a) => m.PseudoWindow(a)),
-            ["fullscreen"] = new(static (m, n, a) => m.FullscreenDispatcher(n, a), TakesWindow: true),
-            ["maximize"] = new(static (m, n, a) => m.FullscreenDispatcher(n, a)),
+            ["fullscreen"] = new(static (m, _, a) => m.FullscreenDispatcher(a), TakesWindow: true),
             ["resizeactive"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
             ["setprop"] = new(static (m, _, a) => m.SetPropDispatch(a)),
 

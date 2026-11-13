@@ -1,14 +1,11 @@
-using static Winland.Domain.OrdinalText;
-
 namespace Winland.Application;
 
-/// <summary>The <c>fullscreen</c> and <c>maximize</c> dispatchers, and what a fullscreen Client covers.</summary>
+/// <summary>The <c>fullscreen</c> dispatcher, and what a fullscreen Client covers.</summary>
 public sealed partial class WindowManager
 {
-    private Outcome FullscreenDispatcher(string name, string arguments)
+    private Outcome FullscreenDispatcher(string arguments)
     {
-        var text = Is(name, "maximize") ? Join("1", arguments) : arguments;
-        var parsed = FullscreenCommands.Parse(text);
+        var parsed = FullscreenCommands.Parse(arguments);
         if (parsed.Ignored)
             return View([]);
 

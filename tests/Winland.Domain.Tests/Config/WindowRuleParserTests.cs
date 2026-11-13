@@ -87,14 +87,29 @@ public class WindowRuleParserTests
         Assert.Empty(document.WindowRules);
     }
 
-    [Fact]
-    public void Windowrulev2IsAnAliasForWindowrule()
+    [Theory]
+    [InlineData("initialClass", "initial_class")]
+    [InlineData("initialTitle", "initial_title")]
+    public void CamelCaseInitialMatchesWarnAndTheSnakeCaseRuleBesideThemApplies(string camel, string snake)
     {
-        var document = ConfigParser.Parse("windowrulev2 = float on, class:kitty\n");
+        var document = ConfigParser.Parse($"windowrule = float on, {camel}:kitty\nwindowrule = float on, {snake}:kitty\n");
 
-        Assert.Empty(document.Warnings);
-        Assert.Equal(WindowRuleEffect.Float, Assert.Single(document.WindowRules).Effect);
-        Assert.Equal("windowrule", Assert.Single(document.Settings).Keyword);
+        var warning = Assert.Single(document.Warnings);
+        Assert.Equal(1, warning.Line);
+        Assert.StartsWith($"Unsupported window rule match '{camel}'.", warning.Message, StringComparison.Ordinal);
+        var rule = Assert.Single(document.WindowRules);
+        Assert.Contains("kitty", new[] { rule.InitialClassPattern, rule.InitialTitlePattern });
+    }
+
+    [Fact]
+    public void Windowrulev2WarnsAndTheWindowruleBesideItStillApplies()
+    {
+        var document = ConfigParser.Parse("windowrulev2 = float on, class:kitty\nwindowrule = pin on, class:notes\n");
+
+        var warning = Assert.Single(document.Warnings);
+        Assert.Equal(1, warning.Line);
+        Assert.StartsWith("Unsupported keyword 'windowrulev2'.", warning.Message, StringComparison.Ordinal);
+        Assert.Equal(WindowRuleEffect.Pin, Assert.Single(document.WindowRules).Effect);
     }
 
     [Theory]

@@ -52,7 +52,6 @@ public sealed record GroupOptions
         OfBar("font_size", OptionValue.Int(2, 64), b => b.FontSize, (b, v) => b with { FontSize = v }),
         OfBar("font_weight_active", Weight, b => b.FontWeightActive, (b, v) => b with { FontWeightActive = v }),
         OfBar("font_weight_inactive", Weight, b => b.FontWeightInactive, (b, v) => b with { FontWeightInactive = v }),
-        OfBar("priority", OptionValue.Int(0, 6), b => b.Priority, (b, v) => b with { Priority = v }),
         OfBar("height", OptionValue.Int(1, 64), b => b.Height, (b, v) => b with { Height = v }),
         OfBar("indicator_height", OptionValue.Int(1, 64), b => b.IndicatorHeight, (b, v) => b with { IndicatorHeight = v }),
         OfBar("indicator_gap", OptionValue.Int(0, 64), b => b.IndicatorGap, (b, v) => b with { IndicatorGap = v }),

@@ -6,12 +6,15 @@ public class BarShapesTests
     private static readonly BorderColor Blue = new(0xFF, 0, 0, 0xFF);
 
     [Fact]
-    public void PriorityIsKeptWithoutAWarning()
+    public void PriorityWarnsAndTheBarLineBesideItStillApplies()
     {
-        Assert.Equal(3, GroupOptions.From(ConfigParser.Parse("")).Bar.Priority);
-        var document = ConfigParser.Parse("group:groupbar:priority = 5\ngroup:groupbar:priority = 9\n");
-        Assert.Equal(6, GroupOptions.From(document).Bar.Priority);
-        Assert.Empty(document.Warnings);
+        var document = ConfigParser.Parse("group:groupbar:priority = 5\ngroup:groupbar:font_size = 10\n");
+
+        var warning = Assert.Single(document.Warnings);
+        Assert.Equal(1, warning.Line);
+        Assert.StartsWith("Unsupported keyword 'group:groupbar:priority'.", warning.Message, StringComparison.Ordinal);
+        Assert.Equal(10, GroupOptions.From(document).Bar.FontSize);
+        Assert.DoesNotContain("group:groupbar:priority", OptionTable.Names);
     }
 
     [Fact]

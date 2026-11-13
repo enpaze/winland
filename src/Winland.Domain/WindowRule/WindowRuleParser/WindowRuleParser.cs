@@ -17,7 +17,7 @@ internal static partial class WindowRuleParser
 
     // The fields TryParseMatch reads.
     private static readonly string[] MatchFields =
-        ["class", "initialClass", "initial_class", "title", "initialTitle", "initial_title", "exe", "aumid"];
+        ["class", "initial_class", "title", "initial_title", "exe", "aumid"];
 
     internal static bool TryParse(string value, out WindowRule? rule, out string error)
     {
@@ -492,14 +492,12 @@ internal static partial class WindowRuleParser
             case "class":
                 classPattern = value;
                 break;
-            case "initialClass":
             case "initial_class":
                 initialClassPattern = value;
                 break;
             case "title":
                 titlePattern = value;
                 break;
-            case "initialTitle":
             case "initial_title":
                 initialTitlePattern = value;
                 break;

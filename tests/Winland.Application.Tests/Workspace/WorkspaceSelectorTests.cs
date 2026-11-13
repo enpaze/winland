@@ -3,7 +3,7 @@ namespace Winland.Application.Tests;
 public class WorkspaceSelectorTests
 {
     [Fact]
-    public void MonitorStepAndEveryStepCycleTheFocusedMonitorsWorkspaces()
+    public void MonitorStepCyclesTheFocusedMonitorsWorkspaces()
     {
         var core = TwoMonitors(out var left, out var right);
         Appear(core, 1, left);
@@ -12,7 +12,7 @@ public class WorkspaceSelectorTests
         Appear(core, 3, left);
         core.Handle(new Dispatch("workspace", "1"));
 
-        // e walks the same Workspaces as m: the ones on the focused Monitor. The other Monitor's Workspace 1 stays put.
+        // m walks the Workspaces on the focused Monitor. The other Monitor's Workspace 1 stays put.
         var monitorNext = core.Handle(new Dispatch("workspace", "m+1"));
         Assert.Equal(new WorkspaceId("3"), monitorNext.State.ActiveWorkspace);
         Assert.Equal(new MonitorId(0), monitorNext.State.ActiveMonitor);
@@ -21,21 +21,12 @@ public class WorkspaceSelectorTests
         Assert.Equal(new WorkspaceId("1"), monitorBack.State.ActiveWorkspace);
         Assert.Equal(new MonitorId(0), monitorBack.State.ActiveMonitor);
 
-        var everyNext = core.Handle(new Dispatch("workspace", "e+1"));
-        Assert.Equal(new WorkspaceId("3"), everyNext.State.ActiveWorkspace);
-        Assert.Equal(new MonitorId(0), everyNext.State.ActiveMonitor);
-
-        var everyBack = core.Handle(new Dispatch("workspace", "e-1"));
-        Assert.Equal(new WorkspaceId("1"), everyBack.State.ActiveWorkspace);
-        Assert.Equal(new MonitorId(0), everyBack.State.ActiveMonitor);
-
         Assert.Equal(new WorkspaceId("1"), core.Handle(new Dispatch("workspace", "m~1")).State.ActiveWorkspace);
-        Assert.Equal(new WorkspaceId("3"), core.Handle(new Dispatch("workspace", "m~2")).State.ActiveWorkspace);
         Assert.Equal(new WorkspaceId("3"), core.Handle(new Dispatch("workspace", "m~9")).State.ActiveWorkspace);
-        var secondOpen = core.Handle(new Dispatch("workspace", "e~2"));
-        Assert.Equal(new WorkspaceId("3"), secondOpen.State.ActiveWorkspace);
-        Assert.Equal(new MonitorId(0), secondOpen.State.ActiveMonitor);
-        Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), Client(secondOpen, 2).Workspace);
+        var secondOnMonitor = core.Handle(new Dispatch("workspace", "m~2"));
+        Assert.Equal(new WorkspaceId("3"), secondOnMonitor.State.ActiveWorkspace);
+        Assert.Equal(new MonitorId(0), secondOnMonitor.State.ActiveMonitor);
+        Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), Client(secondOnMonitor, 2).Workspace);
     }
 
     [Fact]
@@ -102,6 +93,9 @@ public class WorkspaceSelectorTests
     [InlineData("r+notes")]
     [InlineData("m-x")]
     [InlineData("e~one")]
+    [InlineData("e+1")]
+    [InlineData("e-1")]
+    [InlineData("e~2")]
     [InlineData("r+1x")]
     public void TextThatIsNotASelectorDoesNotNameAWorkspace(string name)
     {

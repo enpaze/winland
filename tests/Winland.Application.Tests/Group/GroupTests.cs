@@ -526,14 +526,12 @@ public class GroupTests
         var document = ConfigParser.Parse("""
             group:groupbar:font_size = 10
             group:drag_into_group = 2
-            group:groupbar:priority = 2
             """);
 
         Assert.Empty(document.Warnings);
         var options = GroupOptions.From(document);
         Assert.Equal(10, options.Bar.FontSize);
         Assert.Equal(2, options.DragIntoGroup);
-        Assert.Equal(2, options.Bar.Priority);
     }
 
     [Theory]

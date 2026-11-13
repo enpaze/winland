@@ -5,7 +5,7 @@ public class TitleRuleTests
     [Theory]
     [InlineData("windowrule = float, title:Settings", true)]
     [InlineData("windowrule = float, class:^(kitty)$, title:negative:Settings", true)]
-    [InlineData("windowrule = float, initialTitle:Settings", false)]
+    [InlineData("windowrule = float, initial_title:Settings", false)]
     [InlineData("windowrule = float, class:^(kitty)$", false)]
     [InlineData("general:gaps_in = 0", false)]
     public void OnlyARuleOnTitleReadsTitles(string line, bool expected)
