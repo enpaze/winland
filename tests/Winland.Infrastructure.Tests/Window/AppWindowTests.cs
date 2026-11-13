@@ -72,6 +72,72 @@ public class AppWindowTests
         Assert.True(PInvoke.IsWindowVisible(window.Handle));
     }
 
+    // Superwhisper's transparent indicator is topmost, but is not WS_EX_LAYERED until Winland animates it.
+    [DesktopFact]
+    public void ATransparentTopmostIndicatorIsLeftUnmanaged()
+    {
+        using var window = new Probe(resizable: false, extended:
+            WINDOW_EX_STYLE.WS_EX_TRANSPARENT | WINDOW_EX_STYLE.WS_EX_TOPMOST | WINDOW_EX_STYLE.WS_EX_APPWINDOW);
+        var expected = ProbeNative.Visible((nint)window.Handle);
+        var core = new WindowManager(ConfigParser.Parse("windowrule = tile, class:.*"));
+        using var adapter = new WindowAdapter(core);
+        core.ReducedMotion = () => true;
+
+        adapter.AdoptExisting([(nint)window.Handle]);
+        adapter.Notice(PInvoke.EVENT_OBJECT_SHOW, (nint)window.Handle);
+        adapter.Apply(core.Handle(new Dispatch("workspace", "2")));
+
+        Assert.False(core.Manages(window.Id));
+        Assert.True(PInvoke.IsWindowVisible(window.Handle));
+        Assert.Equal(expected, ProbeNative.Visible((nint)window.Handle));
+        Assert.False(((WINDOW_EX_STYLE)PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
+            .HasFlag(WINDOW_EX_STYLE.WS_EX_LAYERED));
+
+        // A newly created hidden indicator must not be held transparent for an opening animation either.
+        PInvoke.ShowWindow(window.Handle, SHOW_WINDOW_CMD.SW_HIDE);
+        adapter.Notice(PInvoke.EVENT_OBJECT_CREATE, (nint)window.Handle);
+        Assert.False(((WINDOW_EX_STYLE)PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
+            .HasFlag(WINDOW_EX_STYLE.WS_EX_LAYERED));
+        PInvoke.ShowWindow(window.Handle, SHOW_WINDOW_CMD.SW_SHOWNOACTIVATE);
+        adapter.Notice(PInvoke.EVENT_OBJECT_SHOW, (nint)window.Handle);
+        Assert.False(core.Manages(window.Id));
+    }
+
+    [DesktopFact]
+    public void ARestartDoesNotRestoreAnOverlayAsAClient()
+    {
+        using var window = new Probe(extended: WINDOW_EX_STYLE.WS_EX_TOPMOST);
+        var previous = new WindowManager();
+        RecoverySnapshot snapshot;
+        using (var adapter = new WindowAdapter(previous))
+        {
+            previous.ReducedMotion = () => true;
+            adapter.AdoptExisting([(nint)window.Handle]);
+            snapshot = WindowIdentity.Annotate(previous.Recovery());
+            Assert.Single(snapshot.Clients);
+        }
+
+        var extended = PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+        Assert.NotEqual(0, PInvoke.SetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE,
+            extended | (int)WINDOW_EX_STYLE.WS_EX_TRANSPARENT));
+        var expected = ProbeNative.Visible((nint)window.Handle);
+        var core = new WindowManager();
+        using var restarted = new WindowAdapter(core);
+        core.ReducedMotion = () => true;
+
+        restarted.Recover(snapshot);
+
+        Assert.False(core.Manages(window.Id));
+        Assert.True(PInvoke.IsWindowVisible(window.Handle));
+        Assert.Equal(expected, ProbeNative.Visible((nint)window.Handle));
+
+        PInvoke.ShowWindow(window.Handle, SHOW_WINDOW_CMD.SW_HIDE);
+        restarted.Recover(snapshot with { Clients = [snapshot.Clients[0] with { Hidden = true }] });
+
+        Assert.False(core.Manages(window.Id));
+        Assert.True(SpinWait.SpinUntil(() => PInvoke.IsWindowVisible(window.Handle), TimeSpan.FromSeconds(3)));
+    }
+
     // A tool window is adopted when it has a title and a rule asks for it. One without a title, such as a menu, never is.
     [DesktopFact]
     public void AShownToolWindowWithATitleIsAdoptedByARule() => ShowToolWindow("Winland tool window probe", adopted: true);
