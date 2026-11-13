@@ -54,6 +54,36 @@ public sealed class CheckCommandTests : IDisposable
     }
 
     [Fact]
+    public void ASourceWindowsCannotNameWarnsOnItsLineAndTheRestIsStillRead()
+    {
+        Directory.CreateDirectory(Path.Combine(_root, "conf"));
+        var binds = Write(Path.Combine("conf", "binds.conf"), "bind = SUPER, Q, killactiv\n");
+        var path = Write("winland.conf", $"""
+            source = bad{'\0'}name.conf
+            source = bad{'\0'}folder/*.conf
+            source = conf/*{'\0'}.conf
+            source = conf/*.conf
+            ghostkeyword = 1
+            """);
+        var before = File.ReadAllBytes(path);
+
+        var (exit, error) = Check(path);
+
+        Assert.Equal(1, exit);
+        Assert.Equal(
+            $"""
+            {path}:1: Could not read source '{_root}\bad{'\0'}name.conf'.
+            {path}:2: Could not read source '{_root}\bad{'\0'}folder/*.conf'.
+            {path}:3: Could not read source '{_root}\conf/*{'\0'}.conf'.
+            {binds}:1: Unknown dispatcher 'killactiv'. Did you mean 'killactive'?
+            {path}:5: Unsupported keyword 'ghostkeyword'.
+
+            """.ReplaceLineEndings("\n"),
+            error);
+        Assert.Equal(before, File.ReadAllBytes(path));
+    }
+
+    [Fact]
     public void AMissingConfigFailsWithoutWritingOne()
     {
         var named = Path.Combine(_root, "absent.conf");
@@ -77,12 +107,30 @@ public sealed class CheckCommandTests : IDisposable
     [Theory]
     [InlineData("a.conf", "b.conf")]
     [InlineData("-j")]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("\t")]
     public void AnythingButOneFileIsAUsageError(params string[] arguments)
     {
         var (exit, error) = Check(arguments);
 
         Assert.Equal(2, exit);
         Assert.Equal("usage: winland check [file]\n", error);
+        Assert.Empty(Directory.EnumerateFileSystemEntries(_root));
+    }
+
+    [Fact]
+    public void APathWindowsCannotNameFailsTheCheckWithoutWritingAnything()
+    {
+        var invalid = Path.Combine(_root, "bad\0name.conf");
+
+        var (exit, error) = Check(invalid);
+
+        Assert.Equal(1, exit);
+        Assert.StartsWith($"Could not read config '{invalid}': ", error, StringComparison.Ordinal);
+        Assert.EndsWith("\n", error, StringComparison.Ordinal);
+        Assert.Single(error.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+        Assert.Empty(Directory.EnumerateFileSystemEntries(_root));
     }
 
     private (int Exit, string Error) Check(params string[] arguments)

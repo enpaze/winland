@@ -374,7 +374,8 @@ internal partial class Program
     /// <summary><c>winland check [file]</c>: the file, or <paramref name="defaultConfig"/> without one. 2 for any other arguments.</summary>
     internal static int Check(string[] arguments, string defaultConfig, TextWriter error)
     {
-        if (arguments.Length > 1 || (arguments.Length == 1 && arguments[0].StartsWith('-')))
+        // A blank file is usually an empty variable in a script, so it is a usage error, not the default config.
+        if (arguments.Length > 1 || (arguments.Length == 1 && (string.IsNullOrWhiteSpace(arguments[0]) || arguments[0].StartsWith('-'))))
         {
             error.WriteLine("usage: winland check [file]");
             return 2;

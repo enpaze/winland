@@ -20,6 +20,17 @@ static class ConfigFile
     /// </summary>
     public static int Check(string path, TextWriter error)
     {
+        // A path Windows cannot name, such as one with a null character, fails the check as a file that does not read.
+        try
+        {
+            _ = Path.GetFullPath(path);
+        }
+        catch (Exception exception) when (exception is ArgumentException or PathTooLongException or NotSupportedException)
+        {
+            error.WriteLine($"Could not read config '{path}': {exception.Message}");
+            return 1;
+        }
+
         ConfigDocument document;
         try
         {

@@ -6,19 +6,25 @@ sealed class FileConfigSource(string directory) : IConfigSource
 
     private string? ReadFile(string path)
     {
-        var full = Path.IsPathRooted(path) ? path : Path.Combine(directory, path);
         try
         {
+            var full = Path.IsPathRooted(path) ? path : Path.Combine(directory, path);
+
             // An editor may hold the file, so the read shares it.
             using var stream = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true);
             return reader.ReadToEnd();
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (Unreadable(exception))
         {
             return null;
         }
     }
+
+    // A file that cannot be read, or a path Windows cannot name, such as one with a null character in it. The parser
+    // warns on the line that names it, the same as for a missing file.
+    private static bool Unreadable(Exception exception) =>
+        exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException;
 
     public string? Variable(string name) => Environment.GetEnvironmentVariable(name);
 
@@ -26,28 +32,28 @@ sealed class FileConfigSource(string directory) : IConfigSource
 
     private IReadOnlyList<string> MatchFiles(string pattern)
     {
-        var full = Path.IsPathRooted(pattern) ? pattern : Path.Combine(directory, pattern);
-        var (root, depth) = Plan(full);
-        if (!Directory.Exists(root))
-            return [];
-
-        // A wildcard never matches a separator, so a match lies exactly as deep as the pattern
-        // has folders after the root. A folder that cannot be listed is skipped, not fatal.
-        var options = new EnumerationOptions
-        {
-            AttributesToSkip = 0,
-            IgnoreInaccessible = true,
-            RecurseSubdirectories = depth > 0,
-            MaxRecursionDepth = depth,
-        };
         try
         {
+            var full = Path.IsPathRooted(pattern) ? pattern : Path.Combine(directory, pattern);
+            var (root, depth) = Plan(full);
+            if (!Directory.Exists(root))
+                return [];
+
+            // A wildcard never matches a separator, so a match lies exactly as deep as the pattern
+            // has folders after the root. A folder that cannot be listed is skipped, not fatal.
+            var options = new EnumerationOptions
+            {
+                AttributesToSkip = 0,
+                IgnoreInaccessible = true,
+                RecurseSubdirectories = depth > 0,
+                MaxRecursionDepth = depth,
+            };
             return Directory.EnumerateFiles(root, "*", options)
                 .Where(file => SourcePath.Matches(full, file))
                 .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (Unreadable(exception))
         {
             return [];
         }
