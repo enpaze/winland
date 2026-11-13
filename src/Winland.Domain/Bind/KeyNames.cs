@@ -121,7 +121,7 @@ public static class KeyNames
             return false;
 
         if (configName.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase))
-            return int.TryParse(configName.AsSpan("mouse:".Length), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out _);
+            return KeyStrokes.TryMouse(configName, out _);
 
         return configName is "mouse_up" or "mouse_down" or "mouse_left" or "mouse_right"
             || TryCode(configName, out _)
@@ -134,9 +134,11 @@ public static class KeyNames
     {
         ArgumentNullException.ThrowIfNull(configName);
         ArgumentNullException.ThrowIfNull(layout);
-        if (configName.Length == 0
-            || configName.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase)
-            || configName.Equals("catchall", StringComparison.Ordinal))
+        // A mouse button keeps its number, and a named one such as mouse:left becomes that number.
+        if (configName.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase))
+            return KeyStrokes.TryMouse(configName, out var button) ? $"mouse:{button.ToString(CultureInfo.InvariantCulture)}" : configName;
+
+        if (configName.Length == 0 || configName.Equals("catchall", StringComparison.Ordinal))
             return configName;
 
         var split = configName.IndexOf('&');

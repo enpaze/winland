@@ -7,8 +7,11 @@ public static class KeyStrokes
     internal const int FirstMouseButton = 272;
     internal const int LastMouseButton = 276;
 
+    // mouse:left to mouse:x2 name the buttons from 272 in order.
+    private static readonly string[] MouseButtonNames = ["left", "right", "middle", "x1", "x2"];
+
     /// <summary>
-    /// Resolves a relayed key: a key name in the given layout, <c>code:N</c>, or <c>mouse:N</c>.
+    /// Resolves a relayed key: a key name in the given layout, <c>code:N</c>, <c>mouse:N</c> or a mouse button name.
     /// A name is tried first. <paramref name="code"/> is the XKB keycode used when the name does not resolve.
     /// </summary>
     public static bool TryResolve(string key, int code, KeyLayout layout, out KeyStroke stroke)
@@ -59,11 +62,24 @@ public static class KeyStrokes
     private static bool IsExtended(int virtualKey) =>
         virtualKey is >= 0x21 and <= 0x28 or 0x2C or 0x2D or 0x2E or 0x5B or 0x5C or 0x5D or 0x6F or 0x90 or 0xA3 or 0xA5;
 
+    /// <summary>The button of <c>mouse:N</c> or a named one such as <c>mouse:left</c>, which is 272.</summary>
     internal static bool TryMouse(string key, out int button)
     {
         button = 0;
-        return key.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase)
-            && int.TryParse(key.AsSpan(6), NumberStyles.None, CultureInfo.InvariantCulture, out button);
+        if (!key.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var name = key.AsSpan(6);
+        for (var index = 0; index < MouseButtonNames.Length; index++)
+        {
+            if (name.Equals(MouseButtonNames[index], StringComparison.OrdinalIgnoreCase))
+            {
+                button = FirstMouseButton + index;
+                return true;
+            }
+        }
+
+        return int.TryParse(name, NumberStyles.None, CultureInfo.InvariantCulture, out button);
     }
 
     internal static bool TryCode(string key, out int code)

@@ -58,6 +58,20 @@ public class KeyStrokeTests
     }
 
     [Theory]
+    [InlineData("mouse:left", 272)]
+    [InlineData("mouse:right", 273)]
+    [InlineData("mouse:middle", 274)]
+    [InlineData("mouse:x1", 275)]
+    [InlineData("MOUSE:X2", 276)]
+    public void AMouseButtonNameRelaysTheButtonOfItsNumber(string key, int button)
+    {
+        Assert.True(KeyStrokes.TryResolve(key, 0, KeyLayout.UnitedStates, out var stroke));
+
+        Assert.Equal(button, stroke.MouseButton);
+    }
+
+    [Theory]
+    [InlineData("mouse:thumb")]
     [InlineData("mouse:271")]
     [InlineData("mouse:277")]
     [InlineData("NoSuchKey")]
