@@ -761,7 +761,7 @@ internal static class TrayHost
     }
 
     // The mask is bottom-up. A set bit is transparent, which keeps the corners clear where the alpha is not read.
-    private static unsafe HBITMAP Mask(Span<uint> pixels, int size)
+    private static unsafe HBITMAP Mask(ReadOnlySpan<uint> pixels, int size)
     {
         var stride = ((size + 31) / 32) * 4;
         var bytes = new byte[stride * size];

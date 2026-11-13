@@ -32,7 +32,7 @@ public sealed class SlowWindowTests : IDisposable
         try
         {
             var placing = Task.Run(() => _adapter.QuickPlace(window, target, borderless: true));
-            Assert.Same(placing, await Task.WhenAny(placing, Task.Delay(TimeSpan.FromSeconds(5))));
+            await placing.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.NotEqual(target, _window.Outer);
         }
         finally

@@ -71,11 +71,11 @@ public class CommandFailureTests
         Assert.Equal("clients", await PipeFrame.ReadLineAsync(server, PipeFrame.RequestLimit));
         await server.WriteAsync(System.Text.Encoding.UTF8.GetBytes(partialReply));
 
-        var finished = await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(5)));
-        if (finished != request)
+        var finished = SpinWait.SpinUntil(() => request.IsCompleted, TimeSpan.FromSeconds(5));
+        if (!finished)
             server.Dispose();
 
-        Assert.Same(request, finished);
+        Assert.True(finished);
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() => request);
         Assert.Equal("Winland is not answering.", error.Message);
     }

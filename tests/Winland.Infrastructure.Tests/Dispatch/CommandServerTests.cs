@@ -87,7 +87,7 @@ public class CommandServerTests
         using var server = new CommandServer(core, _ => { }, name);
         server.Start();
 
-        var clients = JsonDocument.Parse(CommandClient.Transact("j/clients", name)).RootElement;
+        var clients = JsonElement.Parse(CommandClient.Transact("j/clients", name));
         var client = Assert.Single(clients.EnumerateArray());
         Assert.Equal("0x2a", client.GetProperty("address").GetString());
         Assert.Equal("ok", CommandClient.Transact("dispatch exec", name));
@@ -182,9 +182,7 @@ public class CommandServerTests
                 core.Execute(i % 2 == 0 ? "dispatch workspace 2" : "dispatch workspace 1");
         });
 
-        var completed = await Task.WhenAny(finished, Task.Delay(TimeSpan.FromSeconds(5)));
-        Assert.Same(finished, completed);
-        await finished;
+        await finished.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal("ok", CommandClient.Transact("dispatch workspace 1", name));
     }
 
@@ -250,9 +248,7 @@ public class CommandServerTests
 
         var one = new byte[1];
         var read = silent.ReadAsync(one).AsTask();
-        var completed = await Task.WhenAny(read, Task.Delay(TimeSpan.FromSeconds(10)));
-        Assert.Same(read, completed);
-        Assert.Equal(0, await read);
+        Assert.Equal(0, await read.WaitAsync(TimeSpan.FromSeconds(10)));
     }
 
     // Status bars subscribe and then sit idle. A blocked thread each would starve the pool that
