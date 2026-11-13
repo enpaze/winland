@@ -133,7 +133,7 @@ pwsh -NoProfile -File scripts/mutate.ps1 -Gate <folder>   # gate the run summari
 
 ## Releasing
 
-`src/Winland.Launcher/` holds the small NativeAOT executable used by elevated starts. Publishing `src/Winland.Daemon` for a runtime also publishes this launcher into the same output folder. It removes the `DOTNET_`, `CORECLR_`, `COMPlus_`, `COR_` and `COREHOST_` environment variables before starting the managed daemon, including startup hooks, profiler paths, alternate JITs, dependency paths and trace-file paths.
+`src/Winland.Launcher/` holds the small NativeAOT executable used by elevated starts. `scripts/package.ps1` publishes the daemon and the native launcher into the same output folder, and refuses to package a release without the launcher. Use that script to build an installable release; publishing the daemon alone does not include the launcher. The launcher removes the `DOTNET_`, `CORECLR_`, `COMPlus_`, `COR_` and `COREHOST_` environment variables before starting the managed daemon, including startup hooks, profiler paths, alternate JITs, dependency paths and trace-file paths.
 
 The bootstrap completes per-user cleanup through the internal `winland install --winland-cleanup-user` argument after the elevated install succeeds. It refuses to run elevated. Run install and uninstall from a normal terminal so user cleanup and Windows-setting restoration happen under the invoking account.
 

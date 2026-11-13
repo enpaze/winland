@@ -21,6 +21,13 @@ $dist = Join-Path $OutputDirectory 'dist'
 # The SDK appends SourceRevisionId to the binary version. version.json holds the display version.
 dotnet publish (Join-Path $root 'src/Winland.Daemon/Winland.Daemon.csproj') -c Release -r win-x64 --self-contained true "-p:Version=$Version" "-p:SourceRevisionId=$Commit" -p:ContinuousIntegrationBuild=true -o $daemon
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+# NativeAOT targets must be evaluated after restore. Restore;Publish in one nested MSBuild invocation misses them on
+# a clean checkout, producing the managed DLL without the native launcher that the installed task starts.
+dotnet publish (Join-Path $root 'src/Winland.Launcher/Winland.Launcher.csproj') -c Release -r win-x64 --self-contained true "-p:Version=$Version" "-p:SourceRevisionId=$Commit" -p:ContinuousIntegrationBuild=true -o $daemon
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if (-not (Test-Path -LiteralPath (Join-Path $daemon 'winland-launcher.exe') -PathType Leaf)) {
+    throw 'The native launcher was not published. Refusing to package an incomplete release.'
+}
 New-Item -ItemType Directory -Force -Path (Join-Path $stage 'winland'), $dist | Out-Null
 Copy-Item (Join-Path $daemon '*') (Join-Path $stage 'winland') -Recurse
 $json = [ordered]@{

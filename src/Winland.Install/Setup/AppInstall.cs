@@ -116,6 +116,9 @@ public sealed class AppInstall
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
         var plan = Plan(sourceExecutable, destination);
+        if (!perUser)
+            Require(plan.Files, LogonTaskDefinition.LauncherName, plan.SourceDirectory);
+
         var running = ApplyStopped(plan, perUser);
         var installed = plan.InstalledExecutable;
         var root = perUser ? RegistryRoot.User : RegistryRoot.Machine;
