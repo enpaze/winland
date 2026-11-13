@@ -25,7 +25,7 @@ function Get-LintFiles([string]$start, [string]$filter) {
     while ($stack.Count -gt 0) {
         $dir = $stack.Pop()
         $name = Split-Path $dir -Leaf
-        if ($name -in @('.git', 'bin', 'obj', 'StrykerOutput', 'node_modules')) {
+        if ($name -in @('.git', 'bin', 'obj', 'node_modules')) {
             continue
         }
         foreach ($file in [System.IO.Directory]::EnumerateFiles($dir, $filter)) {

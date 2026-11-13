@@ -1,7 +1,6 @@
 namespace Winland.Infrastructure.Tests;
 
 [Collection(DesktopCollection.Name)]
-[Trait("Category", DesktopCollection.Name)]
 public class LimitProbeTests
 {
     [DesktopFact]

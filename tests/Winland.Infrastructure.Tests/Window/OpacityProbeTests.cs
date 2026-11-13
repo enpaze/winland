@@ -4,7 +4,6 @@ using static Winland.Infrastructure.Tests.ProbeNative;
 namespace Winland.Infrastructure.Tests;
 
 [Collection(DesktopCollection.Name)]
-[Trait("Category", DesktopCollection.Name)]
 public class OpacityProbeTests
 {
     private const uint Layered = 0x00080000;

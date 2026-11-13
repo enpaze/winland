@@ -145,7 +145,6 @@ internal sealed class BorderlessFrame
     }
 }
 
-// Stryker disable once all : reads and writes a real window's style.
 internal sealed class Win32WindowFrame : IWindowFrame
 {
     public bool TryReadStyle(WindowId window, out uint style)

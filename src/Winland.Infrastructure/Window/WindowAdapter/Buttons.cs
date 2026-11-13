@@ -89,7 +89,6 @@ public sealed partial class WindowAdapter
     // A browser that shows a video fullscreen drops its frame and covers its monitor, and puts both back when the video
     // leaves. Each change is reported once. The window keeps its own frame: Winland would otherwise keep the frameless
     // style as the one to put back. A window Winland is moving is somewhere on the way, not where it asked to be.
-    // Stryker disable once all : handles a window event, which needs a real window.
     private void ReportFullscreen(HWND hwnd, WindowId window)
     {
         if (!_core.Manages(window) || _motions.Running(window) || PInvoke.IsIconic(hwnd) || !TryVisible(window, out var visible))

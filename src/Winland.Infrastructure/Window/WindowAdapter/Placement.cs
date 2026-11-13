@@ -25,7 +25,6 @@ public sealed partial class WindowAdapter
     // When the active tile is above a floating Client that belongs over it, the tile goes back below the lowest such
     // Client. Windows does not let a process in the background raise a window over the active one, but it does let
     // it lower the active one. That reorders the windows too, and finds them in place.
-    // Stryker disable once all : reads the z-order, which needs real windows.
     private void KeepFloatingAbove()
     {
         var active = PInvoke.GetForegroundWindow();
@@ -55,7 +54,6 @@ public sealed partial class WindowAdapter
     }
 
     // A Client that resizes itself just after it opens is reported once, so the core can put it back.
-    // Stryker disable once all : handles a window event, which needs a real window.
     private void ReportResize(HWND hwnd, WindowId window)
     {
         // The frames of an opening motion are Winland's own, not the window resizing itself.

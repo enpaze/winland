@@ -5,7 +5,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-// Stryker disable once all : each member calls Windows on a real window.
 internal sealed class Win32Desktop : IDesktop
 {
 
@@ -229,7 +228,6 @@ internal sealed class Win32Desktop : IDesktop
         new(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 }
 
-// Stryker disable once all : each member calls Windows on a real window.
 internal sealed class Win32StandInSurface(HWND window, HWND overlay, nint picture) : IStandInSurface
 {
     // DWM_TNP_RECTDESTINATION, DWM_TNP_RECTSOURCE, DWM_TNP_OPACITY, DWM_TNP_VISIBLE, DWM_TNP_SOURCECLIENTAREAONLY.

@@ -47,7 +47,6 @@ internal static unsafe class CursorShape
     };
 
     /// <summary>Shows <paramref name="name"/>'s shape, or the user's own cursors again for null.</summary>
-    // Stryker disable once all : replaces the system cursors.
     internal static void Show(string? name)
     {
         var shape = For(name);
@@ -91,7 +90,6 @@ internal static unsafe class CursorShape
     }
 
     /// <summary>Loads the user's own cursors again unconditionally, after a run that may have left a shape behind.</summary>
-    // Stryker disable once all : reloads the system cursors.
     internal static void Restore() =>
         _ = PInvoke.SystemParametersInfo(SYSTEM_PARAMETERS_INFO_ACTION.SPI_SETCURSORS, 0, null, 0);
 }

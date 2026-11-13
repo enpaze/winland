@@ -8,7 +8,6 @@ namespace Winland.Infrastructure;
 /// its own. Input sent from inside a low-level hook has to pass that same hook, whose thread is still busy in the call, so
 /// sending there can stall the hook and all input with it. The order of what is posted is kept.
 /// </summary>
-// Stryker disable once all : sends real input; what to send is decided and tested elsewhere.
 internal static class InputInjector
 {
     private static readonly BlockingCollection<INPUT[]> Pending = new();
