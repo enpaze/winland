@@ -134,7 +134,7 @@ public class AppWindowTests
         restarted.Recover(snapshot with { Clients = [snapshot.Clients[0] with { Hidden = true }] });
 
         Assert.False(core.Manages(window.Id));
-        Assert.True(SpinWait.SpinUntil(() => PInvoke.IsWindowVisible(window.Handle), TimeSpan.FromSeconds(3)));
+        Assert.True(PumpUntil(() => PInvoke.IsWindowVisible(window.Handle)));
     }
 
     // A tool window is adopted when it has a title and a rule asks for it. One without a title, such as a menu, never is.
@@ -155,6 +155,20 @@ public class AppWindowTests
 
         Assert.Equal(adopted, core.Manages(window.Id));
     }
+
+    // The test thread owns the probe windows and pumps no messages. Once it has not for 5 seconds, Windows calls its windows
+    // hung, and Winland posts a show to a hung window instead of waiting for it. The wait pumps, as the window's program would.
+    private static bool PumpUntil(Func<bool> condition) =>
+        SpinWait.SpinUntil(() =>
+        {
+            while (ProbeNative.PeekMessage(out var message, IntPtr.Zero, 0, 0, 1))
+            {
+                ProbeNative.TranslateMessage(ref message);
+                ProbeNative.DispatchMessage(ref message);
+            }
+
+            return condition();
+        }, TimeSpan.FromSeconds(3));
 
     private sealed class Probe : IDisposable
     {
