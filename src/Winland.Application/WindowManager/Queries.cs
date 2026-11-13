@@ -17,7 +17,6 @@ public sealed partial class WindowManager
         {
             CommandRejected rejected => new CommandReply(rejected.Error, View([])),
             CommandParsed parsed => Reply(parsed.Request with { Flags = parsed.Request.Flags | added }),
-            _ => throw new InvalidOperationException("No handler for this command."),
         };
 
     // A query's reply, or null for a request that is not one. A query answers from the current State and changes nothing.

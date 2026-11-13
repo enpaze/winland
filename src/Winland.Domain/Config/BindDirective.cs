@@ -1,6 +1,6 @@
 namespace Winland.Domain;
 
-public abstract record BindDirective;
+public closed record BindDirective;
 
 public sealed record Bind(
     Modifier Modifiers,

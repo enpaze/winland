@@ -3,7 +3,7 @@ using System.Text;
 namespace Winland.Install;
 
 /// <summary>What <c>winland update</c> decided. The caller prints it and, when asked, relaunches elevated.</summary>
-public abstract record UpdateResult
+public closed record UpdateResult
 {
     private UpdateResult()
     {

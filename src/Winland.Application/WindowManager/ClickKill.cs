@@ -1,8 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>The click <c>kill</c> waits for, at <paramref name="Position"/>, or Escape when it is null.</summary>
-public sealed record ClickKillChosen(Point? Position) : Event;
-
 /// <summary><c>kill&gt;&gt;ADDRESS</c>: click to kill ended the window's program.</summary>
 public sealed record ClientKilled(WindowId Window) : StreamEvent;
 

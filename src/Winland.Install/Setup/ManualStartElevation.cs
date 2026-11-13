@@ -45,7 +45,7 @@ public static class ManualStartElevation
         value.Equals(OptOutArgument, StringComparison.OrdinalIgnoreCase);
 }
 
-public abstract record ElevationChoice
+public closed record ElevationChoice
 {
     private ElevationChoice()
     {
