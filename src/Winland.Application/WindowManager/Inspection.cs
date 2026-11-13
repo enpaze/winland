@@ -17,6 +17,10 @@ public sealed partial class WindowManager
         WindowId? selected = null;
         if (!pointer)
         {
+            // A selector that cannot be read is a mistake in the request, not a Window that is not there.
+            if (WindowSelector.Malformed(request.Selector) is { } problem)
+                return "error: invalid selector: " + problem;
+
             if (!TrySelect(request.Selector, out var client, out _))
                 return Format(new InspectJson("not_found", target, Reason: "no_client"));
 

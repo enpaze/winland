@@ -169,6 +169,39 @@ public class InspectTests
         Assert.Equal("restored", inspected.GetProperty("floatingReason").GetString());
     }
 
+    // With no Clients there is nothing for a bad selector to fail to match, so only its grammar can reject it.
+    [Theory]
+    [InlineData("class:[", "'[' is not a valid pattern")]
+    [InlineData("[", "'[' is not a valid pattern")]
+    [InlineData("title:(a", "'(a' is not a valid pattern")]
+    [InlineData("pid:12a", "pid: takes a process id, such as pid:1234")]
+    [InlineData("address:zz", "address: takes a window address, such as address:0x2a")]
+    [InlineData("stableid:xyz", "stableid: takes the stableID clients reports, such as stableid:2a")]
+    public void AMalformedSelectorIsAnErrorEvenWithNoClients(string selector, string problem)
+    {
+        var desktop = new TestDesktop();
+
+        Assert.Equal("error: invalid selector: " + problem, desktop.Send("inspect " + selector));
+        Assert.Equal("error: invalid selector: " + problem, desktop.Send("j/inspect " + selector));
+        desktop.Spawn("term");
+        Assert.Equal("error: invalid selector: " + problem, desktop.Send("j/inspect " + selector));
+    }
+
+    [Theory]
+    [InlineData("class:nothing")]
+    [InlineData("nothing")]
+    [InlineData("pid:999")]
+    [InlineData("address:0x999")]
+    [InlineData("0x999")]
+    [InlineData("stableid:ff")]
+    public void AWellFormedSelectorThatMatchesNoClientIsNotFound(string selector)
+    {
+        var desktop = new TestDesktop();
+
+        Assert.Equal("window not found: no Client matches", desktop.Send("inspect " + selector));
+        Assert.Equal("no_client", Inspect(desktop, selector).GetProperty("reason").GetString());
+    }
+
     [Theory]
     [InlineData("", "pointer", "no_window", "window not found: no window under the pointer")]
     [InlineData("class:nothing", "selector", "no_client", "window not found: no Client matches")]

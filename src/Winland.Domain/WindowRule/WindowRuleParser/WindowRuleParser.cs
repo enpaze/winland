@@ -573,18 +573,8 @@ internal static partial class WindowRuleParser
         }
     }
 
-    private static bool IsPattern(string pattern)
-    {
-        try
-        {
-            _ = WholeMatch.Of(Body(pattern, pattern.StartsWith(NegativePrefix, StringComparison.Ordinal)));
-            return true;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-    }
+    private static bool IsPattern(string pattern) =>
+        WholeMatch.IsValid(Body(pattern, pattern.StartsWith(NegativePrefix, StringComparison.Ordinal)));
 
     private static string Body(string pattern, bool negative) =>
         negative ? pattern[NegativePrefix.Length..] : pattern;
