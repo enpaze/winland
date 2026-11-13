@@ -354,7 +354,7 @@ public class MotionPlayerTests
         var tick = Task.Run(player.Tick);
         Assert.True(entered.Wait(TimeSpan.FromSeconds(5)), "The frame never started.");
         var drop = Task.Run(() => player.Drop(Window));
-        var droppedEarly = await Task.WhenAny(drop, Task.Delay(100)) == drop;
+        var droppedEarly = SpinWait.SpinUntil(() => drop.IsCompleted, 100);
         gate.Set();
 
         Assert.False(droppedEarly, "Drop returned while the frame was still being applied.");

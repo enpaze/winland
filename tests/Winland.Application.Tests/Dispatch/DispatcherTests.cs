@@ -29,7 +29,7 @@ public class DispatcherTests
 
     private static WindowId? Active(WindowManager core)
     {
-        var address = System.Text.Json.JsonDocument.Parse(core.Execute("j/activewindow").Text).RootElement.GetProperty("address").GetString() ?? "";
+        var address = System.Text.Json.JsonElement.Parse(core.Execute("j/activewindow").Text).GetProperty("address").GetString() ?? "";
         return address.Length > 2 ? new WindowId(Convert.ToInt64(address[2..], 16)) : null;
     }
 

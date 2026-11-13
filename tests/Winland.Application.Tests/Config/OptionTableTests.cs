@@ -12,7 +12,7 @@ public sealed class OptionTableTests
     {
         var core = Configured("");
 
-        var reply = JsonDocument.Parse(core.Execute("getoption " + name).Text).RootElement;
+        var reply = JsonElement.Parse(core.Execute("getoption " + name).Text);
 
         Assert.Equal(name, reply.GetProperty("option").GetString());
         Assert.False(reply.GetProperty("set").GetBoolean());
@@ -26,7 +26,7 @@ public sealed class OptionTableTests
     {
         var core = Configured("");
         var unset = core.Execute("getoption " + name).Text;
-        var text = ConfigText(JsonDocument.Parse(unset).RootElement.EnumerateObject().ElementAt(1).Value);
+        var text = ConfigText(JsonElement.Parse(unset).EnumerateObject().ElementAt(1).Value);
         if (text.Length == 0)
             return;
 

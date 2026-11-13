@@ -219,7 +219,7 @@ public class FocusTests
 
         core.Execute("dispatch workspace 2");
 
-        Assert.False(System.Text.Json.JsonDocument.Parse(core.Execute("j/activewindow").Text).RootElement.TryGetProperty("address", out _));
+        Assert.False(System.Text.Json.JsonElement.Parse(core.Execute("j/activewindow").Text).TryGetProperty("address", out _));
     }
 
     [Fact]
