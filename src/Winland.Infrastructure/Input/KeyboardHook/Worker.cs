@@ -89,9 +89,9 @@ public sealed partial class KeyboardHook : IDisposable
         }
     }
 
-    // Read here, off the hook thread. Winland's own windows, such as a Group's tab bar, are not another program's, and
-    // the desktop shows through a tile's cut corners.
-    private static WindowId? TopLevelUnder(Point position)
+    // Read here, off the hook thread, and for inspect. Winland's own windows, such as a Group's tab bar, are not another
+    // program's, and the desktop shows through a tile's cut corners.
+    internal static WindowId? TopLevelUnder(Point position)
     {
         var under = PInvoke.WindowFromPoint(new System.Drawing.Point(position.X, position.Y));
         if (under.IsNull)

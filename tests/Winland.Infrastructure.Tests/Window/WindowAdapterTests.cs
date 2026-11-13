@@ -8,6 +8,23 @@ public class WindowAdapterTests
     private static bool Posted(string call, long window) =>
         call.StartsWith($"bounds {window} ", StringComparison.Ordinal) && call.EndsWith(" Post", StringComparison.Ordinal);
 
+    // inspect reads the window afresh. A Client whose window is gone from the desktop is not found, and the read
+    // asks the desktop to do nothing.
+    [Fact]
+    public void InspectingAClientWhoseWindowIsGoneFindsNothingAndChangesNothing()
+    {
+        using var windows = new TestWindows(reducedMotion: true);
+        windows.Open(0x7FFEFFFE);
+        windows.Desktop.Calls.Clear();
+
+        var reply = windows.Core.Execute("j/inspect address:0x7ffefffe");
+
+        Assert.StartsWith("""{"status":"not_found","target":"selector",""", reply.Text, StringComparison.Ordinal);
+        Assert.Contains("\"reason\":\"closed\"", reply.Text, StringComparison.Ordinal);
+        Assert.Empty(windows.Desktop.Calls);
+        Assert.Empty(reply.Effect.Placements);
+    }
+
     [Fact]
     public void AWindowRevealedOnExitStaysShownWhenItsWorkspaceIsHiddenAgain()
     {

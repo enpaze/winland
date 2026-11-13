@@ -49,6 +49,7 @@ public sealed partial class WindowManager
             GetOptionRequest option => OptionTable.Describe(option.Name, _config)
                 ?? DidYouMean.After("error: no such option", option.Name, OptionTable.Names),
             GetPropRequest prop => ReadProp(prop),
+            InspectRequest inspect => Inspect(inspect),
             _ => null,
         };
 

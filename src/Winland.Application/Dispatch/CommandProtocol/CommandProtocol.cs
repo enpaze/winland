@@ -20,6 +20,7 @@ public static partial class CommandProtocol
             : null),
         new("activeworkspace", "", (rest, _) => Bare(rest, new ActiveWorkspaceRequest())),
         new("activewindow", "", (rest, _) => Bare(rest, new ActiveWindowRequest())),
+        new("inspect", "[selector]", (rest, _) => new InspectRequest(rest)),
         new("reload", "", (rest, _) => Bare(rest, new ReloadRequest())),
         new("events", "", (rest, _) => Bare(rest, new EventsRequest())),
         new("binds", "", (rest, _) => Bare(rest, new BindsRequest())),
@@ -133,6 +134,9 @@ public sealed record MonitorsRequest(bool All = false) : CommandRequest;
 public sealed record ActiveWorkspaceRequest : CommandRequest;
 
 public sealed record ActiveWindowRequest : CommandRequest;
+
+/// <summary><c>inspect</c>: the Window under the pointer, or with a selector the Client it names.</summary>
+public sealed record InspectRequest(string Selector) : CommandRequest;
 
 public sealed record EventsRequest : CommandRequest;
 

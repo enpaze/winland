@@ -66,6 +66,8 @@ internal sealed class TestDesktop
         var text = Config + "\n" + extra;
         WindowManager = new WindowManager { Cursor = new PointerReader(this) };
         WindowManager.ReadConfig = () => new ConfigRead(ConfigParser.Parse(text));
+        WindowManager.DescribeWindow = window =>
+            (window ?? UnderPointer) is WindowId read && _described.TryGetValue(read, out var described) ? described : null;
         Handle(new Configure(ConfigParser.Parse(text)));
         Pointer = new Point(960, 540);
         AddMonitor("HEADLESS-2", First);
@@ -80,6 +82,15 @@ internal sealed class TestDesktop
 
     /// <summary>Where the pointer is. It follows the warps the core asks for, as the system cursor does.</summary>
     internal Point Pointer { get; private set; }
+
+    // What reading each open window afresh finds, as the Windows adapter reads one for inspect.
+    private readonly Dictionary<WindowId, WindowAppeared> _described = [];
+
+    /// <summary>The top-level Window under the pointer, as the Windows adapter reads it for <c>inspect</c>. Null over the desktop.</summary>
+    internal WindowId? UnderPointer { get; set; }
+
+    /// <summary>The window closes before the core hears of it, so reading it afresh finds nothing.</summary>
+    internal void Vanish(WindowId window) => _described.Remove(window);
 
     /// <summary>
     /// Opens a window with this class in the middle of the focused Monitor, and returns
@@ -183,6 +194,11 @@ internal sealed class TestDesktop
     /// </summary>
     internal Outcome Handle(Input input)
     {
+        if (input is WindowAppeared appeared)
+            _described[appeared.Window] = appeared;
+        else if (input is WindowClosed closed)
+            _described.Remove(closed.Window);
+
         var outcome = WindowManager.Handle(input);
         Follow(outcome);
         return outcome;
