@@ -83,7 +83,7 @@ public sealed partial class WindowManager
             Reason = decision.Adopt ? "not_adopted" : Code(decision.Admission),
             ReasonAt = "now",
             Rule = rule,
-            RuleNote = rule is not null ? null : decision.Adopt ? "not_adopted" : native ? "native" : "unwritable",
+            RuleNote = rule is not null ? null : decision.Adopt ? "not_adopted" : decision.Admission == Admission.Shell ? "shell" : native ? "native" : "unwritable",
         };
     }
 

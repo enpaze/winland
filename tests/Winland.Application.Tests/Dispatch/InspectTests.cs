@@ -95,6 +95,20 @@ public class InspectTests
     }
 
     [Fact]
+    public void AShellWindowHasNoDraftWithoutClaimingARuleCannotAdoptIt()
+    {
+        var desktop = new TestDesktop();
+        desktop.UnderPointer = desktop.Spawn("shell", traits: WindowTraits.Normal with { Taskbar = true });
+
+        var inspected = Inspect(desktop);
+
+        Assert.Equal("shell", inspected.GetProperty("reason").GetString());
+        Assert.Equal(JsonValueKind.Null, inspected.GetProperty("rule").ValueKind);
+        Assert.Equal("shell", inspected.GetProperty("ruleNote").GetString());
+        Assert.EndsWith("\trule: none (it is part of the Windows shell)\n", desktop.Send("inspect"), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AToolWindowGetsARuleThatAdoptsTheNextOneLikeIt()
     {
         var desktop = new TestDesktop();
