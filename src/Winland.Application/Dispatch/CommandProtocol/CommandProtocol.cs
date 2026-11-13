@@ -110,13 +110,13 @@ public static partial class CommandProtocol
     private static readonly WorkspaceJson NoSpecial = new("", null, "", "", "");
 }
 
-public abstract record CommandParse;
+public closed record CommandParse;
 
 public sealed record CommandParsed(CommandRequest Request) : CommandParse;
 
 public sealed record CommandRejected(string Error) : CommandParse;
 
-public abstract record CommandRequest
+public closed record CommandRequest
 {
     public CommandFlags Flags { get; init; }
 }

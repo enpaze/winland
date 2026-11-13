@@ -309,7 +309,6 @@ public sealed partial class WindowManager
             Preselect preselect => View(CurrentWorkspace().Layout.Preselect(preselect.Direction)),
             Pseudo pseudo => ChangePseudo(pseudo.Window),
             MonitorsChanged changed => SetMonitors(changed.Monitors),
-            _ => throw new ArgumentOutOfRangeException(nameof(input), input, "No handler for this input."),
         };
 
     private static IReadOnlyList<Launch> ConfigLaunches(ConfigDocument config, LaunchParser.LaunchMoment moment, WorkspaceId? initialWorkspace = null)

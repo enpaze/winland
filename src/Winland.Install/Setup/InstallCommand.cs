@@ -1,7 +1,7 @@
 namespace Winland.Install;
 
 /// <summary>What <c>winland install</c>, <c>winland update</c>, <c>winland tweaks</c> and <c>winland uninstall</c> were asked to do.</summary>
-public abstract record InstallCommand
+public closed record InstallCommand
 {
     private InstallCommand()
     {

@@ -1,6 +1,6 @@
 namespace Winland.Application;
 
-public abstract record StreamEvent;
+public closed record StreamEvent;
 
 public sealed record ClientOpened(WindowId Window, WorkspaceId Workspace, string Class, string Title) : StreamEvent;
 

@@ -5,7 +5,7 @@ namespace Winland.Domain;
 /// fraction of the way travelled, which can leave that range before it lands on 1. A <see cref="Bezier"/> or a
 /// <see cref="SpringCurve"/>.
 /// </summary>
-public abstract record Easing
+public closed record Easing
 {
     public abstract double Ease(double x);
 }

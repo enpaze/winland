@@ -1,10 +1,10 @@
 namespace Winland.Domain;
 
-public abstract record Input;
+public closed record Input;
 
-public abstract record Event : Input;
+public closed record Event : Input;
 
-public abstract record Command : Input;
+public closed record Command : Input;
 
 public sealed record KeyPressed(string Key) : Event
 {
@@ -247,3 +247,6 @@ public sealed record WindowAppeared(WindowId Window, Rectangle WorkArea) : Event
     /// <summary>The full path of the window's program, or empty when it could not be read. The traits' exe is only the file name.</summary>
     public string Executable { get; init; } = "";
 }
+
+/// <summary>The click <c>kill</c> waits for, at <paramref name="Position"/>, or Escape when it is null.</summary>
+public sealed record ClickKillChosen(Point? Position) : Event;

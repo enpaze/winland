@@ -4,8 +4,6 @@ namespace Winland.Application.Tests;
 
 public class StepScratchTests
 {
-    private sealed record Unhandled : Input;
-
     [Fact]
     public void AStepThatThrowsLeavesNothingForTheNextStep()
     {
@@ -24,7 +22,7 @@ public class StepScratchTests
         foreach (var (name, value) in scratch)
             Field(name).SetValue(core, value);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => core.Handle(new Unhandled()));
+        Assert.Throws<ArgumentNullException>(() => core.Handle(new MonitorsChanged(null!)));
 
         foreach (var name in scratch.Keys)
             Assert.Null(Field(name).GetValue(core));
