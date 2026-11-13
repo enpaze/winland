@@ -5,7 +5,7 @@ namespace Winland.Application;
 /// <summary>The <c>layout</c> and <c>cyclelayout</c> dispatchers.</summary>
 public sealed partial class WindowManager
 {
-    // Selects the named Layout on the current Workspace. The running Layout is kept as it is, and a name that is no
+    // Selects the named Layout on the Shown workspace. The running Layout is kept as it is, and a name that is no
     // Layout changes nothing. The choice lives on the Workspace until the config is applied again.
     private Outcome SelectLayout(string arguments)
     {

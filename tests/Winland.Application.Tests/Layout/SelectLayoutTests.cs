@@ -79,7 +79,7 @@ public class SelectLayoutTests
     }
 
     [Fact]
-    public void OnlyTheCurrentWorkspaceChanges()
+    public void OnlyTheShownWorkspaceChanges()
     {
         var core = new WindowManager();
         core.Handle(Appeared(1));

@@ -169,6 +169,27 @@ public class GroupTests
         Assert.Single(moved.Effect.Placements.Select(placement => placement.Bounds).Distinct());
     }
 
+    [Theory]
+    [InlineData(1, FullscreenMode.Maximized)]
+    [InlineData(2, FullscreenMode.Fullscreen)]
+    public void JoiningAPlainFullscreenDestinationHandsItsModeToTheShownMember(int mode, FullscreenMode expected)
+    {
+        var core = Opened(First, Second);
+        Assert.Equal("ok", core.Execute($"dispatch fullscreen {mode} set, address:0x1").Text);
+
+        var joined = core.Execute("dispatch moveintogroup address:0x1, address:0x2");
+
+        Assert.Equal("ok", joined.Text);
+        Assert.Equal([First, Second], Assert.Single(joined.Effect.State.Groups));
+        Assert.Equal(expected, ClientOf(joined.Effect, Second).Fullscreen);
+        Assert.Equal(FullscreenMode.None, ClientOf(joined.Effect, First).Fullscreen);
+        Assert.Contains(joined.Effect.State.Hidden, client => client.Window == First);
+
+        var shown = core.Execute("dispatch changegroupactive b");
+        Assert.Equal(expected, ClientOf(shown.Effect, First).Fullscreen);
+        Assert.Equal(FullscreenMode.None, ClientOf(shown.Effect, Second).Fullscreen);
+    }
+
     [Fact]
     public void MoveIntoGroupWithASelectorJoinsTheGroupTheDestinationIsInAfterACommaNamesTheActingClient()
     {
