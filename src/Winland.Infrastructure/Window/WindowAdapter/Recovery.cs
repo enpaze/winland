@@ -1,4 +1,6 @@
+using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
@@ -33,6 +35,15 @@ public sealed partial class WindowAdapter : IDisposable
             Repair(client);
             if (recognized != WindowIdentity.Recognition.SameClient)
                 continue;
+
+            // The program may have turned a former Client into an overlay before the previous run stopped.
+            if (IsOverlay(PInvoke.GetWindowLong(new HWND((nint)client.Window.Value), WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE)))
+            {
+                if (!snapshot.Clean && client.Hidden)
+                    Reveal(client.Window);
+
+                continue;
+            }
 
             // A clean exit showed every hidden Client. One hidden again was hidden by its program, and stays so.
             if (snapshot.Clean && client.Hidden && !_desktop.Shown(client.Window))

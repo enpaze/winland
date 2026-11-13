@@ -452,6 +452,7 @@ public sealed partial class WindowAdapter : IDisposable
         return ((style & CaptionStyle) == CaptionStyle || (style & SizingStyle) != 0)
             && (style & ChildStyle) == 0
             && (extended & ToolStyle) == 0
+            && !IsOverlay(extended)
             && PInvoke.GetWindowTextLength(hwnd) > 0;
     }
 
