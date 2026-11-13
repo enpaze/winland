@@ -77,12 +77,30 @@ public sealed class CheckCommandTests : IDisposable
     [Theory]
     [InlineData("a.conf", "b.conf")]
     [InlineData("-j")]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("\t")]
     public void AnythingButOneFileIsAUsageError(params string[] arguments)
     {
         var (exit, error) = Check(arguments);
 
         Assert.Equal(2, exit);
         Assert.Equal("usage: winland check [file]\n", error);
+        Assert.Empty(Directory.EnumerateFileSystemEntries(_root));
+    }
+
+    [Fact]
+    public void APathWindowsCannotNameFailsTheCheckWithoutWritingAnything()
+    {
+        var invalid = Path.Combine(_root, "bad\0name.conf");
+
+        var (exit, error) = Check(invalid);
+
+        Assert.Equal(1, exit);
+        Assert.StartsWith($"Could not read config '{invalid}': ", error, StringComparison.Ordinal);
+        Assert.EndsWith("\n", error, StringComparison.Ordinal);
+        Assert.Single(error.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+        Assert.Empty(Directory.EnumerateFileSystemEntries(_root));
     }
 
     private (int Exit, string Error) Check(params string[] arguments)
