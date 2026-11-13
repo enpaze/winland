@@ -165,6 +165,35 @@ public class MonitorTests
         Assert.Equal(right.WorkArea, BoundsOf(opened, 2));
     }
 
+    // A tray icon's flyout, such as JetBrains Toolbox's, puts itself above the tray and hides when it loses focus. Moved
+    // to the middle of the focused Monitor, it would hide as the pointer crossed a tile on its way there.
+    [Fact]
+    public void AFramelessWindowOpensWhereItsProgramPutIt()
+    {
+        var core = new WindowManager();
+        var left = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 1920, 1080, 1);
+        var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
+        core.Handle(new MonitorsChanged([left, right]));
+        core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
+        core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
+        core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY2"));
+        var flyout = new Rectangle(1480, 340, 440, 700);
+
+        var opened = core.Handle(new WindowAppeared(new WindowId(3), left.WorkArea)
+        {
+            Bounds = flyout,
+            Opened = true,
+            Foreground = true,
+            Traits = WindowTraits.Normal with { Resizable = false, Frameless = true },
+        });
+
+        var client = Assert.Single(opened.State.Clients, client => client.Window == new WindowId(3));
+        Assert.True(client.Floating);
+        Assert.False(client.Pinned);
+        Assert.Equal(flyout, client.Bounds);
+        Assert.Equal(new WorkspaceId("1"), client.Workspace);
+    }
+
     [Fact]
     public void AWindowWithAnOwnerOpensOnItsOwnersMonitor()
     {

@@ -543,7 +543,8 @@ public sealed partial class WindowAdapter : IDisposable
                 ExclusiveFullscreen: ExclusiveFullscreenWindow.Is((uint)style, outer, monitorRect),
                 Overlay: IsOverlay(extended),
                 Resizable: (style & SizingStyle) != 0,
-                Topmost: (extended & TopmostStyle) != 0),
+                Topmost: (extended & TopmostStyle) != 0,
+                Frameless: (style & CaptionStyle) != CaptionStyle && (style & SizingStyle) == 0),
         };
         return true;
     }
