@@ -155,10 +155,6 @@ public sealed partial class WindowManager
         if (WorkspaceContaining(destination) != desk)
             return Rejected("error: window is on another workspace");
 
-        // A pinned Client shows on every Workspace of its Monitor, which a hidden member cannot.
-        if (_pins.IsPinned(id) || _pins.IsPinned(destination))
-            return Rejected("error: a pinned window can't join a group");
-
         return IntoGroup(desk, desk.Covered(), id, destination);
     }
 

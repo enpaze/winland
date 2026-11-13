@@ -193,14 +193,10 @@ public class GroupTests
     [InlineData("address:0x9", "error: window not found")]
     [InlineData("address:nine", "error: address: takes a window address, such as address:0x2a")]
     [InlineData("address:0x3", "error: window is on another workspace")]
-    [InlineData("address:0x1", "error: a pinned window can't join a group")]
     public void MoveIntoGroupWithASelectorThatCannotJoinChangesNothing(string selector, string error)
     {
         var core = Opened(First, Second, Third);
         core.Execute("dispatch movetoworkspacesilent 2,address:0x3");
-        core.Execute("dispatch focuswindow address:0x1");
-        core.Execute("dispatch togglefloating");
-        core.Execute("dispatch pin");
         core.Execute("dispatch focuswindow address:0x2");
         var before = core.Execute("j/clients").Text;
 
@@ -240,20 +236,40 @@ public class GroupTests
         Assert.Empty(Lines(moved));
     }
 
-    [Fact]
-    public void APinnedClientCannotJoinAGroupBySelectorEither()
+    // A pin has no say in a command join, as with togglegroup: a pinned Client joins and is joined like any other, and
+    // the joining Client still takes the destination's floating state. Window 2 joins window 1.
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public void APinnedClientJoinsBySelectorAsAnUnpinnedOneDoes(bool destinationFloats, bool actorFloats)
     {
-        var core = Opened(First, Second);
-        core.Execute("dispatch focuswindow address:0x1");
-        core.Execute("dispatch togglegroup");
-        core.Execute("dispatch focuswindow address:0x2");
-        core.Execute("dispatch togglefloating");
-        core.Execute("dispatch pin");
+        var plain = Joined(destinationFloats, actorFloats, pin: false);
+        var pinned = Joined(destinationFloats, actorFloats, pin: true);
 
-        var refused = core.Execute("dispatch moveintogroup address:0x1");
+        Assert.Equal("ok", pinned.Reply.Text);
+        Assert.Equal([First, Second], Assert.Single(pinned.Reply.Effect.State.Groups));
+        Assert.Equal(destinationFloats, ClientOf(pinned.Reply.Effect, Second).Floating);
+        Assert.Equal(Lines(plain.Reply), Lines(pinned.Reply));
+        Assert.Equal(plain.Groups, pinned.Groups);
 
-        Assert.Equal("error: a pinned window can't join a group", refused.Text);
-        Assert.Equal([First], Assert.Single(refused.Effect.State.Groups));
+        static (CommandReply Reply, string Groups) Joined(bool destinationFloats, bool actorFloats, bool pin)
+        {
+            var core = Opened(First, Second);
+            foreach (var (window, floats) in new[] { ("0x1", destinationFloats), ("0x2", actorFloats) })
+            {
+                if (!floats)
+                    continue;
+
+                core.Execute("dispatch focuswindow address:" + window);
+                core.Execute("dispatch togglefloating");
+                if (pin)
+                    Assert.Equal("ok", core.Execute("dispatch pin").Text);
+            }
+
+            core.Execute("dispatch focuswindow address:0x2");
+            var reply = core.Execute("dispatch moveintogroup address:0x1");
+            return (reply, string.Join(";", reply.Effect.State.Groups.Select(group => string.Join(",", group))));
+        }
     }
 
     [Fact]
