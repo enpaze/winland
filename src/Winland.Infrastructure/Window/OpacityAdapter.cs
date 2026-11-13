@@ -271,12 +271,15 @@ internal sealed class OpacityAdapter
             _owned.Remove(window);
             _failed.Remove(window);
             _leftAlone.Remove(window);
+
+            if (!_styles.TryRead(window, out var chrome) || (chrome.ExStyle & LayeredStyle) == 0)
+                return;
+
+            // Recovery follows the same hung-window policy as exit: full alpha now, with the style repair kept for
+            // another start. Writing the style of an unresponsive held window would block all startup adoption.
+            _owned[window] = new Original(chrome.ExStyle & ~LayeredStyle, 255);
+            Reset(window);
         }
-
-        if (!_styles.TryRead(window, out var chrome) || (chrome.ExStyle & LayeredStyle) == 0)
-            return;
-
-        _styles.TryWriteExStyle(window, chrome.ExStyle & ~LayeredStyle);
     }
 
     // Only the layered style is Winland's. The rest is read again, so a style the program set meanwhile, such as always

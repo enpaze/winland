@@ -133,6 +133,31 @@ public class OpacityAdapterTests
         Assert.Equal(0x80u, styles.ExStyle[window]);
     }
 
+    [Fact]
+    public void ReleasingARecoveredHungWindowDefersTheStyleWriteAndKeepsItRecorded()
+    {
+        var styles = new FakeStyles();
+        var window = new WindowId(5);
+        styles.ExStyle[window] = OpacityAdapter.LayeredStyle | 0x80;
+        styles.Alpha[window] = 0;
+        var hung = true;
+        var adapter = new OpacityAdapter(styles, _ => hung);
+
+        adapter.ReleaseAdded(window);
+
+        Assert.Equal(0, styles.Writes);
+        Assert.Equal(255, styles.Alpha[window]);
+        Assert.True(adapter.Owns(window));
+        Assert.Equal(window, Assert.Single(adapter.Stamp(new RecoverySnapshot([])).Held).Window);
+
+        hung = false;
+        adapter.ReleaseAdded(window);
+
+        Assert.Equal(0x80u, styles.ExStyle[window]);
+        Assert.False(adapter.Owns(window));
+        Assert.Empty(adapter.Stamp(new RecoverySnapshot([])).Held);
+    }
+
     // A style write waits for the window. One whose program stopped answering is given full alpha, which does not wait,
     // and stays layered and recorded, so the next start takes the style off.
     [Fact]
