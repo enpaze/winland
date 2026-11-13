@@ -54,6 +54,36 @@ public sealed class CheckCommandTests : IDisposable
     }
 
     [Fact]
+    public void ASourceWindowsCannotNameWarnsOnItsLineAndTheRestIsStillRead()
+    {
+        Directory.CreateDirectory(Path.Combine(_root, "conf"));
+        var binds = Write(Path.Combine("conf", "binds.conf"), "bind = SUPER, Q, killactiv\n");
+        var path = Write("winland.conf", $"""
+            source = bad{'\0'}name.conf
+            source = bad{'\0'}folder/*.conf
+            source = conf/*{'\0'}.conf
+            source = conf/*.conf
+            ghostkeyword = 1
+            """);
+        var before = File.ReadAllBytes(path);
+
+        var (exit, error) = Check(path);
+
+        Assert.Equal(1, exit);
+        Assert.Equal(
+            $"""
+            {path}:1: Could not read source '{_root}\bad{'\0'}name.conf'.
+            {path}:2: Could not read source '{_root}\bad{'\0'}folder/*.conf'.
+            {path}:3: Could not read source '{_root}\conf/*{'\0'}.conf'.
+            {binds}:1: Unknown dispatcher 'killactiv'. Did you mean 'killactive'?
+            {path}:5: Unsupported keyword 'ghostkeyword'.
+
+            """.ReplaceLineEndings("\n"),
+            error);
+        Assert.Equal(before, File.ReadAllBytes(path));
+    }
+
+    [Fact]
     public void AMissingConfigFailsWithoutWritingOne()
     {
         var named = Path.Combine(_root, "absent.conf");
