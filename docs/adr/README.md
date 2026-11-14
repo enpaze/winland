@@ -22,10 +22,10 @@ ADR 0012 described the former plugin manager. It was deleted in commit `a21396d1
 
 ## Config and names
 
-- [0002](0002-hyprland-compatibility-without-its-name.md): Winland keeps the option and Dispatcher names it started with; they are its own now.
+- [0002](0002-every-name-is-the-word-a-windows-user-would-say.md) (proposed): every name is the plain word a Windows user would say, in kebab-case, with one name per action and no alias for another window manager.
 - [0008](0008-winland-keeps-what-windows-users-need.md): `docs/behavior.md` is the spec; a thing stays only when the starter config uses it or a Windows user would ask for it, and a removed keyword is deleted outright; readable mouse names normalize to supported numeric codes.
-- [0010](0010-unsupported-keywords-warn-and-are-ignored.md): unknown and malformed lines warn and are skipped, and the rest of the config loads.
-- [0013](0013-the-config-is-one-line-based-file-that-runs-no-code.md): one line-based `winland.conf` that runs no code and uses the shell user's file rights. Starts write defaults for missing or empty default files; offline checking never writes them.
+- [0010](0010-a-bad-key-is-skipped-and-a-broken-file-changes-nothing.md) (proposed): an unknown key or a bad value warns and is skipped, and a file that cannot be parsed leaves the last good config running, or the defaults at startup.
+- [0013](0013-the-config-is-one-toml-file-that-runs-no-code.md) (proposed): one `config.toml` that runs no code, includes no other file, holds every Hotkey and is the only way to configure Winland.
 
 ## Extending
 
