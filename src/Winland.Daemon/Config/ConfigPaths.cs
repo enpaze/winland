@@ -14,7 +14,8 @@ static class ConfigPaths
 
     /// <summary>
     /// The config and every source it names, as full paths. A relative source is relative to the
-    /// config's folder, as the parser reads it. Path.Combine keeps a rooted source as it is.
+    /// config's folder, as the parser reads it. Path.Combine keeps a rooted source as it is. A source
+    /// Windows cannot name, such as one with a null character, is left out: the parser already warned on it.
     /// </summary>
     public static IReadOnlyList<string> Watched(string configPath, IEnumerable<string> sources)
     {
@@ -24,7 +25,15 @@ static class ConfigPaths
         var directory = Path.GetDirectoryName(full) ?? ".";
         var paths = new List<string> { full };
         foreach (var source in sources)
-            paths.Add(Path.GetFullPath(Path.Combine(directory, source)));
+        {
+            try
+            {
+                paths.Add(Path.GetFullPath(Path.Combine(directory, source)));
+            }
+            catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+            {
+            }
+        }
 
         return paths;
     }

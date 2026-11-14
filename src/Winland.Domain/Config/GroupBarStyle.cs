@@ -55,12 +55,6 @@ public sealed record GroupBarStyle
     /// <summary><c>stacked</c>: the tabs are rows, one above the other, instead of side by side.</summary>
     public bool Stacked { get; init; }
 
-    /// <summary>
-    /// <c>priority</c>: where the bar goes among the decorations on a window's top edge. The bar is the only one Winland
-    /// draws there, so the value is kept and changes nothing.
-    /// </summary>
-    public int Priority { get; init; } = 3;
-
     /// <summary><c>gradients</c>: each tab's title row is filled with a gradient of its colors.</summary>
     public bool Gradients { get; init; }
 

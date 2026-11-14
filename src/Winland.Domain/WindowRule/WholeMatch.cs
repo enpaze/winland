@@ -31,6 +31,20 @@ internal static class WholeMatch
         return Built.GetOrAdd(pattern, regex);
     }
 
+    /// <summary>Whether <paramref name="pattern"/> is a regular expression <see cref="Of"/> can build.</summary>
+    public static bool IsValid(string pattern)
+    {
+        try
+        {
+            _ = Of(pattern);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Whether <paramref name="text"/> matches. An invalid pattern, or one that runs out of time, does not.</summary>
     public static bool IsMatch(string pattern, string text)
     {

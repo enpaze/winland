@@ -2,17 +2,34 @@ using static Winland.Domain.OrdinalText;
 
 namespace Winland.Application;
 
-/// <summary>The <c>cyclelayout</c> dispatcher.</summary>
+/// <summary>The <c>layout</c> and <c>cyclelayout</c> dispatchers.</summary>
 public sealed partial class WindowManager
 {
-    // dwindle, scrolling, then floating. The choice lives on the Workspace until the config is applied again.
-    private static readonly string[] LayoutCycle = ["dwindle", "scrolling", "floating"];
+    // Selects the named Layout on the Shown workspace. The running Layout is kept as it is, and a name that is no
+    // Layout changes nothing. The choice lives on the Workspace until the config is applied again.
+    private Outcome SelectLayout(string arguments)
+    {
+        var name = arguments.Trim();
+        if (LayoutFactory.Named(name) is not Layout created)
+            return View([]) with { Error = DidYouMean.After($"error: unknown layout '{name}'", name, LayoutFactory.Names) };
 
+        var desk = CurrentWorkspace();
+        return LayoutFactory.NameOf(created) == LayoutFactory.NameOf(desk.Layout)
+            ? View([])
+            : ChangeLayout(desk, created);
+    }
+
+    // dwindle, scrolling, then floating. The choice lives on the Workspace until the config is applied again.
     private Outcome CycleWorkspaceLayout(string arguments)
     {
         var desk = CurrentWorkspace();
+        var next = NextLayout(LayoutFactory.NameOf(desk.Layout), GoesBack(arguments));
+        return ChangeLayout(desk, LayoutFactory.Named(next)!);
+    }
+
+    private Outcome ChangeLayout(LiveWorkspace desk, Layout created)
+    {
         var covered = desk.Covered();
-        var created = LayoutNamed(NextLayout(LayoutFactory.NameOf(desk.Layout), GoesBack(arguments)));
         AdoptLayout(desk, created);
         Refit(desk);
         return _workspaces.Shown.IsShown(desk.Id)
@@ -32,10 +49,11 @@ public sealed partial class WindowManager
 
     private static string NextLayout(string current, bool back)
     {
+        var cycle = LayoutFactory.Names;
         var index = -1;
-        for (var i = 0; i < LayoutCycle.Length; i++)
+        for (var i = 0; i < cycle.Count; i++)
         {
-            if (Is(LayoutCycle[i], current))
+            if (Is(cycle[i], current))
             {
                 index = i;
                 break;
@@ -46,13 +64,6 @@ public sealed partial class WindowManager
             return "dwindle";
 
         var step = back ? -1 : 1;
-        return LayoutCycle[((index + step) % LayoutCycle.Length + LayoutCycle.Length) % LayoutCycle.Length];
+        return cycle[((index + step) % cycle.Count + cycle.Count) % cycle.Count];
     }
-
-    private static Layout LayoutNamed(string name) => name switch
-    {
-        "scrolling" => new ScrollingLayout(),
-        "floating" => new FloatingLayout(),
-        _ => new DwindleLayout(),
-    };
 }

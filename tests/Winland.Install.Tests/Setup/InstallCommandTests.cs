@@ -106,6 +106,27 @@ public class InstallCommandTests
         Assert.False(swipes.RequiresAdministrator(machineInstallPresent: false));
     }
 
+    [Fact]
+    public void TweaksRestorePutsBackWhatWasRecordedAndAsksForNoAdministrator()
+    {
+        var restore = Assert.IsType<InstallCommand.RestoreTweaks>(InstallCommand.Parse(["Tweaks", "--RESTORE"]));
+
+        Assert.False(restore.RequiresAdministrator(machineInstallPresent: true));
+    }
+
+    [Fact]
+    public void AnElevatedProcessRefusesToRestoreTweaksOrCleanUpTheUser()
+    {
+        var restore = new InstallCommand.RestoreTweaks().ElevatedRefusal;
+        var cleanup = new InstallCommand.UserCleanup().ElevatedRefusal;
+
+        Assert.Contains("winland tweaks --restore", restore, StringComparison.Ordinal);
+        Assert.Contains("normal terminal", restore, StringComparison.Ordinal);
+        Assert.Contains("normal terminal", cleanup, StringComparison.Ordinal);
+        Assert.Null(new InstallCommand.Tweaks(true).ElevatedRefusal);
+        Assert.Null(new InstallCommand.Remove(false).ElevatedRefusal);
+    }
+
     [Theory]
     [InlineData("install", "--purge")]
     [InlineData("uninstall", "--user")]
@@ -121,6 +142,10 @@ public class InstallCommandTests
     [InlineData("tweaks")]
     [InlineData("tweaks", "--touchpad")]
     [InlineData("tweaks", "--off", "--user")]
+    [InlineData("tweaks", "--restore", "--off")]
+    [InlineData("tweaks", "--off", "--restore")]
+    [InlineData("tweaks", "--restore", "--touchpad")]
+    [InlineData("tweaks", "--off", "--touchpad", "--restore")]
     public void AMisusedVerbIsRefused(params string[] args)
     {
         Assert.Throws<ArgumentException>(() => InstallCommand.Parse(args));

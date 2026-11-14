@@ -101,16 +101,20 @@ public class GroupTests
 
         core.Execute("dispatch togglegroup");
         Assert.Equal("error: only one window in group", core.Execute("dispatch changegroupactive f").Text);
-        Assert.Equal("error: unsupported direction: x", core.Execute("dispatch moveintogroup x").Text);
     }
 
     [Fact]
     public void GroupDirectionsAreWholeWordsNotTheirFirstLetter()
     {
-        var core = Opened(First);
+        var core = Opened(First, Second);
+        core.Execute("dispatch focuswindow address:0x1");
         core.Execute("dispatch togglegroup");
+        core.Execute("dispatch focuswindow address:0x2");
 
-        Assert.Equal("error: unsupported direction: leftover", core.Execute("dispatch moveintogroup leftover").Text);
+        // A word that is not a direction names the destination as a window selector does: here a class nothing has.
+        Assert.Equal("error: window not found", core.Execute("dispatch moveintogroup leftover").Text);
+        Assert.Equal("error: unsupported direction: ", core.Execute("dispatch moveintogroup").Text);
+        Assert.Equal([First], Assert.Single(core.Execute("dispatch moveintogroup x").Effect.State.Groups));
     }
 
     [Fact]
@@ -146,6 +150,147 @@ public class GroupTests
         Assert.Contains(First, moved.Effect.Hide);
         Assert.Equal(2, moved.Effect.Placements.Count);
         Assert.Single(moved.Effect.Placements.Select(placement => placement.Bounds).Distinct());
+    }
+
+    [Fact]
+    public void MoveIntoGroupWithASelectorGroupsTwoPlainClients()
+    {
+        var core = Opened(First, Second);
+        core.Execute("dispatch focuswindow address:0x2");
+
+        var moved = core.Execute("dispatch moveintogroup address:0x1");
+
+        Assert.Equal("ok", moved.Text);
+        Assert.Equal(["togglegroup>>1,1", "moveintogroup>>2"], Lines(moved));
+        Assert.Equal([First, Second], Assert.Single(moved.Effect.State.Groups));
+        Assert.Equal(Second, moved.Effect.Focus);
+        Assert.Contains(First, moved.Effect.Hide);
+        Assert.Equal(["one", "two"], Assert.Single(moved.Effect.GroupBars).Tabs.Select(tab => tab.Title));
+        Assert.Single(moved.Effect.Placements.Select(placement => placement.Bounds).Distinct());
+    }
+
+    [Theory]
+    [InlineData(1, FullscreenMode.Maximized)]
+    [InlineData(2, FullscreenMode.Fullscreen)]
+    public void JoiningAPlainFullscreenDestinationHandsItsModeToTheShownMember(int mode, FullscreenMode expected)
+    {
+        var core = Opened(First, Second);
+        Assert.Equal("ok", core.Execute($"dispatch fullscreen {mode} set, address:0x1").Text);
+
+        var joined = core.Execute("dispatch moveintogroup address:0x1, address:0x2");
+
+        Assert.Equal("ok", joined.Text);
+        Assert.Equal([First, Second], Assert.Single(joined.Effect.State.Groups));
+        Assert.Equal(expected, ClientOf(joined.Effect, Second).Fullscreen);
+        Assert.Equal(FullscreenMode.None, ClientOf(joined.Effect, First).Fullscreen);
+        Assert.Contains(joined.Effect.State.Hidden, client => client.Window == First);
+
+        var shown = core.Execute("dispatch changegroupactive b");
+        Assert.Equal(expected, ClientOf(shown.Effect, First).Fullscreen);
+        Assert.Equal(FullscreenMode.None, ClientOf(shown.Effect, Second).Fullscreen);
+    }
+
+    [Fact]
+    public void MoveIntoGroupWithASelectorJoinsTheGroupTheDestinationIsInAfterACommaNamesTheActingClient()
+    {
+        var core = Opened(First, Second, Third);
+        core.Execute("dispatch focuswindow address:0x2");
+        core.Execute("dispatch moveintogroup address:0x1");
+        core.Execute("dispatch focuswindow address:0x2");
+
+        // Window 1 waits hidden in the Group, and window 3 is not focused.
+        var moved = core.Execute("dispatch moveintogroup address:0x1,address:0x3");
+
+        Assert.Equal("ok", moved.Text);
+        Assert.Equal(["moveintogroup>>3"], Lines(moved));
+        Assert.Equal([First, Second, Third], Assert.Single(moved.Effect.State.Groups));
+        Assert.Equal(Third, Assert.Single(moved.Effect.GroupBars).Shown);
+        Assert.Contains(Second, moved.Effect.Hide);
+    }
+
+    [Theory]
+    [InlineData("address:0x2", "error: can't group a window with itself")]
+    [InlineData("active", "error: can't group a window with itself")]
+    [InlineData("address:0x9", "error: window not found")]
+    [InlineData("address:nine", "error: address: takes a window address, such as address:0x2a")]
+    [InlineData("address:0x3", "error: window is on another workspace")]
+    public void MoveIntoGroupWithASelectorThatCannotJoinChangesNothing(string selector, string error)
+    {
+        var core = Opened(First, Second, Third);
+        core.Execute("dispatch movetoworkspacesilent 2,address:0x3");
+        core.Execute("dispatch focuswindow address:0x2");
+        var before = core.Execute("j/clients").Text;
+
+        var refused = core.Execute("dispatch moveintogroup " + selector);
+
+        Assert.Equal(error, refused.Text);
+        Assert.Empty(refused.Effect.State.Groups);
+        Assert.Empty(refused.Effect.Events);
+        Assert.Equal(before, core.Execute("j/clients").Text);
+    }
+
+    // Unlike a drag, the command takes a floating Client into a tiled Group, and the joined Client is tiled like it.
+    [Fact]
+    public void AFloatingClientJoiningATiledClientBySelectorIsTiledInItsGroup()
+    {
+        var core = Opened(First, Second);
+        core.Execute("dispatch focuswindow address:0x2");
+        core.Execute("dispatch togglefloating");
+
+        var moved = core.Execute("dispatch moveintogroup address:0x1");
+
+        Assert.Equal("ok", moved.Text);
+        Assert.Equal([First, Second], Assert.Single(moved.Effect.State.Groups));
+        Assert.False(ClientOf(moved.Effect, Second).Floating);
+    }
+
+    [Fact]
+    public void MoveIntoGroupInADirectionLeavesAPlainNeighbourAlone()
+    {
+        var core = Opened(First, Second);
+        core.Execute("dispatch focuswindow address:0x2");
+
+        var moved = core.Execute("dispatch moveintogroup l");
+
+        Assert.Equal("ok", moved.Text);
+        Assert.Empty(moved.Effect.State.Groups);
+        Assert.Empty(Lines(moved));
+    }
+
+    // A pin has no say in a command join, as with togglegroup: a pinned Client joins and is joined like any other, and
+    // the joining Client still takes the destination's floating state. Window 2 joins window 1.
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public void APinnedClientJoinsBySelectorAsAnUnpinnedOneDoes(bool destinationFloats, bool actorFloats)
+    {
+        var plain = Joined(destinationFloats, actorFloats, pin: false);
+        var pinned = Joined(destinationFloats, actorFloats, pin: true);
+
+        Assert.Equal("ok", pinned.Reply.Text);
+        Assert.Equal([First, Second], Assert.Single(pinned.Reply.Effect.State.Groups));
+        Assert.Equal(destinationFloats, ClientOf(pinned.Reply.Effect, Second).Floating);
+        Assert.Equal(Lines(plain.Reply), Lines(pinned.Reply));
+        Assert.Equal(plain.Groups, pinned.Groups);
+
+        static (CommandReply Reply, string Groups) Joined(bool destinationFloats, bool actorFloats, bool pin)
+        {
+            var core = Opened(First, Second);
+            foreach (var (window, floats) in new[] { ("0x1", destinationFloats), ("0x2", actorFloats) })
+            {
+                if (!floats)
+                    continue;
+
+                core.Execute("dispatch focuswindow address:" + window);
+                core.Execute("dispatch togglefloating");
+                if (pin)
+                    Assert.Equal("ok", core.Execute("dispatch pin").Text);
+            }
+
+            core.Execute("dispatch focuswindow address:0x2");
+            var reply = core.Execute("dispatch moveintogroup address:0x1");
+            return (reply, string.Join(";", reply.Effect.State.Groups.Select(group => string.Join(",", group))));
+        }
     }
 
     [Fact]
@@ -402,14 +547,12 @@ public class GroupTests
         var document = ConfigParser.Parse("""
             group:groupbar:font_size = 10
             group:drag_into_group = 2
-            group:groupbar:priority = 2
             """);
 
         Assert.Empty(document.Warnings);
         var options = GroupOptions.From(document);
         Assert.Equal(10, options.Bar.FontSize);
         Assert.Equal(2, options.DragIntoGroup);
-        Assert.Equal(2, options.Bar.Priority);
     }
 
     [Theory]

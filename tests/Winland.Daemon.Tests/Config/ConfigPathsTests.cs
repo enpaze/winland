@@ -57,6 +57,14 @@ public class ConfigPathsTests
     }
 
     [Fact]
+    public void ASourceWindowsCannotNameIsNotWatched()
+    {
+        Assert.Equal(
+            [@"D:\config\winland.conf", @"D:\config\colors.conf"],
+            ConfigPaths.Watched(@"D:\config\winland.conf", ["bad\0name.conf", "colors.conf"]));
+    }
+
+    [Fact]
     public void NoConfigOrNoSourceListIsRefused()
     {
         Assert.Throws<ArgumentException>(() => ConfigPaths.Watched(" ", []));

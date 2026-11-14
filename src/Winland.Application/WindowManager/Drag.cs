@@ -40,6 +40,7 @@ public sealed partial class WindowManager
         Give(window, desk);
         var gesture = new Gesture(window, button, IsResize(drag.Dispatcher), pointer)
         {
+            Pointer = pointer,
             Cursor = DragCursor(desk, window, IsResize(drag.Dispatcher), pointer),
             WasTiled = LayoutWorkspace(window).ClientOf(window) is { Floating: false },
             KeepRatio = IsResize(drag.Dispatcher) && KeepsRatio(drag.Arguments),
@@ -73,6 +74,7 @@ public sealed partial class WindowManager
 
     private Outcome MoveGesture(Gesture gesture, Point pointer)
     {
+        gesture.Pointer = pointer;
         var layout = LayoutWorkspace(gesture.Window).Layout;
         if (!gesture.PickedUp)
         {
@@ -254,26 +256,11 @@ public sealed partial class WindowManager
     // group:merge_floated_into_tiled_on_groupbar.
     private DropTarget? GroupDrop(WindowId dragged, bool wasTiled, Point pointer)
     {
-        if (_config.Groups.DragIntoGroup == 0 || WorkspaceContaining(dragged) is not LiveWorkspace from)
-            return null;
-
-        var own = from.GroupOf(dragged);
-        foreach (var bar in GroupBars(Snapshot()))
-        {
-            if (bar.Shown == dragged || !BorderPointer.Contains(bar.Bounds, pointer))
-                continue;
-
-            if (WorkspaceContaining(bar.Shown) is not LiveWorkspace there || there.GroupOf(bar.Shown) is not WindowGroup target)
-                break;
-
-            var floatedIntoTiled = there.ClientOf(bar.Shown) is { Floating: false } && !wasTiled;
-            if (!CanDragInto(from, dragged, target) || floatedIntoTiled)
-                break;
-
-            return new DropTarget(there, target, bar.DropIndex(pointer));
-        }
+        if (BarDrop(dragged, wasTiled, pointer, GroupBars(Snapshot())) is { } onBar)
+            return onBar;
 
         if (_config.Groups.DragIntoGroup != 1
+            || WorkspaceContaining(dragged) is not LiveWorkspace from
             || WindowUnderExcept(pointer, dragged) is not WindowId under
             || WorkspaceContaining(under) is not LiveWorkspace home
             || home.GroupOf(under) is not WindowGroup group
@@ -283,6 +270,41 @@ public sealed partial class WindowManager
 
         return new DropTarget(home, group, null);
     }
+
+    // The Group whose tab bar is under the pointer, when the dragged window may join it there, and the place it joins.
+    // The drop and the mark a bar shows while a drag holds the window both come from here, so they agree.
+    private DropTarget? BarDrop(WindowId dragged, bool wasTiled, Point pointer, IReadOnlyList<GroupBar> bars)
+    {
+        if (_config.Groups.DragIntoGroup == 0 || WorkspaceContaining(dragged) is not LiveWorkspace from)
+            return null;
+
+        foreach (var bar in bars)
+        {
+            if (bar.Shown == dragged || !BorderPointer.Contains(bar.Bounds, pointer))
+                continue;
+
+            if (WorkspaceContaining(bar.Shown) is not LiveWorkspace there || there.GroupOf(bar.Shown) is not WindowGroup target)
+                return null;
+
+            var floatedIntoTiled = there.ClientOf(bar.Shown) is { Floating: false } && !wasTiled;
+            if (!CanDragInto(from, dragged, target) || floatedIntoTiled)
+                return null;
+
+            return new DropTarget(there, target, Math.Clamp(bar.DropIndex(pointer), 0, target.Count));
+        }
+
+        return null;
+    }
+
+    // The window a move drag holds now, whether it was tiled when picked up, and where the pointer is. Null with no such
+    // drag, so a mark goes as soon as the drag ends or loses its window.
+    private (WindowId Window, bool WasTiled, Point Pointer)? HeldForDrop() =>
+        _interaction switch
+        {
+            Gesture { PickedUp: true, Resize: false } gesture => (gesture.Window, gesture.WasTiled, gesture.Pointer),
+            NativeMove move => (move.Window, !move.Floating, move.Pointer),
+            _ => null,
+        };
 
     // A dragged window, or the whole Group it is in, joins any other Group. The callers hold back a floating window
     // over a tiled Group.
@@ -463,6 +485,9 @@ public sealed partial class WindowManager
         public bool WasTiled { get; init; }
 
         public bool PickedUp { get; set; }
+
+        /// <summary>Where the pointer holds the window now.</summary>
+        public Point Pointer { get; set; }
 
         /// <summary>The window joined another Workspace while this drag held it.</summary>
         public bool MovedWorkspace { get; set; }

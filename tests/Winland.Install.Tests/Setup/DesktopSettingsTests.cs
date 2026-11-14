@@ -94,7 +94,7 @@ public class DesktopSettingsTests
         settings.TurnOff(touchpad: true);
         windows.Log.Clear();
 
-        settings.Restore();
+        Assert.True(settings.Restore());
 
         Assert.True(windows.Arranging);
         Assert.Equal(1, windows.Three);
@@ -107,7 +107,7 @@ public class DesktopSettingsTests
     [Fact]
     public void RestoreWithNoRecordChangesNothing()
     {
-        settings.Restore();
+        Assert.False(settings.Restore());
 
         Assert.Empty(windows.Log);
         Assert.False(file.Deleted);
@@ -135,9 +135,35 @@ public class DesktopSettingsTests
         var error = Assert.Throws<InvalidOperationException>(() => settings.Restore());
 
         Assert.Contains(".winland", error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("uninstall", error.Message, StringComparison.Ordinal);
         Assert.Empty(windows.Log);
         Assert.Equal("not json", file.Text);
         Assert.False(file.Deleted);
+    }
+
+    [Fact]
+    public void ARestoreThatFailsPartWayKeepsTheWholeRecordForARetry()
+    {
+        windows.Arranging = true;
+        windows.Three = 1;
+        windows.Four = 2;
+        settings.TurnOff(touchpad: true);
+        var record = file.Text;
+        windows.FailingSet = "set three 1";
+
+        Assert.Throws<IOException>(() => settings.Restore());
+
+        Assert.True(windows.Arranging);
+        Assert.Equal(record, file.Text);
+        Assert.False(file.Deleted);
+
+        windows.FailingSet = null;
+        Assert.True(settings.Restore());
+
+        Assert.True(windows.Arranging);
+        Assert.Equal(1, windows.Three);
+        Assert.Equal(2, windows.Four);
+        Assert.True(file.Deleted);
     }
 
     private bool? RecordedArranging() =>
@@ -168,6 +194,9 @@ public class DesktopSettingsTests
 
         public List<string> Log { get; } = [];
 
+        /// <summary>A log line whose write throws, as a Windows write that fails would.</summary>
+        public string? FailingSet { get; set; }
+
         public bool WindowArranging
         {
             get
@@ -177,7 +206,7 @@ public class DesktopSettingsTests
             }
             set
             {
-                Log.Add("set arranging " + value);
+                Set("set arranging " + value);
                 Arranging = value;
             }
         }
@@ -191,7 +220,7 @@ public class DesktopSettingsTests
             }
             set
             {
-                Log.Add("set three " + value);
+                Set("set three " + value);
                 Three = value;
             }
         }
@@ -205,9 +234,17 @@ public class DesktopSettingsTests
             }
             set
             {
-                Log.Add("set four " + (value?.ToString(CultureInfo.InvariantCulture) ?? ""));
+                Set("set four " + (value?.ToString(CultureInfo.InvariantCulture) ?? ""));
                 Four = value;
             }
+        }
+
+        private void Set(string entry)
+        {
+            if (entry == FailingSet)
+                throw new IOException("The write failed.");
+
+            Log.Add(entry);
         }
     }
 

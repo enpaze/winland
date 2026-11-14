@@ -46,8 +46,10 @@ public sealed partial class WindowManager
             FilesRequest files => Json(files)
                 ? CommandProtocol.FormatFiles(_loaded?.Path, LogFile?.Invoke())
                 : CommandProtocol.FormatFilesText(_loaded?.Path, LogFile?.Invoke()),
-            GetOptionRequest option => OptionTable.Describe(option.Name, _config) ?? "error: no such option",
+            GetOptionRequest option => OptionTable.Describe(option.Name, _config)
+                ?? DidYouMean.After("error: no such option", option.Name, OptionTable.Names),
             GetPropRequest prop => ReadProp(prop),
+            InspectRequest inspect => Inspect(inspect),
             _ => null,
         };
 

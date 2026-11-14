@@ -110,6 +110,9 @@ public sealed partial class WindowManager
         if (_interaction is BorderDrag border)
             return MoveBorder(border, moved.Position);
 
+        if (_interaction is NativeMove move)
+            move.Pointer = moved.Position;
+
         if (_interaction is Gesture gesture)
         {
             _lastMoveAt = When(moved.TimeMs);

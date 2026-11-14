@@ -16,16 +16,16 @@ ADR 0012 described the former plugin manager. It was deleted in commit `a21396d1
 - [0005](0005-clean-architecture-in-four-layers.md): four layers, Domain, Application, Infrastructure and presentation, each referencing only the layers inside it.
 - [0006](0006-startup-through-a-scheduled-task.md): the elevated logon task starts a native launcher under Program Files that clears runtime injection variables. `--user` uses the Run key, unelevated, and user maintenance stays unelevated.
 - [0007](0007-elevation-does-not-leak-to-launched-programs-or-ipc.md): launches and user-file access use a checked shell token, the pipe defaults to one name per session and verifies the server's user and session, key relays refuse elevated destinations, and the config is an ordinary user file.
-- [0014](0014-winland-manages-windows-and-leaves-the-desktop-to-windows.md): Winland manages windows and leaves settings, notifications, effects and the taskbar to Windows. The installer may turn off Snap and touchpad swipes, with consent.
+- [0014](0014-winland-manages-windows-and-leaves-the-desktop-to-windows.md): Winland manages windows and leaves settings, notifications, effects and the taskbar to Windows. The installer may turn off Snap and touchpad swipes with consent; recorded values can be restored independently from a normal terminal.
 - [0015](0015-install-and-update-from-published-releases.md): one PowerShell line installs a verified release from protected staging with consent for Windows settings changes. Updates follow stable or dev.
 - [0016](0016-per-window-state-stays-with-the-code-that-uses-it.md): what Winland knows about a window stays in the module that uses it, with no single record per Client; a guard test checks that closing a window leaves nothing behind.
 
 ## Config and names
 
 - [0002](0002-hyprland-compatibility-without-its-name.md): Winland keeps the option and Dispatcher names it started with; they are its own now.
-- [0008](0008-winland-keeps-what-windows-users-need.md): `docs/behavior.md` is the spec; a thing stays only when the starter config uses it or a Windows user would ask for it, and a removed keyword is deleted outright.
+- [0008](0008-winland-keeps-what-windows-users-need.md): `docs/behavior.md` is the spec; a thing stays only when the starter config uses it or a Windows user would ask for it, and a removed keyword is deleted outright; readable mouse names normalize to supported numeric codes.
 - [0010](0010-unsupported-keywords-warn-and-are-ignored.md): unknown and malformed lines warn and are skipped, and the rest of the config loads.
-- [0013](0013-the-config-is-one-line-based-file-that-runs-no-code.md): one line-based `winland.conf` that runs no code and uses the shell user's file rights. Missing or empty default files get defaults.
+- [0013](0013-the-config-is-one-line-based-file-that-runs-no-code.md): one line-based `winland.conf` that runs no code and uses the shell user's file rights. Starts write defaults for missing or empty default files; offline checking never writes them.
 
 ## Extending
 

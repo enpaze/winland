@@ -17,6 +17,65 @@ public class WindowRuleParserTests
             WindowRuleParser.Decide(WindowTraits.Normal with { Class = "kitty" }, [disabled]));
     }
 
+    [Fact]
+    public void ADraftRuleMatchesAWindowByItsAumidRatherThanItsSharedFrame()
+    {
+        var calculator = WindowTraits.Normal with
+        {
+            Class = "ApplicationFrameWindow",
+            Exe = "ApplicationFrameHost.exe",
+            Aumid = "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App",
+        };
+
+        Assert.Equal(@"windowrule = float, aumid:Microsoft\.WindowsCalculator_8wekyb3d8bbwe!App", WindowRuleParser.Draft(floating: true, calculator));
+        Assert.Equal(@"windowrule = tile, class:a\.b\x2C c", WindowRuleParser.Draft(floating: false, WindowTraits.Normal with { Class = "a.b, c" }));
+    }
+
+    [Theory]
+    [InlineData(@" a.b, title:x #1 $HOME {{1+1}} \ (c)* [d]+? ^e| ")]
+    [InlineData("tab\there \"quoted\" é中 😀")]
+    [InlineData("negative:x")]
+    public void ADraftRuleMatchesOnlyTheTitleItWasWrittenFrom(string title)
+    {
+        var window = WindowTraits.Normal with { Title = title };
+
+        var draft = WindowRuleParser.Draft(floating: true, window);
+
+        Assert.NotNull(draft);
+        var rules = ConfigParser.Parse(draft + "\n").WindowRules;
+        Assert.True(WindowRuleParser.Decide(window, rules).Floating);
+        Assert.False(WindowRuleParser.Decide(window with { Title = "X" + title }, rules).Floating);
+        Assert.False(WindowRuleParser.Decide(window with { Title = title.Replace('a', 'b').Replace('x', 'y') + "z" }, rules).Floating);
+    }
+
+    [Fact]
+    public void AWindowWithNothingToMatchGetsNoDraftRule() =>
+        Assert.Null(WindowRuleParser.Draft(floating: true, WindowTraits.Normal));
+
+    [Theory]
+    [InlineData(false, false, false, FloatReason.Default)]
+    [InlineData(true, false, false, FloatReason.Topmost)]
+    [InlineData(false, true, false, FloatReason.Dialog)]
+    [InlineData(false, false, true, FloatReason.FixedSize)]
+    internal void ADecisionSaysWhyAWindowFloats(bool topmost, bool dialog, bool fixedSize, FloatReason reason)
+    {
+        var decision = WindowRuleParser.Decide(WindowTraits.Normal with { Topmost = topmost, Dialog = dialog, Resizable = !fixedSize }, []);
+
+        Assert.Equal(reason, decision.FloatReason);
+        Assert.Equal(reason != FloatReason.Default, decision.Floating);
+    }
+
+    [Fact]
+    public void ARuleCannotAdoptAnOverlayAndADecisionSaysSo()
+    {
+        Assert.True(WindowRuleParser.TryParse("float, class:osd", out var rule, out _));
+
+        var decision = WindowRuleParser.Decide(WindowTraits.Normal with { Class = "osd", Overlay = true }, [rule!]);
+
+        Assert.False(decision.Adopt);
+        Assert.Equal(Admission.Overlay, decision.Admission);
+    }
+
     [Theory]
     [InlineData("match:class kitty, float on")]
     [InlineData("float on, match:class kitty")]
@@ -28,14 +87,29 @@ public class WindowRuleParserTests
         Assert.Empty(document.WindowRules);
     }
 
-    [Fact]
-    public void Windowrulev2IsAnAliasForWindowrule()
+    [Theory]
+    [InlineData("initialClass", "initial_class")]
+    [InlineData("initialTitle", "initial_title")]
+    public void CamelCaseInitialMatchesWarnAndTheSnakeCaseRuleBesideThemApplies(string camel, string snake)
     {
-        var document = ConfigParser.Parse("windowrulev2 = float on, class:kitty\n");
+        var document = ConfigParser.Parse($"windowrule = float on, {camel}:kitty\nwindowrule = float on, {snake}:kitty\n");
 
-        Assert.Empty(document.Warnings);
-        Assert.Equal(WindowRuleEffect.Float, Assert.Single(document.WindowRules).Effect);
-        Assert.Equal("windowrule", Assert.Single(document.Settings).Keyword);
+        var warning = Assert.Single(document.Warnings);
+        Assert.Equal(1, warning.Line);
+        Assert.StartsWith($"Unsupported window rule match '{camel}'.", warning.Message, StringComparison.Ordinal);
+        var rule = Assert.Single(document.WindowRules);
+        Assert.Contains("kitty", new[] { rule.InitialClassPattern, rule.InitialTitlePattern });
+    }
+
+    [Fact]
+    public void Windowrulev2WarnsAndTheWindowruleBesideItStillApplies()
+    {
+        var document = ConfigParser.Parse("windowrulev2 = float on, class:kitty\nwindowrule = pin on, class:notes\n");
+
+        var warning = Assert.Single(document.Warnings);
+        Assert.Equal(1, warning.Line);
+        Assert.StartsWith("Unsupported keyword 'windowrulev2'.", warning.Message, StringComparison.Ordinal);
+        Assert.Equal(WindowRuleEffect.Pin, Assert.Single(document.WindowRules).Effect);
     }
 
     [Theory]

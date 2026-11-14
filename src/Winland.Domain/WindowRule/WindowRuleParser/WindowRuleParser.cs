@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Winland.Domain;
@@ -16,7 +17,7 @@ internal static partial class WindowRuleParser
 
     // The fields TryParseMatch reads.
     private static readonly string[] MatchFields =
-        ["class", "initialClass", "initial_class", "title", "initialTitle", "initial_title", "exe", "aumid"];
+        ["class", "initial_class", "title", "initial_title", "exe", "aumid"];
 
     internal static bool TryParse(string value, out WindowRule? rule, out string error)
     {
@@ -162,10 +163,20 @@ internal static partial class WindowRuleParser
 
         var sizes = new SizeRule(ruleMin, ruleMax);
         var limits = sizes.Floating(traits.MinSize, traits.MaxSize);
+        // A rule is the reason only when it changed the answer.
+        var admission = Excluded(traits)
+            ?? (adopt == false ? Admission.Ignored
+                : Declined(traits) is Admission declined ? (adopt == true ? Admission.Rule : declined)
+                : Admission.Default);
+        var floatReason = floating is not null ? FloatReason.Rule
+            : traits.Topmost ? FloatReason.Topmost
+            : traits.Dialog ? FloatReason.Dialog
+            : !traits.Resizable ? FloatReason.FixedSize
+            : FloatReason.Default;
 
         return new WindowDecision(
-            adopt is bool forced ? forced && Surface(traits) : Adopts(traits),
-            floating ?? (traits.Dialog || !traits.Resizable || traits.Topmost),
+            admission is Admission.Default or Admission.Rule,
+            floating ?? floatReason != FloatReason.Default,
             workspace,
             noInitialFocus ?? false,
             noFocus ?? false,
@@ -180,7 +191,9 @@ internal static partial class WindowRuleParser
             sizes,
             props,
             minExpression,
-            maxExpression);
+            maxExpression,
+            admission,
+            floatReason);
     }
 
     private static bool TryParseEffect(
@@ -479,14 +492,12 @@ internal static partial class WindowRuleParser
             case "class":
                 classPattern = value;
                 break;
-            case "initialClass":
             case "initial_class":
                 initialClassPattern = value;
                 break;
             case "title":
                 titlePattern = value;
                 break;
-            case "initialTitle":
             case "initial_title":
                 initialTitlePattern = value;
                 break;
@@ -560,36 +571,86 @@ internal static partial class WindowRuleParser
         }
     }
 
-    private static bool IsPattern(string pattern)
-    {
-        try
-        {
-            _ = WholeMatch.Of(Body(pattern, pattern.StartsWith(NegativePrefix, StringComparison.Ordinal)));
-            return true;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-    }
+    private static bool IsPattern(string pattern) =>
+        WholeMatch.IsValid(Body(pattern, pattern.StartsWith(NegativePrefix, StringComparison.Ordinal)));
 
     private static string Body(string pattern, bool negative) =>
         negative ? pattern[NegativePrefix.Length..] : pattern;
 
-    private static bool Adopts(WindowTraits traits) =>
-        Surface(traits)
-        && traits.Titled
-        && !traits.Tool
-        && !traits.Taskbar
-        && !traits.ExclusiveFullscreen;
+    // What Winland leaves alone unless a rule adopts it, or null for a window it adopts.
+    private static Admission? Declined(WindowTraits traits) =>
+        !traits.Titled ? Admission.Untitled
+        : traits.Tool ? Admission.Tool
+        : traits.Taskbar ? Admission.Shell
+        : traits.ExclusiveFullscreen ? Admission.ExclusiveFullscreen
+        : null;
 
     // What even a rule that forces adoption needs: a window someone can see and activate, not a tooltip, an
-    // untitled tool window such as a menu, or a no-activate popup a program shows over its own window.
-    private static bool Surface(WindowTraits traits) =>
-        traits.Visible
-        && traits.TopLevel
-        && (traits.Titled || !traits.Tool)
-        && !traits.Tooltip
-        && !traits.Cloaked
-        && !traits.Overlay;
+    // untitled tool window such as a menu, or a no-activate popup a program shows over its own window. Null for a
+    // window that has all of it.
+    private static Admission? Excluded(WindowTraits traits) =>
+        !traits.Visible ? Admission.Hidden
+        : !traits.TopLevel ? Admission.Child
+        : !traits.Titled && traits.Tool ? Admission.UntitledTool
+        : traits.Tooltip ? Admission.Tooltip
+        : traits.Cloaked ? Admission.Cloaked
+        : traits.Overlay ? Admission.Overlay
+        : null;
+
+    /// <summary>
+    /// A <c>windowrule</c> line that floats or tiles a window with these traits: it matches the window's AUMID, else its
+    /// class and program, else its title, each as literal text. Null when none of them can be written so that the line
+    /// reads back as one rule that matches the window.
+    /// </summary>
+    internal static string? Draft(bool floating, WindowTraits traits)
+    {
+        List<(string Field, string Text)> fields = [];
+        if (traits.Aumid.Length > 0)
+        {
+            fields.Add(("aumid", traits.Aumid));
+        }
+        else if (traits.Class.Length > 0 || traits.Exe.Length > 0)
+        {
+            if (traits.Class.Length > 0)
+                fields.Add(("class", traits.Class));
+            if (traits.Exe.Length > 0)
+                fields.Add(("exe", traits.Exe));
+        }
+        else if (traits.Title.Length > 0)
+        {
+            fields.Add(("title", traits.Title));
+        }
+
+        if (fields.Count == 0)
+            return null;
+
+        var line = "windowrule = " + (floating ? "float" : "tile") + ", "
+            + string.Join(", ", fields.Select(field => field.Field + ":" + Literal(field.Text)));
+
+        // The line is read back as the config reads it, so a draft that would match something else is never offered.
+        var read = ConfigParser.Parse(line + "\n");
+        return read.Warnings.Count == 0 && read.WindowRules is [var rule] && Matches(rule, traits) ? line : null;
+    }
+
+    // Text as a pattern that matches only that text. A regex metacharacter gets a backslash. A character the config
+    // line reads as something else, such as a comma, '#', '$', a brace, a backslash, a space at either end or a colon,
+    // which could start a negative: prefix, and a control or other unusual character, is written as its \x or \u escape.
+    private static string Literal(string text)
+    {
+        var pattern = new StringBuilder(text.Length);
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (char.IsLetterOrDigit(c) || c == '_' || (c == ' ' && i > 0 && i < text.Length - 1) || "-/@%&=<>!~;'".Contains(c, StringComparison.Ordinal))
+                pattern.Append(c);
+            else if (".*+?|()[]^".Contains(c, StringComparison.Ordinal))
+                pattern.Append('\\').Append(c);
+            else if (c <= 0xFF)
+                pattern.Append(CultureInfo.InvariantCulture, $"\\x{(int)c:X2}");
+            else
+                pattern.Append(CultureInfo.InvariantCulture, $"\\u{(int)c:X4}");
+        }
+
+        return pattern.ToString();
+    }
 }

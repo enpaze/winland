@@ -131,6 +131,66 @@ public class DefaultConfigTests
     }
 
     [Fact]
+    public void EveryDefaultBindSaysWhatItDoes()
+    {
+        var binds = ConfigParser.Parse(DefaultConfig.Text).Binds.OfType<Bind>();
+
+        Assert.All(binds, bind => Assert.False(string.IsNullOrWhiteSpace(bind.Description), BindText.Line(bind)));
+    }
+
+    [Fact]
+    public void OneAssignmentChangesTheMainModifierOfEveryDefaultBind()
+    {
+        const string assignment = "$mainMod = SUPER";
+        Assert.Contains(assignment, DefaultConfig.Text, StringComparison.Ordinal);
+
+        var binds = ConfigParser.Parse(DefaultConfig.Text.Replace(assignment, "$mainMod = CTRL", StringComparison.Ordinal))
+            .Binds.OfType<Bind>();
+
+        Assert.All(binds, bind => Assert.False(bind.Modifiers.HasFlag(Modifier.Super), BindText.Line(bind)));
+    }
+
+    [Fact]
+    public void OnlyWinOHasTwoDefaultBinds()
+    {
+        var shared = ConfigParser.Parse(DefaultConfig.Text).Binds.OfType<Bind>()
+            .GroupBy(bind => (bind.Modifiers, bind.Key))
+            .Where(chord => chord.Count() > 1)
+            .Select(chord => $"{chord.Key.Modifiers}|{chord.Key.Key}|{string.Join(' ', chord.Select(bind => bind.Dispatcher))}");
+
+        Assert.Equal(["Super|O|togglefloating pin"], shared);
+    }
+
+    [Fact]
+    public void TheDefaultParsesWithNoWarningsOnAGermanLayout()
+    {
+        var german = KeyLayout.From(
+            new Dictionary<int, string>
+            {
+                [0x30] = "0",
+                [0x51] = "q",
+                [0x59] = "z",
+                [0x5A] = "y",
+                [0xBA] = "ö",
+                [0xBC] = ",",
+                [0xBD] = "ß",
+                [0xBF] = "-",
+                [0xDB] = "ü",
+                [0xDC] = "#",
+                [0xDE] = "ä",
+            },
+            hasAltGr: true,
+            deadKeys: [0xBB, 0xC0]);
+
+        var document = ConfigParser.Parse(DefaultConfig.Text, layout: german, dispatchers: WindowManager.DispatcherNames);
+
+        Assert.True(
+            document.Warnings.Count == 0,
+            string.Join('\n', document.Warnings.Select(warning => $"{warning.Line}: {warning.Message}")));
+        Assert.Equal(Lines(Binds).Count(), document.Binds.Count);
+    }
+
+    [Fact]
     public void TheDefaultIsWrittenOnlyWhenTheFileIsMissing()
     {
         var root = Path.Combine(Path.GetTempPath(), "winland-default-config-" + Guid.NewGuid().ToString("N"));

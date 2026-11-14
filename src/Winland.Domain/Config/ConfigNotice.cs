@@ -11,11 +11,12 @@ public sealed record ConfigNotice(string Title, string Text, string? File, int G
 {
     /// <summary>
     /// The notification for the first start, which wrote the default config at <paramref name="configPath"/>.
-    /// It says what Winland is doing and what the menu offers, and a click opens the config.
+    /// It says what Winland is doing, how to list the hotkeys and what the menu offers, and a click opens the config.
+    /// Windows cuts the text at 255 characters.
     /// </summary>
     public static ConfigNotice Welcome(string? configPath, int generation) => new(
         "Winland",
-        "Winland is tiling your windows. Right-click its icon to edit the config or quit.",
+        "Winland is tiling your windows. Run winland binds to list the hotkeys. Right-click the Winland icon to edit the config or quit.",
         string.IsNullOrEmpty(configPath) ? null : configPath,
         generation,
         Informational: true);

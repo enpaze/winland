@@ -8,12 +8,19 @@ namespace Winland.Domain;
 /// </summary>
 public sealed record GroupBar(WindowId Shown, Rectangle Bounds, IReadOnlyList<GroupTab> Tabs, GroupBarStyle Style)
 {
+    /// <summary>
+    /// Where a window held by a drag over this bar would join if dropped now, as a <see cref="DropIndex"/>, or null.
+    /// The bar marks it.
+    /// </summary>
+    public int? Insertion { get; init; }
+
     /// <summary>True when both bars draw the same pixels.</summary>
     public bool SameAs(GroupBar? other) =>
         other is not null
         && other.Shown == Shown
         && other.Bounds == Bounds
         && other.Style == Style
+        && other.Insertion == Insertion
         && other.Tabs.SequenceEqual(Tabs);
 
     /// <summary>The width of one tab. Tabs share the strip with <c>gaps_in</c> between them, or each takes it all when stacked.</summary>
@@ -94,6 +101,28 @@ public sealed record GroupBar(WindowId Shown, Rectangle Bounds, IReadOnlyList<Gr
 
         return (relative < 0 || step <= 0 ? -1 : (int)(relative / step)) + 1;
     }
+
+    /// <summary>
+    /// The mark of <see cref="Insertion"/>, relative to the strip: a line as thick as the indicator across the bar, centred
+    /// where the tabs it falls between meet and kept inside the strip. Empty with no insertion.
+    /// </summary>
+    public Rectangle InsertionBounds()
+    {
+        if (Insertion is not int index || Tabs.Count == 0)
+            return default;
+
+        var thickness = Math.Max(1, Style.IndicatorHeight);
+        if (Style.Stacked)
+        {
+            var line = Bounds.Height - ((Tabs.Count - index) * Style.OneBarHeight);
+            return new Rectangle(0, Inside(line - (thickness / 2), Bounds.Height - thickness), Bounds.Width, thickness);
+        }
+
+        var meet = index == 0 ? 0 : (index * (TabWidth + Style.GapsIn)) - (Style.GapsIn / 2);
+        return new Rectangle(Inside(meet - (thickness / 2), Bounds.Width - thickness), 0, thickness, Bounds.Height);
+    }
+
+    private static int Inside(int at, int last) => Math.Max(0, Math.Min(at, last));
 
     // Winland's stacked row: the bar height it divides the strip into, plus gaps_out.
     private double RowStep =>

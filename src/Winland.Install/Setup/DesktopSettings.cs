@@ -49,7 +49,7 @@ public sealed class DesktopSettings : IDesktopRestore
     public const string FourFingerName = "fourFingerSlide";
 
     private const string Corrupt =
-        "The settings record in .winland could not be read. It was left in place. Fix that file and run winland uninstall again.";
+        "The settings record in .winland could not be read. It was left in place. Fix that file and try again.";
 
     private readonly IWindowsDesktop windows;
     private readonly ISettingsText file;
@@ -102,11 +102,15 @@ public sealed class DesktopSettings : IDesktopRestore
         windows.FourFingerSlide = SwipeOff;
     }
 
-    public void Restore()
+    /// <summary>
+    /// Writes every recorded value back, then deletes the record. False when there is no record, and nothing changes.
+    /// A write that fails keeps the whole record, so running this again finishes the job.
+    /// </summary>
+    public bool Restore()
     {
         var text = file.Read();
         if (text is null)
-            return;
+            return false;
 
         var record = Parse(text);
         if (record.WindowArranging is bool arranging)
@@ -119,7 +123,10 @@ public sealed class DesktopSettings : IDesktopRestore
             windows.FourFingerSlide = record.FourFingerSlide;
 
         file.Delete();
+        return true;
     }
+
+    void IDesktopRestore.Restore() => Restore();
 
     private Record Load() => Parse(file.Read());
 

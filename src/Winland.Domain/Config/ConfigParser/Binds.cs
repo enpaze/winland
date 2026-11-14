@@ -160,8 +160,6 @@ public static partial class ConfigParser
                     case 'd':
                         hasDescription = true;
                         break;
-                    case 'p':
-                        break;
                     default:
                         error = $"Bind flag '{flag}' is not supported.";
                         return false;

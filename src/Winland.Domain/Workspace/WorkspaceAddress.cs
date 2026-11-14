@@ -9,7 +9,6 @@ internal static class WorkspaceAddress
         Func<WorkspaceId?> Previous,
         Func<WorkspaceId?> PreviousOnMonitor,
         IReadOnlyList<WorkspaceId> OnMonitor,
-        IReadOnlyList<WorkspaceId> Open,
         Func<long, bool> NumberIsEmpty);
 
     internal readonly record struct Rule(WorkspaceId? Id, bool Silent);
@@ -52,7 +51,7 @@ internal static class WorkspaceAddress
             return false;
 
         // A relative selector is one only when the offset is a number. r+notes is a name.
-        if (text.Length > 2 && text[0] is 'r' or 'm' or 'e' && text[1] is '+' or '-' or '~' && IsSignedNumber(text[2..]))
+        if (text.Length > 2 && text[0] is 'r' or 'm' && text[1] is '+' or '-' or '~' && IsSignedNumber(text[2..]))
             return false;
 
         if (text[0] is '+' or '-')
@@ -99,7 +98,7 @@ internal static class WorkspaceAddress
         if (text.Contains('[', StringComparison.Ordinal) || text.Contains(']', StringComparison.Ordinal))
             return false;
 
-        if (text.Length > 2 && text[0] is 'r' or 'm' or 'e' && text[1] is '+' or '-' or '~' && IsSignedNumber(text[2..]))
+        if (text.Length > 2 && text[0] is 'r' or 'm' && text[1] is '+' or '-' or '~' && IsSignedNumber(text[2..]))
             return TrySelector(text, context, out id);
 
         if (text[0] is '+' or '-')
@@ -167,7 +166,7 @@ internal static class WorkspaceAddress
         if (kind == 'r')
             return TryRelative(context, absolute, offset, out id);
 
-        return TryCycle(context, allMonitors: kind == 'e', absolute, offset, out id);
+        return TryCycle(context, absolute, offset, out id);
     }
 
     // r walks the focused Monitor's numbers. r~N is that number, and r-1 on Workspace 1 stays there.
@@ -189,10 +188,11 @@ internal static class WorkspaceAddress
         return TryNumber(next, context, out id);
     }
 
-    private static bool TryCycle(Context context, bool allMonitors, bool absolute, int offset, out WorkspaceId id)
+    // m walks the Workspaces the focused Monitor lists. m~N is the Nth of them.
+    private static bool TryCycle(Context context, bool absolute, int offset, out WorkspaceId id)
     {
         id = default;
-        var cycle = allMonitors ? context.Open : context.OnMonitor;
+        var cycle = context.OnMonitor;
         if (cycle.Count == 0)
             return false;
 

@@ -208,7 +208,7 @@ public class StuckModifierTests
     [Fact]
     public void WheelChordWithSuperMasksSuper()
     {
-        var (core, session) = Load("bind = SUPER, mouse_down, workspace, e+1");
+        var (core, session) = Load("bind = SUPER, mouse_down, workspace, m+1");
         core.Decide(new KeyPressed("Super_L"), session);
 
         var wheel = core.Decide(new WheelTurned("mouse_down", 1000), session);

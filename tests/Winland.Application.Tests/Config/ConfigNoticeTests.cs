@@ -119,7 +119,10 @@ public class ConfigNoticeTests
 
         Assert.NotNull(notice);
         Assert.Equal("Winland", notice.Title);
-        Assert.Equal("Winland is tiling your windows. Right-click its icon to edit the config or quit.", notice.Text);
+        Assert.Equal(
+            "Winland is tiling your windows. Run winland binds to list the hotkeys. Right-click the Winland icon to edit the config or quit.",
+            notice.Text);
+        Assert.InRange(notice.Text.Length, 1, 255);
         Assert.Equal(Path, notice.File);
         Assert.True(notice.Informational);
         Assert.True(notice.Generation > 0);

@@ -292,7 +292,6 @@ public class WindowManagerTests
     }
 
     [Theory]
-    [InlineData("initialClass:^(kitty)$")]
     [InlineData("initial_class:^(kitty)$")]
     public void InitialClassNamesMatchTheClass(string match)
     {
@@ -311,7 +310,6 @@ public class WindowManagerTests
 
     [Theory]
     [InlineData("title:^Editor$")]
-    [InlineData("initialTitle:^Editor$")]
     [InlineData("initial_title:^Editor$")]
     public void TitleRuleFloatsAMatchingWindow(string match)
     {

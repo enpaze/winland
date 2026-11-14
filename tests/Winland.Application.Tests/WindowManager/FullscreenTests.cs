@@ -49,16 +49,37 @@ public class FullscreenTests
         Assert.Equal(FullscreenMode.Maximized, Client(entered, 2).Fullscreen);
         Assert.False(DecorationOf(entered, 2).Borderless);
 
-        var named = core.Handle(new Dispatch("maximize"));
+        var named = core.Handle(new Dispatch("fullscreen", "maximized"));
 
         Assert.Equal(left, BoundsOf(named, 1));
         Assert.Equal(FullscreenMode.None, Client(named, 2).Fullscreen);
         var restored = BoundsOf(named, 2);
-        core.Handle(new Dispatch("maximize", "set"));
+        core.Handle(new Dispatch("fullscreen", "1 set"));
         Assert.Equal(Work, Bounds(core, 2));
-        core.Handle(new Dispatch("maximize", "unset"));
+        core.Handle(new Dispatch("fullscreen", "1 unset"));
         Assert.Equal(restored, Bounds(core, 2));
         Assert.Equal(left, Bounds(core, 1));
+    }
+
+    [Fact]
+    public void MaximizeIsNotADispatcherAndABindToItIsSkipped()
+    {
+        var core = Desk();
+        OpenWindows(core, 1);
+
+        var dispatched = core.Handle(new Dispatch("maximize"));
+
+        Assert.StartsWith("error: unknown dispatcher 'maximize'", dispatched.Error, StringComparison.Ordinal);
+        Assert.Equal(FullscreenMode.None, Client(dispatched, 1).Fullscreen);
+
+        var document = ConfigParser.Parse("bind = SUPER, M, maximize\nbind = SUPER, F, fullscreen, 1\n", dispatchers: WindowManager.DispatcherNames);
+
+        var warning = Assert.Single(document.Warnings);
+        Assert.Equal(1, warning.Line);
+        Assert.StartsWith("Unknown dispatcher 'maximize'", warning.Message, StringComparison.Ordinal);
+        Assert.Equal("fullscreen", Assert.IsType<Bind>(Assert.Single(document.Binds)).Dispatcher);
+        Assert.True(ControlInvocation.TryListNames(["dispatch"], out var names));
+        Assert.DoesNotContain("maximize", names.Split('\n'));
     }
 
     [Fact]

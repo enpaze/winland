@@ -4,6 +4,16 @@ using Winland.Install;
 // An elevated relaunch writes back to the console that started it, before any argument is read.
 args = Elevation.SendOutputBack(args);
 
+// These answer here, with no Winland and no UAC: the names this winland knows, and a check of a config.
+if (ControlInvocation.TryListNames(args, out var names))
+{
+    Console.WriteLine(names);
+    return 0;
+}
+
+if (args.Length > 0 && args[0].Equals("check", StringComparison.OrdinalIgnoreCase))
+    return Program.Check(args[1..], ConfigPaths.Default(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)), Console.Error);
+
 // A command for the running Winland is sent down its pipe before anything that starts one, so it never asks for UAC.
 if (ControlInvocation.TryCreate(args, out var line, out var events))
     return ControlCommand.Run(line, events, PipeName());
@@ -104,12 +114,7 @@ static int Run(string? path, RollingLogWriter log)
     }
 
     var current = ConfigFile.Read(configPath);
-
-    foreach (var warning in current.Warnings)
-    {
-        var where = warning.Source ?? configPath;
-        Console.Error.WriteLine($"{where}:{warning.Line}: {warning.Message}");
-    }
+    ConfigFile.WriteWarnings(current.Warnings, configPath, Console.Error);
 
     var core = new WindowManager { Cursor = new SystemCursor(), FirstStart = firstStart };
     core.ReadConfig = () => ConfigFile.TryRead(configPath);
@@ -320,11 +325,15 @@ static int Usage()
 {
     Console.Error.WriteLine("usage: winland");
     Console.Error.WriteLine("       winland --config <path>");
+    Console.Error.WriteLine("       winland check [file]");
     Console.Error.WriteLine("       winland install [--user] [--no-logon] [--no-start]");
     Console.Error.WriteLine("       winland update [--channel <stable|dev>]");
     Console.Error.WriteLine("       winland uninstall [--purge]");
     Console.Error.WriteLine("       winland tweaks --off [--touchpad]");
+    Console.Error.WriteLine("       winland tweaks --restore");
     Console.Error.Write(ControlInvocation.Usage);
+    Console.Error.WriteLine("check reads a config as a start would, and changes nothing: 0 when clean, 1 for any warning or a file it cannot read, 2 for bad usage.");
+    Console.Error.WriteLine("dispatch or getoption with no name lists the names this winland knows. A running Winland can differ.");
     Console.Error.WriteLine("WINLAND_NO_ELEVATE=1 or --no-elevate starts without elevation. install --user uses it.");
     Console.Error.WriteLine("Elevated features then do not work. A per-user install never asks for elevation.");
     return 2;
@@ -362,6 +371,19 @@ static void CopyLog(RollingLogWriter log, DebugOptions options, string? file)
 
 internal partial class Program
 {
+    /// <summary><c>winland check [file]</c>: the file, or <paramref name="defaultConfig"/> without one. 2 for any other arguments.</summary>
+    internal static int Check(string[] arguments, string defaultConfig, TextWriter error)
+    {
+        // A blank file is usually an empty variable in a script, so it is a usage error, not the default config.
+        if (arguments.Length > 1 || (arguments.Length == 1 && (string.IsNullOrWhiteSpace(arguments[0]) || arguments[0].StartsWith('-'))))
+        {
+            error.WriteLine("usage: winland check [file]");
+            return 2;
+        }
+
+        return ConfigFile.Check(arguments.Length == 0 ? defaultConfig : arguments[0], error);
+    }
+
     internal static int Guard(Func<int> action, bool rethrow = false)
     {
         try

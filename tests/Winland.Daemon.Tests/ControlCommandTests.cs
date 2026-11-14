@@ -36,6 +36,22 @@ public class ControlCommandTests
         Assert.Equal((reply.Length == 0 ? "error: no reply" : reply) + Environment.NewLine, result.Error);
     }
 
+    // A malformed selector fails the command. A well-formed one that matches nothing is an answer, not a failure.
+    [Theory]
+    [InlineData("inspect class:[", 1)]
+    [InlineData("j/inspect pid:12a", 1)]
+    [InlineData("inspect class:nothing", 0)]
+    [InlineData("j/inspect class:nothing", 0)]
+    public void InspectFailsOnlyForAMalformedSelector(string line, int expectedExit)
+    {
+        var reply = new WindowManager().Execute(line).Text;
+
+        var result = WriteReply(line, reply);
+
+        Assert.Equal(expectedExit, result.Exit);
+        Assert.Equal(expectedExit == 1 ? reply + Environment.NewLine : "", result.Error);
+    }
+
     private static (int Exit, string Output, string Error) WriteReply(string line, string reply)
     {
         var previousOut = Console.Out;

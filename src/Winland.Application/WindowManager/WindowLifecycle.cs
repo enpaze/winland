@@ -106,6 +106,8 @@ public sealed partial class WindowManager
 
         var restored = FindRestored(appeared.Window);
         decision = Recovered(decision, restored);
+        if (restored?.Floating is not null)
+            decision = decision with { FloatReason = FloatReason.Restored };
         var screen = MonitorFor(appeared);
         if (_monitors.Count > 0 && screen is null && !RestoredMonitorExists(restored))
             return View([]);

@@ -268,6 +268,30 @@ public class KeyNameTests
         Assert.Equal("mouse:272", bind.Key);
     }
 
+    [Theory]
+    [InlineData("mouse:left", "mouse:272")]
+    [InlineData("mouse:right", "mouse:273")]
+    [InlineData("mouse:middle", "mouse:274")]
+    [InlineData("mouse:x1", "mouse:275")]
+    [InlineData("Mouse:X2", "mouse:276")]
+    public void AMouseButtonNameBindsTheSameButtonAsItsNumber(string written, string number)
+    {
+        var document = ConfigParser.Parse($"bindm = SUPER, {written}, movewindow\n", layout: German());
+
+        Assert.Empty(document.Warnings);
+        var bind = Assert.IsType<Bind>(Assert.Single(document.Binds));
+        Assert.Equal(number, bind.Key);
+    }
+
+    [Fact]
+    public void AnUnknownMouseButtonNameIsAnUnknownKey()
+    {
+        var document = ConfigParser.Parse("bindm = SUPER, mouse:thumb, movewindow\n");
+
+        Assert.Empty(document.Binds);
+        Assert.Contains(document.Warnings, warning => warning.Message.Contains("mouse:thumb", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void MultiKeyPartsResolveSeparately()
     {

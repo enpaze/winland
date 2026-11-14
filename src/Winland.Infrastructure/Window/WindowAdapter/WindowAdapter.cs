@@ -108,6 +108,7 @@ public sealed partial class WindowAdapter : IDisposable
         _motions = new MotionPlayer(new MotionTarget(this), _clock, threaded);
         _core.ReducedMotion = ReducedMotion;
         _core.Decided = _decided.Enqueue;
+        _core.DescribeWindow = Inspect;
         GroupBarHost.Dispatch = (name, arguments) =>
         {
             if (!_disposed)
@@ -493,7 +494,8 @@ public sealed partial class WindowAdapter : IDisposable
         return disabled;
     }
 
-    private bool TryDescribe(HWND hwnd, WindowId window, out WindowAppeared appeared)
+    // With inspecting, the read notes nothing and asks the window nothing: inspect reads its facts, not its limits.
+    private bool TryDescribe(HWND hwnd, WindowId window, out WindowAppeared appeared, bool inspecting = false)
     {
         appeared = null!;
         var monitor = PInvoke.MonitorFromWindow(hwnd, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTONEAREST);
@@ -515,7 +517,7 @@ public sealed partial class WindowAdapter : IDisposable
         // A Store app's frame belongs to ApplicationFrameHost. The Client's process is the app it hosts.
         long processId = identity.ProcessId;
         var facts = ProcessFacts.Shared.For(identity.ProcessId);
-        var (min, max) = LimitsOf(hwnd, window);
+        var (min, max) = inspecting ? default : LimitsOf(hwnd, window);
 
         var ownerWindow = PInvoke.GetWindow(hwnd, GET_WINDOW_CMD.GW_OWNER);
         appeared = new WindowAppeared(window, From(info.rcWork))
@@ -523,7 +525,7 @@ public sealed partial class WindowAdapter : IDisposable
             Foreground = PInvoke.GetForegroundWindow() == hwnd,
             Pointer = pointer,
             Owner = ownerWindow.IsNull ? null : new WindowId(((IntPtr)ownerWindow).ToInt64()),
-            Disabled = Note(window, !PInvoke.IsWindowEnabled(hwnd)),
+            Disabled = inspecting ? !PInvoke.IsWindowEnabled(hwnd) : Note(window, !PInvoke.IsWindowEnabled(hwnd)),
             Bounds = bounds,
             ProcessId = processId,
             AncestorProcessIds = facts.Ancestors,

@@ -101,6 +101,42 @@ public class WindowSelectorTests
         Assert.Null(WindowSelector.Find("class:(", new WindowId(1), clients));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("active")]
+    [InlineData("activewindow")]
+    [InlineData("floating")]
+    [InlineData("tiled")]
+    [InlineData("kitty")]
+    [InlineData("0x2a")]
+    [InlineData("class:^kitty$")]
+    [InlineData("class:")]
+    [InlineData("initialclass:old")]
+    [InlineData("title:a{1,2} b")]
+    [InlineData("initialtitle:first")]
+    [InlineData("pid:42")]
+    [InlineData("address:0x2a")]
+    [InlineData("address:0X2A")]
+    [InlineData("stableid:2a")]
+    public void EverySelectorFindReadsIsWellFormed(string selector) =>
+        Assert.Null(WindowSelector.Malformed(selector));
+
+    [Theory]
+    [InlineData("[", "'[' is not a valid pattern")]
+    [InlineData("class:[", "'[' is not a valid pattern")]
+    [InlineData("initialclass:*", "'*' is not a valid pattern")]
+    [InlineData("title:(a", "'(a' is not a valid pattern")]
+    [InlineData("initialtitle:a)|(b", "'a)|(b' is not a valid pattern")]
+    [InlineData("pid:", "pid: takes a process id, such as pid:1234")]
+    [InlineData("pid:12a", "pid: takes a process id, such as pid:1234")]
+    [InlineData("address:", "address: takes a window address, such as address:0x2a")]
+    [InlineData("address:2a", "address: takes a window address, such as address:0x2a")]
+    [InlineData("address:0xzz", "address: takes a window address, such as address:0x2a")]
+    [InlineData("stableid:", "stableid: takes the stableID clients reports, such as stableid:2a")]
+    [InlineData("stableid:xyz", "stableid: takes the stableID clients reports, such as stableid:2a")]
+    public void AMalformedSelectorSaysWhatIsWrong(string selector, string problem) =>
+        Assert.Equal(problem, WindowSelector.Malformed(selector));
+
     private static Client Client(
         long window,
         string windowClass,

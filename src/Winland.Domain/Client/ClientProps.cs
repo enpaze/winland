@@ -22,6 +22,7 @@ internal sealed class ClientProps
         entry.Opacity = new OpacityChoice(decision.Opacity, decision.Opaque);
         entry.RuleProps = RulePropsOf(decision);
         entry.Subject = (traits.WithInitialNames(), followed);
+        entry.Admitted = new Admitted(decision.Admission, decision.Floating, decision.FloatReason);
     }
 
     /// <summary>The window's rules were matched again after its class or title changed: its property effects follow.</summary>
@@ -136,6 +137,10 @@ internal sealed class ClientProps
     public (WindowTraits Traits, IReadOnlyList<WindowRule> Followed)? Subject(WindowId window) =>
         _entries.TryGetValue(window, out var entry) ? entry.Subject : null;
 
+    /// <summary>Why the window was adopted and whether it floated then, or null for a window never adopted.</summary>
+    public Admitted? AdmittedOf(WindowId window) =>
+        _entries.TryGetValue(window, out var entry) ? entry.Admitted : null;
+
     private Entry Of(WindowId window)
     {
         if (!_entries.TryGetValue(window, out var entry))
@@ -161,8 +166,12 @@ internal sealed class ClientProps
 
         public (WindowTraits Traits, IReadOnlyList<WindowRule> Followed)? Subject { get; set; }
 
+        public Admitted? Admitted { get; set; }
     }
 }
+
+/// <summary>Why a window was adopted, and whether it floated when it was and why. Later changes leave it as it was.</summary>
+internal readonly record struct Admitted(Admission Reason, bool Floating, FloatReason FloatReason);
 
 /// <summary>The focus effects a window's rules give it.</summary>
 internal readonly record struct FocusRule(bool NoInitialFocus, bool NoFocus);
