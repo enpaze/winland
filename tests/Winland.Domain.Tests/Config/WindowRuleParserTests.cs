@@ -18,7 +18,7 @@ public class WindowRuleParserTests
     }
 
     [Fact]
-    public void ADraftRuleMatchesAnAppByItsAumidRatherThanItsSharedFrame()
+    public void ADraftRuleMatchesAWindowByItsAumidRatherThanItsSharedFrame()
     {
         var calculator = WindowTraits.Normal with
         {
