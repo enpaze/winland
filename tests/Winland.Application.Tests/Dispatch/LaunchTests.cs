@@ -93,13 +93,11 @@ public class LaunchTests
     {
         var document = ConfigParser.Parse(
             "exec = every\n" +
-            "exec-once = once\n" +
-            "exec-shutdown = bye\n");
+            "exec-once = once\n");
         var core = new WindowManager();
 
         var startup = core.StartupLaunches(document);
         var reload = core.ReloadLaunches(document);
-        var shutdown = WindowManager.ShutdownLaunches(document);
 
         Assert.Equal(
             [
@@ -112,7 +110,6 @@ public class LaunchTests
                 new Launch("every", null) { InitialWorkspace = WorkspaceId.Initial },
             ],
             reload);
-        Assert.Equal([new Launch("bye", null)], shutdown);
     }
 
     [Fact]

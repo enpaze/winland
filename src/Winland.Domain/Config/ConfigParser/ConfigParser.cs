@@ -31,7 +31,7 @@ public static partial class ConfigParser
     /// Every other line, an option or a rule, can be applied at once with <c>keyword</c>.
     /// </summary>
     public static bool AppliesLive(string keyword) =>
-        keyword is not ("exec" or "exec-once" or "exec-shutdown" or "source");
+        keyword is not ("exec" or "exec-once" or "source");
 
     private sealed partial class Parser(IConfigSource? sourceReader, KeyLayout layout, IReadOnlyCollection<string>? dispatchers)
     {
@@ -39,7 +39,6 @@ public static partial class ConfigParser
         {
             "exec",
             "exec-once",
-            "exec-shutdown",
             "monitor",
             "windowrule",
         };
@@ -435,7 +434,7 @@ public static partial class ConfigParser
         }
 
         private static bool IsLaunchKeyword(string keyword) =>
-            keyword is "exec" or "exec-once" or "exec-shutdown";
+            keyword is "exec" or "exec-once";
 
         // True when the line has a '#' that starts a comment. "##" is an escaped '#'.
         private static bool HasComment(string line)

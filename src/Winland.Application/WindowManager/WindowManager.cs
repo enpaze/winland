@@ -160,9 +160,6 @@ public sealed partial class WindowManager
             return ConfigLaunches(config, LaunchParser.LaunchMoment.Reload, LaunchWorkspace());
     }
 
-    public static IReadOnlyList<Launch> ShutdownLaunches(ConfigDocument config) =>
-        ConfigLaunches(config, LaunchParser.LaunchMoment.Shutdown);
-
     public void NoteLaunched(int processId, Launch launch)
     {
         ArgumentNullException.ThrowIfNull(launch);

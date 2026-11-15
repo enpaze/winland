@@ -37,7 +37,6 @@ public class ConfigTests
     [Theory]
     [InlineData("exec")]
     [InlineData("exec-once")]
-    [InlineData("exec-shutdown")]
     [InlineData("monitor")]
     public void HandlersCanRepeat(string keyword)
     {
@@ -170,12 +169,20 @@ public class ConfigTests
     }
 
     [Fact]
+    public void ExecShutdownIsAnUnsupportedKeywordAndLaunchesNothing()
+    {
+        var document = ConfigParser.Parse("exec-shutdown = bye\n");
+
+        Assert.StartsWith("Unsupported keyword 'exec-shutdown'.", Assert.Single(document.Warnings).Message, StringComparison.Ordinal);
+        Assert.Empty(new WindowManager().StartupLaunches(document));
+    }
+
+    [Fact]
     public void KeptKeywordsLoadWithoutAWarning()
     {
         var text = """
             exec = app
             exec-once = app
-            exec-shutdown = app
             monitor = , addreserved, 0, 0, 0, 0
             windowrule = float, class:^(kitty)$
             windowrule = tile, class:^(kitty)$
