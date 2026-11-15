@@ -46,8 +46,7 @@ public sealed partial class KeyboardHook : IDisposable
     }
 
     /// <summary>
-    /// The watch tick, on the hook thread. A modifier can be left down at any time, for one by a
-    /// relay that pressed it again just after the user let go, so the sweep runs on every tick.
+    /// The watch tick, on the hook thread. A modifier can be left down at any time, so the sweep runs on every tick.
     /// It waits while the hook may have missed a key, or a held key would be taken as stale.
     /// </summary>
     internal void Watch()
@@ -87,13 +86,6 @@ public sealed partial class KeyboardHook : IDisposable
             else
                 InputInjector.Post(Key(vk, up: true));
         }
-    }
-
-    /// <summary>True when the user physically holds this modifier key, as the hook last saw.</summary>
-    internal static bool Held(int vk)
-    {
-        var bit = ModifierBit(vk);
-        return bit != 0 && (Volatile.Read(ref _held) & bit) != 0;
     }
 
     private static void NoteHeld(uint vk, bool up)

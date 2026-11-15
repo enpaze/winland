@@ -35,7 +35,7 @@ public sealed partial class KeyboardHook : IDisposable
 
     // The modifier keys the user physically holds, one bit per entry of Modifiers, as the hook saw
     // them. Kept by virtual key rather than by bind name, so AltGr and the Left Ctrl Windows sends
-    // with it count too. Only the hook thread writes it; the key relay reads it on the bind worker.
+    // with it count too. Only the hook thread writes it.
     private static int _held;
 
     private readonly WindowManager _core;
@@ -167,7 +167,7 @@ public sealed partial class KeyboardHook : IDisposable
             if (Environment.TickCount64 - _startedAt >= SweepDelayMs)
                 ReleaseStale();
 
-            // Nothing updates it once the hook is gone, so the relay must not trust it.
+            // Nothing updates it once the hook is gone.
             Volatile.Write(ref _held, 0);
         }
 
