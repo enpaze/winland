@@ -11,8 +11,8 @@ public sealed partial class WindowManager
 {
     /// <summary>
     /// What a dispatcher runs, given the Window Manager, the name it was called by and its arguments.
-    /// <paramref name="AllowsComma"/> for a command line and for the window <c>focuswindow</c> names. No other
-    /// dispatcher has a comma in its arguments.
+    /// <paramref name="AllowsComma"/> when the argument is free text or a name, which may hold a comma: a command
+    /// line, a window selector, or the name of a Workspace or Monitor. Any other dispatcher refuses a comma.
     /// </summary>
     private sealed record Dispatcher(
         Func<WindowManager, string, string, Outcome> Run,
@@ -33,12 +33,12 @@ public sealed partial class WindowManager
             ["exit"] = new(static (m, _, _) => m.ExitDaemon()),
 
             // Workspaces and Monitors
-            ["workspace"] = new(static (m, _, a) => m.WorkspaceDispatch(a)),
-            ["togglespecialworkspace"] = new(static (m, _, a) => m.ToggleSpecial(a)),
+            ["workspace"] = new(static (m, _, a) => m.WorkspaceDispatch(a), AllowsComma: true),
+            ["togglespecialworkspace"] = new(static (m, _, a) => m.ToggleSpecial(a), AllowsComma: true),
             ["movetoworkspace"] = new(static (m, _, a) => m.MoveTo(a, silent: false, consumed: false)),
             ["movetoworkspacesilent"] = new(static (m, _, a) => m.MoveTo(a, silent: true, consumed: false)),
-            ["focusmonitor"] = new(static (m, _, a) => m.FocusMonitorDispatch(a), Traits: DispatcherTraits.WarpsToEmptyMonitor),
-            ["movecurrentworkspacetomonitor"] = new(static (m, _, a) => m.MoveCurrentWorkspace(a)),
+            ["focusmonitor"] = new(static (m, _, a) => m.FocusMonitorDispatch(a), AllowsComma: true, Traits: DispatcherTraits.WarpsToEmptyMonitor),
+            ["movecurrentworkspacetomonitor"] = new(static (m, _, a) => m.MoveCurrentWorkspace(a), AllowsComma: true),
 
             // Focus
             ["movefocus"] = new(static (m, _, a) => m.MoveFocusDirection(a), Traits: DispatcherTraits.WarpsToFocused | DispatcherTraits.WarpsToEmptyMonitor),
@@ -52,7 +52,7 @@ public sealed partial class WindowManager
             ["pin"] = new(static (m, _, a) => m.PinWindow(a)),
             ["fullscreen"] = new(static (m, _, a) => m.FullscreenDispatcher(a)),
             ["resizeactive"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
-            ["setprop"] = new(static (m, _, a) => m.SetPropDispatch(a)),
+            ["setprop"] = new(static (m, _, a) => m.SetPropDispatch(a), AllowsComma: true),
 
             // Layouts
             ["layoutmsg"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),

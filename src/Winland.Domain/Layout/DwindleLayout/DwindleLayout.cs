@@ -234,11 +234,7 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         var bottom = box.Y + box.Height == area.Y + area.Height ? 0 : gaps.Bottom;
         var presented = _options.KeepAspect(Shrink(box, left, top, right, bottom), _area, _nodes.Count);
         var border = _options.BorderFor(id);
-        presented = new Rectangle(
-            presented.X + border,
-            presented.Y + border,
-            Math.Max(0, presented.Width - border - border),
-            Math.Max(0, presented.Height - border - border));
+        presented = Shrink(presented, border, border, border, border);
         return _limits.TryGetValue(id, out var limits) ? limits.ForTiles.Raise(presented, area) : presented;
     }
 
@@ -301,7 +297,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         var dy = point.Y < box.Y ? box.Y - point.Y : point.Y >= box.Y + box.Height ? point.Y - (box.Y + box.Height) : 0;
         return (dx * (double)dx) + (dy * (double)dy);
     }
-
 
     private static Node Leaf(Node node)
     {

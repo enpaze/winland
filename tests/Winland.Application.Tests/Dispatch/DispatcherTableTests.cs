@@ -11,7 +11,7 @@ public class DispatcherTableTests
     }
 
     [Fact]
-    public void FlippingASplitIsStillALayoutMessageAndADispatcher()
+    public void TogglesplitRunsAsALayoutMessageAndAsADispatcher()
     {
         var desk = new TestDesktop();
         desk.Spawn("a");

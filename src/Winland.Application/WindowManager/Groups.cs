@@ -199,7 +199,7 @@ public sealed partial class WindowManager
 
     private Outcome MoveOutOfGroup(string text)
     {
-        if (text.Length > 0 && text != "active")
+        if (text.Length > 0)
             return Rejected("error: moveoutofgroup takes no argument");
 
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)

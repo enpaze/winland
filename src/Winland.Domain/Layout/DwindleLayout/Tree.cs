@@ -2,7 +2,7 @@ namespace Winland.Domain;
 
 internal sealed partial class DwindleLayout
 {
-    private void Split(Node opening, Node node, Point? pointer, PendingSplit? requested = null)
+    private void Split(Node opening, Node node, Point? pointer, PendingSplit direction = PendingSplit.None)
     {
         var parent = new Node
         {
@@ -12,7 +12,6 @@ internal sealed partial class DwindleLayout
             SplitTop = SplitsTop(opening.Box),
         };
 
-        var direction = requested ?? PendingSplit.None;
         if (direction != PendingSplit.None)
         {
             AssignDirection(parent, opening, node, direction);

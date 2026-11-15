@@ -67,6 +67,7 @@ public class SelectorDispatcherTests
     [InlineData("swapwindow class:b")]
     [InlineData("moveintogroup address:0x2")]
     [InlineData("moveoutofgroup class:b")]
+    [InlineData("moveoutofgroup active")]
     [InlineData("movewindow l,address:0x2")]
     [InlineData("fullscreen 1,address:0x2")]
     [InlineData("togglegroup ,class:b")]
@@ -81,6 +82,19 @@ public class SelectorDispatcherTests
 
         Assert.StartsWith("error:", desk.Dispatch(line), StringComparison.Ordinal);
         Assert.Equal(before, desk.Send("j/clients"));
+    }
+
+    [Theory]
+    [InlineData("togglespecialworkspace work,notes")]
+    [InlineData("workspace name:work,notes")]
+    [InlineData("focusmonitor desc:Dell, Inc. U2720Q")]
+    [InlineData("movecurrentworkspacetomonitor desc:Dell, Inc. U2720Q")]
+    public void AWorkspaceOrMonitorNameMayHoldAComma(string line)
+    {
+        var desk = new TestDesktop();
+        desk.Spawn("a");
+
+        Assert.DoesNotContain("comma", desk.Dispatch(line), StringComparison.Ordinal);
     }
 
     [Fact]
