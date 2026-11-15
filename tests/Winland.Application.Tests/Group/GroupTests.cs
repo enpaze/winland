@@ -97,7 +97,6 @@ public class GroupTests
 
         Assert.Equal("error: window is not in a group", core.Execute("dispatch changegroupactive f").Text);
         Assert.Equal("error: window not in a group", core.Execute("dispatch moveoutofgroup").Text);
-        Assert.Equal("error: window not in a group", core.Execute("dispatch movegroupwindow").Text);
 
         core.Execute("dispatch togglegroup");
         Assert.Equal("error: only one window in group", core.Execute("dispatch changegroupactive f").Text);
@@ -407,18 +406,6 @@ public class GroupTests
         Assert.Empty(ended.Effect.State.Hidden);
         Assert.Equal(3, ended.Effect.Placements.Count);
         Assert.Equal(3, ended.Effect.Placements.Select(placement => placement.Bounds).Distinct().Count());
-    }
-
-    [Fact]
-    public void MoveGroupWindowReordersTheMembers()
-    {
-        var core = Grouped();
-
-        var moved = core.Execute("dispatch movegroupwindow b");
-
-        Assert.Equal([Second, First], moved.Effect.State.Groups.Single());
-        Assert.Empty(moved.Effect.Show);
-        Assert.Empty(moved.Effect.Hide);
     }
 
     [Fact]

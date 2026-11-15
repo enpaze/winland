@@ -52,15 +52,6 @@ internal sealed class WindowGroup(WindowId first)
         _members.RemoveAt(index);
         Current = current;
     }
-
-    /// <summary>Swaps the shown member with the one at <paramref name="index"/>, which stays shown in its new place.</summary>
-    public void MoveShownTo(int index)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegative(index);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _members.Count);
-        (_members[Current], _members[index]) = (_members[index], _members[Current]);
-        Current = index;
-    }
 }
 
 /// <summary>How a window left its Group.</summary>

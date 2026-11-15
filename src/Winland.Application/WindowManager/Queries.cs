@@ -64,7 +64,6 @@ public sealed partial class WindowManager
             DispatchRequest dispatch => DispatchReply(dispatch),
             EventsRequest => Answer("") with { Stream = true },
             ReloadRequest => ReloadCommand(),
-            ClickKillRequest => ArmClickKill(),
             KeywordRequest keyword => ApplyKeyword(keyword),
             SetPropRequest prop => WriteProp(prop),
             BatchRequest batch => RunBatch(batch.Payload, batch.Flags),

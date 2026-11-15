@@ -119,12 +119,6 @@ internal sealed class FloatingLayout : Layout, IDragOwner
         return [];
     }
 
-    public IReadOnlyList<Placement> TogglePseudo(WindowId window)
-    {
-        _ = window;
-        return [];
-    }
-
     public WindowId? MoveFocus(WindowId active, string arguments) => _inner.MoveFocus(active, arguments);
 
     public IReadOnlyList<Placement> MoveWindow(WindowId window, string arguments) => _inner.MoveWindow(window, arguments);

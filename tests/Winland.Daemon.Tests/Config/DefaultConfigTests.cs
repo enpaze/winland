@@ -6,7 +6,6 @@ public class DefaultConfigTests
         SUPER|W|killactive||
         SUPER|Q|killactive||
         SUPER|J|togglesplit||
-        SUPER|P|pseudo||
         SUPER|T|togglefloating||
         SUPER|F|fullscreen||
         SUPER ALT|F|fullscreen|1|

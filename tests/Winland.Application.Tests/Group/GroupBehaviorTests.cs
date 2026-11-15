@@ -67,24 +67,6 @@ public class GroupBehaviorTests
     }
 
     [Fact]
-    public void GroupMoveWindow()
-    {
-        var desk = new TestDesktop();
-        desk.Spawn("a");
-        desk.Ok("togglegroup");
-        desk.Spawn("b");
-        Assert.Equal(2, desk.Clients().Length);
-
-        var before = desk.ActiveId();
-        desk.Ok("movegroupwindow", "f");
-        Assert.Equal(before, desk.ActiveId());
-
-        before = desk.ActiveId();
-        desk.Ok("movegroupwindow", "b");
-        Assert.Equal(before, desk.ActiveId());
-    }
-
-    [Fact]
     public void GroupsNoCrash()
     {
         var desk = new TestDesktop();

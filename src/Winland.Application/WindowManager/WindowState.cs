@@ -14,7 +14,6 @@ public sealed partial class WindowManager
         _windowState.Track(_props.Forget);
         _windowState.Track(_renamed);
         _windowState.Track(_awaitingMapFocus);
-        _windowState.Track(_urgent);
         _windowState.Track(ForgetFocusMarks);
         _windowState.Track(_restored);
         _windowState.Track(_restoredTiles);

@@ -120,7 +120,7 @@ public sealed partial class BindSession
         var deferred = new List<Bind>();
         foreach (var bind in Collect(table, key, scanCode, mouse, releasing: false))
         {
-            if (bind.Flags.HasFlag(BindFlag.Release) && !SendsBothEdges(bind))
+            if (bind.Flags.HasFlag(BindFlag.Release))
                 deferred.Add(bind);
             else
                 immediate.Add(bind);
@@ -140,7 +140,7 @@ public sealed partial class BindSession
         else
             passed.Add(key);
 
-        return MaskHeld(Ran(immediate, consumed, new BindTrigger(key, scanCode, Pressed: true)));
+        return MaskHeld(Ran(immediate, consumed));
     }
 
     private BindDecision OnRepeat(BindTable table, string key, int scanCode, bool mouse)
@@ -161,7 +161,7 @@ public sealed partial class BindSession
         if (consumed)
             Catch(key, mouse);
 
-        return MaskHeld(Ran(repeating, consumed, new BindTrigger(key, scanCode, Pressed: true)));
+        return MaskHeld(Ran(repeating, consumed));
     }
 
     private BindDecision OnRelease(BindTable table, string key, int scanCode, bool mouse)
@@ -186,8 +186,7 @@ public sealed partial class BindSession
 
         // The OS saw this press, so it must see the release, or it keeps the key down.
         var consumed = Consumes(fire) || caught;
-        var trigger = new BindTrigger(key, scanCode, Pressed: false);
-        var decision = fire.Count > 0 ? Ran(fire, consumed, trigger) : caught ? Caught() : Passed();
+        var decision = fire.Count > 0 ? Ran(fire, consumed) : caught ? Caught() : Passed();
         if (passed)
             decision = decision with { Consumed = false };
 
@@ -267,14 +266,14 @@ public sealed partial class BindSession
 
         _scrollSeen = true;
         _scrollAtMs = wheel.TimeMs;
-        return MaskHeld(Ran(pressing, Consumes(pressing), trigger: null));
+        return MaskHeld(Ran(pressing, Consumes(pressing)));
     }
 
     private static BindDecision Passed() => new(false, null);
 
     private static BindDecision Caught() => new(true, null);
 
-    private static BindDecision Ran(List<Bind> binds, bool consumed, BindTrigger? trigger)
+    private static BindDecision Ran(List<Bind> binds, bool consumed)
     {
         var count = 0;
         foreach (var bind in binds)
@@ -299,7 +298,6 @@ public sealed partial class BindSession
         return new BindDecision(consumed, dispatches[0].Dispatcher, dispatches[0].Arguments)
         {
             Dispatches = dispatches,
-            Trigger = trigger,
         };
     }
 }

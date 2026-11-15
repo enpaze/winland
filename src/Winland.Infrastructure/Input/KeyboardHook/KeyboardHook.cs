@@ -18,7 +18,6 @@ public sealed partial class KeyboardHook : IDisposable
     internal const ushort MaskKey = 0xE8;
 
     // Long enough for a held key to start repeating, so a held key is never taken as stale.
-    private const int EscapeKey = 0x1B;
     private const int SweepDelayMs = 1500;
     private const int WatchPeriodMs = 2000;
     private const int UnseenInputMs = 1000;
@@ -38,9 +37,6 @@ public sealed partial class KeyboardHook : IDisposable
     // them. Kept by virtual key rather than by bind name, so AltGr and the Left Ctrl Windows sends
     // with it count too. Only the hook thread writes it; the key relay reads it on the bind worker.
     private static int _held;
-
-    // Modifiers a relay pressed and left down on purpose. Not stale.
-    private static int _relayed;
 
     private readonly WindowManager _core;
     private readonly Action<Outcome> _apply;
@@ -270,13 +266,6 @@ public sealed partial class KeyboardHook : IDisposable
 
             if (!up)
                 InputClock.NoteKey(info.time, vk, info.flags.HasFlag(KBDLLHOOKSTRUCT_FLAGS.LLKHF_INJECTED));
-
-            // Escape gives up a click to kill, and goes no further.
-            if (vk == EscapeKey && !up && _core.ClickKillArmed)
-            {
-                PostInput(new ClickKillChosen(null));
-                return new LRESULT(1);
-            }
 
             if (KeyNames.PassesThrough(vk))
                 return Next(code, wParam, lParam);

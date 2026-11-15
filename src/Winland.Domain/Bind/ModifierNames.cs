@@ -1,6 +1,6 @@
 namespace Winland.Domain;
 
-/// <summary>Reads and writes a modifier list such as <c>SUPER SHIFT</c>, as a bind and <c>sendshortcut</c> write it.</summary>
+/// <summary>Reads and writes a modifier list such as <c>SUPER SHIFT</c>, as a bind writes it.</summary>
 internal static class ModifierNames
 {
     private static readonly (string Name, Modifier Modifier)[] Written =

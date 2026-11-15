@@ -174,20 +174,6 @@ public class SelectLayoutTests
         Assert.Equal(2, TestDesktop.Fullscreen(desk.ActiveWindow()));
     }
 
-    [Fact]
-    public void APseudoWindowStaysPseudoBetweenTiledLayouts()
-    {
-        var core = Flat();
-        core.Handle(Appeared(1, bounds: new Rectangle(0, 0, 800, 600)));
-        core.Handle(new Pseudo(new WindowId(1)));
-
-        var scrolling = core.Handle(new Dispatch("layout", "scrolling"));
-        var dwindle = core.Handle(new Dispatch("layout", "dwindle"));
-
-        Assert.Equal(new Rectangle(560, 240, 800, 600), BoundsOf(scrolling, 1));
-        Assert.Equal(new Rectangle(560, 240, 800, 600), BoundsOf(dwindle, 1));
-    }
-
     private static int Grouped(System.Text.Json.JsonElement client) => client.GetProperty("grouped").GetArrayLength();
 
     private static string LayoutOf(Outcome outcome, string name) =>

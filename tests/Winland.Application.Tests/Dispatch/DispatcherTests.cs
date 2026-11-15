@@ -460,51 +460,6 @@ public class DispatcherTests
     }
 
     [Fact]
-    public void PreselectAndPseudoRunFromABindAndThePipe()
-    {
-        var core = new WindowManager();
-        var document = ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
-            dwindle:preserve_split = true
-            bind = SUPER, P, pseudo
-            bind = SUPER, D, layoutmsg, preselect l
-            """);
-        core.Handle(new Configure(document));
-        core.Handle(new ConfigLoaded(document));
-        core.Handle(new WindowAppeared(new WindowId(1), Tall)
-        {
-            Bounds = new Rectangle(0, 0, 800, 600),
-        });
-        Press(core, "Super_L");
-
-        var fromPipe = core.Execute("dispatch pseudo");
-
-        Assert.Equal("ok", fromPipe.Text);
-        Assert.Equal(new Rectangle(140, 660, 800, 600), BoundsOf(fromPipe.Effect, 1));
-
-        var fromBind = Press(core, "P");
-
-        Assert.True(fromBind.Consumed);
-        Assert.Equal(Tall, BoundsOf(fromBind, 1));
-
-        var directed = core.Execute("dispatch layoutmsg preselect l");
-        Assert.Equal("ok", directed.Text);
-        var opened = Appear(core, 2, Tall);
-
-        Assert.Equal(new Rectangle(540, 0, 540, 1920), BoundsOf(opened, 1));
-        Assert.Equal(new Rectangle(0, 0, 540, 1920), BoundsOf(opened, 2));
-
-        Press(core, "D");
-        var again = Appear(core, 3, Tall);
-
-        Assert.Equal(new Rectangle(0, 0, 270, 1920), BoundsOf(again, 3));
-        Assert.Equal(new Rectangle(270, 0, 270, 1920), BoundsOf(again, 2));
-        Assert.Equal(new Rectangle(540, 0, 540, 1920), BoundsOf(again, 1));
-    }
-
-    [Fact]
     public void DispatchRunsKillActiveOnTheSamePath()
     {
         var core = TwoWindows();

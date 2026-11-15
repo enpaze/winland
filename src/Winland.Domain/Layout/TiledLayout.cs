@@ -2,14 +2,13 @@ namespace Winland.Domain;
 
 /// <summary>
 /// What every tiling Layout keeps around its own tiling: the Clients it holds, its floating Clients, the size each
-/// Client opened with, its pseudotiles and its size limits. A Layout places its tiled Clients itself.
+/// Client opened with and its size limits. A Layout places its tiled Clients itself.
 /// </summary>
 internal abstract class TiledLayout
 {
     private protected readonly List<Client> _clients = [];
     private protected readonly FloatingClients _floating = new();
     private protected readonly Dictionary<ClientId, Rectangle> _natural = [];
-    private protected readonly PseudoTiles _pseudo = new();
     private protected readonly Dictionary<ClientId, SizeLimits> _limits = [];
 
     public IReadOnlyList<Client> Clients => _clients;
@@ -39,8 +38,6 @@ internal abstract class TiledLayout
     }
 
     public void NudgeFloating(int dx, int dy) => _floating.Nudge(dx, dy);
-
-    public bool IsPseudo(WindowId window) => _pseudo.IsOn(new ClientId(window.Value));
 
     public SizeLimits FloatingLimits(ClientId id) => _limits.TryGetValue(id, out var limits) ? new SizeLimits(limits.Min, limits.Max) : default;
 
@@ -88,7 +85,6 @@ internal abstract class TiledLayout
         _clients[index] = SlotHandover.Rename(_clients[index], next, incoming);
         Rename(from, to);
         _floating.Hand(from, to);
-        _pseudo.Hand(from, to);
         _natural.Remove(from);
         _natural[to] = incoming.Bounds;
         _limits.Remove(from);

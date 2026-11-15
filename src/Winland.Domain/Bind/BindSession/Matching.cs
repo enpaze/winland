@@ -22,7 +22,7 @@ public sealed partial class BindSession
 
         if (releasing)
         {
-            if (!bind.Flags.HasFlag(BindFlag.Release) && !SendsBothEdges(bind))
+            if (!bind.Flags.HasFlag(BindFlag.Release))
                 return false;
             if (_shadowed.Contains(bind))
                 return false;
@@ -49,11 +49,6 @@ public sealed partial class BindSession
     // A mouse button's bind. A drag bound to a key, through the mouse dispatcher, is the key's.
     private static bool IsMouseBind(Bind bind) =>
         bind.Key.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase);
-
-    // A sendshortcut bind runs on the press and again on the release, so the window it
-    // sends to sees both edges.
-    private static bool SendsBothEdges(Bind bind) =>
-        bind.Dispatcher.Equals("sendshortcut", StringComparison.OrdinalIgnoreCase);
 
     // A non-consuming bind never consumes. Any other bind does.
     private static bool Consumes(List<Bind> binds) =>

@@ -284,48 +284,6 @@ public class WindowBehaviorTests
     }
 
     [Fact]
-    public void CycleNextTiled()
-    {
-        var desk = new TestDesktop();
-        foreach (var name in new[] { "a", "b", "c", "d" })
-            desk.Spawn(name);
-
-        desk.Ok("togglefloating", "class:a");
-        desk.Ok("togglefloating", "class:c");
-        desk.Ok("togglefloating", "class:d");
-
-        // Focus history: b is the only tile.
-        desk.Ok("focuswindow", "class:a");
-        desk.Ok("focuswindow", "class:b");
-        desk.Ok("focuswindow", "class:c");
-        desk.Ok("focuswindow", "class:d");
-
-        desk.Ok("cyclenext", "tiled");
-
-        Assert.Equal("b", desk.ActiveClass());
-    }
-
-    [Fact]
-    public void CycleNextFloating()
-    {
-        var desk = new TestDesktop();
-        foreach (var name in new[] { "a", "b", "c", "d" })
-            desk.Spawn(name);
-
-        desk.Ok("togglefloating", "class:b");
-
-        // Focus history: b is the only floating window.
-        desk.Ok("focuswindow", "class:a");
-        desk.Ok("focuswindow", "class:b");
-        desk.Ok("focuswindow", "class:c");
-        desk.Ok("focuswindow", "class:d");
-
-        desk.Ok("cyclenext", "floating");
-
-        Assert.Equal("b", desk.ActiveClass());
-    }
-
-    [Fact]
     public void ExecRulesWorkspaceOverride()
     {
         var desk = new TestDesktop("windowrule = workspace 2, class:kitty_exec_override\n");

@@ -111,7 +111,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
     {
         var id = new ClientId(window.Value);
         _natural.Remove(id);
-        _pseudo.Forget(id);
         _limits.Remove(id);
         _widths.Remove(window);
         _restoreWidths.Remove(id);
@@ -231,17 +230,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
     {
         ArgumentNullException.ThrowIfNull(direction);
         return [];
-    }
-
-    public IReadOnlyList<Placement> TogglePseudo(WindowId window)
-    {
-        var id = new ClientId(window.Value);
-        if (!_clients.Exists(client => client.Id == id))
-            return [];
-
-        _pseudo.Toggle(id);
-        Recalculate();
-        return Placements();
     }
 
     public void NoteFocus(WindowId window) => Follow(window, pointer: false);

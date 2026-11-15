@@ -45,7 +45,7 @@ public sealed partial class WindowManager
 
     /// <summary>
     /// The rectangle a new Client opens at. A floating Client is centered in the floating work area
-    /// unless a <c>move</c> rule places it. <c>size</c> sets its size, which a tiled Client keeps as its pseudo size.
+    /// unless a <c>move</c> rule places it. <c>size</c> sets its size.
     /// Expressions are in pixels and monitor-local.
     /// </summary>
     private Rectangle PlaceOnMap(WindowAppeared appeared, WindowDecision decision, LiveWorkspace desk, Rectangle area)

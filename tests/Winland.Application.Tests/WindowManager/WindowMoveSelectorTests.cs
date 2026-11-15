@@ -132,7 +132,6 @@ public class WindowMoveSelectorTests
 
     [Theory]
     [InlineData("movewindow", "l,address:0x9")]
-    [InlineData("cyclenext", ",address:0x9")]
     public void AMissingWindowIsRejected(string name, string arguments)
     {
         var core = Opened(new WindowManager(), 1);
@@ -140,60 +139,6 @@ public class WindowMoveSelectorTests
         var moved = core.Handle(new Dispatch(name, arguments));
 
         Assert.Equal("error: window not found", moved.Error);
-    }
-
-    [Fact]
-    public void CycleNextOnANamedWindowWalksThatWindowsWorkspace()
-    {
-        var core = Opened(new WindowManager(), 3);
-
-        var cycled = core.Handle(new Dispatch("cyclenext", ",address:0x1"));
-
-        Assert.Equal(new WindowId(2), cycled.Focus);
-        Assert.Equal(WorkspaceId.Initial, cycled.State.ActiveWorkspace);
-    }
-
-    [Fact]
-    public void CycleNextOnAnotherMonitorShowsThatWorkspace()
-    {
-        var core = TwoMonitors();
-        core.Handle(new WindowAppeared(new WindowId(3), Right));
-
-        var cycled = core.Handle(new Dispatch("cyclenext", ",address:0x2"));
-
-        Assert.Equal(new WindowId(3), cycled.Focus);
-        Assert.Equal(new MonitorId(1), cycled.State.ActiveMonitor);
-        Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), cycled.State.ActiveWorkspace);
-    }
-
-    [Fact]
-    public void CycleNextOnAHiddenWorkspaceShowsIt()
-    {
-        var core = Opened(new WindowManager(), 2);
-        core.Handle(new Dispatch("workspace", "2"));
-        core.Handle(new WindowAppeared(new WindowId(3), Area));
-        core.Handle(new WindowAppeared(new WindowId(4), Area));
-        core.Handle(new Dispatch("workspace", "1"));
-
-        var cycled = core.Handle(new Dispatch("cyclenext", ",address:0x3"));
-
-        Assert.Equal(new WindowId(4), cycled.Focus);
-        Assert.Equal(new WorkspaceId("2"), cycled.State.ActiveWorkspace);
-    }
-
-    [Fact]
-    public void TiledCycleOnAHiddenMasterWorkspaceUsesThatWorkspace()
-    {
-        var core = Opened(Master(), 2);
-        core.Handle(new Dispatch("workspace", "2"));
-        core.Handle(new WindowAppeared(new WindowId(3), Area));
-        core.Handle(new WindowAppeared(new WindowId(4), Area));
-        core.Handle(new Dispatch("workspace", "1"));
-
-        var cycled = core.Handle(new Dispatch("cyclenext", "tiled,address:0x3"));
-
-        Assert.Equal(new WindowId(4), cycled.Focus);
-        Assert.Equal(new WorkspaceId("2"), cycled.State.ActiveWorkspace);
     }
 
     private static WindowManager Master() => new(ConfigParser.Parse("general:layout = master\n"));

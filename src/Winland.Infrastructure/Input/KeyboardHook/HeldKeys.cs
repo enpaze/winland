@@ -69,10 +69,10 @@ public sealed partial class KeyboardHook : IDisposable
     }
 
     // A modifier the OS holds down that the user is not holding: left by a release lost
-    // before this daemon ran, on a desktop the hook cannot see, or by a relay. Release it.
+    // before this daemon ran, or on a desktop the hook cannot see. Release it.
     private static void ReleaseStale()
     {
-        var kept = Volatile.Read(ref _held) | Volatile.Read(ref _relayed);
+        var kept = Volatile.Read(ref _held);
         for (var i = 0; i < Modifiers.Length; i++)
         {
             var (name, vk) = Modifiers[i];
@@ -94,19 +94,6 @@ public sealed partial class KeyboardHook : IDisposable
     {
         var bit = ModifierBit(vk);
         return bit != 0 && (Volatile.Read(ref _held) & bit) != 0;
-    }
-
-    /// <summary>A relay pressed a modifier and left it down on purpose, or let it go.</summary>
-    internal static void NoteRelayed(int vk, bool down)
-    {
-        var bit = ModifierBit(vk);
-        if (bit == 0)
-            return;
-
-        if (down)
-            Interlocked.Or(ref _relayed, bit);
-        else
-            Interlocked.And(ref _relayed, ~bit);
     }
 
     private static void NoteHeld(uint vk, bool up)

@@ -124,27 +124,6 @@ public class DispatcherRegressionTests
         Assert.Equal(new Rectangle(1200, 100, 300, 200), Client(moved, 1).Bounds);
     }
 
-    [Theory]
-    [InlineData(false, "floating", 2)]
-    [InlineData(false, "tiled", 3)]
-    [InlineData(true, "floating", 2)]
-    [InlineData(true, "tiled", 3)]
-    public void CyclingWithoutFocusUsesTheCurrentWorkspaceAndItsFilters(bool special, string kind, long expected)
-    {
-        var core = Configured("windowrule = no_focus, class:quiet");
-        if (special)
-        {
-            core.Handle(new WindowAppeared(new WindowId(99), Area));
-            core.Handle(new Dispatch("togglespecialworkspace", "tools"));
-        }
-        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "quiet" } });
-        core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Dialog = true } });
-        core.Handle(new WindowAppeared(new WindowId(3), Area));
-        core.Handle(new WindowFocused(new WindowId(100), FocusCause.User));
-
-        Assert.Equal(new WindowId(expected), core.Handle(new Dispatch("cyclenext", kind)).Focus);
-    }
-
     [Fact]
     public void LayoutMessagesUseTheLayoutmsgDispatcher()
     {

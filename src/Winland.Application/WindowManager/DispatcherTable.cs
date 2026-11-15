@@ -30,7 +30,6 @@ public sealed partial class WindowManager
             // Programs and the daemon
             ["exec"] = new(static (m, _, a) => m.Exec(a)),
             ["exit"] = new(static (m, _, _) => m.ExitDaemon()),
-            ["sendshortcut"] = new(static (m, _, a) => m.SendShortcut(a)),
 
             // Workspaces and Monitors
             ["workspace"] = new(static (m, _, a) => m.WorkspaceDispatch(a)),
@@ -43,18 +42,13 @@ public sealed partial class WindowManager
             // Focus
             ["movefocus"] = new(static (m, _, a) => m.MoveFocusDirection(a), Traits: DispatcherTraits.WarpsToFocused | DispatcherTraits.WarpsToEmptyMonitor),
             ["focuswindow"] = new(static (m, _, a) => m.FocusWindow(a)),
-            ["cyclenext"] = new(static (m, _, a) => m.CycleNext(a), TakesWindow: true, Traits: DispatcherTraits.WarpsToFocused),
-            ["focusurgentorlast"] = new(static (m, _, _) => m.FocusUrgentOrLast(), Traits: DispatcherTraits.WarpsToFocused),
 
             // Windows
             ["killactive"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
-            ["closeall"] = new(static (m, _, _) => m.CloseAll()),
             ["movewindow"] = new(static (m, _, a) => m.MoveWindowDirection(a), TakesWindow: true),
             ["swapwindow"] = new(static (m, _, a) => m.SwapWindow(a), TakesWindow: true),
-            ["centerwindow"] = new(static (m, _, _) => m.CenterWindow(), TakesWindow: true),
             ["togglefloating"] = new(static (m, _, a) => m.FloatWindow(a)),
             ["pin"] = new(static (m, _, a) => m.PinWindow(a)),
-            ["pseudo"] = new(static (m, _, a) => m.PseudoWindow(a)),
             ["fullscreen"] = new(static (m, _, a) => m.FullscreenDispatcher(a), TakesWindow: true),
             ["resizeactive"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
             ["setprop"] = new(static (m, _, a) => m.SetPropDispatch(a)),
@@ -67,7 +61,6 @@ public sealed partial class WindowManager
             // Groups
             ["togglegroup"] = new(static (m, _, _) => m.ToggleGroup(), TakesWindow: true),
             ["changegroupactive"] = new(static (m, _, a) => m.ChangeGroupActive(a.Trim()), TakesWindow: true),
-            ["movegroupwindow"] = new(static (m, _, a) => m.MoveGroupWindow(a.Trim())),
             ["moveintogroup"] = new(static (m, _, a) => m.MoveIntoGroup(a.Trim()), TakesWindow: true),
             ["moveoutofgroup"] = new(static (m, _, a) => m.MoveOutOfGroup(a.Trim())),
 

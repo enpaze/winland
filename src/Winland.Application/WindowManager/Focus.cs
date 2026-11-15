@@ -148,7 +148,6 @@ public sealed partial class WindowManager
         else
             desk.Layout.NoteFocus(given);
 
-        _urgent.Remove(given);
         _focus.Confirm(given);
     }
 

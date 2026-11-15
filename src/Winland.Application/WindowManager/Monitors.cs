@@ -56,37 +56,6 @@ public sealed partial class WindowManager
         return false;
     }
 
-    // The window after or before this one on its Workspace in the order they opened, wrapping around, as Winland's
-    // window cycle walks them. A minimized window and one with nofocus are passed over, and a hidden Group member is
-    // not in the Layout to begin with. floating, when given, takes only floating windows or only tiles.
-    private WindowId? CycleFrom(LiveWorkspace desk, WindowId? current, bool previous, bool? floating = null)
-    {
-        var clients = desk.Layout.Clients;
-        var start = -1;
-        for (var i = 0; i < clients.Count; i++)
-        {
-            if (clients[i].Window == current)
-                start = i;
-        }
-
-        for (var step = 1; step <= (start < 0 ? clients.Count : clients.Count - 1); step++)
-        {
-            var index = start < 0 ? step - 1 : previous
-                ? (start - step + clients.Count) % clients.Count
-                : (start + step) % clients.Count;
-            var client = clients[index];
-            if (client.Minimized || HasNoFocus(client.Window))
-                continue;
-
-            if (floating is bool wanted && client.Floating != wanted)
-                continue;
-
-            return client.Window;
-        }
-
-        return null;
-    }
-
     private Outcome MoveWindowDirection(string arguments)
     {
         if (TryMonitorArgument(arguments, out var monitorText, out var silent))

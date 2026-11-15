@@ -14,7 +14,7 @@ public sealed partial class WindowManager
             if (dispatch.Dispatcher.Length == 0)
                 continue;
 
-            var next = ExecuteTriggered(dispatch.Dispatcher, dispatch.Arguments, match.Trigger);
+            var next = Execute(dispatch.Dispatcher, dispatch.Arguments);
             outcome = outcome is null ? next : outcome.Then(next);
         }
 
@@ -32,19 +32,6 @@ public sealed partial class WindowManager
             return [];
 
         return [new BindDispatch(match.Dispatcher, match.Arguments)];
-    }
-
-    private Outcome ExecuteTriggered(string name, string arguments, BindTrigger? trigger)
-    {
-        _trigger = trigger;
-        try
-        {
-            return Execute(name, arguments);
-        }
-        finally
-        {
-            _trigger = null;
-        }
     }
 
     // Runs a dispatcher from the table and stamps its outcome with the entry's traits. One that takes a window and is given

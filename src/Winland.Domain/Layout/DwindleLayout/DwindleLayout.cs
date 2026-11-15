@@ -68,17 +68,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return [];
     }
 
-    public IReadOnlyList<Placement> TogglePseudo(WindowId window)
-    {
-        var id = new ClientId(window.Value);
-        if (!_clients.Exists(client => client.Id == id))
-            return [];
-
-        _pseudo.Toggle(id);
-
-        return Placements();
-    }
-
     public IReadOnlyList<Placement> Add(
         WindowId window,
         Rectangle area,
@@ -143,7 +132,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
     public override IReadOnlyList<Placement> Remove(WindowId window)
     {
         var id = new ClientId(window.Value);
-        _pseudo.Forget(id);
         _natural.Remove(id);
         _limits.Remove(id);
         _drag.Forget(id);
@@ -254,8 +242,12 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         var right = box.X + box.Width == area.X + area.Width ? 0 : gaps.Right;
         var bottom = box.Y + box.Height == area.Y + area.Height ? 0 : gaps.Bottom;
         var presented = _options.KeepAspect(Shrink(box, left, top, right, bottom), _area, _nodes.Count);
-        _natural.TryGetValue(id, out var natural);
-        presented = _pseudo.Frame(id, presented, natural, _options.BorderFor(id));
+        var border = _options.BorderFor(id);
+        presented = new Rectangle(
+            presented.X + border,
+            presented.Y + border,
+            Math.Max(0, presented.Width - border - border),
+            Math.Max(0, presented.Height - border - border));
         return _limits.TryGetValue(id, out var limits) ? limits.ForTiles.Raise(presented, area) : presented;
     }
 

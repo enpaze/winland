@@ -351,17 +351,6 @@ public sealed partial class WindowManager
         return Present(desk, covered, placements);
     }
 
-    private Outcome ChangePseudo(WindowId window)
-    {
-        var desk = WorkspaceContaining(window);
-        if (desk is null)
-            return View([]);
-
-        var covered = desk.Covered();
-        var placements = desk.Layout.TogglePseudo(window);
-        return _workspaces.Shown.IsShown(desk.Id) ? Present(desk, covered, placements) : View([]);
-    }
-
     // A window changed its class. The class it had when it appeared stays, for initialClass. Its Client takes the new
     // class, and the rules are matched against it again. The events follow from the new State.
     private Outcome Reclass(WindowClassChanged reclassed)

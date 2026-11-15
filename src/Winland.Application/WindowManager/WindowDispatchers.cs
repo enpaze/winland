@@ -1,6 +1,6 @@
 namespace Winland.Application;
 
-/// <summary>Dispatchers that act on one window and the daemon: focus, float, swap, move to a Workspace, <c>closeall</c> and <c>exit</c>.</summary>
+/// <summary>Dispatchers that act on one window and the daemon: focus, float, swap, move to a Workspace and <c>exit</c>.</summary>
 public sealed partial class WindowManager
 {
     private Outcome FocusWindow(string arguments)
@@ -62,15 +62,6 @@ public sealed partial class WindowManager
         return _workspaces.Shown.IsShown(desk.Id)
             ? Present(desk, covered, placements)
             : View([]);
-    }
-
-    private Outcome PseudoWindow(string arguments)
-    {
-        var window = Select(arguments, emptyMeansActive: true);
-        if (window is not WindowId id)
-            return View([]);
-
-        return ChangePseudo(id);
     }
 
     private Outcome MoveWindowToWorkspace(string arguments, bool silent)
@@ -213,24 +204,4 @@ public sealed partial class WindowManager
 
     private Outcome Rejected(string error) =>
         View([]) with { Error = error };
-
-    // The same request killactive makes, so the application can still ask to save, for every Client.
-    // Workspace 1 of the focused Monitor is what shows
-    // afterwards, which closes a Special workspace open on that Monitor.
-    private Outcome CloseAll()
-    {
-        var closes = EveryClient().ConvertAll(client => client.Window);
-
-        var monitor = FocusedId();
-        if (_workspaces.Shown.SpecialOn(monitor) is null)
-        {
-            return SwitchTo(WorkspaceId.FromNumber(1, monitor), focus: null, consumed: false)
-                with { Closes = closes };
-        }
-
-        // Closing it first shows the Monitor's Workspace. Switching with it still open would leave it on top.
-        var concealed = CloseSpecial(monitor);
-        var shown = SwitchTo(WorkspaceId.FromNumber(1, monitor), focus: null, consumed: false);
-        return concealed.Then(shown) with { Closes = closes, Focus = _focus.Focused };
-    }
 }

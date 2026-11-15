@@ -243,28 +243,8 @@ public sealed partial class WindowAdapter : IDisposable
                 _core.NoteLaunched(id, launch);
         }
 
-        foreach (var kill in outcome.Kills)
-            Kill(kill);
-
         if (outcome.Exit)
             SessionHalt.Request();
-    }
-
-    // The owner is read from the window again, because the recorded process can be stale or the frame's host.
-    private static void Kill(KillRequest kill)
-    {
-        long? live = null;
-        if (kill.Window is WindowId window)
-        {
-            var hwnd = new HWND((nint)window.Value);
-            if (PInvoke.IsWindow(hwnd))
-                live = PackagedIdentity.OwnerProcess(hwnd);
-        }
-
-        if (ProcessTerminator.Target(kill.ProcessId, live, pid => pid is > 0 and <= uint.MaxValue ? PackagedIdentity.ExeFile((uint)pid) : "") is long target)
-            ProcessTerminator.TryTerminateOnSystem(target);
-        else
-            Console.Error.WriteLine("The window's process was not ended: it could not be told apart from the frame host.");
     }
 
     // SW_HIDE removes the window from the switcher: a hidden window is not visible,

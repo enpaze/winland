@@ -93,21 +93,6 @@ public sealed partial class WindowManager
             : View([]);
     }
 
-    private Outcome MoveGroupWindow(string text)
-    {
-        if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
-            return Rejected("error: no window found");
-
-        if (desk.GroupOf(id) is not WindowGroup group)
-            return Rejected("error: window not in a group");
-
-        var other = text is "b" or "prev"
-            ? (group.Current == 0 ? group.Count - 1 : group.Current - 1)
-            : (group.Current + 1 >= group.Count ? 0 : group.Current + 1);
-        group.MoveShownTo(other);
-        return View([]);
-    }
-
     private Outcome MoveIntoGroup(string text)
     {
         if (!TryGroupDirection(text, out var direction))

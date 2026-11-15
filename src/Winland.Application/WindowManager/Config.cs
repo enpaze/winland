@@ -158,8 +158,7 @@ public sealed partial class WindowManager
         AdoptLayout(desk, created);
     }
 
-    // Moves the Workspace onto <paramref name="created"/>, keeping each Client's floating state, and its pseudotile
-    // where the new Layout tiles it.
+    // Moves the Workspace onto <paramref name="created"/>, keeping each Client's floating state.
     private void AdoptLayout(LiveWorkspace desk, Layout created)
     {
         RankFocus(created);
@@ -170,12 +169,11 @@ public sealed partial class WindowManager
             return;
         }
 
-        var held = new List<(WindowId Window, Taken Taken, bool Pseudo)>();
+        var held = new List<(WindowId Window, Taken Taken)>();
         foreach (var client in desk.Layout.Clients.ToArray())
         {
-            var pseudo = desk.Layout.IsPseudo(client.Window);
             if (desk.Take(client.Window, out var taken))
-                held.Add((client.Window, taken, pseudo));
+                held.Add((client.Window, taken));
         }
 
         var focus = desk.Focus;
@@ -189,12 +187,8 @@ public sealed partial class WindowManager
             created.Fit(area, screen is { Arranged.Enabled: true } ? screen.Bounds : default);
 
         var monitor = screen is { Arranged.Enabled: true } ? screen.Bounds : default;
-        foreach (var (window, taken, pseudo) in held)
-        {
+        foreach (var (window, taken) in held)
             desk.Receive(window, taken, area, monitor);
-            if (pseudo)
-                created.TogglePseudo(window);
-        }
 
         if (focus is WindowId focused)
             created.NoteFocus(focused);

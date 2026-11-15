@@ -100,15 +100,9 @@ public sealed record Outcome(
 
     public string? Error { get; init; }
 
-    /// <summary>Terminate these Clients' processes, in order. The adapter performs it; tests pass a stand-in.</summary>
-    public IReadOnlyList<KillRequest> Kills { get; init; } = [];
-
 
     /// <summary>Stop the daemon after the command reply is written.</summary>
     public bool Exit { get; init; }
-
-    /// <summary>Keys to send on to a window. The adapter sends them; tests read them.</summary>
-    public IReadOnlyList<KeyRelay> Relays { get; init; } = [];
 
     /// <summary>Clients to raise above or lower below the other windows, in order.</summary>
     public IReadOnlyList<ZOrderRequest> ZOrder { get; init; } = [];
@@ -146,9 +140,7 @@ public sealed record Outcome(
             Warp = next.Warp ?? Warp,
             Cursor = next.Cursor ?? Cursor,
             Error = Error ?? next.Error,
-            Kills = [.. Kills, .. next.Kills],
             Exit = Exit || next.Exit,
-            Relays = [.. Relays, .. next.Relays],
             ZOrder = [.. ZOrder, .. next.ZOrder],
             IsEmpty = IsEmpty && next.IsEmpty,
         };
@@ -177,9 +169,7 @@ public sealed record Outcome(
         && ResetDecorations.Count == 0
         && Warp is null
         && Error is null
-        && Kills.Count == 0
         && !Exit
-        && Relays.Count == 0
         && ZOrder.Count == 0
         && ResizeCursor == applied.ResizeCursor
         && Cursor == applied.Cursor
@@ -248,12 +238,6 @@ public enum DispatcherTraits
 
     /// <summary>Puts the cursor in the middle of a Monitor it leaves with nothing to focus.</summary>
     WarpsToEmptyMonitor = 2,
-}
-
-/// <summary>A request to end the process that owns a Client. The adapter reads the owner of <see cref="Window"/> again when it acts.</summary>
-public readonly record struct KillRequest(long ProcessId)
-{
-    public WindowId? Window { get; init; }
 }
 
 /// <summary>A request to raise a Client to the top of the z-order, or lower it to the bottom.</summary>

@@ -119,7 +119,7 @@ public class TextRepliesTests
             bindn = , Escape, exec, quiet
             bindle = SUPER, Up, resizeactive, 0 -20
             bindd = SUPER, Q, Close the window, killactive
-            binddl = SUPER, X, Cut, sendshortcut, CTRL, X,
+            binddl = SUPER, X, Cut, exec, cut
             bindm = SUPER, mouse:272, movewindow
             bindm = SUPER, mouse:273, resizewindow 1
             bindmd = SUPER, mouse:274, Move, movewindow

@@ -82,22 +82,6 @@ public class SelectorDispatcherTests
     }
 
     [Fact]
-    public void PseudoUsesTheSelector()
-    {
-        var core = Flat();
-        core.Handle(new WindowAppeared(new WindowId(1), Wide)
-        {
-            Traits = WindowTraits.Normal with { Class = "Left" },
-            Bounds = new Rectangle(0, 0, 800, 600),
-        });
-        Appear(core, 2, "Right", "b");
-
-        var outcome = core.Handle(new Dispatch("pseudo", "class:Left"));
-
-        Assert.Equal(new Rectangle(80, 240, 800, 600), BoundsOf(outcome, 1));
-    }
-
-    [Fact]
     public void MoveToWorkspaceReadsTheSelectorAfterTheComma()
     {
         var core = new WindowManager();

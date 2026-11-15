@@ -1,15 +1,14 @@
 namespace Winland.Infrastructure;
 
 /// <summary>
-/// Applies cursor and relayed key requests from an outcome. Until <see cref="InstallSystem"/> the cursor is a
-/// stand-in and no key is sent, so tests that apply an outcome do not change the machine.
+/// Applies cursor requests from an outcome. Until <see cref="InstallSystem"/> the cursor is a
+/// stand-in, so tests that apply an outcome do not change the machine.
 /// </summary>
 public static class SessionEffects
 {
     private static readonly CursorIdle Idle = new(NullCursor.Instance, new SystemClock());
 
     private static CursorIdleTimer? _timer;
-    private static IKeyRelaySender? _relay;
     private static int _installed;
 
     public static void InstallSystem()
@@ -19,7 +18,6 @@ public static class SessionEffects
 
         Idle.Use(new Win32Cursor());
         _timer = new CursorIdleTimer(Idle);
-        _relay = new Win32KeyRelaySender();
     }
 
     public static void Apply(Outcome outcome)
@@ -35,17 +33,6 @@ public static class SessionEffects
 
         if (outcome.Warp is WarpTo warp)
             Idle.Warp(warp.Position);
-
-        Relay(outcome);
-    }
-
-    private static void Relay(Outcome outcome)
-    {
-        if (_relay is not IKeyRelaySender relay)
-            return;
-
-        foreach (var key in outcome.Relays)
-            relay.Send(key);
     }
 
     public static void NoteMove(Point position, PointerSource source = PointerSource.Mouse)
