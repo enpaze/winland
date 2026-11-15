@@ -5,7 +5,8 @@ public class AnimationTests
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
     private static readonly Rectangle Left = new(0, 0, 960, 1080);
     private static readonly Rectangle Right = new(960, 0, 960, 1080);
-    private static readonly Timing Default = new(Bezier.Default, 300);
+    private static readonly Timing WindowTiming = new(Bezier.Default, 300);
+    private static readonly Timing TransitionTiming = new(Bezier.Default, 800);
 
     [Fact]
     public void AnOpenedWindowPopsInAndFadesIn()
@@ -20,10 +21,10 @@ public class AnimationTests
         Assert.Equal(Area, motion.To);
         Assert.Equal(new Rectangle(957, 537, 5, 5), motion.From);
         Assert.True(motion.Warp);
-        Assert.Equal(Default, motion.Move);
+        Assert.Equal(WindowTiming, motion.Move);
         Assert.Equal(0, motion.FadeFrom);
         Assert.Equal(1, motion.FadeTo);
-        Assert.Equal(Default, motion.Fade);
+        Assert.Equal(TransitionTiming, motion.Fade);
         Assert.Equal(MotionEnd.None, motion.End);
         Assert.Equal(Area, motion.Rest);
     }
@@ -41,7 +42,7 @@ public class AnimationTests
         Assert.Equal(Left, moved.To);
         Assert.Equal(Area, moved.From);
         Assert.False(moved.Warp);
-        Assert.Equal(Default, moved.Move);
+        Assert.Equal(WindowTiming, moved.Move);
         Assert.Null(moved.Fade);
         Assert.Contains(outcome.Motions, motion => motion.Window == new WindowId(2) && motion.FadeFrom == 0);
     }
@@ -76,7 +77,7 @@ public class AnimationTests
         Assert.Equal(Left with { X = -1920 }, first.To);
         Assert.Equal(Left, first.Rest);
         Assert.Equal(MotionEnd.Hide, first.End);
-        Assert.Equal(Default, first.Move);
+        Assert.Equal(TransitionTiming, first.Move);
         Assert.Null(first.Fade);
         var second = Assert.Single(outcome.Motions, motion => motion.Window == new WindowId(2));
         Assert.Equal(Right with { X = 960 - 1920 }, second.To);
@@ -125,7 +126,7 @@ public class AnimationTests
         var grown = Assert.Single(into.Motions, motion => motion.Window == new WindowId(2));
         Assert.Equal(Right, grown.From);
         Assert.Equal(Area, grown.To);
-        Assert.Equal(Default, grown.Move);
+        Assert.Equal(WindowTiming, grown.Move);
     }
 
     [Fact]
@@ -226,12 +227,12 @@ public class AnimationTests
         var left = Assert.Single(outcome.Motions, motion => motion.Window == new WindowId(2));
         Assert.Equal((byte)255, focused.AlphaTo);
         Assert.True(focused.AlphaFrom < 255);
-        Assert.Equal(Default, focused.Alpha);
+        Assert.Equal(TransitionTiming, focused.Alpha);
         Assert.Equal(left.AlphaFrom, focused.AlphaTo);
         Assert.Equal(focused.AlphaFrom, left.AlphaTo);
         Assert.Equal(DecorationOptions.Documented.InactiveBorder, focused.BorderFrom);
         Assert.Equal(DecorationOptions.Documented.ActiveBorder, focused.BorderTo);
-        Assert.Equal(new Timing(Bezier.Default, 300), focused.Border);
+        Assert.Equal(TransitionTiming, focused.Border);
         Assert.Null(focused.Move);
         Assert.Equal(Left, focused.To);
     }
@@ -302,7 +303,7 @@ public class AnimationTests
         animator.Step(400);
 
         Play(animator, Tap(core, "1"), now: 400);
-        var landed = animator.Step(400 + Default.Milliseconds);
+        var landed = animator.Step(400 + TransitionTiming.Milliseconds);
 
         Assert.All(landed, frame => Assert.True(frame.Done));
         Assert.Equal(Left, Assert.Single(landed, frame => frame.Window == new WindowId(1)).Bounds);

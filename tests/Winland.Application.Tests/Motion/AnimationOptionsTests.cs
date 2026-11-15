@@ -10,7 +10,19 @@ public class AnimationOptionsTests
         var second = core.Handle(new WindowAppeared(new WindowId(2), Area));
 
         Assert.Equal(new Timing(Bezier.Default, 300), Assert.Single(first.Motions).Move);
+        Assert.Equal(new Timing(Bezier.Default, 800), Assert.Single(first.Motions).Fade);
         Assert.Equal(new Timing(Bezier.Default, 300), Assert.Single(second.Motions, motion => motion.Window == new WindowId(1)).Move);
+    }
+
+    [Fact]
+    public void WorkspaceTransitionsKeepTheirEightHundredMilliseconds()
+    {
+        var core = new WindowManager();
+        core.Handle(new WindowAppeared(new WindowId(1), Area));
+
+        var switched = core.Handle(new Dispatch("workspace", "2"));
+
+        Assert.Equal(new Timing(Bezier.Default, 800), Assert.Single(switched.Motions).Move);
     }
 
     [Fact]

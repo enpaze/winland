@@ -112,6 +112,9 @@ public sealed partial class WindowManager
         if (_props.Own(window, active ? WindowProp.ActiveBorderColor : WindowProp.InactiveBorderColor) is { } set)
             return set;
 
+        if (WorkspaceContaining(window)?.GroupOf(window) is not null)
+            return active ? _config.Groups.ActiveBorder : _config.Groups.InactiveBorder;
+
         return active ? _config.Decoration.ActiveBorder : _config.Decoration.InactiveBorder;
     }
 }

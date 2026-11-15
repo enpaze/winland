@@ -7,6 +7,10 @@ public sealed record GroupOptions
 
     public GroupBarStyle Bar { get; init; } = GroupBarStyle.Documented;
 
+    public BorderColor ActiveBorder { get; private init; } = new(0x66, 0xFF, 0xFF, 0x00);
+
+    public BorderColor InactiveBorder { get; private init; } = new(0x66, 0x77, 0x77, 0x00);
+
     internal static OptionSet<GroupOptions> Options { get; } = new(
     [
         OfBar("font_family", OptionValue.Text, b => b.FontFamily, (b, v) => b with { FontFamily = v }),
@@ -23,6 +27,8 @@ public sealed record GroupOptions
 
     private static GroupOptions InContrast(HighContrast colors) => Documented with
     {
+        ActiveBorder = colors.Highlight,
+        InactiveBorder = colors.GrayText,
         Bar = Documented.Bar with { TextColor = colors.Text, Active = colors.Highlight, Inactive = colors.GrayText },
     };
 

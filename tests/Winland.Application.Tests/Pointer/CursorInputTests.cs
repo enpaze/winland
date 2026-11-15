@@ -3,12 +3,12 @@ namespace Winland.Application.Tests;
 public class CursorInputTests
 {
     [Fact]
-    public void DocumentedCursorDoesNotWarpOrHide()
+    public void DocumentedCursorFollowsFocusAndHidesOnTyping()
     {
         var options = CursorOptions.From(ConfigParser.Parse(""));
 
         Assert.False(options.NoWarps);
-        Assert.False(options.HideOnKeyPress);
+        Assert.True(options.HideOnKeyPress);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class CursorInputTests
                 new ConfigWarning(2, "Unsupported keyword 'input:scroll_factor'."),
             ],
             document.Warnings);
-        Assert.Equal(new CursorBehavior(false), outcome.Cursor);
+        Assert.Equal(new CursorBehavior(true), outcome.Cursor);
     }
 
     [Fact]

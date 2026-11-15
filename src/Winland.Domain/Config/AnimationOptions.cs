@@ -7,7 +7,9 @@ public sealed record AnimationOptions
 
     public bool Enabled { get; init; } = true;
 
-    public Timing? Timing => Enabled ? new(Bezier.Default, 300) : null;
+    public Timing? WindowTiming => Enabled ? new(Bezier.Default, 300) : null;
+
+    public Timing? TransitionTiming => Enabled ? new(Bezier.Default, 800) : null;
 
     internal static OptionSet<AnimationOptions> Options { get; } = new(
     [

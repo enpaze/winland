@@ -152,11 +152,12 @@ public sealed class Animator
         foreach (var (window, entry) in _entries.ToArray())
         {
             var frame = Show(window, entry, now, final: false);
-            entry.Geometry = Done(entry.Geometry, now);
             entry.Fade = Done(entry.Fade, now);
             entry.Alpha = Done(entry.Alpha, now);
             entry.Border = Done(entry.Border, now);
-            if (entry.Geometry is null && entry.Fade is null && entry.Alpha is null && entry.Border is null)
+            // Keep the geometry's goal until the other channels finish too: the stand-in still owns the window's
+            // final placement while a longer fade or border transition runs.
+            if (!Running(entry.Geometry, now) && entry.Fade is null && entry.Alpha is null && entry.Border is null)
             {
                 frame = Rested(frame, entry);
                 _entries.Remove(window);

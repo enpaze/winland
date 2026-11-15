@@ -124,7 +124,7 @@ public sealed partial class WindowManager
                 if (!TrySwitch(client.Workspace, entering, out var left))
                     continue;
 
-                var timing = Options.Timing;
+                var timing = Options.TransitionTiming;
                 if (timing is null)
                     continue;
 
@@ -178,15 +178,15 @@ public sealed partial class WindowManager
             if (_change.HiddenBefore.Contains(window) || from == bounds)
                 return;
 
-            if (Options.Timing is Timing move)
+            if (Options.WindowTiming is Timing move)
                 _motions[window] = new Motion(window, bounds) { From = from, Move = move };
         }
 
         // Alpha and border changes of a window that stays shown.
         public void Switches(Dictionary<WindowId, Decoration> previous, Dictionary<WindowId, Decoration> painted)
         {
-            var alphaTiming = Options.Timing;
-            var borderTiming = Options.Timing;
+            var alphaTiming = Options.TransitionTiming;
+            var borderTiming = Options.TransitionTiming;
             if (alphaTiming is null && borderTiming is null)
                 return;
 
@@ -225,8 +225,8 @@ public sealed partial class WindowManager
 
         private void Open(Client client, Rectangle bounds)
         {
-            var move = Options.Timing;
-            var fade = Options.Timing;
+            var move = Options.WindowTiming;
+            var fade = Options.TransitionTiming;
             if (move is null && fade is null)
                 return;
 

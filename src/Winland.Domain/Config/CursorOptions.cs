@@ -4,7 +4,7 @@ public sealed record CursorOptions
 {
     public bool NoWarps { get; init; }
 
-    public bool HideOnKeyPress { get; init; }
+    public bool HideOnKeyPress { get; init; } = true;
 
     public static CursorOptions Documented { get; } = new();
 

@@ -13,6 +13,42 @@ public class GroupTests
     private const int BarHeight = 21;
 
     [Fact]
+    public void ABackgroundGroupMemberLeavesTheShownMemberFocusedWhenFollowingIsOff()
+    {
+        var core = Opened("input:follow_mouse = false\n", First);
+        core.Execute("dispatch togglegroup");
+
+        var opened = core.Handle(Appear(Second, "two"));
+
+        Assert.Equal(First, Assert.Single(opened.GroupBars).Shown);
+        Assert.Contains(Second, opened.State.Hidden.Select(client => client.Window));
+        Assert.Contains("\"address\":\"0x1\"", core.Execute("j/activewindow").Text, StringComparison.Ordinal);
+        var clicked = core.Handle(new WindowFocused(Second, FocusCause.User));
+        Assert.Equal(Second, clicked.Focus);
+    }
+
+    [Fact]
+    public void GroupBordersKeepTheirFixedColorsWhenOtherColorsChange()
+    {
+        var core = Opened("""
+            general:col.active_border = 0xffff0000
+            general:col.inactive_border = 0xff0000ff
+            group:groupbar:col.active = 0xff00ff00
+            group:groupbar:col.inactive = 0xffffffff
+            """, First);
+        var grouped = core.Execute("dispatch togglegroup").Effect;
+        Assert.Equal(new BorderColor(0x66, 0xFF, 0xFF, 0), Decoration(grouped, First).Border);
+
+        var otherWorkspace = core.Handle(new WindowAppeared(Second, Area)
+        {
+            Traits = WindowTraits.Normal with { Dialog = true },
+        });
+
+        Assert.Equal(new BorderColor(0x66, 0x77, 0x77, 0), Decoration(otherWorkspace, First).Border);
+        Assert.Equal(new BorderColor(0xFF, 0xFF, 0, 0), Decoration(otherWorkspace, Second).Border);
+    }
+
+    [Fact]
     public void ToggleGroupMakesAGroupOfOneWithABar()
     {
         var core = Opened(First);

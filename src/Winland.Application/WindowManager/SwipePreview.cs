@@ -86,8 +86,8 @@ public sealed partial class WindowManager
             return View([]);
 
         var (vertical, span) = SwipeSpan(MonitorById(swipe.Monitor)?.Bounds ?? _area);
-        var back = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.Timing : null;
-        var away = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.Timing : null;
+        var back = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.TransitionTiming : null;
+        var away = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.TransitionTiming : null;
         var motions = new List<Motion>();
         var hide = new List<WindowId>();
         var side = Pixels(swipe.Delta < 0 ? -span : span);
