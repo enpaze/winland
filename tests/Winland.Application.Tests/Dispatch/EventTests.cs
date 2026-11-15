@@ -307,8 +307,10 @@ public class EventTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(0xFF), Area));
 
-        var lifted = core.Execute("dispatch togglefloating address:0x1");
-        var dropped = core.Execute("dispatch togglefloating address:0x1");
+        core.Execute("dispatch focuswindow address:0x1");
+        var lifted = core.Execute("dispatch togglefloating");
+        core.Execute("dispatch focuswindow address:0x1");
+        var dropped = core.Execute("dispatch togglefloating");
 
         Assert.Equal(["changefloatingmode>>1,1"], Lines(lifted));
         Assert.Equal(["changefloatingmode>>1,0"], Lines(dropped));

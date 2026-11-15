@@ -64,7 +64,8 @@ public class FloatingLayerTests
         Open(core, 2, "float a");
         Open(core, 3, "float b");
         Open(core, 4, "float c");
-        core.Execute("dispatch movetoworkspacesilent 2,address:0x4");
+        core.Execute("dispatch focuswindow address:0x4");
+        core.Execute("dispatch movetoworkspacesilent 2");
 
         Assert.Equal([new WindowId(2), new WindowId(3)], core.FloatingAbove(new WindowId(1)));
         Assert.Empty(core.FloatingAbove(new WindowId(2)));
@@ -76,7 +77,8 @@ public class FloatingLayerTests
     {
         var core = Desk();
         Open(core, 2, "float a");
-        core.Execute("dispatch movetoworkspacesilent 2,address:0x2");
+        core.Execute("dispatch focuswindow address:0x2");
+        core.Execute("dispatch movetoworkspacesilent 2");
         Open(core, 1, "tile");
         core.Handle(new WindowFocused(new WindowId(2)));
 

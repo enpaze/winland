@@ -11,10 +11,13 @@ public class DwindleLayoutTests
             desk.Spawn(name);
 
         desk.Ok("focuswindow", "class:c");
-        desk.Ok("togglefloating", "class:c");
+        desk.Ok("focuswindow", "class:c");
+        desk.Ok("togglefloating");
         desk.Place("c", 360, 90, 1200, 900);
-        desk.Ok("togglefloating", "class:c");
-        desk.Ok("togglefloating", "class:c");
+        desk.Ok("focuswindow", "class:c");
+        desk.Ok("togglefloating");
+        desk.Ok("focuswindow", "class:c");
+        desk.Ok("togglefloating");
 
         Assert.Equal("1200,900", desk.PlaceOf("c").Size);
     }
@@ -27,10 +30,12 @@ public class DwindleLayoutTests
         var desk = new TestDesktop();
         desk.Spawn("a");
         desk.Spawn("b");
-        desk.Ok("togglefloating", "class:a");
+        desk.Ok("focuswindow", "class:a");
+        desk.Ok("togglefloating");
         desk.MovePointer(x, 540);
 
-        desk.Ok("togglefloating", "class:a");
+        desk.Ok("focuswindow", "class:a");
+        desk.Ok("togglefloating");
 
         Assert.Equal(left, desk.Placed("a").X < desk.Placed("b").X);
     }
@@ -209,7 +214,8 @@ public class DwindleLayoutTests
         desk.Ok("focuswindow", "class:red");
         ExpectUnmovedByMaximize(desk, names);
 
-        desk.Ok("togglefloating", "class:red");
+        desk.Ok("focuswindow", "class:red");
+        desk.Ok("togglefloating");
         ExpectUnmovedByMaximize(desk, names);
     }
 

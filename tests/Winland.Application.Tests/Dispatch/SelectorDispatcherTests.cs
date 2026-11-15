@@ -58,106 +58,29 @@ public class SelectorDispatcherTests
         Assert.Null(reply.Effect.Focus);
     }
 
-    [Fact]
-    public void ToggleFloatingHonorsASelector()
+    [Theory]
+    [InlineData("togglefloating class:b")]
+    [InlineData("pin class:b")]
+    [InlineData("pin enable class:b")]
+    [InlineData("movetoworkspace 2,class:b")]
+    [InlineData("movetoworkspacesilent 2,address:0x2")]
+    [InlineData("swapwindow class:b")]
+    [InlineData("moveintogroup address:0x2")]
+    [InlineData("moveoutofgroup class:b")]
+    [InlineData("movewindow l,address:0x2")]
+    [InlineData("fullscreen 1,address:0x2")]
+    [InlineData("togglegroup ,class:b")]
+    [InlineData("changegroupactive f,class:b")]
+    public void ADispatcherGivenAnotherWindowIsRefusedAndChangesNothing(string line)
     {
-        var core = Flat();
-        Appear(core, 1, "keep", "a");
-        Appear(core, 2, "go", "b");
+        var desk = new TestDesktop();
+        desk.Spawn("a");
+        desk.Spawn("b");
+        desk.Ok("focuswindow", "class:a");
+        var before = desk.Send("j/clients");
 
-        var floated = core.Handle(new Dispatch("togglefloating", "class:go"));
-
-        Assert.True(Client(floated, 2).Floating);
-        Assert.False(Client(floated, 1).Floating);
-
-        var missed = core.Handle(new Dispatch("togglefloating", "class:missing"));
-        Assert.True(Client(missed, 2).Floating);
-
-        var tiled = core.Handle(new Dispatch("togglefloating", "class:go"));
-        Assert.False(Client(tiled, 2).Floating);
-
-        var toggled = core.Handle(new Dispatch("togglefloating", "class:keep"));
-        Assert.True(Client(toggled, 1).Floating);
-        Assert.False(Client(toggled, 2).Floating);
-    }
-
-    [Fact]
-    public void MoveToWorkspaceReadsTheSelectorAfterTheComma()
-    {
-        var core = new WindowManager();
-        Appear(core, 1, "stay", "a");
-        Appear(core, 2, "go", "b");
-
-        var silent = core.Handle(new Dispatch("movetoworkspacesilent", "3,class:go"));
-
-        Assert.Equal(new WorkspaceId("1"), silent.State.ActiveWorkspace);
-        Assert.Equal(new WorkspaceId("3"), Client(silent, 2).Workspace);
-        Assert.Equal(new WorkspaceId("1"), Client(silent, 1).Workspace);
-        Assert.Null(core.Handle(new Dispatch("movetoworkspace", "4,class:missing")).Focus);
-
-        var followed = core.Handle(new Dispatch("movetoworkspace", "4,class:go"));
-
-        Assert.Equal(new WorkspaceId("4"), followed.State.ActiveWorkspace);
-        Assert.Equal(new WorkspaceId("4"), Client(followed, 2).Workspace);
-        Assert.Equal(new WindowId(2), followed.Focus);
-    }
-
-    [Fact]
-    public void SwapWindowExchangesADirectionOrASelector()
-    {
-        var core = Flat();
-        Appear(core, 1, "Left", "a");
-        Appear(core, 2, "Right", "b");
-
-        var directed = core.Handle(new Dispatch("swapwindow", "l"));
-
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(directed, 2));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(directed, 1));
-
-        var selected = core.Handle(new Dispatch("swapwindow", "class:Left"));
-
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(selected, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(selected, 2));
-        Assert.Equal("error: No window to swap with", core.Execute("dispatch swapwindow class:missing").Text);
-    }
-
-    [Fact]
-    public void SwapWindowTradesWorkspacesWithAClientOnAnotherOne()
-    {
-        var core = Flat();
-        Appear(core, 1, "Left", "a");
-        Appear(core, 2, "Right", "b");
-        core.Handle(new Dispatch("movetoworkspacesilent", "2"));
-
-        var swapped = core.Handle(new Dispatch("swapwindow", "class:Right"));
-
-        Assert.Null(swapped.Error);
-        Assert.Equal(WorkspaceId.FromNumber(1), Client(swapped, 2).Workspace);
-        Assert.Equal(WorkspaceId.FromNumber(2), Client(swapped, 1).Workspace);
-        Assert.Contains(new WindowId(2), swapped.Show);
-        Assert.Contains(new WindowId(1), swapped.Hide);
-        Assert.Equal(new WindowId(2), swapped.Focus);
-        Assert.Equal("error: Can't swap a window with itself", core.Execute("dispatch swapwindow class:Right").Text);
-    }
-
-    [Fact]
-    public void SwapWindowExchangesATileAndAFloatingClient()
-    {
-        var core = new WindowManager(ConfigParser.Parse(
-            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:^(Float)$\n"));
-        Appear(core, 1, "Tile", "a");
-        Appear(core, 2, "Float", "b");
-        var before = core.Handle(new Dispatch("focuswindow", "class:Tile"));
-        var tile = Client(before, 1).Bounds;
-        var floated = Client(before, 2).Bounds;
-
-        var swapped = core.Handle(new Dispatch("swapwindow", "class:Float"));
-
-        Assert.Null(swapped.Error);
-        Assert.Equal(tile, BoundsOf(swapped, 2));
-        Assert.False(Client(swapped, 2).Floating);
-        Assert.Equal(floated, BoundsOf(swapped, 1));
-        Assert.True(Client(swapped, 1).Floating);
+        Assert.StartsWith("error:", desk.Dispatch(line), StringComparison.Ordinal);
+        Assert.Equal(before, desk.Send("j/clients"));
     }
 
     [Fact]

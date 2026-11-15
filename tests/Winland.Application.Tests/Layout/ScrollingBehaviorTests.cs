@@ -136,7 +136,8 @@ public class ScrollingBehaviorTests
     {
         var desk = new TestDesktop(Scrolling);
         desk.Spawn("under");
-        desk.Ok("togglefloating", "class:under");
+        desk.Ok("focuswindow", "class:under");
+        desk.Ok("togglefloating");
 
         desk.Spawn("tiledOne");
         desk.Ok("fullscreen", "0");
@@ -291,7 +292,8 @@ public class ScrollingBehaviorTests
         desk.Ok("focuswindow", "class:red");
         ExpectUnmovedByMaximize(desk, names);
 
-        desk.Ok("togglefloating", "class:red");
+        desk.Ok("focuswindow", "class:red");
+        desk.Ok("togglefloating");
         ExpectUnmovedByMaximize(desk, names);
     }
 

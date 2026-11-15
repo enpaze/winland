@@ -23,31 +23,9 @@ public class WindowBehaviorTests
         desk.Ok("focuswindow", "class:kitty_B");
         Assert.Equal(at, desk.ActivePlace().At);
 
-        desk.Dispatch("focuswindow", "class:kitty_A");
-        at = desk.ActivePlace().At;
-        desk.Ok("swapwindow", "class:kitty_B");
-        desk.Ok("focuswindow", "class:kitty_B");
-        Assert.Equal(at, desk.ActivePlace().At);
-
-        desk.Dispatch("focuswindow", "class:kitty_B");
-        var address = Address(desk.ActiveWindow());
-        desk.Dispatch("focuswindow", "class:kitty_A");
-        at = desk.ActivePlace().At;
-        desk.Ok("swapwindow", "address:" + address);
-        desk.Ok("focuswindow", "address:" + address);
-        Assert.Equal(at, desk.ActivePlace().At);
-
         desk.Ok("fullscreen", "0");
         Assert.Contains("Can't swap fullscreen window", desk.Dispatch("swapwindow", "l"), StringComparison.Ordinal);
         desk.Ok("fullscreen", "0");
-
-        desk.Dispatch("focuswindow", "class:kitty_B");
-        address = Address(desk.ActiveWindow());
-        var workspace = WorkspaceName(desk.ActiveWindow());
-        desk.Ok("movetoworkspacesilent", "3");
-        desk.Ok("swapwindow", "address:" + address);
-        desk.Dispatch("focuswindow", "class:kitty_B");
-        Assert.Equal(workspace, WorkspaceName(desk.ActiveWindow()));
     }
 
     [Fact]
@@ -182,8 +160,10 @@ public class WindowBehaviorTests
         desk.Dispatch("workspace", "1337");
         desk.Spawn("kitty");
 
-        desk.Ok("togglefloating", "class:kitty");
-        desk.Ok("pin", "class:kitty");
+        desk.Ok("focuswindow", "class:kitty");
+        desk.Ok("togglefloating");
+        desk.Ok("focuswindow", "class:kitty");
+        desk.Ok("pin");
 
         var active = desk.ActiveWindow();
         Assert.Equal(1337, TestDesktop.WorkspaceId(active));
@@ -195,7 +175,8 @@ public class WindowBehaviorTests
         Assert.Equal(1338, TestDesktop.WorkspaceId(active));
         Assert.True(TestDesktop.Pinned(active));
 
-        desk.Ok("togglefloating", "class:kitty");
+        desk.Ok("focuswindow", "class:kitty");
+        desk.Ok("togglefloating");
 
         active = desk.ActiveWindow();
         Assert.Equal(1338, TestDesktop.WorkspaceId(active));
@@ -228,10 +209,14 @@ public class WindowBehaviorTests
         var desk = new TestDesktop();
         desk.Spawn("kitty_14038");
 
-        desk.Ok("movetoworkspacesilent", "special:a,class:kitty_14038");
-        desk.Ok("togglefloating", "class:kitty_14038");
-        desk.Ok("pin", "class:kitty_14038");
-        desk.Ok("togglefloating", "class:kitty_14038");
+        desk.Ok("focuswindow", "class:kitty_14038");
+        desk.Ok("movetoworkspacesilent", "special:a");
+        desk.Ok("focuswindow", "class:kitty_14038");
+        desk.Ok("togglefloating");
+        desk.Ok("focuswindow", "class:kitty_14038");
+        desk.Ok("pin");
+        desk.Ok("focuswindow", "class:kitty_14038");
+        desk.Ok("togglefloating");
     }
 
     [Fact]
@@ -243,14 +228,17 @@ public class WindowBehaviorTests
 
         desk.Spawn("kitty_14134");
 
-        desk.Ok("togglefloating", "class:kitty_14134");
-        desk.Ok("pin", "class:kitty_14134");
+        desk.Ok("focuswindow", "class:kitty_14134");
+        desk.Ok("togglefloating");
+        desk.Ok("focuswindow", "class:kitty_14134");
+        desk.Ok("pin");
 
         // Disabling the monitor takes it away, as unplugging it does.
         desk.RemoveMonitor("HEADLESS-4");
 
         // The reference answers an error here and only checks that it is still alive.
-        desk.Dispatch("pin", "class:kitty_14134");
+        desk.Ok("focuswindow", "class:kitty_14134");
+        desk.Dispatch("pin");
 
         Assert.Equal("ok", desk.Send("reload"));
         CloseAll(desk);
@@ -532,8 +520,10 @@ public class WindowBehaviorTests
         desk.Spawn("kitty_normal");
 
         desk.Spawn("kitty_pinned");
-        desk.Ok("togglefloating", "class:kitty_pinned");
-        desk.Ok("pin", "enable class:kitty_pinned");
+        desk.Ok("focuswindow", "class:kitty_pinned");
+        desk.Ok("togglefloating");
+        desk.Ok("focuswindow", "class:kitty_pinned");
+        desk.Ok("pin", "enable");
 
         desk.Ok("togglespecialworkspace", "fallback");
 

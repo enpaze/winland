@@ -4,27 +4,6 @@ namespace Winland.Application;
 public sealed partial class WindowManager
 {
     // The window a dispatcher given a window acts on in place of the active one, while it runs.
-    private WindowId? _actingOn;
-
-    private Outcome ExecuteOn(string name, string arguments, string selector)
-    {
-        if (selector.Length == 0)
-            return Execute(name, arguments);
-
-        if (WindowSelector.Find(selector, ActiveWindow(), EveryClient()) is not WindowId target)
-            return Rejected("error: window not found");
-
-        var outer = _actingOn;
-        _actingOn = target;
-        try
-        {
-            return Execute(name, arguments);
-        }
-        finally
-        {
-            _actingOn = outer;
-        }
-    }
 
     private static IReadOnlyList<WindowRule> JoinRules(IReadOnlyList<WindowRule> rules, IReadOnlyList<WindowRule> followed)
     {
@@ -43,9 +22,6 @@ public sealed partial class WindowManager
 
     private WindowId? ActiveWindow()
     {
-        if (_actingOn is WindowId acting)
-            return Find(acting) is null ? null : acting;
-
         if (_focus.Focused is not WindowId active)
             return null;
 

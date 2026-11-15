@@ -78,9 +78,6 @@ public sealed partial class WindowManager
             return Present(desk, covered, stayed);
         }
 
-        // A direction onto the neighbouring Monitor follows only for the focused window. Another window is assigned
-        // there and the focus stays.
-        var stay = !DirectionFollows();
         if (MonitorHolding(desk) is LiveMonitor origin
             && desk.Layout.TryBounds(window, out var box))
         {
@@ -90,7 +87,7 @@ public sealed partial class WindowManager
             var focal = MonitorSelector.Focal(Ideal(desk, window, box), direction);
             var hit = MonitorSelector.At(Targets(), focal);
             if (hit is MonitorTarget other && other.Id != origin.Id && MonitorOf(other) is LiveMonitor across)
-                return MoveActiveOnto(across, stay, focal);
+                return MoveActiveOnto(across, silent: false, focal);
         }
 
         var placements = desk.Layout.MoveWindow(window, arguments);
@@ -100,13 +97,10 @@ public sealed partial class WindowManager
             && TargetOf(home) is MonitorTarget from
             && MonitorSelector.InDirection(Targets(), from, direction) is MonitorTarget neighbor
             && MonitorOf(neighbor) is LiveMonitor next)
-            return MoveActiveOnto(next, stay);
+            return MoveActiveOnto(next, silent: false);
 
         return Present(desk, covered, placements);
     }
-
-    // A named window is followed when it is the focused one, or when the dispatcher names no window.
-    private bool DirectionFollows() => _actingOn is not WindowId acting || _focus.Focused == acting;
 
     private Outcome FocusMonitorDispatch(string arguments)
     {

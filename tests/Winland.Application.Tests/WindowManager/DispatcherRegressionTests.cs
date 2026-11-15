@@ -63,33 +63,6 @@ public class DispatcherRegressionTests
     }
 
     [Fact]
-    public void SwapAcrossTwoShownWorkspacesKeepsFocusOnTheSourceMonitor()
-    {
-        var core = new WindowManager();
-        core.Handle(new MonitorsChanged([Display("left", 0, 1000, 800), Display("right", 1000, 1000, 800)]));
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new WindowAppeared(new WindowId(2), new Rectangle(1000, 0, 1000, 800)));
-        core.Handle(new Dispatch("focuswindow", "address:0x1"));
-
-        var swapped = core.Handle(new Dispatch("swapwindow", "address:0x2"));
-
-        Assert.Equal(new WindowId(2), swapped.Focus);
-        Assert.Equal(new MonitorId(0), swapped.State.ActiveMonitor);
-    }
-
-    [Fact]
-    public void MoveToWorkspaceKeepsCommasInTheWindowSelector()
-    {
-        var core = new WindowManager();
-        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "Hello, World" } });
-
-        var moved = core.Handle(new Dispatch("movetoworkspace", "2,title:Hello, World"));
-
-        Assert.Null(moved.Error);
-        Assert.Equal("2", Client(moved, 1).Workspace.Name);
-    }
-
-    [Fact]
     public void PropertiesCanAddressAHiddenGroupMember()
     {
         var core = new WindowManager();

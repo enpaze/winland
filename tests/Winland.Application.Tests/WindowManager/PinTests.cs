@@ -192,23 +192,6 @@ public class PinTests
     }
 
     [Fact]
-    public void SelectorEnablesOneClient()
-    {
-        var core = Floating();
-        core.Handle(new WindowAppeared(new WindowId(2), Area)
-        {
-            Traits = WindowTraits.Normal with { Class = "other" },
-        });
-        core.Execute("dispatch togglefloating class:other");
-
-        var reply = core.Execute("dispatch pin enable class:other");
-
-        Assert.Equal(["pin>>2,1"], Lines(reply));
-        Assert.False(ClientOf(reply.Effect, Window).Pinned);
-        Assert.True(ClientOf(reply.Effect, new WindowId(2)).Pinned);
-    }
-
-    [Fact]
     public void APinnedClientIsNotMovedButTheSpecialWorkspaceStillOpens()
     {
         var core = Floating();
