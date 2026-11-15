@@ -476,14 +476,14 @@ public class ConfigTests
     {
         var source = new MemorySource(new Dictionary<string, string>
         {
-            ["inner.conf"] = "dwindle {\n    preserve_split = true\n",
+            ["inner.conf"] = "general {\n    border_size = 3\n",
         });
 
         var document = ConfigParser.Parse("source = inner.conf\ngeneral:gaps_in = 1\n", source);
 
-        Assert.Equal(new ConfigWarning(1, "Unclosed category 'dwindle'.", "inner.conf"), Assert.Single(document.Warnings));
+        Assert.Equal(new ConfigWarning(1, "Unclosed category 'general'.", "inner.conf"), Assert.Single(document.Warnings));
         Assert.Equal(
-            new[] { new Setting("dwindle:preserve_split", "true"), new Setting("general:gaps_in", "1") },
+            new[] { new Setting("general:border_size", "3"), new Setting("general:gaps_in", "1") },
             document.Settings);
     }
 

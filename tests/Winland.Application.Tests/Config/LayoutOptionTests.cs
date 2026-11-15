@@ -172,11 +172,9 @@ public class LayoutOptionTests
     }
 
     [Fact]
-    public void PreserveSplitKeepsTheDirectionWhenTheContainerChangesShape()
+    public void ASplitKeepsItsDirectionWhenTheContainerChangesShape()
     {
-        var core = Configured(FlatConfig("""
-            dwindle:preserve_split = yes
-            """));
+        var core = Configured(FlatConfig(""));
         core.Handle(Appeared(1, Wide));
         core.Handle(Appeared(2, Wide));
         core.Handle(Appeared(3, Wide));
@@ -188,11 +186,9 @@ public class LayoutOptionTests
     }
 
     [Fact]
-    public void PreservedSplitSurvivesMinimizeAndRestore()
+    public void ASplitsDirectionSurvivesMinimizeAndRestore()
     {
-        var core = Configured(FlatConfig("""
-            dwindle:preserve_split = true
-            """));
+        var core = Configured(FlatConfig(""));
         core.Handle(Appeared(1, Wide));
         core.Handle(Appeared(2, Wide));
         core.Handle(Appeared(3, Wide));

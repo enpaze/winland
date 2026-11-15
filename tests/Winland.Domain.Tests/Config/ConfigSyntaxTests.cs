@@ -381,7 +381,6 @@ public class ConfigSyntaxTests
         Assert.Equal(EdgeInsets.Uniform(4), layout.GapsIn);
         Assert.Equal(EdgeInsets.Uniform(8), layout.GapsOut);
         Assert.Equal(2, layout.BorderSize);
-        Assert.False(layout.PreserveSplit);
         Assert.Equal(new BorderColor(0xFF, 0xFF, 0xFF, 0xFF), decoration.ActiveBorder);
         Assert.Equal(new BorderColor(0xFF, 0x40, 0x40, 0x40), decoration.InactiveBorder);
         Assert.Equal(8, decoration.Rounding);

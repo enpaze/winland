@@ -26,8 +26,6 @@ public sealed record LayoutOptions
     /// <summary>How far past a window's border the pointer still grabs it, in pixels: 15 logical pixels.</summary>
     internal int GrabArea => Scale(15, BorderScale);
 
-    public bool PreserveSplit { get; init; }
-
     /// <summary><c>general:layout</c>: the Layout a Workspace uses when no workspace rule names one.</summary>
     public string Layout { get; init; } = "dwindle";
 
@@ -49,7 +47,6 @@ public sealed record LayoutOptions
         Of("general:gaps_out", OptionValue.Gaps, o => o.GapsOut, (o, v) => o with { GapsOut = v }),
         Of("general:border_size", OptionValue.Int(0, 20), o => o.BorderSize, (o, v) => o with { BorderSize = v }),
         Of("general:resize_on_border", OptionValue.Bool, o => o.ResizeOnBorder, (o, v) => o with { ResizeOnBorder = v }),
-        Of("dwindle:preserve_split", OptionValue.Bool, o => o.PreserveSplit, (o, v) => o with { PreserveSplit = v }),
     ]);
 
     public static LayoutOptions From(ConfigDocument document) => Options.From(Documented, document);

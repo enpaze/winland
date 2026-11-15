@@ -86,7 +86,6 @@ public class FullscreenTests
     public void TreeEditsOnACoveringClientAreRefusedAndTheSlotComesBack()
     {
         var core = Desk();
-        core.Handle(new Configure(ConfigParser.Parse("dwindle:preserve_split = true")));
         OpenWindows(core, 3);
         Rectangle[] before = [Bounds(core, 1), Bounds(core, 2), Bounds(core, 3)];
         core.Handle(new Dispatch("fullscreen"));

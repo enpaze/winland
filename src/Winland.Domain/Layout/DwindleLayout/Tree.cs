@@ -13,10 +13,7 @@ internal sealed partial class DwindleLayout
         };
 
         if (direction != PendingSplit.None)
-        {
             AssignDirection(parent, opening, node, direction);
-            parent.KeepDirection = true;
-        }
         else
             AssignByPointer(parent, opening, node, pointer);
 

@@ -246,14 +246,11 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return new Rectangle(_area.X + gaps.Left, _area.Y + gaps.Top, width, height);
     }
 
-    private void Recalculate(Node node, bool keepDirection = false)
+    // A split keeps the direction it was made with, however its box changes shape.
+    private static void Recalculate(Node node)
     {
         if (node.First is null || node.Second is null)
             return;
-
-        if (!keepDirection && !node.KeepDirection && !_options.PreserveSplit)
-            node.SplitTop = SplitsTop(node.Box);
-        node.KeepDirection = false;
 
         if (node.SplitTop)
         {
@@ -331,7 +328,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
 
         public bool SplitTop { get; set; }
 
-        public bool KeepDirection { get; set; }
     }
 
     private sealed record Sibling(Node Node, int Index, double SplitRatio, bool SplitTop);

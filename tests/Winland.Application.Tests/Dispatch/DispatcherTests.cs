@@ -285,21 +285,9 @@ public class DispatcherTests
     }
 
     [Fact]
-    public void ToggleSplitDoesNothingUnlessTheSplitIsPreserved()
-    {
-        var core = Flat("");
-        Appear(core, 1);
-        Appear(core, 2);
-
-        var outcome = core.Handle(new Dispatch("layoutmsg", "togglesplit"));
-
-        Assert.Empty(outcome.Placements);
-    }
-
-    [Fact]
     public void ToggleSplitFlipsTheCurrentSplitWhenItIsPreserved()
     {
-        var core = Flat("dwindle:preserve_split = true");
+        var core = Flat("");
         Appear(core, 1);
         Appear(core, 2);
 
@@ -317,7 +305,6 @@ public class DispatcherTests
             general:gaps_in = 0
             general:gaps_out = 0
             general:border_size = 0
-            dwindle:preserve_split = true
             bind = SUPER, T, layoutmsg, togglesplit
             """);
         core.Handle(new Configure(document));

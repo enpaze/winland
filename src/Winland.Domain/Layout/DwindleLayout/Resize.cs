@@ -51,7 +51,7 @@ internal sealed partial class DwindleLayout
 
     // The outer split on each axis is the one whose divider is the grabbed edge. The inner split
     // below it is the tile's other edge on that axis, which is kept where it was.
-    private void SmartResize(Node node, int deltaX, int deltaY, (bool Left, bool Top)? corner, TileEdges edges)
+    private static void SmartResize(Node node, int deltaX, int deltaY, (bool Left, bool Top)? corner, TileEdges edges)
     {
         var none = corner is null;
         var left = corner is { Left: true } || edges.Right;
@@ -89,7 +89,7 @@ internal sealed partial class DwindleLayout
 
     private static bool IsSecond(Node node) => ReferenceEquals(node.Parent?.Second, node);
 
-    private void MoveEdge(Node outer, Node? inner, int delta, bool horizontal)
+    private static void MoveEdge(Node outer, Node? inner, int delta, bool horizontal)
     {
         if (delta == 0)
             return;
