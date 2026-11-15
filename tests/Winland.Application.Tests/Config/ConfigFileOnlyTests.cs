@@ -5,7 +5,6 @@ public class ConfigFileOnlyTests
 {
     [Theory]
     [InlineData("keyword general:hide_taskbar true")]
-    [InlineData("keyword misc:disable_autoreload true")]
     [InlineData("keyword general:gaps_out 0")]
     [InlineData("keyword windowrule float, class:b")]
     [InlineData("getoption general:gaps_out")]
@@ -20,7 +19,7 @@ public class ConfigFileOnlyTests
         var desk = new TestDesktop();
         desk.Spawn("a");
         var core = desk.WindowManager;
-        var applied = (core.HideTaskbar, core.ReloadsOnSave, core.RuleRevision);
+        var applied = (core.HideTaskbar, core.RuleRevision);
         var windows = desk.Send("j/clients");
         var placed = desk.PlaceOf("a");
 
@@ -30,7 +29,7 @@ public class ConfigFileOnlyTests
         desk.Spawn("b");
         Assert.False(TestDesktop.Floating(desk.Client("b")));
         desk.Close("b");
-        Assert.Equal(applied, (core.HideTaskbar, core.ReloadsOnSave, core.RuleRevision));
+        Assert.Equal(applied, (core.HideTaskbar, core.RuleRevision));
         Assert.Equal(placed, desk.PlaceOf("a"));
         Assert.Equal(windows, desk.Send("j/clients"));
     }

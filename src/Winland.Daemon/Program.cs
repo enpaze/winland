@@ -126,8 +126,6 @@ static int Run(string? path, RollingLogWriter log)
         current = document;
         CopyLog(log, core.Debug, logFile);
         watcher?.Watch(ConfigPaths.Watched(configPath, document.Sources));
-        // exec-once ran at process start. A reload launches only the commands that repeat.
-        LaunchConfigured(core, core.ReloadLaunches(document));
     };
 
     core.Handle(new Configure(current));
@@ -170,11 +168,7 @@ static int Run(string? path, RollingLogWriter log)
     };
     AppDomain.CurrentDomain.UnhandledException += onCrash;
     // The watcher calls from a thread of its own. The reload runs on the loop, as the tray's does.
-    using var watching = new ConfigWatcher(() =>
-    {
-        if (core.ReloadsOnSave)
-            host.PostReload();
-    });
+    using var watching = new ConfigWatcher(host.PostReload);
     watcher = watching;
     try
     {

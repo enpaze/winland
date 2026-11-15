@@ -9,10 +9,8 @@ internal static class OptionTable
         DecorationOptions.Options.All,
         GroupOptions.Options.All,
         SessionOptions.Options.All,
-        BindOptions.Options.All,
         CursorOptions.Options.All,
         InputOptions.Options.All,
-        GestureOptions.Options.All,
         AnimationOptions.Options.All,
         DebugOptions.Options.All);
 

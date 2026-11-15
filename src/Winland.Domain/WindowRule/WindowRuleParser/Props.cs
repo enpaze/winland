@@ -37,18 +37,6 @@ internal static partial class WindowRuleParser
             return true;
         }
 
-        if (name == "animation")
-        {
-            if (argument is null)
-            {
-                error = "Malformed window rule.";
-                return false;
-            }
-
-            props = new Dictionary<string, object>(StringComparer.Ordinal) { [name] = argument };
-            return true;
-        }
-
         if (name == "border_color")
             return TryParseBorderColor(argument, out props, out error);
 

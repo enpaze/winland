@@ -30,9 +30,7 @@ public sealed class Animator
             var old = motion.Warp ? null : entry.Geometry;
             var begun = old?.Value(now) ?? Vector(motion.From ?? motion.To);
 
-            // A spring that takes over a moving window keeps the speed it had, so the window does not stop and start.
-            var velocity = move.Curve is SpringCurve ? old?.Velocity(now) : null;
-            entry.Geometry = new Track(begun, Vector(motion.To), now, move, velocity);
+            entry.Geometry = new Track(begun, Vector(motion.To), now, move);
         }
         else if (entry.Geometry is not null && entry.Goal != motion.To)
         {
@@ -154,11 +152,12 @@ public sealed class Animator
         foreach (var (window, entry) in _entries.ToArray())
         {
             var frame = Show(window, entry, now, final: false);
-            entry.Geometry = Done(entry.Geometry, now);
             entry.Fade = Done(entry.Fade, now);
             entry.Alpha = Done(entry.Alpha, now);
             entry.Border = Done(entry.Border, now);
-            if (entry.Geometry is null && entry.Fade is null && entry.Alpha is null && entry.Border is null)
+            // Keep the geometry's goal until the other channels finish too: the stand-in still owns the window's
+            // final placement while a longer fade or border transition runs.
+            if (!Running(entry.Geometry, now) && entry.Fade is null && entry.Alpha is null && entry.Border is null)
             {
                 frame = Rested(frame, entry);
                 _entries.Remove(window);
@@ -245,8 +244,7 @@ public sealed class Animator
         public Rectangle Rest { get; set; }
     }
 
-    // A spring given a starting speed is solved from that speed, in units a second. Without one it eases from rest.
-    private sealed class Track(double[] begun, double[] goal, double start, Timing timing, double[]? velocity = null)
+    private sealed class Track(double[] begun, double[] goal, double start, Timing timing)
     {
         public double[] Goal { get; } = goal;
 
@@ -261,38 +259,10 @@ public sealed class Animator
                 return Goal;
 
             var value = new double[Goal.Length];
-            if (velocity is not null && Timing.Curve is SpringCurve spring)
-            {
-                var seconds = progress * Timing.Milliseconds / 1000;
-                for (var i = 0; i < value.Length; i++)
-                {
-                    var position = begun[i];
-                    var speed = velocity[i];
-                    Spring.Advance(ref position, ref speed, Goal[i], spring.Stiffness, spring.Damping, spring.Mass, seconds);
-                    value[i] = position;
-                }
-
-                return value;
-            }
-
             var eased = Timing.Curve.Ease(progress);
             for (var i = 0; i < value.Length; i++)
                 value[i] = begun[i] + ((Goal[i] - begun[i]) * eased);
             return value;
-        }
-
-        /// <summary>How fast each value moves at <paramref name="now"/>, in units a second.</summary>
-        public double[] Velocity(double now)
-        {
-            var speed = new double[Goal.Length];
-            if (Finished(now))
-                return speed;
-
-            var here = Value(now);
-            var before = Value(now - 1);
-            for (var i = 0; i < speed.Length; i++)
-                speed[i] = (here[i] - before[i]) * 1000;
-            return speed;
         }
 
         private double Progress(double now)

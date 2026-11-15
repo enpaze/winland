@@ -19,18 +19,6 @@ public class OffWindowAxisTests
     public void ABoxWithNoSizeClampsToItsCorner() =>
         Assert.Equal(new Point(5, 6), BorderPointer.Clamp(new Rectangle(5, 6, 0, 0), new Point(50, 60)));
 
-    [Theory]
-    [InlineData(2, false, 2)]
-    [InlineData(2, true, 17)]
-    [InlineData(0, true, 15)]
-    [InlineData(0, false, 0)]
-    public void TheReachIsTheBorderAndWithResizeOnBorderTheGrabArea(int border, bool resize, int reach)
-    {
-        var options = new LayoutOptions { BorderSize = border, ResizeOnBorder = resize };
-
-        Assert.Equal(reach, BorderPointer.AxisReach(options));
-    }
-
     [Fact]
     public void AFloatingWindowsRingIsItsOffWindowTargetAndTheNearestPointInsideIsClamped()
     {
@@ -57,16 +45,6 @@ public class OffWindowAxisTests
         var bare = CoreWith("general:border_size = 0\n");
         Float(bare, 1);
         Assert.Null(bare.OffWindowTarget(new Point(1280, 500)));
-    }
-
-    [Fact]
-    public void ResizeOnBorderWidensTheRingByTheGrabArea()
-    {
-        var core = CoreWith("general:border_size = 4\ngeneral:resize_on_border = true\n");
-        Float(core, 1);
-
-        Assert.Equal(new OffWindowScroll(new WindowId(1), new Point(1279, 500)), core.OffWindowTarget(new Point(1290, 500)));
-        Assert.Null(core.OffWindowTarget(new Point(1299, 500)));
     }
 
     private static WindowManager CoreWith(string config)

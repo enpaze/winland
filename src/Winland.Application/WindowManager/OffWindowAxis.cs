@@ -7,7 +7,7 @@ public sealed partial class WindowManager
 {
     /// <summary>
     /// The window a wheel turn at <paramref name="pointer"/> is meant for when the pointer is not inside it but within
-    /// its ring (the border, and with <c>resize_on_border</c> the grab area around it), or null when the pointer is inside
+    /// its border, or null when the pointer is inside
     /// a window or over none. It runs on the mouse hook for every wheel turn, so it never waits: with a ring of no size
     /// or the core busy it answers null at once.
     /// </summary>
@@ -18,9 +18,8 @@ public sealed partial class WindowManager
 
         try
         {
-            var options = ActiveOptions();
-            var reach = BorderPointer.AxisReach(options);
-            if (reach <= 0 || !TryRingTarget(pointer, options, reach, out var window, out var bounds, out _, out _))
+            var reach = Math.Max(0, ActiveOptions().BorderSize);
+            if (reach <= 0 || !TryRingTarget(pointer, reach, out var window, out var bounds))
                 return null;
 
             return new OffWindowScroll(window, BorderPointer.Clamp(bounds, pointer));

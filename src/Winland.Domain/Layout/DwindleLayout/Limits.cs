@@ -150,7 +150,7 @@ internal sealed partial class DwindleLayout
         HonorMinimums(node.Second);
     }
 
-    private void Resplit(Node node, bool horizontal, int firstSpan, int secondSpan)
+    private static void Resplit(Node node, bool horizontal, int firstSpan, int secondSpan)
     {
         if (horizontal)
         {
@@ -163,8 +163,8 @@ internal sealed partial class DwindleLayout
             node.Second!.Box = new Rectangle(node.Box.X, node.Box.Y + firstSpan, node.Box.Width, secondSpan);
         }
 
-        Recalculate(node.First, keepDirection: true);
-        Recalculate(node.Second, keepDirection: true);
+        Recalculate(node.First);
+        Recalculate(node.Second);
     }
 
     private int Need(Node node, bool horizontal)

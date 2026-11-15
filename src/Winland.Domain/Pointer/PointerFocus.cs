@@ -34,25 +34,14 @@ internal static class PointerFocus
     }
 
     internal static Decision Choose(
-        int mode,
+        bool enabled,
         double traveled,
         WindowId? under,
-        bool underFloats,
         WindowId? keyboard,
-        bool keyboardFloats,
         WindowId? lastMouse)
     {
-        if (under is null)
+        if (!enabled || under is null)
             return new Decision(null, lastMouse, false);
-
-        if (mode != 1)
-        {
-            var switches = mode != 3
-                && keyboard is not null
-                && under != keyboard
-                && keyboardFloats != underFloats;
-            return new Decision(switches ? under : null, lastMouse, false);
-        }
 
         if (lastMouse == under && keyboard == under)
             return new Decision(null, lastMouse, false);

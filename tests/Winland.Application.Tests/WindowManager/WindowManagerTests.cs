@@ -112,21 +112,6 @@ public class WindowManagerTests
     }
 
     [Fact]
-    public void ClosingAWindowReflowsTheSplitToTheNewShape()
-    {
-        var core = new WindowManager();
-        var area = new Rectangle(0, 0, 1920, 1080);
-        core.Handle(new WindowAppeared(new WindowId(1), area));
-        core.Handle(new WindowAppeared(new WindowId(2), area));
-        core.Handle(new WindowAppeared(new WindowId(3), area));
-
-        var outcome = core.Handle(new WindowClosed(new WindowId(1)));
-
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 2));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 3));
-    }
-
-    [Fact]
     public void MinimizingAWindowGivesItsSpaceBackAndRestoringReturnsIt()
     {
         var core = new WindowManager();

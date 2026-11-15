@@ -86,7 +86,6 @@ public class FullscreenTests
     public void TreeEditsOnACoveringClientAreRefusedAndTheSlotComesBack()
     {
         var core = Desk();
-        core.Handle(new Configure(ConfigParser.Parse("dwindle:preserve_split = true")));
         OpenWindows(core, 3);
         Rectangle[] before = [Bounds(core, 1), Bounds(core, 2), Bounds(core, 3)];
         core.Handle(new Dispatch("fullscreen"));
@@ -140,20 +139,6 @@ public class FullscreenTests
         });
         Assert.Equal(Work, BoundsOf(edit, 2));
         Assert.Equal(FullscreenMode.Maximized, Client(edit, 2).Fullscreen);
-    }
-
-    [Fact]
-    public void FullscreenOpacityAppliesOnlyToModeTwo()
-    {
-        var core = new WindowManager(ConfigParser.Parse("decoration:fullscreen_opacity = 0.5\n"));
-        core.Handle(new MonitorsChanged([Screen()]));
-        core.Handle(new WindowAppeared(new WindowId(1), Work));
-
-        var maximized = core.Handle(new Dispatch("fullscreen", "1"));
-        Assert.Equal(255, DecorationOf(maximized, 1).Alpha);
-
-        var fullscreen = core.Handle(new Dispatch("fullscreen", "2"));
-        Assert.Equal(128, DecorationOf(fullscreen, 1).Alpha);
     }
 
     [Fact]

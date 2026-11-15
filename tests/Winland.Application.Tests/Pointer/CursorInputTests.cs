@@ -3,13 +3,12 @@ namespace Winland.Application.Tests;
 public class CursorInputTests
 {
     [Fact]
-    public void DocumentedCursorDoesNotWarpOrHide()
+    public void DocumentedCursorFollowsFocusAndHidesOnTyping()
     {
         var options = CursorOptions.From(ConfigParser.Parse(""));
 
         Assert.False(options.NoWarps);
-        Assert.Equal(0, options.InactiveTimeoutSeconds);
-        Assert.False(options.HideOnKeyPress);
+        Assert.True(options.HideOnKeyPress);
     }
 
     [Fact]
@@ -18,7 +17,6 @@ public class CursorInputTests
         var document = ConfigParser.Parse("""
             cursor {
                 no_warps = true
-                inactive_timeout = 4.5
                 hide_on_key_press = on
             }
             """);
@@ -26,16 +24,7 @@ public class CursorInputTests
         Assert.Empty(document.Warnings);
         var options = CursorOptions.From(document);
         Assert.True(options.NoWarps);
-        Assert.Equal(4.5, options.InactiveTimeoutSeconds);
         Assert.True(options.HideOnKeyPress);
-    }
-
-    [Fact]
-    public void InactiveTimeoutClamps()
-    {
-        var options = CursorOptions.From(ConfigParser.Parse("cursor:inactive_timeout = 40\n"));
-
-        Assert.Equal(20, options.InactiveTimeoutSeconds);
     }
 
     [Fact]
@@ -70,11 +59,11 @@ public class CursorInputTests
     [Fact]
     public void FollowMouseIsReadAndATabletKeyWarns()
     {
-        var document = ConfigParser.Parse("input:follow_mouse = detached\ninput:tablet:enabled = true\n");
+        var document = ConfigParser.Parse("input:follow_mouse = true\ninput:tablet:enabled = true\n");
 
-        Assert.Equal([new Setting("input:follow_mouse", "detached")], document.Settings);
+        Assert.Equal([new Setting("input:follow_mouse", "true")], document.Settings);
         Assert.Equal(new ConfigWarning(2, "Unsupported keyword 'input:tablet:enabled'."), Assert.Single(document.Warnings));
-        Assert.Equal(2, InputOptions.From(document).FollowMouse);
+        Assert.True(InputOptions.From(document).FollowMouse);
     }
 
     [Fact]
@@ -101,7 +90,7 @@ public class CursorInputTests
                 new ConfigWarning(2, "Unsupported keyword 'input:scroll_factor'."),
             ],
             document.Warnings);
-        Assert.Equal(new CursorBehavior(false, 0), outcome.Cursor);
+        Assert.Equal(new CursorBehavior(true), outcome.Cursor);
     }
 
     [Fact]

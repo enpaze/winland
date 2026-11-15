@@ -17,6 +17,7 @@ internal static class GroupBarPainter
 
     // Grayscale antialiasing, not ClearType, so the mask's channels are one coverage.
     private const FONT_QUALITY Quality = FONT_QUALITY.ANTIALIASED_QUALITY;
+    private const int NormalWeight = 400;
 
     /// <summary>The live title of each tab, or the title the core knows when the window has none.</summary>
     internal static string[] Titles(GroupBar bar)
@@ -67,29 +68,13 @@ internal static class GroupBarPainter
         var count = bar.Tabs.Count;
         for (var i = 0; i < count; i++)
         {
-            var active = bar.Tabs[i].Focused;
-            var order = bar.DrawOrder(i);
-            var corners = BarShapes.Rounded(order, count, style.Rounding, style.RoundOnlyEdges);
+            var corners = BarShapes.Rounded(i, count, style.Rounding);
             var indicator = bar.IndicatorBounds(i);
-            var color = style.IndicatorColor(active);
-            Fill(pixels, width, height, indicator, (x, y) => Shaded(color, BarShapes.Coverage(x, y, indicator, style.Rounding, style.RoundingPower, corners)));
-
-            if (!style.Gradients)
-                continue;
-
-            // Winland fills the title row with a vertical gradient of the tab's colors, rounded on its own.
-            var row = bar.TitleBounds(i);
-            var colors = style.GradientColors(active);
-            var rowCorners = BarShapes.Rounded(order, count, style.GradientRounding, style.GradientRoundOnlyEdges);
-            Fill(pixels, width, height, row, (x, y) =>
-            {
-                var shade = BarShapes.GradientAt(colors, (y - row.Y + 0.5) / row.Height);
-                return Shaded(shade, BarShapes.Coverage(x, y, row, style.GradientRounding, style.GradientRoundingPower, rowCorners));
-            });
+            var color = style.IndicatorColor(bar.Tabs[i].Focused);
+            Fill(pixels, width, height, indicator, (x, y) => Shaded(color, BarShapes.Coverage(x, y, indicator, style.Rounding, corners)));
         }
 
-        if (bar.Style.RenderTitles)
-            DrawTitles(memory, pixels, width, height, bar, titles);
+        DrawTitles(memory, pixels, width, height, bar, titles);
 
         MarkInsertion(pixels, bar);
 
@@ -135,13 +120,11 @@ internal static class GroupBarPainter
         {
             var tab = bar.Tabs[i];
             var row = bar.TitleBounds(i);
-            var padding = bar.Style.TextPadding;
-            var box = new RECT(row.X + padding, row.Y + bar.Style.TextOffset, row.X + row.Width - padding, row.Y + row.Height + bar.Style.TextOffset);
+            var box = new RECT(row.X, row.Y, row.X + row.Width, row.Y + row.Height);
             if (box.right <= box.left || box.bottom <= box.top)
                 continue;
 
-            var weight = tab.Focused ? bar.Style.FontWeightActive : bar.Style.FontWeightInactive;
-            using var font = GdiFonts.Create(bar.Style.FontSize, weight, Quality, family);
+            using var font = GdiFonts.Create(bar.Style.FontSize, NormalWeight, Quality, family);
             var previous = PInvoke.SelectObject(maskDc, font);
             var text = titles[i];
             fixed (char* chars = text)
@@ -157,7 +140,7 @@ internal static class GroupBarPainter
 
             _ = PInvoke.SelectObject(maskDc, previous);
             _ = PInvoke.GdiFlush();
-            ComposeText(pixels, mask, width, height, row with { Y = row.Y + bar.Style.TextOffset }, bar.Style.TitleColor(tab.Focused));
+            ComposeText(pixels, mask, width, height, row, bar.Style.TextColor);
         }
 
         _ = PInvoke.SelectObject(maskDc, oldMask);

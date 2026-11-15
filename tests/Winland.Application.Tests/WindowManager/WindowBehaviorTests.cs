@@ -35,7 +35,8 @@ public class WindowBehaviorTests
         desk.Spawn("kitty_A");
         desk.Spawn("kitty_B");
 
-        desk.Set("misc:focus_on_activate", "true");
+        // A window that asks for the focus gets it.
+        desk.Set("windowrule", "focus_on_activate 1, class:.*");
 
         // Unfullscreen on conflict.
         desk.Ok("focuswindow", "class:kitty_A");
@@ -128,9 +129,7 @@ public class WindowBehaviorTests
         var desk = new TestDesktop();
         desk.Spawn("kitty_default");
 
-        // focus_on_activate off on the rule wins.
-        desk.Set("misc:focus_on_activate", "true");
-        desk.Set("windowrule", "focus_on_activate 0, class:kitty_antifocus");
+        // Without the rule a window that asks for the focus does not get it.
 
         var antifocus = desk.Spawn("kitty_antifocus");
         ExpectFocused(desk, "kitty_antifocus", 0);
@@ -140,8 +139,7 @@ public class WindowBehaviorTests
         Activate(desk, antifocus);
         Assert.NotEqual("kitty_antifocus", desk.ActiveClass());
 
-        // focus_on_activate on on the rule wins.
-        desk.Set("misc:focus_on_activate", "false");
+        // With the rule it does.
         desk.Set("windowrule", "focus_on_activate 1, class:kitty_superfocus");
 
         var superfocus = desk.Spawn("kitty_superfocus");

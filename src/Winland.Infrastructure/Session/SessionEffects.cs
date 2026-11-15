@@ -6,9 +6,8 @@ namespace Winland.Infrastructure;
 /// </summary>
 public static class SessionEffects
 {
-    private static readonly CursorIdle Idle = new(NullCursor.Instance, new SystemClock());
+    private static readonly CursorIdle Idle = new(NullCursor.Instance);
 
-    private static CursorIdleTimer? _timer;
     private static int _installed;
 
     public static void InstallSystem()
@@ -17,7 +16,6 @@ public static class SessionEffects
             return;
 
         Idle.Use(new Win32Cursor());
-        _timer = new CursorIdleTimer(Idle);
     }
 
     public static void Apply(Outcome outcome)
@@ -26,10 +24,7 @@ public static class SessionEffects
         CursorShape.Show(outcome.ResizeCursor);
 
         if (outcome.Cursor is CursorBehavior behavior)
-        {
             Idle.Configure(behavior);
-            _timer?.Follow();
-        }
 
         if (outcome.Warp is WarpTo warp)
             Idle.Warp(warp.Position);
@@ -56,8 +51,6 @@ public static class SessionEffects
         Magnifier.Stop();
         CursorShape.Reset();
         Idle.Reveal();
-        _timer?.Dispose();
-        _timer = null;
     }
 
     private sealed class NullCursor : ICursorSurface

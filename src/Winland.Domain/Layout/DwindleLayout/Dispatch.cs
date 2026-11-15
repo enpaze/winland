@@ -199,10 +199,6 @@ internal sealed partial class DwindleLayout
             return [];
         }
 
-        // A refit resets the direction unless one of these keeps it, so the flip would not last.
-        if (!_options.PreserveSplit)
-            return [];
-
         node.Parent.SplitTop = !node.Parent.SplitTop;
         Refit();
         return Placements();

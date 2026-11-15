@@ -43,12 +43,6 @@ public sealed partial class WindowManager
     /// <summary>The full path of the log file Winland writes now, or null while it writes none. <c>files</c> reports it.</summary>
     public Func<string?>? LogFile { get; set; }
 
-    /// <summary>
-    /// Whether saving the config reloads it. <c>misc:disable_autoreload</c> turns it off, and turning it back on takes
-    /// a reload by hand.
-    /// </summary>
-    public bool ReloadsOnSave => !_config.Session.DisableAutoreload;
-
     /// <summary><c>general:hide_taskbar</c>: the taskbars are hidden and set to auto-hide while Winland runs.</summary>
     public bool HideTaskbar => _config.Session.HideTaskbar;
 
@@ -148,13 +142,7 @@ public sealed partial class WindowManager
     public IReadOnlyList<Launch> StartupLaunches(ConfigDocument config)
     {
         lock (_gate)
-            return ConfigLaunches(config, LaunchParser.LaunchMoment.Startup, LaunchWorkspace());
-    }
-
-    public IReadOnlyList<Launch> ReloadLaunches(ConfigDocument config)
-    {
-        lock (_gate)
-            return ConfigLaunches(config, LaunchParser.LaunchMoment.Reload, LaunchWorkspace());
+            return LaunchParser.FromConfig(config);
     }
 
     public void NoteLaunched(int processId, Launch launch)
@@ -301,12 +289,6 @@ public sealed partial class WindowManager
             RestoredAdopted => ArrangeRestored(),
             MonitorsChanged changed => SetMonitors(changed.Monitors),
         };
-
-    private static IReadOnlyList<Launch> ConfigLaunches(ConfigDocument config, LaunchParser.LaunchMoment moment, WorkspaceId? initialWorkspace = null)
-    {
-        ArgumentNullException.ThrowIfNull(config);
-        return LaunchParser.FromConfig(config, moment, initialWorkspace);
-    }
 
     // The Workspace a program started now is started on: the special workspace the focused Monitor shows, or its
     // Workspace.

@@ -6,7 +6,6 @@ namespace Winland.Domain;
 /// </summary>
 internal abstract record WindowProp(string Name, bool IsRuleEffect)
 {
-    public static readonly WindowProp<string?> Animation = new("animation");
     public static readonly WindowProp<BorderColor?> ActiveBorderColor = new("active_border_color");
     public static readonly WindowProp<BorderColor?> InactiveBorderColor = new("inactive_border_color");
     public static readonly WindowProp<bool?> Decorate = new("decorate", IsRuleEffect: true);
@@ -18,7 +17,7 @@ internal abstract record WindowProp(string Name, bool IsRuleEffect)
 
     public static IReadOnlyList<WindowProp> All { get; } =
     [
-        Animation, ActiveBorderColor, InactiveBorderColor, Decorate, FocusOnActivate, NoAnim, NoBlur, BorderSize, Rounding,
+        ActiveBorderColor, InactiveBorderColor, Decorate, FocusOnActivate, NoAnim, NoBlur, BorderSize, Rounding,
     ];
 
     /// <summary>Whether a window rule named <paramref name="name"/> is one of the on/off effects.</summary>

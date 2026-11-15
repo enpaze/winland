@@ -69,15 +69,4 @@ public class ConfigValueSyntaxTests
         Assert.Equal(90, oneAngle.AngleDegrees);
         Assert.Equal(1, oneAngle.Colors);
     }
-
-    [Fact]
-    public void DwindleBoolUsesTheSharedWords()
-    {
-        var document = ConfigParser.Parse("""
-            dwindle:preserve_split = off
-            """);
-
-        Assert.False(LayoutOptions.From(document).PreserveSplit);
-        Assert.True(LayoutOptions.From(ConfigParser.Parse("dwindle:preserve_split = 1\n")).PreserveSplit);
-    }
 }

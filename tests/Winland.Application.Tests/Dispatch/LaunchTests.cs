@@ -89,36 +89,12 @@ public class LaunchTests
     }
 
     [Fact]
-    public void StartupLaunchesExecAndExecOnceAndReloadSkipsOnce()
-    {
-        var document = ConfigParser.Parse(
-            "exec = every\n" +
-            "exec-once = once\n");
-        var core = new WindowManager();
-
-        var startup = core.StartupLaunches(document);
-        var reload = core.ReloadLaunches(document);
-
-        Assert.Equal(
-            [
-                new Launch("every", null) { InitialWorkspace = WorkspaceId.Initial },
-                new Launch("once", null),
-            ],
-            startup);
-        Assert.Equal(
-            [
-                new Launch("every", null) { InitialWorkspace = WorkspaceId.Initial },
-            ],
-            reload);
-    }
-
-    [Fact]
     public void StartupHonorsKnownRulesAndWarnsOnUnknownOnes()
     {
         var document = ConfigParser.Parse(
-            "exec = [float; workspace 2; confine_pointer] kitty\n" +
+            "exec-once = [float; workspace 2; confine_pointer] kitty\n" +
             "exec-once = notepad\n" +
-            "exec = [float; workspace] broken\n");
+            "exec-once = [float; workspace] broken\n");
 
         Assert.Equal(
             [
@@ -141,7 +117,7 @@ public class LaunchTests
     [Fact]
     public void AnExecRuleBlockKeepsTheScrollingWidth()
     {
-        var launches = new WindowManager().StartupLaunches(ConfigParser.Parse("exec = [scrolling_width 0.25] app\n"));
+        var launches = new WindowManager().StartupLaunches(ConfigParser.Parse("exec-once = [scrolling_width 0.25] app\n"));
 
         Assert.Equal(0.25, Assert.Single(launches[0].Rules).ScrollingWidth);
     }

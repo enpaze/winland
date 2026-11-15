@@ -64,16 +64,6 @@ public class LiveSwipeTests
         Assert.Equal(new Rectangle(-1280, 0, 1920, 1080), leaving.From);
     }
 
-    [Fact]
-    public void AVerticalSlideStyleSwipesVertically()
-    {
-        var core = Twin(Horizontal + "animation = workspaces, 1, 4, default, slidevert\n");
-        core.Handle(new SwipeBegan(3));
-
-        var halfway = Move(core, 15, -10);
-
-        Assert.Equal(-540, Assert.Single(halfway.Motions, motion => motion.Window == new WindowId(1)).To.Y);
-    }
 
     private static Outcome Move(WindowManager core, int count, double x)
     {

@@ -137,24 +137,6 @@ public class MouseDragTests
     }
 
     [Fact]
-    public void TheDragThresholdHoldsTheClientUntilThePointerPassesIt()
-    {
-        var core = Flat("binds:drag_threshold = 10\nbindm = SUPER, mouse:272, movewindow\n");
-        Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
-        Press(core, "Super_L");
-        core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(700, 400) });
-
-        var held = core.Handle(new PointerMoved(new Point(706, 408)));
-        core.Handle(new PointerMoved(new Point(720, 400)));
-        var moved = core.Handle(new PointerMoved(new Point(750, 430)));
-
-        Assert.Empty(held.Placements);
-        // The drag starts at (720, 400), where the pointer passed 10 pixels, so the float moves by (+30, +30).
-        Assert.Equal(new Rectangle(670, 370, 640, 400), BoundsOf(moved, 1));
-    }
-
-    [Fact]
     public void ALiftedTileIsCenteredOnThePointer()
     {
         var core = Flat("bindm = SUPER, mouse:272, movewindow\n");

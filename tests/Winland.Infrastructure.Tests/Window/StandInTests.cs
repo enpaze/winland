@@ -6,13 +6,13 @@ namespace Winland.Infrastructure.Tests;
 /// </summary>
 public class StandInTests
 {
-    private const string Fast = "animation = global, 1, 1, linear\n";
+    private const string Config = "";
     private const uint Layered = 0x00080000;
 
     // Two tiles, then the second closes and the first grows to fill the screen.
     private static TestWindows Grow(out Rectangle before, Action<FakeDesktop>? arrange = null)
     {
-        var windows = new TestWindows(Fast);
+        var windows = new TestWindows(Config);
         windows.Open(1);
         var second = windows.Open(2);
         windows.Settle();
@@ -81,7 +81,7 @@ public class StandInTests
     [Fact]
     public void AWindowThatShrinksKeepsItsLargerSizeUntilTheMotionEnds()
     {
-        using var windows = new TestWindows(Fast);
+        using var windows = new TestWindows(Config);
         windows.Open(1);
         windows.Settle();
         var shrinking = windows.Desktop[1];
@@ -99,7 +99,7 @@ public class StandInTests
     [Fact]
     public void AWindowThatChangesSizeIsGivenItsSizeOnceAndNotOnEveryFrame()
     {
-        using var windows = new TestWindows(Fast);
+        using var windows = new TestWindows(Config);
         windows.Open(1);
         windows.Settle();
         windows.Desktop.Calls.Clear();
@@ -132,7 +132,7 @@ public class StandInTests
     [Fact]
     public void AWindowThatOpensKeepsTheBorderWinlandTookOffWhenItsStandInEnds()
     {
-        using var windows = new TestWindows(Fast);
+        using var windows = new TestWindows(Config);
         windows.Open(1);
         Assert.Contains("standin open 1", windows.Desktop.Calls);
 
@@ -170,22 +170,4 @@ public class StandInTests
         Assert.True(Posted(windows) >= 3, $"{Posted(windows)} frames were sent.");
     }
 
-    [Fact]
-    public void AClosingWindowsStandInHidesBeforeTheWindowIsAskedToCloseAndEndsIfItStays()
-    {
-        using var windows = new TestWindows(Fast);
-        windows.Open(1);
-        windows.Settle();
-        windows.Desktop.Calls.Clear();
-
-        windows.Dispatch("killactive");
-        windows.Settle();
-
-        var desktop = windows.Desktop;
-        var hidden = desktop.IndexOf("standin hide 1");
-        Assert.True(hidden >= 0, "The stand-in was not hidden.");
-        Assert.True(hidden < desktop.IndexOf("close 1"));
-        Assert.True(desktop.IndexOf("standin close 1") > desktop.IndexOf("close 1"));
-        Assert.True(windows.Desktop.StandInOf(1).Closed);
-    }
 }

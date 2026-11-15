@@ -38,12 +38,10 @@ public sealed partial class WindowManager
         var plan = new MotionPlan(this, change, outcome, released);
         plan.Workspaces(outcome.Hide, entering: false);
         plan.Workspaces(outcome.Show, entering: true);
-        foreach (var closing in outcome.Closes)
-            plan.Close(closing);
 
         // A window the pointer drags follows it at once, and the windows its Layout moves to make room for it, when it
         // is lifted out or dropped, animate. A mouse resize moves every window at once.
-        if (_interaction is not (Gesture { Resize: true } or BorderDrag or NativeSize))
+        if (_interaction is not (Gesture { Resize: true } or NativeSize))
         {
             var held = (_interaction as Gesture)?.Window;
             foreach (var placement in outcome.Placements)
@@ -68,11 +66,6 @@ public sealed partial class WindowManager
         var mine = new HashSet<WindowId>(own.Select(motion => motion.Window));
         return outcome with { Motions = [.. own, .. planned.Where(motion => !mine.Contains(motion.Window))] };
     }
-
-    // A window's own animation style, from a window rule, replaces the windowsIn or windowsOut style it opens
-    // or closes with. Its curve and speed stay the node's.
-    private string WindowStyleOf(WindowId window, string node) =>
-        _props.Own(window, WindowProp.Animation) is { Length: > 0 } own ? own : _config.Animations.StyleOf(node);
 
     private Rectangle MonitorRectangle(WorkspaceId workspace)
     {
@@ -128,16 +121,15 @@ public sealed partial class WindowManager
                 if (entering == _change.WasShown(window))
                     continue;
 
-                if (!TrySwitch(client.Workspace, entering, out var leaf, out var left, out var styled))
+                if (!TrySwitch(client.Workspace, entering, out var left))
                     continue;
 
-                var timing = Options.TimingOf(leaf);
+                var timing = Options.TransitionTiming;
                 if (timing is null)
                     continue;
 
                 var monitor = _core.MonitorRectangle(client.Workspace);
-                var style = Options.StyleOf(leaf);
-                var shift = MotionStyles.Workspace(style, entering, left, client.Workspace.IsSpecial, monitor);
+                var shift = MotionStyles.Workspace(entering, left, client.Workspace.IsSpecial, monitor);
                 var rest = _placed.TryGetValue(window, out var placed) ? placed : client.Bounds;
                 var away = rest with { X = rest.X + shift.Dx, Y = rest.Y + shift.Dy };
                 var moves = shift.Dx != 0 || shift.Dy != 0;
@@ -160,29 +152,6 @@ public sealed partial class WindowManager
                         Rest = rest,
                     };
             }
-        }
-
-        public void Close(WindowId window)
-        {
-            if (!_change.Is.TryGetValue(window, out var client) || _change.HiddenAfter.Contains(window) || client.Fullscreen == FullscreenMode.Fullscreen)
-                return;
-
-            var move = Options.TimingOf("windowsOut");
-            var fade = Options.TimingOf("fadeOut");
-            if (move is null && fade is null)
-                return;
-
-            var rest = client.Bounds;
-            var to = move is null ? rest : MotionStyles.Window(_core.WindowStyleOf(window, "windowsOut"), rest, _core.MonitorRectangle(client.Workspace));
-            _motions[window] = new Motion(window, to)
-            {
-                From = rest,
-                Move = move,
-                FadeTo = fade is null ? 1 : 0,
-                Fade = fade,
-                End = MotionEnd.Close,
-                Rest = rest,
-            };
         }
 
         public void Place(Client client, Rectangle bounds)
@@ -209,15 +178,15 @@ public sealed partial class WindowManager
             if (_change.HiddenBefore.Contains(window) || from == bounds)
                 return;
 
-            if (Options.TimingOf("windowsMove") is Timing move)
+            if (Options.WindowTiming is Timing move)
                 _motions[window] = new Motion(window, bounds) { From = from, Move = move };
         }
 
         // Alpha and border changes of a window that stays shown.
         public void Switches(Dictionary<WindowId, Decoration> previous, Dictionary<WindowId, Decoration> painted)
         {
-            var alphaTiming = Options.TimingOf("fadeSwitch");
-            var borderTiming = Options.TimingOf("border");
+            var alphaTiming = Options.TransitionTiming;
+            var borderTiming = Options.TransitionTiming;
             if (alphaTiming is null && borderTiming is null)
                 return;
 
@@ -256,12 +225,12 @@ public sealed partial class WindowManager
 
         private void Open(Client client, Rectangle bounds)
         {
-            var move = Options.TimingOf("windowsIn");
-            var fade = Options.TimingOf("fadeIn");
+            var move = Options.WindowTiming;
+            var fade = Options.TransitionTiming;
             if (move is null && fade is null)
                 return;
 
-            var from = MotionStyles.Window(_core.WindowStyleOf(client.Window, "windowsIn"), bounds, _core.MonitorRectangle(client.Workspace));
+            var from = MotionStyles.Window(bounds);
             _motions[client.Window] = new Motion(client.Window, bounds)
             {
                 From = move is null ? null : from,
@@ -280,14 +249,10 @@ public sealed partial class WindowManager
             return _change.Is.TryGetValue(window, out var client) ? client.Bounds : default;
         }
 
-        // The Workspace whose rule style the motion plays: the one switched to, for both the
-        // Workspace leaving and the one entering, and for a special workspace that hides, the special workspace that
-        // replaces it on its Monitor, or itself.
-        private bool TrySwitch(WorkspaceId workspace, bool entering, out string leaf, out bool left, out WorkspaceId styled)
+        // Whether a Workspace is entering or leaving, and which side it travels from.
+        private bool TrySwitch(WorkspaceId workspace, bool entering, out bool left)
         {
-            leaf = "";
             left = entering;
-            styled = workspace;
             if (workspace.IsSpecial)
             {
                 var wasShown = SpecialShown(_change.Before, workspace);
@@ -295,10 +260,6 @@ public sealed partial class WindowManager
                 if (entering ? wasShown || !isShown : !wasShown || isShown)
                     return false;
 
-                if (!entering && Replacing(workspace) is WorkspaceId replacing)
-                    styled = replacing;
-
-                leaf = entering ? "specialWorkspaceIn" : "specialWorkspaceOut";
                 return true;
             }
 
@@ -325,20 +286,8 @@ public sealed partial class WindowManager
             if (older == newer)
                 return false;
 
-            leaf = entering ? "workspacesIn" : "workspacesOut";
             left = Compare(newer, older) > 0;
-            styled = newer;
             return true;
-        }
-
-        // The special workspace shown in place of one that hides, on the same Monitor, or null.
-        private WorkspaceId? Replacing(WorkspaceId special)
-        {
-            if (_change.Before.Screens.Count == 0 || _change.After.Screens.Count == 0)
-                return _change.After.SpecialWorkspace;
-
-            var screen = _change.Before.Screens.FirstOrDefault(candidate => candidate.SpecialWorkspace == special);
-            return screen is null ? null : _change.After.Screens.FirstOrDefault(candidate => candidate.Id == screen.Id)?.SpecialWorkspace;
         }
 
         private static bool SpecialShown(State state, WorkspaceId workspace)

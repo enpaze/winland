@@ -2,19 +2,6 @@ namespace Winland.Domain.Tests;
 
 public class ConfigSyntaxTests
 {
-    [Theory]
-    [InlineData("layers")]
-    [InlineData("layersIn")]
-    [InlineData("layersOut")]
-    [InlineData("fadeLayersIn")]
-    [InlineData("fadeLayersOut")]
-    [InlineData("zoomFactor")]
-    public void AnimationNodesWinlandDoesNotDrawExplainThat(string name)
-    {
-        var document = ConfigParser.Parse($"animation = {name}, 1, 3, default\n");
-
-        Assert.Equal($"Animation '{name}' is not one Winland draws.", Assert.Single(document.Warnings).Message);
-    }
 
     [Fact]
     public void AnimationOptionsAcceptABooleanPrefix()
@@ -88,7 +75,7 @@ public class ConfigSyntaxTests
     [Fact]
     public void VariableExpansionThatExceeds64KWarnsAndSkipsTheLine()
     {
-        var document = ConfigParser.Parse($"$large = {new string('x', 32768)}\nexec = $large$large$large\ngeneral:gaps_in = 4\n");
+        var document = ConfigParser.Parse($"$large = {new string('x', 32768)}\nexec-once = $large$large$large\ngeneral:gaps_in = 4\n");
 
         Assert.Single(document.Warnings);
         Assert.DoesNotContain(document.Settings, setting => setting.Keyword == "exec");
@@ -98,7 +85,7 @@ public class ConfigSyntaxTests
     [Fact]
     public void ADoublingVariableWarnsWithoutExhaustingMemory()
     {
-        var document = ConfigParser.Parse("$a = $a$a\nexec = $a\ngeneral:gaps_in = 4\n");
+        var document = ConfigParser.Parse("$a = $a$a\nexec-once = $a\ngeneral:gaps_in = 4\n");
 
         Assert.Single(document.Warnings);
         Assert.Equal(new Setting("general:gaps_in", "4"), Assert.Single(document.Settings));
@@ -182,18 +169,18 @@ public class ConfigSyntaxTests
     {
         var document = ConfigParser.Parse("""
             $VAR1 = 2
-            exec = \{{10 + 10}}
-            exec = \\{{VAR1 + 10}}
-            exec = \\{ hello \\}
+            exec-once = \{{10 + 10}}
+            exec-once = \\{{VAR1 + 10}}
+            exec-once = \\{ hello \\}
             """);
 
         Assert.Empty(document.Warnings);
         Assert.Equal(
             new[]
             {
-                new Setting("exec", "{{10 + 10}}"),
-                new Setting("exec", @"\12"),
-                new Setting("exec", @"\{ hello \}"),
+                new Setting("exec-once", "{{10 + 10}}"),
+                new Setting("exec-once", @"\12"),
+                new Setting("exec-once", @"\{ hello \}"),
             },
             document.Settings);
     }
@@ -381,7 +368,6 @@ public class ConfigSyntaxTests
         Assert.Equal(EdgeInsets.Uniform(4), layout.GapsIn);
         Assert.Equal(EdgeInsets.Uniform(8), layout.GapsOut);
         Assert.Equal(2, layout.BorderSize);
-        Assert.False(layout.PreserveSplit);
         Assert.Equal(new BorderColor(0xFF, 0xFF, 0xFF, 0xFF), decoration.ActiveBorder);
         Assert.Equal(new BorderColor(0xFF, 0x40, 0x40, 0x40), decoration.InactiveBorder);
         Assert.Equal(8, decoration.Rounding);

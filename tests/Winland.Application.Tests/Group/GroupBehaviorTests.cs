@@ -37,16 +37,7 @@ public class GroupBehaviorTests
         Assert.Equal(1, desk.Clients().Count(client => TestDesktop.Fullscreen(client) == 0));
 
         desk.Ok("togglegroup");
-        desk.Set("group:groupbar:enabled", "1");
         Assert.Equal(("22,43", "1876,1015"), desk.PlaceOf("a"));
-
-        desk.Set("group:groupbar:enabled", "0");
-        Assert.Equal(("22,22", "1876,1036"), desk.PlaceOf("a"));
-
-        desk.CloseAll();
-        desk.Spawn("a");
-        desk.Ok("togglegroup");
-        Assert.Equal(("22,22", "1876,1036"), desk.PlaceOf("a"));
     }
 
     [Fact]
@@ -75,50 +66,6 @@ public class GroupBehaviorTests
         desk.Ok("togglegroup");
 
         Assert.Equal("kittyA", desk.ActiveClass());
-    }
-
-    [Fact]
-    public void GroupsDisableWhenOnly()
-    {
-        var desk = new TestDesktop();
-        desk.Spawn("kittyA");
-        Assert.Single(desk.Clients());
-        desk.Ok("focuswindow", "class:kittyA");
-        desk.ExpectActive("22,22", "1876,1036");
-
-        desk.Ok("togglegroup");
-        desk.Set("group:groupbar:disable_when_only", "true");
-        desk.ExpectActive("22,22", "1876,1036");
-
-        desk.Spawn("kittyB");
-        Assert.Equal(2, desk.Clients().Length);
-        desk.Ok("focuswindow", "class:kittyB");
-        desk.ExpectActive("22,43", "1876,1015");
-
-        desk.CloseActive();
-        Assert.Single(desk.Clients());
-        desk.Ok("focuswindow", "class:kittyA");
-        desk.ExpectActive("22,22", "1876,1036");
-
-        desk.Set("group:groupbar:disable_when_only", "false");
-        desk.ExpectActive("22,43", "1876,1015");
-    }
-
-    [Fact]
-    public void GroupbarDisableWhenOnlyDimensions()
-    {
-        var desk = new TestDesktop("group:groupbar:disable_when_only = true\n");
-        desk.Spawn("kittenA");
-        desk.Ok("togglegroup");
-        desk.ExpectActive("22,22", "1876,1036");
-
-        // The first member gets its tab bar when a second one joins.
-        desk.Spawn("kittenB");
-        Assert.Equal(("22,43", "1876,1015"), desk.PlaceOf("kittenA"));
-
-        // And loses it when the other member leaves.
-        desk.Ok("moveoutofgroup");
-        Assert.Equal(("22,22", "931,1036"), desk.PlaceOf("kittenA"));
     }
 
     [Fact]

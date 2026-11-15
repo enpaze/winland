@@ -3,7 +3,7 @@ namespace Winland.Infrastructure.Tests;
 /// <summary>What the Windows adapter does to the desktop for an Outcome, and in what order.</summary>
 public class WindowAdapterTests
 {
-    private const string Fast = "animation = global, 1, 1, linear\n";
+    private const string Config = "";
 
     private static bool Posted(string call, long window) =>
         call.StartsWith($"bounds {window} ", StringComparison.Ordinal) && call.EndsWith(" Post", StringComparison.Ordinal);
@@ -217,7 +217,7 @@ public class WindowAdapterTests
     [Fact]
     public void TransitionsAreTurnedOffOncePerWindowBeforeItsFirstHide()
     {
-        using var windows = new TestWindows(Fast);
+        using var windows = new TestWindows(Config);
         windows.Open(1);
         windows.Open(2);
         windows.Dispatch("workspace", "2");
@@ -235,7 +235,7 @@ public class WindowAdapterTests
     [Fact]
     public void AWindowAWorkspaceSlidesInTakesItsFirstFrameBeforeItShows()
     {
-        using var windows = new TestWindows(Fast);
+        using var windows = new TestWindows(Config);
         windows.Open(1);
         windows.Settle();
         windows.Dispatch("workspace", "2");

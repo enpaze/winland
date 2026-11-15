@@ -19,8 +19,8 @@ public partial class CursorIdleTests
     public void TouchHidesTheCursorUntilTheMouseMoves()
     {
         var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, new ManualClock());
-        idle.Configure(new CursorBehavior(false, 0));
+        var idle = new CursorIdle(cursor);
+        idle.Configure(new CursorBehavior(false));
 
         idle.Touched();
         Assert.True(cursor.Hidden);

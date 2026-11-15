@@ -9,7 +9,7 @@ public class ElevatedWordTests
     public void AnExecLineWarnsAndLaunchesTheCommand()
     {
         var document = ConfigParser.Parse(
-            "exec = [elevated] every\n" +
+            "exec-once = [elevated] every\n" +
             "exec-once = [elevated] once\n");
 
         Assert.Equal(
@@ -22,13 +22,10 @@ public class ElevatedWordTests
         var core = new WindowManager();
         Assert.Equal(
             [
-                new Launch("every", null) { InitialWorkspace = WorkspaceId.Initial },
+                new Launch("every", null),
                 new Launch("once", null),
             ],
             core.StartupLaunches(document));
-        Assert.Equal(
-            [new Launch("every", null) { InitialWorkspace = WorkspaceId.Initial }],
-            core.ReloadLaunches(document));
     }
 
     [Fact]

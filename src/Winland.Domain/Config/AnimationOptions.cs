@@ -1,72 +1,23 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// <c>animations:enabled</c>, the named <c>bezier</c> curves
-/// and the <c>animation</c> tree, read in config order.
-/// </summary>
+/// <summary>The switch for Winland's fixed animations.</summary>
 public sealed record AnimationOptions
 {
-    private AnimationOptions()
-    {
-    }
-
-    private AnimationBook Book { get; init; } = new();
-
     public static AnimationOptions Documented { get; } = new();
 
     public bool Enabled { get; init; } = true;
+
+    public Timing? WindowTiming => Enabled ? new(Bezier.Default, 300) : null;
+
+    public Timing? TransitionTiming => Enabled ? new(Bezier.Default, 800) : null;
 
     internal static OptionSet<AnimationOptions> Options { get; } = new(
     [
         Option<AnimationOptions>.Of("animations:enabled", OptionValue.Bool, o => o.Enabled, (o, v) => o with { Enabled = v }),
     ]);
 
-    public static AnimationOptions From(ConfigDocument document)
-    {
-        ArgumentNullException.ThrowIfNull(document);
-        var book = new AnimationBook();
-        foreach (var setting in document.Settings)
-        {
-            switch (setting.Keyword)
-            {
-                case AnimationBook.BezierKeyword:
-                    _ = book.AddBezier(setting.Value);
-                    break;
-                case AnimationBook.SpringKeyword:
-                    _ = book.AddSpring(setting.Value);
-                    break;
-                case AnimationBook.AnimationKeyword:
-                    _ = book.SetAnimation(setting.Value);
-                    break;
-            }
-        }
-
-        return Options.From(Documented with { Book = book }, document);
-    }
-
-    /// <summary>The resolved values of <paramref name="node"/>, inherited from the nearest set ancestor.</summary>
-    public AnimationLeaf Leaf(string node) => Book.Effective(node);
-
-    /// <summary>The curve and duration of <paramref name="node"/>, or null when it does not animate.</summary>
-    public Timing? TimingOf(string node)
-    {
-        if (!Enabled)
-            return null;
-
-        var leaf = Book.Effective(node);
-        if (!leaf.Enabled || !Book.TryCurve(leaf.Curve, out var curve))
-            return null;
-
-        // Speed is in deciseconds. A spring runs until it settles, whatever the speed.
-        return curve is SpringCurve spring ? new Timing(spring, spring.Milliseconds) : new Timing(curve, leaf.Speed * 100);
-    }
-
-    /// <summary>The style of <paramref name="node"/>, lower case. Empty when none is set.</summary>
-    public string StyleOf(string node) => Book.Effective(node).Style.ToLowerInvariant();
+    public static AnimationOptions From(ConfigDocument document) => Options.From(Documented, document);
 }
 
-/// <summary>The values one node of the animation tree resolves to, after inheritance.</summary>
-public sealed record AnimationLeaf(bool Enabled, double Speed, string Curve, string Style);
-
 /// <summary>How long one animation runs and how it eases.</summary>
-public readonly record struct Timing(Easing Curve, double Milliseconds);
+public readonly record struct Timing(Bezier Curve, double Milliseconds);

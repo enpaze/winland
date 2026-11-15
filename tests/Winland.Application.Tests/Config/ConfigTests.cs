@@ -35,9 +35,7 @@ public class ConfigTests
     }
 
     [Theory]
-    [InlineData("exec")]
     [InlineData("exec-once")]
-    [InlineData("monitor")]
     public void HandlersCanRepeat(string keyword)
     {
         var document = ConfigParser.Parse($"{keyword} = one\n{keyword} = two\n");
@@ -172,9 +170,7 @@ public class ConfigTests
     public void KeptKeywordsLoadWithoutAWarning()
     {
         var text = """
-            exec = app
             exec-once = app
-            monitor = , addreserved, 0, 0, 0, 0
             windowrule = float, class:^(kitty)$
             windowrule = tile, class:^(kitty)$
             """;
@@ -320,7 +316,7 @@ public class ConfigTests
     [Fact]
     public void MalformedLineWarnsWithItsLineNumber()
     {
-        var document = ConfigParser.Parse("general:gaps_in = 5\r\nthis is bad\r\nexec = notepad\r\n}\n");
+        var document = ConfigParser.Parse("general:gaps_in = 5\r\nthis is bad\r\nexec-once = notepad\r\n}\n");
 
         Assert.Equal(
             new[]
@@ -330,7 +326,7 @@ public class ConfigTests
             },
             document.Warnings);
         Assert.Equal(
-            new[] { new Setting("general:gaps_in", "5"), new Setting("exec", "notepad") },
+            new[] { new Setting("general:gaps_in", "5"), new Setting("exec-once", "notepad") },
             document.Settings);
     }
 
@@ -346,7 +342,7 @@ public class ConfigTests
             {
                 new ConfigWarning(2, "Unsupported keyword 'ghostkeyword'."),
                 new ConfigWarning(3, "Unsupported keyword 'xwayland:enabled'."),
-                new ConfigWarning(4, "Unsupported keyword 'execr'. Did you mean 'exec'?"),
+                new ConfigWarning(4, "Unsupported keyword 'execr'."),
             },
             document.Warnings);
         Assert.Equal(
@@ -476,14 +472,14 @@ public class ConfigTests
     {
         var source = new MemorySource(new Dictionary<string, string>
         {
-            ["inner.conf"] = "dwindle {\n    preserve_split = true\n",
+            ["inner.conf"] = "general {\n    border_size = 3\n",
         });
 
         var document = ConfigParser.Parse("source = inner.conf\ngeneral:gaps_in = 1\n", source);
 
-        Assert.Equal(new ConfigWarning(1, "Unclosed category 'dwindle'.", "inner.conf"), Assert.Single(document.Warnings));
+        Assert.Equal(new ConfigWarning(1, "Unclosed category 'general'.", "inner.conf"), Assert.Single(document.Warnings));
         Assert.Equal(
-            new[] { new Setting("dwindle:preserve_split", "true"), new Setting("general:gaps_in", "1") },
+            new[] { new Setting("general:border_size", "3"), new Setting("general:gaps_in", "1") },
             document.Settings);
     }
 
@@ -519,10 +515,10 @@ public class ConfigTests
     [Fact]
     public void AnEscapedHashBeforeABackslashStillJoinsTheNextLine()
     {
-        var document = ConfigParser.Parse("exec = echo ## \\\n    done\n");
+        var document = ConfigParser.Parse("exec-once = echo ## \\\n    done\n");
 
         Assert.Empty(document.Warnings);
-        Assert.Equal(new Setting("exec", "echo #    done"), Assert.Single(document.Settings));
+        Assert.Equal(new Setting("exec-once", "echo #    done"), Assert.Single(document.Settings));
     }
 
     [Fact]

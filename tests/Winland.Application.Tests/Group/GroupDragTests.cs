@@ -17,16 +17,6 @@ public class GroupDragTests
     }
 
     [Fact]
-    public void DragIntoGroupZeroLeavesTheGroupAlone()
-    {
-        var core = Grouped("group:drag_into_group = 0\n");
-
-        var dropped = Drag(core, 2, Middle(Tile(core, 1)));
-
-        Assert.Equal([new WindowId(1)], Assert.Single(dropped.State.Groups));
-    }
-
-    [Fact]
     public void ATileDroppedOnTheFirstTabGoesInFrontOfIt()
     {
         var core = Grouped("group:drag_into_group = 2\n");
@@ -35,16 +25,6 @@ public class GroupDragTests
         var dropped = Drag(core, 2, new Point(bar.Bounds.X + 2, bar.Bounds.Y + (bar.Bounds.Height / 2)));
 
         Assert.Equal([new WindowId(2), new WindowId(1)], Assert.Single(dropped.State.Groups));
-    }
-
-    [Fact]
-    public void DragIntoGroupTwoJoinsOnlyOnTheTabBar()
-    {
-        var core = Grouped("group:drag_into_group = 2\n");
-
-        var dropped = Drag(core, 2, Middle(Tile(core, 1)));
-
-        Assert.Equal([new WindowId(1)], Assert.Single(dropped.State.Groups));
     }
 
     [Fact]
@@ -66,7 +46,7 @@ public class GroupDragTests
     [Fact]
     public void AMoveStartedOnATabTakesThatMemberOutAndDragsItAlone()
     {
-        var core = Grouped("group:drag_into_group = 0\n");
+        var core = Grouped("");
         core.Handle(new Dispatch("focuswindow", "address:0x2"));
         core.Handle(new Dispatch("moveintogroup", "l"));
         var bar = Assert.Single(core.Handle(new Dispatch("resizewindow")).GroupBars);
@@ -74,13 +54,9 @@ public class GroupDragTests
         core.Handle(new KeyPressed("Super_L"));
 
         var pressed = core.Handle(new PointerButtonPressed("mouse:272") { Position = tab });
-        core.Handle(new PointerMoved(new Point(1800, 900)));
-        var dropped = core.Handle(new PointerButtonReleased("mouse:272") { Position = new Point(1800, 900) });
 
         Assert.Equal([new WindowId(1)], Assert.Single(pressed.State.Groups));
         Assert.Contains(pressed.Events, item => item is ClientOutOfGroup left && left.Window == new WindowId(2));
-        Assert.Equal([new WindowId(1)], Assert.Single(dropped.State.Groups));
-        Assert.False(Assert.Single(dropped.State.Clients, client => client.Window == new WindowId(2)).Floating);
     }
 
     [Fact]
@@ -151,25 +127,6 @@ public class GroupDragTests
         Assert.Equal(1, Assert.Single(past.GroupBars).Insertion);
         Assert.Equal([new WindowId(1), new WindowId(2), new WindowId(3)], Assert.Single(dropped.State.Groups));
         Assert.Null(Assert.Single(dropped.GroupBars).Insertion);
-    }
-
-    [Fact]
-    public void TheMarkGoesWhenThePointerLeavesTheBar()
-    {
-        var core = GroupOfTwo("group:drag_into_group = 2\n");
-        var bar = Bar(core);
-        var onMember = Middle(Tile(core, 1));
-        Hold(core, 2);
-        core.Handle(new PointerMoved(new Point(bar.Bounds.X + 2, bar.Bounds.Y + 2)));
-
-        var member = core.Handle(new PointerMoved(onMember));
-        var away = core.Handle(new PointerMoved(new Point(1800, 900)));
-        var dropped = core.Handle(new PointerButtonReleased("mouse:272") { Position = new Point(1800, 900) });
-
-        // Only the tab bar marks a place.
-        Assert.Null(Assert.Single(member.GroupBars).Insertion);
-        Assert.Null(Assert.Single(away.GroupBars).Insertion);
-        Assert.Equal([new WindowId(1), new WindowId(3)], Assert.Single(dropped.State.Groups));
     }
 
     [Fact]

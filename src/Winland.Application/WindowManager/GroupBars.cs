@@ -8,8 +8,6 @@ public sealed partial class WindowManager
     {
         var bars = new List<GroupBar>();
         var style = _config.Groups.Bar;
-        if (!style.Enabled)
-            return bars;
 
         var clients = new Dictionary<WindowId, Client>(snapshot.Clients.Count);
         foreach (var client in snapshot.Clients)
@@ -23,14 +21,11 @@ public sealed partial class WindowManager
 
             var scaled = style.ScaledBy(MonitorById(desk.Monitor)?.Arranged.Scale ?? 1, _textScale);
 
-            // The bar's own font_family wins, and misc:font_family stands in for an empty one.
-            scaled = scaled with { FontFamily = FontNames.Windows(scaled.FontFamily.Length == 0 ? _config.Session.FontFamily : scaled.FontFamily) };
+            // An empty font_family is Windows' own interface font.
+            scaled = scaled with { FontFamily = FontNames.Windows(scaled.FontFamily.Length == 0 ? "Sans" : scaled.FontFamily) };
             var showing = desk.Showing();
             foreach (var group in desk.Groups)
             {
-                if (style.DisableWhenOnly && group.Count == 1)
-                    continue;
-
                 if (!clients.TryGetValue(group.Shown, out var shown)
                     || shown.Minimized
                     || shown.Fullscreen == FullscreenMode.Fullscreen
@@ -38,7 +33,7 @@ public sealed partial class WindowManager
                     || _props.Own(group.Shown, WindowProp.Decorate) == false)
                     continue;
 
-                var reserved = scaled.ReservedFor(group.Count);
+                var reserved = scaled.Reserved;
                 var box = shown.Bounds;
                 var strip = shown.Floating
                     ? new Rectangle(box.X, box.Y - reserved, box.Width, reserved)

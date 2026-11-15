@@ -4,22 +4,6 @@ namespace Winland.Application.Tests;
 public class LayoutChangeTests
 {
     [Fact]
-    public void SingleWindowAspectRatio()
-    {
-        var desk = new TestDesktop("layout:single_window_aspect_ratio = 1 1\n");
-        desk.Spawn("a");
-        desk.ExpectActive("442,22", "1036,1036");
-
-        desk.Spawn("a");
-        desk.CloseActive();
-        desk.ExpectActive("442,22", "1036,1036");
-
-        // A maximized Client does not keep the ratio.
-        desk.Ok("fullscreen", "1");
-        desk.ExpectActive("22,22", "1876,1036");
-    }
-
-    [Fact]
     public void LayoutRefreshDuringMonitorTeardown()
     {
         var desk = new TestDesktop();

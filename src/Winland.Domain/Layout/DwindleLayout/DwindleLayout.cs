@@ -232,7 +232,7 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         var top = box.Y == area.Y ? 0 : gaps.Top;
         var right = box.X + box.Width == area.X + area.Width ? 0 : gaps.Right;
         var bottom = box.Y + box.Height == area.Y + area.Height ? 0 : gaps.Bottom;
-        var presented = _options.KeepAspect(Shrink(box, left, top, right, bottom), _area, _nodes.Count);
+        var presented = Shrink(box, left, top, right, bottom);
         var border = _options.BorderFor(id);
         presented = Shrink(presented, border, border, border, border);
         return _limits.TryGetValue(id, out var limits) ? limits.ForTiles.Raise(presented, area) : presented;
@@ -246,14 +246,11 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return new Rectangle(_area.X + gaps.Left, _area.Y + gaps.Top, width, height);
     }
 
-    private void Recalculate(Node node, bool keepDirection = false)
+    // A split keeps the direction it was made with, however its box changes shape.
+    private static void Recalculate(Node node)
     {
         if (node.First is null || node.Second is null)
             return;
-
-        if (!keepDirection && !node.KeepDirection && !_options.PreserveSplit)
-            node.SplitTop = SplitsTop(node.Box);
-        node.KeepDirection = false;
 
         if (node.SplitTop)
         {
@@ -331,7 +328,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
 
         public bool SplitTop { get; set; }
 
-        public bool KeepDirection { get; set; }
     }
 
     private sealed record Sibling(Node Node, int Index, double SplitRatio, bool SplitTop);

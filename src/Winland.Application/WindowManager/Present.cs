@@ -68,7 +68,7 @@ public sealed partial class WindowManager
         outcome = KeepLeavingRings(outcome, leaving);
         return outcome with
         {
-            Tray = TrayIcon.For(_config.Session.ShowTray, outcome.State.ActiveWorkspace),
+            Tray = TrayIcon.For(outcome.State.ActiveWorkspace),
             ConfigNotice = _notice,
         };
     }

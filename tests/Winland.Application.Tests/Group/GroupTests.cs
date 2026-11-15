@@ -13,6 +13,42 @@ public class GroupTests
     private const int BarHeight = 21;
 
     [Fact]
+    public void ABackgroundGroupMemberLeavesTheShownMemberFocusedWhenFollowingIsOff()
+    {
+        var core = Opened("input:follow_mouse = false\n", First);
+        core.Execute("dispatch togglegroup");
+
+        var opened = core.Handle(Appear(Second, "two"));
+
+        Assert.Equal(First, Assert.Single(opened.GroupBars).Shown);
+        Assert.Contains(Second, opened.State.Hidden.Select(client => client.Window));
+        Assert.Contains("\"address\":\"0x1\"", core.Execute("j/activewindow").Text, StringComparison.Ordinal);
+        var clicked = core.Handle(new WindowFocused(Second, FocusCause.User));
+        Assert.Equal(Second, clicked.Focus);
+    }
+
+    [Fact]
+    public void GroupBordersKeepTheirFixedColorsWhenOtherColorsChange()
+    {
+        var core = Opened("""
+            general:col.active_border = 0xffff0000
+            general:col.inactive_border = 0xff0000ff
+            group:groupbar:col.active = 0xff00ff00
+            group:groupbar:col.inactive = 0xffffffff
+            """, First);
+        var grouped = core.Execute("dispatch togglegroup").Effect;
+        Assert.Equal(new BorderColor(0x66, 0xFF, 0xFF, 0), Decoration(grouped, First).Border);
+
+        var otherWorkspace = core.Handle(new WindowAppeared(Second, Area)
+        {
+            Traits = WindowTraits.Normal with { Dialog = true },
+        });
+
+        Assert.Equal(new BorderColor(0x66, 0x77, 0x77, 0), Decoration(otherWorkspace, First).Border);
+        Assert.Equal(new BorderColor(0xFF, 0xFF, 0, 0), Decoration(otherWorkspace, Second).Border);
+    }
+
+    [Fact]
     public void ToggleGroupMakesAGroupOfOneWithABar()
     {
         var core = Opened(First);
@@ -313,43 +349,14 @@ public class GroupTests
     }
 
     [Fact]
-    public void GroupedWindowsUseTheGroupBorderColors()
+    public void TheTitleRowHeightShapesTheBar()
     {
-        var core = Grouped("""
-            group:col.border_active = rgb(102030)
-            """);
-
-        var grouped = core.Execute("dispatch changegroupactive 2");
-        Assert.Equal(new BorderColor(0xFF, 0x10, 0x20, 0x30), Decoration(grouped.Effect, Second).Border);
-    }
-
-    [Fact]
-    public void DisabledGroupBarTakesNoSpace()
-    {
-        var core = Opened("group:groupbar:enabled = false\n", First);
-        var tile = ClientOf(core.Execute("dispatch workspace 1").Effect, First).Bounds;
-
-        var made = core.Execute("dispatch togglegroup");
-
-        Assert.Empty(made.Effect.GroupBars);
-        Assert.Equal(tile, Assert.Single(made.Effect.Placements).Bounds);
-    }
-
-    [Fact]
-    public void GroupBarOptionsShapeTheBar()
-    {
-        var core = Opened("""
-            group:groupbar:height = 20
-            group:groupbar:indicator_height = 4
-            group:groupbar:keep_upper_gap = false
-            group:groupbar:gaps_out = 1
-            group:groupbar:render_titles = false
-            """, First);
+        var core = Opened("group:groupbar:height = 20\n", First);
 
         var bar = Assert.Single(core.Execute("dispatch togglegroup").Effect.GroupBars);
 
-        Assert.Equal(1 + 4, bar.Bounds.Height);
-        Assert.False(bar.Style.RenderTitles);
+        // The gap above, the title row, the indicator and the gap below.
+        Assert.Equal(2 + 20 + 3 + 2, bar.Bounds.Height);
     }
 
     [Fact]
@@ -394,13 +401,13 @@ public class GroupTests
     {
         var document = ConfigParser.Parse("""
             group:groupbar:font_size = 10
-            group:drag_into_group = 2
+            group:groupbar:col.active = rgba(ff0000ff)
             """);
 
         Assert.Empty(document.Warnings);
         var options = GroupOptions.From(document);
         Assert.Equal(10, options.Bar.FontSize);
-        Assert.Equal(2, options.DragIntoGroup);
+        Assert.Equal(new BorderColor(0xFF, 0xFF, 0x00, 0x00), options.Bar.Active);
     }
 
     [Theory]

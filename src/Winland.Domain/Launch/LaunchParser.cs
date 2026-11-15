@@ -29,25 +29,19 @@ internal static class LaunchParser
         return new LaunchParse(launch, warnings);
     }
 
-    internal static IReadOnlyList<Launch> FromConfig(ConfigDocument config, LaunchMoment moment, WorkspaceId? initialWorkspace = null)
+    internal static IReadOnlyList<Launch> FromConfig(ConfigDocument config)
     {
         ArgumentNullException.ThrowIfNull(config);
         var launches = new List<Launch>();
         foreach (var setting in config.Settings)
         {
-            // exec runs at startup and on every reload. exec-once runs at startup only.
-            var once = setting.Keyword == "exec-once";
-            if (!once && setting.Keyword != "exec")
-                continue;
-            if (once && moment == LaunchMoment.Reload)
+            if (setting.Keyword != "exec-once")
                 continue;
 
             var parsed = Parse(setting.Value);
             if (parsed.Launch is not { } launch)
                 continue;
 
-            if (!once)
-                launch = launch with { InitialWorkspace = initialWorkspace };
             launches.Add(launch);
         }
 
@@ -77,11 +71,6 @@ internal static class LaunchParser
         return !fatal;
     }
 
-    internal enum LaunchMoment
-    {
-        Startup,
-        Reload,
-    }
 }
 
 internal readonly record struct LaunchParse(Launch? Launch, IReadOnlyList<string> Warnings);

@@ -162,7 +162,6 @@ public class ReloadTests
             general:gaps_in = 0
             general:gaps_out = 10
             general:border_size = 0
-            exec = notepad
             exec-once = once
             """);
         core.ReadConfig = () => new ConfigRead(document);
@@ -178,7 +177,7 @@ public class ReloadTests
         Assert.Equal(1, calls);
         Assert.Same(document, seen);
         Assert.NotNull(seen);
-        Assert.Equal([new Launch("notepad", null) { InitialWorkspace = WorkspaceId.Initial }], core.ReloadLaunches(seen));
+        Assert.Null(reply.Effect.Launch);
         Assert.Equal(new Rectangle(10, 10, 1900, 1060), BoundsOf(reply.Effect, 1));
         Assert.Contains("configreloaded>>", Lines(reply));
     }
@@ -189,7 +188,7 @@ public class ReloadTests
         var called = false;
         var core = new WindowManager { AfterReload = _ => called = true };
 
-        core.Handle(new Configure(ConfigParser.Parse("exec = notepad")));
+        core.Handle(new Configure(ConfigParser.Parse("exec-once = notepad")));
 
         Assert.False(called);
     }
@@ -212,27 +211,6 @@ public class ReloadTests
         var reply = new WindowManager().Execute("reload now");
 
         Assert.Equal("error: unknown request", reply.Text);
-    }
-
-    [Fact]
-    public void ReloadAppliesMonitorRulesAlreadyKnown()
-    {
-        var core = new WindowManager();
-        core.Handle(new MonitorsChanged(
-        [
-            new Monitor(@"\\.\DISPLAY1", "Dell", 0, 0, 100, 100, 1, true, new Rectangle(0, 0, 100, 100)),
-        ]));
-        core.ReadConfig = () => new ConfigRead(ConfigParser.Parse("""
-            monitor = \\.\DISPLAY1, addreserved, 1, 2, 3, 4
-            """));
-
-        var reply = core.Execute("reload");
-
-        var monitor = Assert.Single(reply.Effect.State.Monitors);
-        Assert.Equal(0, monitor.X);
-        Assert.Equal(0, monitor.Y);
-        Assert.Equal(new Rectangle(3, 1, 93, 97), monitor.WorkArea);
-        Assert.Equal("ok", reply.Text);
     }
 
     [Fact]

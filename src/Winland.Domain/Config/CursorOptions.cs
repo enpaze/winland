@@ -4,18 +4,15 @@ public sealed record CursorOptions
 {
     public bool NoWarps { get; init; }
 
-    public double InactiveTimeoutSeconds { get; init; }
-
-    public bool HideOnKeyPress { get; init; }
+    public bool HideOnKeyPress { get; init; } = true;
 
     public static CursorOptions Documented { get; } = new();
 
-    public CursorBehavior Behavior() => new(HideOnKeyPress, InactiveTimeoutSeconds);
+    public CursorBehavior Behavior() => new(HideOnKeyPress);
 
     internal static OptionSet<CursorOptions> Options { get; } = new(
     [
         Of("cursor:no_warps", OptionValue.Bool, o => o.NoWarps, (o, v) => o with { NoWarps = v }),
-        Of("cursor:inactive_timeout", OptionValue.Number(0, 20), o => o.InactiveTimeoutSeconds, (o, v) => o with { InactiveTimeoutSeconds = v }),
         Of("cursor:hide_on_key_press", OptionValue.Bool, o => o.HideOnKeyPress, (o, v) => o with { HideOnKeyPress = v }),
     ]);
 

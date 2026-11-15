@@ -72,31 +72,4 @@ public class BorderRingTests
         Assert.Null(Assert.Single(core.Execute("dispatch resizewindow").Effect.Decorations).Ring);
     }
 
-    [Fact]
-    public void AGroupBorderTakesItsColorAndAGradientDoesNot()
-    {
-        var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("general:border_size = 2\ngroup:col.border_active = rgba(33ccffff)\n")));
-        core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "", 0, 0, 1920, 1080, 1, true, Area)]));
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-
-        var ring = Assert.Single(core.Execute("dispatch togglegroup").Effect.Decorations).Ring;
-
-        Assert.NotNull(ring);
-        Assert.Equal(Cyan, ring.Color);
-
-        var kept = new WindowManager();
-        kept.Handle(new Configure(ConfigParser.Parse("general:border_size = 2\ngroup:col.border_active = rgba(33ccffff) rgba(00ff99ff) 90deg\n")));
-        kept.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "", 0, 0, 1920, 1080, 1, true, Area)]));
-        kept.Handle(new WindowAppeared(new WindowId(1), Area));
-        Assert.Equal(GroupOptions.Documented.ActiveBorder, Assert.Single(kept.Execute("dispatch togglegroup").Effect.Decorations).Ring!.Color);
-    }
-
-    [Fact]
-    public void TheBorderAngleAnimationDoesNotExist()
-    {
-        var document = ConfigParser.Parse("animation = borderangle, 1, 10, linear, loop\n");
-
-        Assert.Contains(document.Warnings, warning => warning.Message == "Animation 'borderangle' is not one Winland draws.");
-    }
 }

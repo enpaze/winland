@@ -9,17 +9,7 @@ public class FollowMouseTests
     {
         var input = InputOptions.From(ConfigParser.Parse(""));
 
-        Assert.Equal(1, input.FollowMouse);
-    }
-
-    [Fact]
-    public void FollowMouseNamesClamp()
-    {
-        var input = InputOptions.From(ConfigParser.Parse("""
-            input:follow_mouse = separate
-            """));
-
-        Assert.Equal(3, input.FollowMouse);
+        Assert.True(input.FollowMouse);
     }
 
     [Fact]
@@ -68,13 +58,39 @@ public class FollowMouseTests
     [Fact]
     public void DisabledFollowLeavesTheFocusedClient()
     {
-        var (core, laid) = Tiled("input:follow_mouse = disabled\n");
+        var (core, laid) = Tiled("input:follow_mouse = false\n");
+        core.Handle(new Dispatch("focuswindow", "address:0x2"));
 
         Move(core, Center(laid, 2), 1_000);
         var followed = Move(core, Center(laid, 1), 1_100);
 
         Assert.Null(followed.Focus);
         Assert.DoesNotContain(followed.Events, item => item is FocusChanged);
+    }
+
+    [Fact]
+    public void DisabledFollowLeavesANewBackgroundWindowUnfocusedUntilAClick()
+    {
+        var core = new WindowManager(ConfigParser.Parse("input:follow_mouse = false\n"));
+        core.Handle(new WindowAppeared(new WindowId(1), Area));
+
+        core.Handle(new WindowAppeared(new WindowId(2), Area));
+
+        Assert.Equal("\"address\":\"0x1\"", Address(core));
+        core.Handle(new PointerButtonPressed("mouse:272"));
+        core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));
+        Assert.Equal("\"address\":\"0x2\"", Address(core));
+    }
+
+    [Fact]
+    public void DisabledFollowKeepsTheForegroundWindowWhenItIsAdopted()
+    {
+        var core = new WindowManager(ConfigParser.Parse("input:follow_mouse = false\n"));
+        core.Handle(new WindowAppeared(new WindowId(1), Area));
+
+        core.Handle(new WindowAppeared(new WindowId(2), Area) { Foreground = true });
+
+        Assert.Equal("\"address\":\"0x2\"", Address(core));
     }
 
     [Fact]
@@ -92,31 +108,19 @@ public class FollowMouseTests
     }
 
     [Fact]
-    public void FloatSwitchFocusesAcrossTiledAndFloating()
+    public void DisabledFollowLeavesFocusAcrossTiledAndFloating()
     {
         var core = Floats("input:follow_mouse = 0\n");
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(Box(2, 100, 100, 200, 200));
+        core.Handle(new Dispatch("focuswindow", "address:0x2"));
         var switched = Move(core, new Point(700, 700), 1_000);
 
-        Assert.Equal(new WindowId(1), switched.Focus);
+        Assert.Null(switched.Focus);
     }
 
     [Fact]
-    public void SeparateModeIgnoresThePointerAndAClick()
-    {
-        var (core, laid) = Tiled("input:follow_mouse = 3\n");
-        Move(core, Center(laid, 2), 1_000);
-        var moved = Move(core, Center(laid, 1), 1_100);
-        core.Handle(new PointerButtonPressed("mouse:272") { Position = Center(laid, 1) });
-        var clicked = core.Handle(new WindowFocused(new WindowId(1), FocusCause.User));
-
-        Assert.Null(moved.Focus);
-        Assert.Equal(new WindowId(2), clicked.Focus);
-    }
-
-    [Fact]
-    public void MovingOntoAnotherMonitorFocusesIt()
+    public void DisabledFollowLeavesTheFocusedMonitor()
     {
         var core = new WindowManager(ConfigParser.Parse("input:follow_mouse = 0\n"));
         var left = Display(@"\\.\DISPLAY1", 0, 800, 600);
@@ -127,7 +131,7 @@ public class FollowMouseTests
 
         var moved = Move(core, new Point(1_000, 100), 1_000);
 
-        Assert.Equal(new MonitorId(1), moved.State.ActiveMonitor);
+        Assert.Equal(new MonitorId(0), moved.State.ActiveMonitor);
         Assert.Null(moved.Focus);
         Assert.DoesNotContain(moved.Events, item => item is FocusChanged);
     }

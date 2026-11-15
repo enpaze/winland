@@ -9,8 +9,6 @@ public sealed partial class WindowManager
     {
         ArgumentNullException.ThrowIfNull(reported);
         var identified = _identity.Number(reported);
-        var rules = MonitorRules.From(_config.Document);
-        var arranged = MonitorRules.Arrange(identified, rules);
         var previous = _monitors.ToArray();
         var wasEnabled = new List<LiveMonitor>(previous.Length);
         foreach (var screen in previous)
@@ -23,7 +21,7 @@ public sealed partial class WindowManager
         for (var i = 0; i < identified.Length; i++)
         {
             var monitor = identified[i];
-            var effective = arranged[i];
+            var effective = monitor;
             var screen = FindTracked(previous, monitor) ?? FindTracked(next, monitor);
             if (screen is null)
                 screen = new LiveMonitor(NextMonitorId(previous, next), monitor, effective);

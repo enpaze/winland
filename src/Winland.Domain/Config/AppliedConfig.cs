@@ -23,8 +23,6 @@ public sealed record AppliedConfig
 
     public BindTable Binds { get; init; } = BindTable.Empty;
 
-    public BindOptions BindOptions { get; init; } = BindOptions.Documented;
-
     public LayoutOptions Layout { get; init; } = LayoutOptions.Unconfigured;
 
     public ScrollingOptions Scrolling { get; init; } = ScrollingOptions.Defaults;
@@ -45,8 +43,6 @@ public sealed record AppliedConfig
 
     public InputOptions Input { get; init; } = InputOptions.Documented;
 
-    public GestureOptions Swipe { get; init; } = GestureOptions.Documented;
-
     /// <summary>
     /// Reads every option <paramref name="document"/> sets. <paramref name="accent"/> is the system accent color, and
     /// <paramref name="contrast"/> the High Contrast colors while a High Contrast theme is on.
@@ -59,7 +55,6 @@ public sealed record AppliedConfig
             Document = document,
             TitleRules = document.WindowRules.Any(rule => rule.TitlePattern is not null),
             Binds = BindTable.From(document),
-            BindOptions = BindOptions.From(document),
             Layout = LayoutOptions.From(document),
             Scrolling = ScrollingOptions.From(document),
             Decoration = Decorated(document, accent, contrast),
@@ -69,7 +64,6 @@ public sealed record AppliedConfig
             Animations = AnimationOptions.From(document),
             Cursor = CursorOptions.From(document),
             Input = InputOptions.From(document),
-            Swipe = GestureOptions.From(document),
         };
     }
 

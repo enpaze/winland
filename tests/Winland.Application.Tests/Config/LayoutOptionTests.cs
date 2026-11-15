@@ -129,19 +129,16 @@ public class LayoutOptionTests
         var document = ConfigParser.Parse($"""
             scrolling:column_width = 0.7
             scrolling:column_width = {value}
-            scrolling:explicit_column_widths = 0.5, {value}
-            cursor:inactive_timeout = 3
-            cursor:inactive_timeout = {value}
+            decoration:active_opacity = 0.5
+            decoration:active_opacity = {value}
             """);
 
         var scrolling = ScrollingOptions.From(document);
         var cursor = CursorOptions.From(document);
 
-        Assert.Equal([2, 3, 5], document.Warnings.Select(warning => warning.Line));
+        Assert.Equal([2, 4], document.Warnings.Select(warning => warning.Line));
 
         Assert.Equal(0.7, scrolling.ColumnWidth);
-        Assert.Equal(ScrollingOptions.Defaults.ExplicitColumnWidths, scrolling.ExplicitColumnWidths);
-        Assert.Equal(3, cursor.InactiveTimeoutSeconds);
     }
 
     [Fact]
@@ -175,11 +172,9 @@ public class LayoutOptionTests
     }
 
     [Fact]
-    public void PreserveSplitKeepsTheDirectionWhenTheContainerChangesShape()
+    public void ASplitKeepsItsDirectionWhenTheContainerChangesShape()
     {
-        var core = Configured(FlatConfig("""
-            dwindle:preserve_split = yes
-            """));
+        var core = Configured(FlatConfig(""));
         core.Handle(Appeared(1, Wide));
         core.Handle(Appeared(2, Wide));
         core.Handle(Appeared(3, Wide));
@@ -191,11 +186,9 @@ public class LayoutOptionTests
     }
 
     [Fact]
-    public void PreservedSplitSurvivesMinimizeAndRestore()
+    public void ASplitsDirectionSurvivesMinimizeAndRestore()
     {
-        var core = Configured(FlatConfig("""
-            dwindle:preserve_split = true
-            """));
+        var core = Configured(FlatConfig(""));
         core.Handle(Appeared(1, Wide));
         core.Handle(Appeared(2, Wide));
         core.Handle(Appeared(3, Wide));
@@ -258,37 +251,11 @@ public class LayoutOptionTests
         Assert.Equal(NewFloat.Centered(Wide, bounds), BoundsOf(outcome, 2));
     }
 
-    [Theory]
-    [InlineData("dwindle")]
-    [InlineData("scrolling")]
-    public void ALoneTileIsPaddedToTheAspectRatio(string layout)
-    {
-        var plain = Configured(FlatConfig($"general:layout = {layout}\n"));
-        var ruled = Configured(FlatConfig($"general:layout = {layout}\nlayout:single_window_aspect_ratio = 4 3\n"));
-
-        var before = BoundsOf(plain.Handle(Appeared(1, Wide)), 1);
-        var after = BoundsOf(ruled.Handle(Appeared(1, Wide)), 1);
-
-        // 4:3 on 1920 by 1080 leaves 1920 - 1080 * 4 / 3 = 480 pixels, split between the two sides.
-        Assert.Equal(before with { X = before.X + 240, Width = before.Width - 480 }, after);
-    }
-
     [Fact]
     public void PaddingWithinTheToleranceIsNotAdded()
     {
         var core = Configured(FlatConfig("layout:single_window_aspect_ratio = 19 10\n"));
 
         Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(core.Handle(Appeared(1, Wide)), 1));
-    }
-
-    [Fact]
-    public void TwoTilesAreNotPadded()
-    {
-        var core = Configured(FlatConfig("layout:single_window_aspect_ratio = 4 3\n"));
-        Assert.Equal(new Rectangle(240, 0, 1440, 1080), BoundsOf(core.Handle(Appeared(1, Wide)), 1));
-
-        var split = core.Handle(Appeared(2, Wide));
-
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(split, 1));
     }
 }

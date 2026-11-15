@@ -52,7 +52,7 @@ public sealed partial class WindowManager
             return new CommandReply(message, View([]));
         }
 
-        // AfterReload watches files and starts programs, so it runs once Execute has let go of the lock.
+        // AfterReload updates file watching and logging once Execute has let go of the lock.
         _reloaded = document;
         return new CommandReply("ok", Apply(document));
     }

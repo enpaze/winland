@@ -33,7 +33,7 @@ public sealed partial class WindowManager
         return desk.ClientOf(active) is { Minimized: false } ? active : null;
     }
 
-    // A Client took its focus when it first appeared. Appearing again, as it does when Winland shows it after hiding it,
+    // A new Client may take focus. Appearing again, as it does when Winland shows it after hiding it,
     // leaves the focus where it is.
     private void Note(Input input, bool wasClient)
     {
@@ -42,6 +42,7 @@ public sealed partial class WindowManager
             case WindowAppeared appeared when !wasClient && WorkspaceContaining(appeared.Window) is { } appearedWorkspace
                 && _workspaces.Shown.IsShown(appearedWorkspace.Id)
                 && (!appeared.Traits.Topmost || appeared.Foreground)
+                && TakesMapFocus(appeared)
                 && _restoring != appeared.Window
                 && !_awaitingMapFocus.Contains(appeared.Window):
                 var current = _workspaces.Shown.SpecialOn(appearedWorkspace.Monitor) ?? _workspaces.Shown.ActiveOn(appearedWorkspace.Monitor);
@@ -56,6 +57,9 @@ public sealed partial class WindowManager
                 break;
         }
     }
+
+    private bool TakesMapFocus(WindowAppeared appeared) =>
+        _config.Input.FollowMouse || appeared.Foreground || _focus.Focused is null;
 
     private Outcome Appear(WindowAppeared appeared)
     {
@@ -150,7 +154,7 @@ public sealed partial class WindowManager
             placements = OpenUnderFullscreen(desk, appeared.Window, placements);
 
         var focused = restored is null ? ActiveWindow() : null;
-        if (!appeared.Dragging && GroupOnOpen(desk, appeared.Window, decision, appeared.Traits.Dialog, focused))
+        if (!appeared.Dragging && GroupOnOpen(desk, appeared.Window, decision, appeared.Traits.Dialog, focused, TakesMapFocus(appeared)))
             placements = desk.Layout.Visible();
 
         placements = OpenDragged(appeared, desk, placements);

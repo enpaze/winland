@@ -7,7 +7,7 @@ public sealed partial class WindowManager
     /// Puts a window that just opened into the focused Group, after the shown member. A dialog, and a floating window
     /// opened over a tiled Group, open on their own. True when the Layout changed.
     /// </summary>
-    private static bool GroupOnOpen(LiveWorkspace desk, WindowId window, WindowDecision decision, bool dialog, WindowId? focused)
+    private static bool GroupOnOpen(LiveWorkspace desk, WindowId window, WindowDecision decision, bool dialog, WindowId? focused, bool show)
     {
         if (focused is not WindowId owner
             || owner == window
@@ -19,7 +19,8 @@ public sealed partial class WindowManager
 
         var position = group.Current + 1;
         desk.Join(group, window, taken, position);
-        desk.Show(group, position);
+        if (show)
+            desk.Show(group, position);
         return true;
     }
 

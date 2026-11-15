@@ -67,19 +67,6 @@ public class ExtraCommandTests
     }
 
     [Fact]
-    public void DisableAutoreloadStopsReloadingOnSaveUntilItIsTurnedOff()
-    {
-        var core = new WindowManager();
-        Assert.True(core.ReloadsOnSave);
-
-        core.Handle(new Configure(ConfigParser.Parse("misc:disable_autoreload = true\n")));
-        Assert.False(core.ReloadsOnSave);
-
-        core.Handle(new Configure(ConfigParser.Parse("misc:disable_autoreload = false\n")));
-        Assert.True(core.ReloadsOnSave);
-    }
-
-    [Fact]
     public void KeyboardLayoutAndTheDevicesCommandAreNotApplied()
     {
         var core = new WindowManager();

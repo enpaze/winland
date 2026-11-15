@@ -31,8 +31,6 @@ public sealed record DecorationOptions
 
     public float InactiveOpacity { get; init; } = 1;
 
-    public float FullscreenOpacity { get; init; } = 1;
-
     // A negative radius does not read.
     private static readonly OptionValue<int> Radius = OptionValue.Of(
         "int",
@@ -47,7 +45,6 @@ public sealed record DecorationOptions
         Of("decoration:blur:enabled", OptionValue.Bool, o => o.Blur, (o, v) => o with { Blur = v }),
         Of("decoration:active_opacity", OptionValue.Single(0f, 1f), o => o.ActiveOpacity, (o, v) => o with { ActiveOpacity = v }),
         Of("decoration:inactive_opacity", OptionValue.Single(0f, 1f), o => o.InactiveOpacity, (o, v) => o with { InactiveOpacity = v }),
-        Of("decoration:fullscreen_opacity", OptionValue.Single(0f, 1f), o => o.FullscreenOpacity, (o, v) => o with { FullscreenOpacity = v }),
     ]);
 
     /// <summary>The options <paramref name="document"/> sets, over the High Contrast colors while <paramref name="contrast"/> is on.</summary>
