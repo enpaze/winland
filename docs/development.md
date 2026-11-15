@@ -21,7 +21,7 @@ cd winland
 
 `pwsh -NoProfile -File scripts/run.ps1` publishes this checkout, asks the running Winland to exit cleanly, and starts the new build in its place. A failed publish leaves the running copy alone. Use this script for starts and stops. A running Winland takes over windows on your desktop, including your own.
 
-For an isolated test, give it its own pipe and state file, and a config that ignores every window except the test windows you create. This example manages only windows of class `WinlandDevWindow` titled `WinlandDev 1` or `WinlandDev 2`. Adjust those matches to your test windows. Patterns match the whole string, so `^foo` matches only `foo`.
+For an isolated test, give it its own pipe and state file, and a config that ignores every window except the test windows you create. This example manages only windows of class `WinlandDevWindow` titled `WinlandDev 1` or `WinlandDev 2`. Adjust those matches to your test windows. A name matches the whole field, and `*` matches any run, so `foo` matches only `foo`.
 
 ```powershell
 $devId = [guid]::NewGuid().ToString('n')
@@ -30,9 +30,9 @@ $env:WINLAND_STATE = Join-Path $env:TEMP "winland-dev-$devId.json"
 $devConfig = Join-Path $env:TEMP "winland-dev-$devId.conf"
 @'
 animations:enabled = false
-windowrule = ignore, class:.*
-windowrule = tile, class:^(WinlandDevWindow)$, title:^(WinlandDev [12])$
-windowrule = workspace 1, class:^(WinlandDevWindow)$, title:^(WinlandDev [12])$
+windowrule = ignore, class:*
+windowrule = tile, class:WinlandDevWindow, title:WinlandDev *
+windowrule = workspace 1, class:WinlandDevWindow, title:WinlandDev *
 '@ | Set-Content -LiteralPath $devConfig
 pwsh -NoProfile -File scripts/run.ps1 -Config $devConfig
 ```

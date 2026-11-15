@@ -253,7 +253,7 @@ public class WindowManagerTests
     [Fact]
     public void ClassRuleFloatsTheWindowAndLeavesTheTilesAlone()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:^(kitty)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:kitty\n"));
         var area = new Rectangle(0, 0, 1920, 1080);
         var bounds = new Rectangle(40, 50, 320, 200);
         core.Handle(new WindowAppeared(new WindowId(1), area));
@@ -277,25 +277,7 @@ public class WindowManagerTests
     }
 
     [Theory]
-    [InlineData("initial_class:^(kitty)$")]
-    public void InitialClassNamesMatchTheClass(string match)
-    {
-        var core = new WindowManager(ConfigParser.Parse($"windowrule = float, {match}\n"));
-        var bounds = new Rectangle(8, 9, 10, 11);
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 400, 300))
-        {
-            Traits = WindowTraits.Normal with { Class = "kitty" },
-            Bounds = bounds,
-        });
-
-        Assert.True(Assert.Single(outcome.State.Clients).Floating);
-        Assert.Equal(NewFloat.Centered(new Rectangle(0, 0, 400, 300), bounds), Assert.Single(outcome.Placements).Bounds);
-    }
-
-    [Theory]
-    [InlineData("title:^Editor$")]
-    [InlineData("initial_title:^Editor$")]
+    [InlineData("title:Editor")]
     public void TitleRuleFloatsAMatchingWindow(string match)
     {
         var core = new WindowManager(ConfigParser.Parse($"windowrule = float, {match}\n"));
@@ -321,64 +303,6 @@ public class WindowManagerTests
     }
 
     [Fact]
-    public void AumidRuleFloatsTheMatchingWindow()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = float, aumid:^(Microsoft\\.WindowsCalculator_8wekyb3d8bbwe!App)$\n"));
-        var bounds = new Rectangle(12, 16, 240, 180);
-        var area = new Rectangle(0, 0, 1920, 1080);
-
-        var missed = core.Handle(new WindowAppeared(new WindowId(1), area)
-        {
-            Traits = WindowTraits.Normal with { Aumid = "Microsoft.WindowsNotepad_8wekyb3d8bbwe!App" },
-            Bounds = bounds,
-        });
-        Assert.False(Assert.Single(missed.State.Clients).Floating);
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(2), area)
-        {
-            Traits = WindowTraits.Normal with
-            {
-                Class = "Windows.UI.Core.CoreWindow",
-                Exe = "CalculatorApp.exe",
-                Aumid = "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App",
-            },
-            Bounds = bounds,
-        });
-
-        var floated = Assert.Single(outcome.State.Clients, client => client.Window == new WindowId(2));
-        Assert.True(floated.Floating);
-        Assert.Equal(NewFloat.Centered(area, bounds), Assert.Single(outcome.Placements, placement => placement.Client == floated.Id).Bounds);
-    }
-
-    [Fact]
-    public void AumidRuleRequiresTheOtherFieldsToo()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 4, class:^(Windows\\.UI\\.Core\\.CoreWindow)$, title:^(Calculator)$, exe:^(CalculatorApp\\.exe)$, aumid:^(Microsoft\\.WindowsCalculator_8wekyb3d8bbwe!App)$\n"));
-        var area = new Rectangle(0, 0, 1000, 800);
-        var hosted = WindowTraits.Normal with
-        {
-            Class = "Windows.UI.Core.CoreWindow",
-            Title = "Calculator",
-            Exe = "CalculatorApp.exe",
-            Aumid = "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App",
-        };
-
-        var missed = core.Handle(new WindowAppeared(new WindowId(1), area)
-        {
-            Traits = hosted with { Aumid = "Microsoft.WindowsNotepad_8wekyb3d8bbwe!App" },
-        });
-        Assert.Equal(WorkspaceId.Initial, Assert.Single(missed.State.Clients).Workspace);
-
-        var hit = core.Handle(new WindowAppeared(new WindowId(2), area)
-        {
-            Traits = hosted,
-        });
-        var client = Assert.Single(hit.State.Clients, candidate => candidate.Window == new WindowId(2));
-        Assert.Equal(new WorkspaceId("4"), client.Workspace);
-        Assert.False(client.Floating);
-    }
-
-    [Fact]
     public void CloakedFrameStaysUnmanagedWithAPackagedIdentity()
     {
         var core = new WindowManager();
@@ -401,7 +325,7 @@ public class WindowManagerTests
     [Fact]
     public void ExeRuleIgnoresTheWindow()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = ignore, exe:^(notepad\\.exe)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = ignore, exe:notepad.exe\n"));
         var area = new Rectangle(0, 0, 1920, 1080);
         core.Handle(new WindowAppeared(new WindowId(1), area));
 
@@ -418,7 +342,7 @@ public class WindowManagerTests
     [Fact]
     public void RuleMatchesOnlyWhenClassTitleAndExeAllMatch()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 4, class:^(code)$, title:^(Editor)$, exe:^(code\\.exe)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 4, class:code, title:Editor, exe:code.exe\n"));
         var area = new Rectangle(0, 0, 1000, 800);
 
         var missed = core.Handle(new WindowAppeared(new WindowId(1), area)
@@ -439,7 +363,7 @@ public class WindowManagerTests
     [Fact]
     public void VersionOneRuleMatchesClassOnly()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:^(kitty)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:kitty\n"));
         var area = new Rectangle(0, 0, 200, 100);
         var bounds = new Rectangle(5, 5, 20, 20);
 
@@ -463,7 +387,7 @@ public class WindowManagerTests
     [Fact]
     public void TileRuleAdoptsAWindowTheFilterWouldLeaveAlone()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = tile, class:^(toolwindow)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = tile, class:toolwindow\n"));
         var area = new Rectangle(0, 0, 1920, 1080);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(7), area)
@@ -498,7 +422,7 @@ public class WindowManagerTests
     [Fact]
     public void TileRuleTilesADialog()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = tile, class:^(dialog)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = tile, class:dialog\n"));
         var area = new Rectangle(0, 0, 1920, 1080);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), area)
@@ -514,7 +438,7 @@ public class WindowManagerTests
     [Fact]
     public void FloatAndWorkspaceBothApply()
     {
-        var text = "windowrule = workspace 4, class:^(kitty)$\nwindowrule = float, class:^(kitty)$\n";
+        var text = "windowrule = workspace 4, class:kitty\nwindowrule = float, class:kitty\n";
         var core = new WindowManager(ConfigParser.Parse(text));
         var bounds = new Rectangle(10, 20, 30, 40);
 
@@ -534,7 +458,7 @@ public class WindowManagerTests
     [Fact]
     public void WorkspaceRuleOnADialogKeepsItFloating()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 3, class:^(dialog)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 3, class:dialog\n"));
         var bounds = new Rectangle(4, 5, 6, 7);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 900, 700))
@@ -552,7 +476,7 @@ public class WindowManagerTests
     [Fact]
     public void SilentWorkspaceRuleDoesNotSwitch()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:^(kitty)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:kitty\n"));
         var area = new Rectangle(0, 0, 640, 480);
         core.Handle(new WindowAppeared(new WindowId(1), area));
 
@@ -575,9 +499,9 @@ public class WindowManagerTests
     public void LaterRuleWinsAndDifferentEffectsCombine()
     {
         var text =
-            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:^(kitty)$\n" +
-            "windowrule = workspace 9, class:^(kitty)$\n" +
-            "windowrule = tile, class:^(kitty)$\n";
+            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:kitty\n" +
+            "windowrule = workspace 9, class:kitty\n" +
+            "windowrule = tile, class:kitty\n";
         var core = new WindowManager(ConfigParser.Parse(text));
         var area = new Rectangle(0, 0, 1920, 1080);
         core.Handle(new WindowAppeared(new WindowId(1), area));
@@ -598,7 +522,7 @@ public class WindowManagerTests
     [Fact]
     public void LaterIgnoreLeavesTheWindowUnmanaged()
     {
-        var text = "windowrule = workspace 2, class:^(kitty)$\nwindowrule = ignore, class:^(kitty)$\n";
+        var text = "windowrule = workspace 2, class:kitty\nwindowrule = ignore, class:kitty\n";
         var core = new WindowManager(ConfigParser.Parse(text));
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 100, 100))
@@ -613,7 +537,7 @@ public class WindowManagerTests
     [Fact]
     public void XwaylandMatchIsNotApplied()
     {
-        var document = ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:^(kitty)$, xwayland:1\n");
+        var document = ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:kitty, xwayland:1\n");
         var core = new WindowManager(document);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 100, 100))
@@ -638,52 +562,6 @@ public class WindowManagerTests
         });
 
         Assert.False(Assert.Single(outcome.State.Clients).Floating);
-    }
-
-    [Theory]
-    [InlineData("windowrule = float, title:Notes|Release Notes\n")]
-    [InlineData("windowrule = float, title:Release.*\n")]
-    [InlineData("windowrule = float, class:Release.*\n")]
-    public void PatternThatMatchesTheWholeFieldApplies(string config)
-    {
-        var core = new WindowManager(ConfigParser.Parse(config));
-        var traits = config.Contains("class:", StringComparison.Ordinal)
-            ? WindowTraits.Normal with { Class = "Release Notes" }
-            : WindowTraits.Normal with { Title = "Release Notes" };
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 300, 200))
-        {
-            Traits = traits,
-            Bounds = new Rectangle(4, 5, 6, 7),
-        });
-
-        Assert.True(Assert.Single(outcome.State.Clients).Floating);
-    }
-
-    [Theory]
-    [InlineData("kitty", false)]
-    [InlineData("firefox", true)]
-    [InlineData("kitty2", true)]
-    public void NegativePatternAppliesWhenThePatternDoesNotMatch(string windowClass, bool floats)
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:negative:kitty\n"));
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 300, 200))
-        {
-            Traits = WindowTraits.Normal with { Class = windowClass },
-            Bounds = new Rectangle(4, 5, 6, 7),
-        });
-
-        Assert.Equal(floats, Assert.Single(outcome.State.Clients).Floating);
-    }
-
-    [Fact]
-    public void NegativePrefixWithAnInvalidPatternWarns()
-    {
-        var document = ConfigParser.Parse("windowrule = float, class:negative:(kitty\n");
-
-        Assert.Empty(document.WindowRules);
-        Assert.Contains(document.Warnings, warning => warning.Message == "Invalid window rule pattern.");
     }
 
     [Fact]

@@ -9,11 +9,8 @@ public class WorkspaceDispatchTests
     [Fact]
     public void WorkspacesCombined()
     {
-        var desk = new TestDesktop("workspace = 966, persistent:true\n");
+        var desk = new TestDesktop();
         desk.ReloadWithoutExtra();
-
-        Assert.Contains("966 (966)", Labels(desk));
-        Assert.Equal("ok", desk.Send("reload"));
 
         desk.Ok("workspace", "1");
         desk.Spawn("a");
@@ -120,7 +117,6 @@ public class WorkspaceDispatchTests
         desk.RemoveMonitor("HEADLESS-3");
 
         SpecialWorkspaceFullscreen(desk);
-        AsymmetricGaps(desk);
 
         Assert.Empty(desk.Clients());
     }
@@ -242,32 +238,6 @@ public class WorkspaceDispatchTests
 
         desk.CloseAll();
         Assert.Equal("ok", desk.Send("reload"));
-    }
-
-    private static void AsymmetricGaps(TestDesktop desk)
-    {
-        Assert.Empty(desk.Clients());
-        desk.Dispatch("workspace", "1");
-        desk.Send("reload");
-
-        desk.Ok("workspace", "8");
-        desk.Set("general:gaps_in", "0");
-        desk.Set("general:border_size", "0");
-        desk.Set("workspace", "8, gapsout:0 1000 0 0");
-
-        // The default split puts B below A.
-        desk.Spawn("gaps_kitty_A");
-        desk.Spawn("gaps_kitty_B");
-
-        desk.Ok("focuswindow", "class:gaps_kitty_A");
-        Assert.Equal("0,0", desk.ActivePlace().At);
-        desk.Ok("focuswindow", "class:gaps_kitty_B");
-        Assert.Equal("0,540", desk.ActivePlace().At);
-
-        desk.CloseAll();
-        Assert.Empty(desk.Clients());
-
-        desk.CloseAll();
     }
 
     private static int X(TestDesktop desk) => desk.Placed(desk.ActiveId()).X;

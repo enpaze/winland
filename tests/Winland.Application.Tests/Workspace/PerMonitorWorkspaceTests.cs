@@ -48,11 +48,17 @@ public class PerMonitorWorkspaceTests
     [Fact]
     public void UnplugNumbersGuestsAbove10When1To10AreFull()
     {
-        var rules = string.Join('\n', Enumerable.Range(1, 10).Select(number => $"workspace = {number}, persistent:true"));
-        var core = new WindowManager(ConfigParser.Parse(rules + "\n"));
+        var core = new WindowManager();
         var left = Screen(@"\\.\DISPLAY1", "Dell", "P2415Q", "A", 0);
         var right = Screen(@"\\.\DISPLAY2", "Samsung", "S27", "B", 1920);
         core.Handle(new MonitorsChanged([left, right]));
+        for (var number = 1; number <= 10; number++)
+        {
+            core.Handle(new Dispatch("focusmonitor", left.Name));
+            core.Handle(new Dispatch("workspace", number.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            core.Handle(new WindowAppeared(new WindowId(100 + number), left.WorkArea));
+        }
+
         core.Handle(new Dispatch("focusmonitor", right.Name));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
         core.Handle(new Dispatch("workspace", "4"));

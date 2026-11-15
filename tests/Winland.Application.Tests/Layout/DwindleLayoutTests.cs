@@ -243,7 +243,7 @@ public class DwindleLayoutTests
     {
         foreach (var mode in new[] { "0", "1" })
         {
-            var desk = new TestDesktop("windowrule = float, class:^(kitty_floated)$\n");
+            var desk = new TestDesktop("windowrule = float, class:kitty_floated\n");
             desk.Ok("workspace", "1");
             desk.Spawn("kitty_tiled");
 

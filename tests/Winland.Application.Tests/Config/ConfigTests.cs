@@ -45,7 +45,7 @@ public class ConfigTests
     }
 
     [Theory]
-    [InlineData("windowrule", "float, class:^(one)$", "tile, class:^(two)$")]
+    [InlineData("windowrule", "float, class:one", "tile, class:two")]
     public void WindowRulesCanRepeat(string keyword, string first, string second)
     {
         var document = ConfigParser.Parse($"{keyword} = {first}\n{keyword} = {second}\n");
@@ -58,13 +58,13 @@ public class ConfigTests
     [Fact]
     public void MalformedWindowRuleWarnsAndTheConfigStillLoads()
     {
-        var document = ConfigParser.Parse("windowrule = confine_pointer, class:^(kitty)$\nwindowrule = float, class:^(unclosed\ngeneral:gaps_in = 2\n");
+        var document = ConfigParser.Parse("windowrule = confine_pointer, class:kitty\nwindowrule = size 10, class:box\ngeneral:gaps_in = 2\n");
 
         Assert.Equal(
             new[]
             {
-                new Setting("windowrule", "confine_pointer, class:^(kitty)$"),
-                new Setting("windowrule", "float, class:^(unclosed"),
+                new Setting("windowrule", "confine_pointer, class:kitty"),
+                new Setting("windowrule", "size 10, class:box"),
                 new Setting("general:gaps_in", "2"),
             },
             document.Settings);
@@ -73,7 +73,7 @@ public class ConfigTests
             new[]
             {
                 new ConfigWarning(1, "Unsupported window rule 'confine_pointer'."),
-                new ConfigWarning(2, "Invalid window rule pattern."),
+                new ConfigWarning(2, "Malformed window rule."),
             },
             document.Warnings);
     }
@@ -81,19 +81,19 @@ public class ConfigTests
     [Fact]
     public void XwaylandWindowRuleMatchIsAnUnsupportedMatch()
     {
-        var document = ConfigParser.Parse("windowrule = float, xwayland:1, class:^(kitty)$\n");
+        var document = ConfigParser.Parse("windowrule = float, xwayland:1, class:kitty\n");
 
         Assert.Empty(document.WindowRules);
         Assert.Equal(
             new ConfigWarning(1, "Unsupported window rule match 'xwayland'."),
             Assert.Single(document.Warnings));
-        Assert.Equal(new Setting("windowrule", "float, xwayland:1, class:^(kitty)$"), Assert.Single(document.Settings));
+        Assert.Equal(new Setting("windowrule", "float, xwayland:1, class:kitty"), Assert.Single(document.Settings));
     }
 
     [Fact]
     public void UnsupportedWindowRuleMatchDropsTheRule()
     {
-        var document = ConfigParser.Parse("windowrule = float, class:^(kitty)$, xdg_tag:foo\n");
+        var document = ConfigParser.Parse("windowrule = float, class:kitty, xdg_tag:foo\n");
 
         Assert.Empty(document.WindowRules);
         Assert.Equal(
@@ -171,8 +171,8 @@ public class ConfigTests
     {
         var text = """
             exec-once = app
-            windowrule = float, class:^(kitty)$
-            windowrule = tile, class:^(kitty)$
+            windowrule = float, class:kitty
+            windowrule = tile, class:kitty
             """;
 
         var document = ConfigParser.Parse(text);
@@ -393,7 +393,7 @@ public class ConfigTests
     [Fact]
     public void MistypedWindowRuleEffectWarnsWithTheOneEffectItIsCloseTo()
     {
-        var document = ConfigParser.Parse("windowrule = floot, class:^(kitty)$\n");
+        var document = ConfigParser.Parse("windowrule = floot, class:kitty\n");
 
         Assert.Equal(
             new ConfigWarning(1, "Unsupported window rule 'floot'. Did you mean 'float'?"),
@@ -423,7 +423,7 @@ public class ConfigTests
     [Fact]
     public void ANameCloseToTwoNamesGetsNoHint()
     {
-        var document = ConfigParser.Parse("general:gaps_ou = 5\nbind = SUPER, Q, ex\nwindowrule = pize, class:^(kitty)$\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("general:gaps_ou = 5\nbind = SUPER, Q, ex\nwindowrule = pize, class:kitty\n", dispatchers: WindowManager.DispatcherNames);
 
         Assert.Equal(
             new[]
@@ -768,16 +768,12 @@ public class ConfigTests
     }
 
     [Fact]
-    public void WorkspaceRulesAreReadAndGapFieldsWarn()
+    public void AWorkspaceLineWarnsAndIsSkipped()
     {
         var document = ConfigParser.Parse("workspace = 1, monitor:DP-1, default:true\ngeneral:gaps_in = 2\n");
 
-        Assert.DoesNotContain(document.Warnings, warning => warning.Message.Contains("'workspace'", StringComparison.Ordinal));
-        Assert.Empty(document.Warnings);
-        Assert.Contains(document.Settings, setting => setting.Keyword == "workspace");
-        Assert.Equal(new Setting("general:gaps_in", "2"), document.Settings[^1]);
-        var rule = Assert.Single(document.WorkspaceRules);
-        Assert.Equal("DP-1", rule.Monitor);
-        Assert.True(rule.Default);
+        Assert.Equal([new ConfigWarning(1, "Unsupported keyword 'workspace'.")], document.Warnings);
+        Assert.Equal(WorkspaceRule.None, document.WorkspaceRules);
+        Assert.Equal(new Setting("general:gaps_in", "2"), Assert.Single(document.Settings));
     }
 }

@@ -59,7 +59,7 @@ public class AppWindowTests
         };
         Assert.True(Assert.Single(core.Handle(appeared).State.Clients).Floating);
 
-        var ruled = new WindowManager(ConfigParser.Parse("windowrule = tile, class:.*"));
+        var ruled = new WindowManager(ConfigParser.Parse("windowrule = tile, class:*"));
         Assert.False(Assert.Single(ruled.Handle(appeared).State.Clients).Floating);
     }
 

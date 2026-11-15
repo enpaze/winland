@@ -231,7 +231,7 @@ public class FollowMouseTests
     }
 
     private static WindowManager Floats(string extra) =>
-        new(ConfigParser.Parse(FlatConfig(extra) + "windowrule = float, class:^(box)$\nwindowrule = move window_x window_y, class:^(box)$\n"));
+        new(ConfigParser.Parse(FlatConfig(extra) + "windowrule = float, class:box\n"));
 
     private static WindowAppeared Box(long window, int x, int y, int width = 100, int height = 100) =>
         new(new WindowId(window), Area)

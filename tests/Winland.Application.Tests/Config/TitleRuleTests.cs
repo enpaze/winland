@@ -4,9 +4,9 @@ public class TitleRuleTests
 {
     [Theory]
     [InlineData("windowrule = float, title:Settings", true)]
-    [InlineData("windowrule = float, class:^(kitty)$, title:negative:Settings", true)]
+    [InlineData("windowrule = float, class:kitty, title:negative:Settings", true)]
     [InlineData("windowrule = float, initial_title:Settings", false)]
-    [InlineData("windowrule = float, class:^(kitty)$", false)]
+    [InlineData("windowrule = float, class:kitty", false)]
     [InlineData("general:gaps_in = 0", false)]
     public void OnlyARuleOnTitleReadsTitles(string line, bool expected)
     {
@@ -28,7 +28,7 @@ public class TitleRuleTests
         Assert.True(core.RulesMatchTitles);
         Assert.NotEqual(before, reloaded);
 
-        core.Handle(new Configure(ConfigParser.Parse("windowrule = ignore, class:^(kitty)$\n")));
+        core.Handle(new Configure(ConfigParser.Parse("windowrule = ignore, class:kitty\n")));
 
         Assert.False(core.RulesMatchTitles);
         Assert.NotEqual(reloaded, core.RuleRevision);

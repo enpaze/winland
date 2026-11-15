@@ -38,7 +38,7 @@ public class ConfigFileOnlyTests
     public void AReloadGivesEveryWindowTheRuleEffectsOfTheFileAsItIsNow()
     {
         const string options = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 2\n";
-        var rules = "windowrule = border_size 9, class:a\nwindowrule = opacity 0.5, class:b\n";
+        var rules = "windowrule = opacity 0.5, class:b\n";
         var core = new WindowManager(ConfigParser.Parse(options + rules));
         core.ReadConfig = () => new ConfigRead(ConfigParser.Parse(options + rules));
         var area = new Rectangle(0, 0, 1000, 800);
@@ -48,15 +48,10 @@ public class ConfigFileOnlyTests
         rules = "windowrule = opacity 0.5, class:a\n";
         var reloaded = core.Execute("reload");
 
-        Assert.Equal(new Rectangle(9, 9, 482, 782), BoundsOf(opened, 1));
         Assert.Equal((255, 128), (AlphaOf(opened, 1), AlphaOf(opened, 2)));
         Assert.Equal("ok", reloaded.Text);
-        Assert.Equal(new Rectangle(2, 2, 496, 796), BoundsOf(reloaded.Effect, 1));
         Assert.Equal((128, 255), (AlphaOf(reloaded.Effect, 1), AlphaOf(reloaded.Effect, 2)));
     }
-
-    private static Rectangle BoundsOf(Outcome outcome, long client) =>
-        Assert.Single(outcome.Placements, placement => placement.Client == new ClientId(client)).Bounds;
 
     private static int AlphaOf(Outcome outcome, long window) =>
         Assert.Single(outcome.Decorations, decoration => decoration.Client == new ClientId(window)).Alpha;

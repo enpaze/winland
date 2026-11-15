@@ -45,7 +45,7 @@ public class RetitleTests
     [Fact]
     public void ARuleOnTheTitleAppliesOnceTheTitleMatches()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, title:.*Video.*\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, title:*Video*\n"));
         var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "Browser" } });
         Assert.Equal(255, Assert.Single(opened.Decorations).Alpha);
 
@@ -76,57 +76,6 @@ public class RetitleTests
         using var active = JsonDocument.Parse(core.Execute("j/activewindow").Text);
         Assert.Equal("new", active.RootElement.GetProperty("title").GetString());
         Assert.Equal("old", active.RootElement.GetProperty("initialTitle").GetString());
-    }
-
-    [Fact]
-    public void AnInitialTitleRuleKeepsMatchingAfterTheTitleChanges()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, initial_title:^Browser$\n"));
-        var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "Browser" } });
-        Assert.Equal(127, Assert.Single(opened.Decorations).Alpha, tolerance: 1);
-
-        var retitled = core.Handle(new WindowTitleChanged(new WindowId(1), "Notes"));
-
-        Assert.Equal(127, Assert.Single(retitled.Decorations).Alpha, tolerance: 1);
-        Assert.Equal("Browser", Assert.Single(retitled.State.Clients).InitialTitle);
-    }
-
-    [Fact]
-    public void AnEmptyInitialTitleDoesNotTakeTheLaterTitle()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, initial_title:^$\n"));
-        var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "" } });
-        Assert.Equal(127, Assert.Single(opened.Decorations).Alpha, tolerance: 1);
-
-        var retitled = core.Handle(new WindowTitleChanged(new WindowId(1), "Notes"));
-
-        Assert.Equal("", Assert.Single(retitled.State.Clients).InitialTitle);
-        Assert.Equal(127, Assert.Single(retitled.Decorations).Alpha, tolerance: 1);
-    }
-
-    [Fact]
-    public void AnInitialTitleRuleDoesNotMatchTheNewTitle()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, initial_title:.*Video.*\n"));
-        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "Browser" } });
-
-        var retitled = core.Handle(new WindowTitleChanged(new WindowId(1), "A Video - Browser"));
-
-        Assert.Equal(255, Assert.Single(retitled.Decorations).Alpha);
-    }
-
-    [Fact]
-    public void ARuleOnTheTitleAndTheInitialTitleNeedsBoth()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, title:.*Video.*, initial_title:^Browser$\n"));
-        var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "Browser" } });
-        Assert.Equal(255, Assert.Single(opened.Decorations).Alpha);
-
-        var matched = core.Handle(new WindowTitleChanged(new WindowId(1), "A Video"));
-        Assert.Equal(127, Assert.Single(matched.Decorations).Alpha, tolerance: 1);
-
-        var missed = core.Handle(new WindowTitleChanged(new WindowId(1), "Notes"));
-        Assert.Equal(255, Assert.Single(missed.Decorations).Alpha);
     }
 
     [Fact]

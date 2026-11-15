@@ -121,8 +121,8 @@ public class FullscreenTests
             general:gaps_in = 0
             general:gaps_out = 0
             general:border_size = 0
-            windowrule = fullscreen, class:^(game)$
-            windowrule = maximize, class:^(edit)$
+            windowrule = fullscreen, class:game
+            windowrule = maximize, class:edit
             """));
         core.Handle(new MonitorsChanged([Screen()]));
 
@@ -390,19 +390,6 @@ public class FullscreenTests
         Assert.Contains(new ZOrderRequest(new WindowId(1), Top: true), ended.ZOrder);
         Assert.True(Client(ended, 1).AllowedOverFullscreen);
         Assert.False(Client(ended, 1).BelowFullscreen);
-    }
-
-    [Fact]
-    public void AFloatingClientIsPlacedWhenAFullscreenRuleChangesTheWorkspaceOptions()
-    {
-        var core = Desk("general:gaps_out = 20\nworkspace = f[1], gapsout:0\n");
-        OpenWindows(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
-
-        var maximized = core.Handle(new Dispatch("fullscreen", "1"));
-
-        Assert.Equal(Client(maximized, 1).Bounds, BoundsOf(maximized, 1));
-        Assert.Equal(FullscreenMode.Maximized, Client(maximized, 1).Fullscreen);
     }
 
     private static WindowManager Desk(string config)

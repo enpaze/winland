@@ -5,28 +5,13 @@ internal static class LaunchParser
     internal static LaunchParse Parse(string arguments)
     {
         var text = arguments.Trim();
-        var warnings = new List<string>();
-        IReadOnlyList<WindowRule> rules = Launch.NoRules;
         if (text.StartsWith('['))
-        {
-            var end = text.IndexOf(']');
-            if (end < 0)
-                return new LaunchParse(null, ["Unclosed rule block."]);
-
-            if (!TryParseRules(text[1..end], out rules, warnings))
-                return new LaunchParse(null, warnings);
-
-            text = text[(end + 1)..].TrimStart();
-        }
+            return new LaunchParse(null, ["Unsupported rule block."]);
 
         if (text.Length == 0)
-            return new LaunchParse(null, warnings);
+            return new LaunchParse(null, []);
 
-        var launch = new Launch(text, null)
-        {
-            Rules = rules.Count == 0 ? Launch.NoRules : rules,
-        };
-        return new LaunchParse(launch, warnings);
+        return new LaunchParse(new Launch(text, null), []);
     }
 
     internal static IReadOnlyList<Launch> FromConfig(ConfigDocument config)
@@ -46,29 +31,6 @@ internal static class LaunchParser
         }
 
         return launches;
-    }
-
-    private static bool TryParseRules(string body, out IReadOnlyList<WindowRule> rules, List<string> warnings)
-    {
-        rules = Launch.NoRules;
-        var parsed = new List<WindowRule>();
-        var fatal = false;
-        foreach (var piece in body.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
-        {
-            if (WindowRuleParser.TryParseBare(piece, out var rule, out var error) && rule is not null)
-            {
-                parsed.Add(rule);
-                continue;
-            }
-
-            warnings.Add(error);
-            if (!error.StartsWith("Unsupported window rule '", StringComparison.Ordinal))
-                fatal = true;
-        }
-
-        if (parsed.Count > 0)
-            rules = parsed;
-        return !fatal;
     }
 
 }

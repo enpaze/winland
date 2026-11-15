@@ -16,8 +16,6 @@ internal readonly record struct WindowDecision(
     MapPlacement Placement = default,
     SizeRule Sizes = default,
     IReadOnlyDictionary<string, object>? Props = null,
-    ExpressionPair? MinSizeExpression = null,
-    ExpressionPair? MaxSizeExpression = null,
     Admission Admission = Admission.Default,
     FloatReason FloatReason = FloatReason.Default);
 

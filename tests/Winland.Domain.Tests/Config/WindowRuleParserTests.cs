@@ -18,23 +18,25 @@ public class WindowRuleParserTests
     }
 
     [Fact]
-    public void ADraftRuleMatchesAWindowByItsAumidRatherThanItsSharedFrame()
+    public void ADraftRulePrefersTheExecutableThenTheClassThenTheTitle()
     {
         var calculator = WindowTraits.Normal with
         {
             Class = "ApplicationFrameWindow",
             Exe = "ApplicationFrameHost.exe",
+            Title = "Calculator",
             Aumid = "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App",
         };
 
-        Assert.Equal(@"windowrule = float, aumid:Microsoft\.WindowsCalculator_8wekyb3d8bbwe!App", WindowRuleParser.Draft(floating: true, calculator));
-        Assert.Equal(@"windowrule = tile, class:a\.b\x2C c", WindowRuleParser.Draft(floating: false, WindowTraits.Normal with { Class = "a.b, c" }));
+        Assert.Equal("windowrule = float, exe:ApplicationFrameHost.exe", WindowRuleParser.Draft(floating: true, calculator));
+        Assert.Equal("windowrule = tile, class:CabinetWClass", WindowRuleParser.Draft(floating: false, WindowTraits.Normal with { Class = "CabinetWClass", Title = "Home" }));
+        Assert.Equal("windowrule = float, title:Release Notes", WindowRuleParser.Draft(floating: true, WindowTraits.Normal with { Title = "Release Notes" }));
+        Assert.Null(WindowRuleParser.Draft(floating: false, WindowTraits.Normal with { Class = "a.b, c" }));
     }
 
     [Theory]
-    [InlineData(@" a.b, title:x #1 $HOME {{1+1}} \ (c)* [d]+? ^e| ")]
-    [InlineData("tab\there \"quoted\" é中 😀")]
-    [InlineData("negative:x")]
+    [InlineData("Release Notes")]
+    [InlineData("tab there quoted")]
     public void ADraftRuleMatchesOnlyTheTitleItWasWrittenFrom(string title)
     {
         var window = WindowTraits.Normal with { Title = title };
@@ -88,17 +90,18 @@ public class WindowRuleParserTests
     }
 
     [Theory]
-    [InlineData("initialClass", "initial_class")]
-    [InlineData("initialTitle", "initial_title")]
-    public void CamelCaseInitialMatchesWarnAndTheSnakeCaseRuleBesideThemApplies(string camel, string snake)
+    [InlineData("initial_class")]
+    [InlineData("initial_title")]
+    [InlineData("aumid")]
+    [InlineData("negative")]
+    public void ARemovedMatcherWarnsAndTheRuleBesideItApplies(string field)
     {
-        var document = ConfigParser.Parse($"windowrule = float on, {camel}:kitty\nwindowrule = float on, {snake}:kitty\n");
+        var document = ConfigParser.Parse($"windowrule = float on, {field}:kitty\nwindowrule = pin on, class:notes\n");
 
         var warning = Assert.Single(document.Warnings);
         Assert.Equal(1, warning.Line);
-        Assert.StartsWith($"Unsupported window rule match '{camel}'.", warning.Message, StringComparison.Ordinal);
-        var rule = Assert.Single(document.WindowRules);
-        Assert.Contains("kitty", new[] { rule.InitialClassPattern, rule.InitialTitlePattern });
+        Assert.StartsWith($"Unsupported window rule match '{field}'.", warning.Message, StringComparison.Ordinal);
+        Assert.Equal(WindowRuleEffect.Pin, Assert.Single(document.WindowRules).Effect);
     }
 
     [Fact]
@@ -114,9 +117,11 @@ public class WindowRuleParserTests
 
     [Theory]
     [InlineData("notepad.exe", "Notepad.exe", true)]
-    [InlineData("negative:notepad.exe", "Notepad.exe", false)]
-    [InlineData("negative:notepad.exe", "other.exe", true)]
-    public void ExePatternsIgnoreCase(string pattern, string exe, bool floating)
+    [InlineData("NOTEPAD.EXE", "notepad.exe", true)]
+    [InlineData("other.exe", "Notepad.exe", false)]
+    [InlineData("*pad.exe", "Notepad.exe", true)]
+    [InlineData("note*", "other.exe", false)]
+    public void ExeClassAndTitleMatchTheWholeFieldWithoutCase(string pattern, string exe, bool floating)
     {
         var document = ConfigParser.Parse($"windowrule = float, exe:{pattern}\n");
 
@@ -142,15 +147,34 @@ public class WindowRuleParserTests
     }
 
     [Fact]
-    public void APatternThatClosesAGroupItNeverOpenedIsRejected()
+    public void ALiteralPatternMatchesThatTextAndAStarMatchesARun()
     {
-        Assert.False(WindowRuleParser.TryParse("float, class:a)|(b", out _, out var error));
-        Assert.Equal("Invalid window rule pattern.", error);
+        Assert.True(WindowRuleParser.TryParse("float, class:a)|(b", out var rule, out _));
+        var literal = rule!;
+        Assert.True(WindowRuleParser.Decide(WindowTraits.Normal with { Class = "a)|(b" }, [literal]).Floating);
+        Assert.False(WindowRuleParser.Decide(WindowTraits.Normal with { Class = "ab" }, [literal]).Floating);
+
+        Assert.True(WindowRuleParser.TryParse("float, title:Release *", out var titled, out _));
+        var star = titled!;
+        Assert.True(WindowRuleParser.Decide(WindowTraits.Normal with { Title = "release notes" }, [star]).Floating);
+        Assert.False(WindowRuleParser.Decide(WindowTraits.Normal with { Title = "Notes" }, [star]).Floating);
     }
 
     [Theory]
-    [InlineData("no_blur banana, class:x")]
+    [InlineData("no_blur", "class:x")]
+    [InlineData("min_size 10 10", "class:x")]
+    [InlineData("scrolling_width 0.25", "class:x")]
+    public void ARemovedEffectWarnsAndIsSkipped(string effect, string match)
+    {
+        var document = ConfigParser.Parse($"windowrule = {effect}, {match}\nwindowrule = float, class:kept\n");
+
+        Assert.StartsWith("Unsupported window rule '", Assert.Single(document.Warnings).Message, StringComparison.Ordinal);
+        Assert.Equal(WindowRuleEffect.Float, Assert.Single(document.WindowRules).Effect);
+    }
+
+    [Theory]
     [InlineData("opacity, class:x")]
+    [InlineData("size 10, class:x")]
     public void AnArgumentThatDoesNotReadDropsTheRule(string text)
     {
         Assert.False(WindowRuleParser.TryParse(text, out _, out var error));

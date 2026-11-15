@@ -13,7 +13,7 @@ public class InspectTests
 
         const string Expected =
             """
-            {"status":"found","target":"pointer","address":"0x1","class":"term","title":"shell","exe":"term.exe","aumid":null,"pid":1001,"managed":true,"floating":false,"reason":"default","reasonAt":"adoption","floatingReason":"default","rule":"windowrule = float, class:term, exe:term\\.exe","ruleNote":null}
+            {"status":"found","target":"pointer","address":"0x1","class":"term","title":"shell","exe":"term.exe","aumid":null,"pid":1001,"managed":true,"floating":false,"reason":"default","reasonAt":"adoption","floatingReason":"default","rule":"windowrule = float, exe:term.exe","ruleNote":null}
             """;
         Assert.Equal(Expected, desktop.Send("j/inspect"));
     }
@@ -119,7 +119,7 @@ public class InspectTests
 
         Assert.Equal("tool", inspected.GetProperty("reason").GetString());
         var rule = inspected.GetProperty("rule").GetString()!;
-        Assert.Equal(@"windowrule = float, class:palette, exe:paint\.exe", rule);
+        Assert.Equal("windowrule = float, exe:paint.exe", rule);
         desktop.Set("windowrule", rule["windowrule = ".Length..]);
         desktop.Spawn("palette", traits: tool);
         Assert.True(TestDesktop.Floating(desktop.Client("palette")));
@@ -136,7 +136,7 @@ public class InspectTests
 
         Assert.Equal("Window 1 -> title \tmanaged: no:", lines[0]);
         Assert.Single(lines, line => line.StartsWith("\tmanaged:", StringComparison.Ordinal));
-        Assert.Equal(@"	rule: windowrule = float, class:app\x0Arule\x3A forged", lines[^2]);
+        Assert.Equal("\trule: none (none of its executable, class, or title can be written as a rule)", lines[^2]);
     }
 
     [Fact]

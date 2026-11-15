@@ -61,7 +61,7 @@ public class EventTests
     [Fact]
     public void SilentWorkspaceOpenDoesNotChangeFocus()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:^(kitty)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:kitty\n"));
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
@@ -76,7 +76,7 @@ public class EventTests
     [Fact]
     public void WorkspaceRuleOpenSwitchesThenFocuses()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2, class:^(kitty)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2, class:kitty\n"));
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), Area)
         {

@@ -43,27 +43,28 @@ public class PlacementRuleTests
     }
 
     [Fact]
-    public void SizeExpressionsReadTheMonitorAndTheWindow()
+    public void APercentageIsHalfTheWorkArea()
     {
-        var core = Ruled("size monitor_w*0.5 window_h+(10*2)");
+        var core = Ruled("size 50% 50%", "move 0% 0%");
+        var area = new Rectangle(100, 40, 1800, 1000);
 
-        var outcome = core.Handle(Box(1));
+        var outcome = core.Handle(Box(1, area));
 
-        Assert.Equal(new Rectangle(480, 455, 960, 170), BoundsOf(outcome, 1));
+        Assert.Equal(new Rectangle(100, 40, 900, 500), BoundsOf(outcome, 1));
     }
 
     [Fact]
     public void MoveIsMonitorLocalAndAcceptsMinusValues()
     {
         var core = Configured("""
-            windowrule = float, class:^(box)$
-            windowrule = move monitor_w-window_w-10 5, class:^(box)$
+            windowrule = float, class:box
+            windowrule = move 10 5, class:box
             """);
         core.Handle(new MonitorsChanged([Display(@"\\.\DISPLAY1", "Dell", Left), Display(@"\\.\DISPLAY2", "Samsung", Right)]));
 
         var outcome = core.Handle(Box(1, Right));
 
-        Assert.Equal(new Rectangle(1920 + 1920 - 200 - 10, 5, 200, 150), BoundsOf(outcome, 1));
+        Assert.Equal(new Rectangle(1920 + 10, 5, 200, 150), BoundsOf(outcome, 1));
     }
 
     [Fact]
@@ -81,8 +82,8 @@ public class PlacementRuleTests
     {
         var core = Configured("""
             general:border_size = 3
-            windowrule = float, class:^(box)$
-            windowrule = move 1900 1000, class:^(box)$
+            windowrule = float, class:box
+            windowrule = move 1900 1000, class:box
             """);
 
         var outcome = core.Handle(Box(1));
@@ -95,7 +96,7 @@ public class PlacementRuleTests
     {
         var core = Configured("""
             general:border_size = 0
-            windowrule = float, class:^(box)$
+            windowrule = float, class:box
             """);
         core.Handle(Box(1));
 
@@ -105,23 +106,13 @@ public class PlacementRuleTests
     }
 
     [Fact]
-    public void MoveCanCenterTheWindowOnTheCursor()
+    public void MoveAndSizeBothApply()
     {
-        var core = Ruled("move cursor_x-(window_w*0.5) cursor_y-(window_h*0.5)");
-
-        var outcome = core.Handle(Box(1) with { Pointer = new Point(300, 400) });
-
-        Assert.Equal(new Rectangle(200, 325, 200, 150), BoundsOf(outcome, 1));
-    }
-
-    [Fact]
-    public void MoveUsesTheSizeFromASizeRule()
-    {
-        var core = Ruled("size 400 300", "move monitor_w-window_w 0");
+        var core = Ruled("size 400 300", "move 10 20");
 
         var outcome = core.Handle(Box(1));
 
-        Assert.Equal(new Rectangle(1520, 0, 400, 300), BoundsOf(outcome, 1));
+        Assert.Equal(new Rectangle(10, 20, 400, 300), BoundsOf(outcome, 1));
     }
 
     [Fact]
@@ -141,8 +132,8 @@ public class PlacementRuleTests
             general:gaps_in = 0
             general:gaps_out = 0
             general:border_size = 0
-            windowrule = move 10 10, class:^(box)$
-            windowrule = size 400 300, class:^(box)$
+            windowrule = move 10 10, class:box
+            windowrule = size 400 300, class:box
             """));
 
         var tiled = core.Handle(new WindowAppeared(new WindowId(1), Area)
@@ -174,38 +165,24 @@ public class PlacementRuleTests
     {
         var nested = string.Concat(Enumerable.Repeat(open, 100_000)) + middle + string.Concat(Enumerable.Repeat(close, 100_000));
 
-        var document = ConfigParser.Parse($"windowrule = size {nested} 10, class:^(box)$\n");
+        var document = ConfigParser.Parse($"windowrule = size {nested} 10, class:box\n");
 
         Assert.Equal([new ConfigWarning(1, "Malformed window rule.")], document.Warnings);
         Assert.Empty(document.WindowRules);
     }
 
     [Fact]
-    public void AnExpressionNestedWithinTheLimitStillParses()
+    public void AnExpressionWarnsAndIsSkipped()
     {
-        var nested = new string('(', 100) + "monitor_w" + new string(')', 100);
+        var document = ConfigParser.Parse("windowrule = size monitor_w*0.5 10, class:box\n");
 
-        var document = ConfigParser.Parse($"windowrule = size {nested} 10, class:^(box)$\n");
-
-        Assert.Empty(document.Warnings);
-        Assert.Single(document.WindowRules);
-    }
-
-    [Fact]
-    public void TheSignOfNotANumberIsZero()
-    {
-        var document = ConfigParser.Parse("windowrule = move sign(sqrt(-1)) 0, class:.*\n");
-
-        Assert.Empty(document.Warnings);
-        Assert.Single(document.WindowRules);
-        Assert.True(RuleExpression.TryEvaluate("sign(sqrt(-1))", new Dictionary<string, double>(), out var value));
-        Assert.Equal(0, value);
+        Assert.Equal([new ConfigWarning(1, "Malformed window rule.")], document.Warnings);
+        Assert.Empty(document.WindowRules);
     }
 
     [Theory]
     [InlineData("move 10")]
     [InlineData("move 10,10")]
-    [InlineData("size 50% 50%")]
     [InlineData("size 800x600 1")]
     [InlineData("move unknown_w 0")]
     [InlineData("move (10 10")]
@@ -213,7 +190,7 @@ public class PlacementRuleTests
     [InlineData("monitor")]
     public void AMalformedPlacementRuleWarnsAndIsSkipped(string effect)
     {
-        var document = ConfigParser.Parse($"windowrule = {effect}, class:^(box)$\n");
+        var document = ConfigParser.Parse($"windowrule = {effect}, class:box\n");
 
         Assert.Equal([new ConfigWarning(1, "Malformed window rule.")], document.Warnings);
         Assert.Empty(document.WindowRules);
@@ -222,7 +199,7 @@ public class PlacementRuleTests
     [Fact]
     public void MonitorOpensTheWindowOnThatMonitorAndFocusesIt()
     {
-        var core = Monitors("windowrule = monitor desc:Samsung, class:^(box)$\n");
+        var core = Monitors("windowrule = monitor desc:Samsung, class:box\n");
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), Left) { Traits = WindowTraits.Normal with { Class = "box" } });
 
@@ -233,7 +210,7 @@ public class PlacementRuleTests
     [Fact]
     public void SilentMonitorOpensTheWindowThereWithoutFocusingIt()
     {
-        var core = Monitors("windowrule = monitor desc:Samsung silent, class:^(box)$\n");
+        var core = Monitors("windowrule = monitor desc:Samsung silent, class:box\n");
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), Left) { Traits = WindowTraits.Normal with { Class = "box" } });
 
@@ -244,7 +221,7 @@ public class PlacementRuleTests
     [Fact]
     public void AMonitorThatDoesNotExistKeepsTheMonitorTheWindowOpenedOn()
     {
-        var core = Monitors("windowrule = monitor HDMI-A-9, class:^(box)$\n");
+        var core = Monitors("windowrule = monitor HDMI-A-9, class:box\n");
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), Left) { Traits = WindowTraits.Normal with { Class = "box" } });
 
@@ -288,24 +265,11 @@ public class PlacementRuleTests
         Assert.False(core.AwaitsFirstResize(new WindowId(1)));
     }
 
-    [Fact]
-    public void ExecRuleBlocksHonorSizeAndMove()
-    {
-        var core = new WindowManager();
-        var launch = core.Handle(new Dispatch("exec", "[float; size 300 200; move 40 50] kitty")).Launch;
-        Assert.NotNull(launch);
-        core.NoteLaunched(40, launch);
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(1), Area) { ProcessId = 40, Bounds = Own });
-
-        Assert.Equal(new Rectangle(40, 50, 300, 200), BoundsOf(outcome, 1));
-    }
-
     private static WindowManager Ruled(params string[] effects)
     {
-        var text = "windowrule = float, class:^(box)$\n";
+        var text = "windowrule = float, class:box\n";
         foreach (var effect in effects)
-            text += $"windowrule = {effect}, class:^(box)$\n";
+            text += $"windowrule = {effect}, class:box\n";
 
         return new WindowManager(ConfigParser.Parse(text));
     }

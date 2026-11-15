@@ -7,7 +7,7 @@ public class SelectorDispatcherTests
     [Fact]
     public void FocusWindowSwitchesToTheClientsWorkspace()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, title:^(away)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, title:away\n"));
         Appear(core, 1, "app", "here");
         Appear(core, 2, "app", "away");
 

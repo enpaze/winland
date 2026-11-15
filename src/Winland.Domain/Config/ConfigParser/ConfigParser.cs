@@ -27,14 +27,13 @@ public static partial class ConfigParser
 
         // The keywords a line can start with besides an Option, for the hint an unsupported keyword gets.
         private static readonly string[] Keywords =
-            ["source", "unbind", "bind", "gesture", "workspace", .. KeptHandlers];
+            ["source", "unbind", "bind", "gesture", .. KeptHandlers];
 
         private readonly List<Setting> _settings = [];
         private readonly List<BindDirective> _binds = [];
         private readonly List<TrackpadGesture> _gestures = [];
         private readonly List<ConfigWarning> _warnings = [];
         private readonly List<WindowRule> _windowRules = [];
-        private readonly List<WorkspaceRule> _workspaceRules = [];
         private readonly List<string> _sources = [];
         private readonly Dictionary<string, string> _variables = new(StringComparer.Ordinal);
         private readonly List<OpenCategory> _categories = [];
@@ -59,7 +58,7 @@ public static partial class ConfigParser
             return new ConfigDocument([.. _settings], [.. _binds], [.. _warnings])
             {
                 WindowRules = [.. _windowRules],
-                WorkspaceRules = _workspaceRules.Count == 0 ? WorkspaceRule.None : [.. _workspaceRules],
+                WorkspaceRules = WorkspaceRule.None,
                 Sources = [.. _sources],
                 Gestures = [.. _gestures],
                 Path = path,
@@ -185,13 +184,6 @@ public static partial class ConfigParser
                 return;
             }
 
-            if (lhs == "workspace")
-            {
-                _settings.Add(new Setting(lhs, rhs));
-                RememberWorkspace(rhs, lineNumber);
-                return;
-            }
-
             if (KeptHandlers.Contains(lhs))
             {
                 _settings.Add(new Setting(lhs, rhs));
@@ -299,17 +291,6 @@ public static partial class ConfigParser
             }
 
             return false;
-        }
-
-        private void RememberWorkspace(string value, int lineNumber)
-        {
-            var warnings = new List<string>();
-            var rule = WorkspaceRules.Parse(value, warnings);
-            foreach (var warning in warnings)
-                Warn(lineNumber, warning);
-
-            if (rule is not null)
-                WorkspaceRules.ReplaceOrAdd(_workspaceRules, rule);
         }
 
         private void RememberRule(string value, int lineNumber)
