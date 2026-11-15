@@ -142,13 +142,7 @@ public sealed partial class WindowManager
     public IReadOnlyList<Launch> StartupLaunches(ConfigDocument config)
     {
         lock (_gate)
-            return ConfigLaunches(config, LaunchParser.LaunchMoment.Startup, LaunchWorkspace());
-    }
-
-    public IReadOnlyList<Launch> ReloadLaunches(ConfigDocument config)
-    {
-        lock (_gate)
-            return ConfigLaunches(config, LaunchParser.LaunchMoment.Reload, LaunchWorkspace());
+            return LaunchParser.FromConfig(config);
     }
 
     public void NoteLaunched(int processId, Launch launch)
@@ -295,12 +289,6 @@ public sealed partial class WindowManager
             RestoredAdopted => ArrangeRestored(),
             MonitorsChanged changed => SetMonitors(changed.Monitors),
         };
-
-    private static IReadOnlyList<Launch> ConfigLaunches(ConfigDocument config, LaunchParser.LaunchMoment moment, WorkspaceId? initialWorkspace = null)
-    {
-        ArgumentNullException.ThrowIfNull(config);
-        return LaunchParser.FromConfig(config, moment, initialWorkspace);
-    }
 
     // The Workspace a program started now is started on: the special workspace the focused Monitor shows, or its
     // Workspace.

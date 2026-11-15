@@ -59,11 +59,11 @@ public class CursorInputTests
     [Fact]
     public void FollowMouseIsReadAndATabletKeyWarns()
     {
-        var document = ConfigParser.Parse("input:follow_mouse = detached\ninput:tablet:enabled = true\n");
+        var document = ConfigParser.Parse("input:follow_mouse = true\ninput:tablet:enabled = true\n");
 
-        Assert.Equal([new Setting("input:follow_mouse", "detached")], document.Settings);
+        Assert.Equal([new Setting("input:follow_mouse", "true")], document.Settings);
         Assert.Equal(new ConfigWarning(2, "Unsupported keyword 'input:tablet:enabled'."), Assert.Single(document.Warnings));
-        Assert.Equal(2, InputOptions.From(document).FollowMouse);
+        Assert.True(InputOptions.From(document).FollowMouse);
     }
 
     [Fact]

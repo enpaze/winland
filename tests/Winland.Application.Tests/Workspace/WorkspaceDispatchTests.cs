@@ -130,7 +130,7 @@ public class WorkspaceDispatchTests
     {
         var desk = new TestDesktop();
         desk.Spawn("a");
-        for (var followMouse = 0; followMouse <= 3; followMouse++)
+        for (var followMouse = 0; followMouse <= 1; followMouse++)
         {
             desk.Set("input:follow_mouse", followMouse.ToString(CultureInfo.InvariantCulture));
 

@@ -21,15 +21,13 @@ public static partial class ConfigParser
     {
         private static readonly HashSet<string> KeptHandlers = new(StringComparer.Ordinal)
         {
-            "exec",
             "exec-once",
-            "monitor",
             "windowrule",
         };
 
         // The keywords a line can start with besides an Option, for the hint an unsupported keyword gets.
         private static readonly string[] Keywords =
-            ["source", "unbind", "bind", "gesture", "monitor", "workspace", "animation", "bezier", "spring", .. KeptHandlers];
+            ["source", "unbind", "bind", "gesture", "workspace", .. KeptHandlers];
 
         private readonly List<Setting> _settings = [];
         private readonly List<BindDirective> _binds = [];
@@ -187,22 +185,12 @@ public static partial class ConfigParser
                 return;
             }
 
-            if (lhs == "monitor")
-            {
-                _settings.Add(new Setting(lhs, rhs));
-                RememberMonitor(rhs, lineNumber);
-                return;
-            }
-
             if (lhs == "workspace")
             {
                 _settings.Add(new Setting(lhs, rhs));
                 RememberWorkspace(rhs, lineNumber);
                 return;
             }
-
-            if (TryAnimationLine(lhs, rhs, lineNumber))
-                return;
 
             if (KeptHandlers.Contains(lhs))
             {
@@ -313,15 +301,6 @@ public static partial class ConfigParser
             return false;
         }
 
-        private void RememberMonitor(string value, int lineNumber)
-        {
-            if (!MonitorRules.TryParse(value, out _, out var warnings) && warnings.Count == 0)
-                Warn(lineNumber, "Malformed monitor rule.");
-
-            foreach (var warning in warnings)
-                Warn(lineNumber, warning);
-        }
-
         private void RememberWorkspace(string value, int lineNumber)
         {
             var warnings = new List<string>();
@@ -385,7 +364,7 @@ public static partial class ConfigParser
         }
 
         private static bool IsLaunchKeyword(string keyword) =>
-            keyword is "exec" or "exec-once";
+            keyword == "exec-once";
 
         // True when the line has a '#' that starts a comment. "##" is an escaped '#'.
         private static bool HasComment(string line)

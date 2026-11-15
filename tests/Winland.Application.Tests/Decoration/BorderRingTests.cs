@@ -72,11 +72,4 @@ public class BorderRingTests
         Assert.Null(Assert.Single(core.Execute("dispatch resizewindow").Effect.Decorations).Ring);
     }
 
-    [Fact]
-    public void TheBorderAngleAnimationDoesNotExist()
-    {
-        var document = ConfigParser.Parse("animation = borderangle, 1, 10, linear, loop\n");
-
-        Assert.Contains(document.Warnings, warning => warning.Message == "Animation 'borderangle' is not one Winland draws.");
-    }
 }

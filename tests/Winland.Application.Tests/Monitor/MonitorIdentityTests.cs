@@ -97,20 +97,6 @@ public class MonitorIdentityTests
             byNumber.State.ActiveMonitor);
     }
 
-    [Fact]
-    public void AReservedAreaSelectsTheMonitorByItsIdentity()
-    {
-        var core = new WindowManager(ConfigParser.Parse("""
-            monitor = desc:SAM S27 XYZ, addreserved, 10, 0, 0, 0
-            """));
-        var dell = Panel(@"\\.\DISPLAY1", "DEL", "U2723QE", "ABC", 0);
-        var samsung = Panel(@"\\.\DISPLAY2", "SAM", "S27", "XYZ", 1920);
-
-        var outcome = core.Handle(new MonitorsChanged([dell, samsung]));
-
-        Assert.Equal(new Rectangle(1920, 10, 1920, 1070), WorkArea(outcome, @"\\.\DISPLAY2"));
-        Assert.Equal(dell.WorkArea, WorkArea(outcome, @"\\.\DISPLAY1"));
-    }
 
     [Fact]
     public void MakeAloneDoesNotNumberMonitors()

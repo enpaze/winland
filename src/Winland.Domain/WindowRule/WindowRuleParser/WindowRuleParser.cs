@@ -11,7 +11,7 @@ internal static partial class WindowRuleParser
     [
         "float", "tile", "ignore", "no_initial_focus", "no_focus", "opaque", "pin", "workspace", "min_size",
         "max_size", "scrolling_width", "opacity", "fullscreen", "maximize", "move", "size", "center", "monitor",
-        "border_size", "rounding", "animation", "border_color",
+        "border_size", "rounding", "border_color",
         .. WindowProp.All.Where(prop => prop.IsRuleEffect).Select(prop => prop.Name),
     ];
 

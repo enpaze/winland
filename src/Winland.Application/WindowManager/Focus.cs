@@ -39,12 +39,6 @@ public sealed partial class WindowManager
         if (HasNoFocus(window))
             return Restore(Kept());
 
-        if (focused.Cause == FocusCause.User
-            && _config.Input.FollowMouse == 3
-            && _keyState.ButtonsHeld
-            && _focus.Focused != window)
-            return Restore(Kept());
-
         // Winland rejects an activation without a fresh input serial, and honors one with it only under
         // focus_on_activate, which a window rule wins over. A window that takes the foreground with no click or
         // key before it has no such serial. One that takes it right after a click in a Client of another program has one.

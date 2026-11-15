@@ -5,7 +5,7 @@ public class AnimationTests
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
     private static readonly Rectangle Left = new(0, 0, 960, 1080);
     private static readonly Rectangle Right = new(960, 0, 960, 1080);
-    private static readonly Timing Default = new(Bezier.Default, 800);
+    private static readonly Timing Default = new(Bezier.Default, 300);
 
     [Fact]
     public void AnOpenedWindowPopsInAndFadesIn()
@@ -26,36 +26,6 @@ public class AnimationTests
         Assert.Equal(Default, motion.Fade);
         Assert.Equal(MotionEnd.None, motion.End);
         Assert.Equal(Area, motion.Rest);
-    }
-
-    [Fact]
-    public void TheOpenStyleAndCurveComeFromTheConfig()
-    {
-        var core = Load("""
-            bezier = quick, 0.1, 1, 0.1, 1
-            animation = windowsIn, 1, 3, quick, popin 50%
-            animation = fadeIn, 0
-            """);
-
-        var motion = Assert.Single(Appear(core, 1).Motions);
-
-        Assert.Equal(new Rectangle(480, 270, 960, 540), motion.From);
-        Assert.Equal(new Timing(new Bezier(0.1, 1, 0.1, 1), 300), motion.Move);
-        Assert.Null(motion.Fade);
-        Assert.Null(motion.FadeFrom);
-    }
-
-    [Fact]
-    public void ASlidingWindowEntersFromTheNearestMonitorEdge()
-    {
-        var core = Load("animation = windows, 1, 4, default, slide");
-        Appear(core, 1);
-
-        var opened = Appear(core, 2);
-
-        var motion = Assert.Single(opened.Motions, candidate => candidate.Window == new WindowId(2));
-        Assert.Equal(Right with { X = 1920 }, motion.From);
-        Assert.Equal(Right, motion.To);
     }
 
     [Fact]
@@ -202,86 +172,6 @@ public class AnimationTests
     }
 
     [Fact]
-    public void AFadingWorkspaceStaysInPlace()
-    {
-        var core = Load("""
-            animation = workspaces, 1, 4, linear, fade
-            bind = SUPER, 2, workspace, 2
-            """);
-        Appear(core, 1);
-        HoldSuper(core);
-
-        var motion = Assert.Single(Tap(core, "2").Motions);
-
-        Assert.Equal(Area, motion.To);
-        Assert.Null(motion.Move);
-        Assert.Equal(0, motion.FadeTo);
-        Assert.Equal(new Timing(Bezier.Linear, 400), motion.Fade);
-        Assert.Equal(MotionEnd.Hide, motion.End);
-    }
-
-    [Fact]
-    public void ASlideFadeTravelsItsPercentage()
-    {
-        var core = Load("""
-            animation = workspaces, 1, 4, default, slidefade 20%
-            bind = SUPER, 2, workspace, 2
-            """);
-        Appear(core, 1);
-        HoldSuper(core);
-
-        var motion = Assert.Single(Tap(core, "2").Motions);
-
-        Assert.Equal(Area with { X = -384 }, motion.To);
-        Assert.Equal(0, motion.FadeTo);
-    }
-
-    [Fact]
-    public void AVerticalSlideTravelsTheMonitorHeight()
-    {
-        var core = Load("""
-            animation = workspaces, 1, 4, default, slidevert
-            bind = SUPER, 2, workspace, 2
-            """);
-        Appear(core, 1);
-        HoldSuper(core);
-
-        var motion = Assert.Single(Tap(core, "2").Motions);
-
-        Assert.Equal(Area with { Y = -1080 }, motion.To);
-    }
-
-    [Fact]
-    public void AWindowsOwnAnimationStyleReplacesTheOpenStyle()
-    {
-        var core = Load("windowrule = animation slide left, class:.*\n");
-
-        var motion = Assert.Single(Appear(core, 1).Motions);
-
-        Assert.Equal(Area with { X = -1920 }, motion.From);
-        Assert.Equal(Default, motion.Move);
-    }
-
-    [Fact]
-    public void ClosingAWindowShrinksAndFadesItBeforeItIsAskedToClose()
-    {
-        var core = new WindowManager();
-        Appear(core, 1);
-
-        var outcome = core.Handle(new Dispatch("killactive", ""));
-
-        Assert.Equal(new WindowId(1), outcome.Close);
-        var motion = Assert.Single(outcome.Motions);
-        Assert.Equal(MotionEnd.Close, motion.End);
-        Assert.Equal(new Rectangle(957, 537, 5, 5), motion.To);
-        Assert.Equal(Area, motion.Rest);
-        Assert.Equal(Area, motion.From);
-        Assert.False(motion.Warp);
-        Assert.Equal(0, motion.FadeTo);
-        Assert.Null(motion.FadeFrom);
-    }
-
-    [Fact]
     public void AnimationsOffPlansNoMotion()
     {
         var core = Load("""
@@ -298,20 +188,6 @@ public class AnimationTests
         Assert.Equal(2, outcome.Hide.Count);
         Assert.Empty(outcome.Motions);
         Assert.Empty(core.Handle(new Dispatch("killactive", "")).Motions);
-    }
-
-    [Fact]
-    public void ADisabledNodeAnimatesNothingButItsSiblingsStillDo()
-    {
-        var core = Load("""
-            animation = windowsMove, 0
-            """);
-        Appear(core, 1);
-
-        var outcome = Appear(core, 2);
-
-        Assert.DoesNotContain(outcome.Motions, motion => motion.Window == new WindowId(1) && motion.Move is not null);
-        Assert.Contains(outcome.Motions, motion => motion.Window == new WindowId(2));
     }
 
     [Fact]
@@ -339,8 +215,6 @@ public class AnimationTests
     {
         var core = Load("""
             decoration:inactive_opacity = 0.5
-            animation = fadeSwitch, 1, 2, linear
-            animation = border, 1, 3, default
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -352,7 +226,7 @@ public class AnimationTests
         var left = Assert.Single(outcome.Motions, motion => motion.Window == new WindowId(2));
         Assert.Equal((byte)255, focused.AlphaTo);
         Assert.True(focused.AlphaFrom < 255);
-        Assert.Equal(new Timing(Bezier.Linear, 200), focused.Alpha);
+        Assert.Equal(Default, focused.Alpha);
         Assert.Equal(left.AlphaFrom, focused.AlphaTo);
         Assert.Equal(focused.AlphaFrom, left.AlphaTo);
         Assert.Equal(DecorationOptions.Documented.InactiveBorder, focused.BorderFrom);

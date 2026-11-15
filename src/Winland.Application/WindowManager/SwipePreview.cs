@@ -74,11 +74,9 @@ public sealed partial class WindowManager
     }
 
     // Whether the swipe runs vertically, and how far a whole swipe moves a Workspace: the monitor's width or height.
-    private (bool Vertical, double Span) SwipeSpan(Rectangle monitor)
+    private static (bool Vertical, double Span) SwipeSpan(Rectangle monitor)
     {
-        var style = _config.Animations.StyleOf("workspaces");
-        var vertical = style == "slidevert" || style.StartsWith("slidefadevert", StringComparison.Ordinal);
-        return (vertical, vertical ? monitor.Height : monitor.Width);
+        return (false, monitor.Width);
     }
 
     // The swipe ended without a switch: the Workspace swiped from slides back and the neighbour slides away and hides.
@@ -88,8 +86,8 @@ public sealed partial class WindowManager
             return View([]);
 
         var (vertical, span) = SwipeSpan(MonitorById(swipe.Monitor)?.Bounds ?? _area);
-        var back = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.TimingOf("workspacesIn") : null;
-        var away = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.TimingOf("workspacesOut") : null;
+        var back = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.Timing : null;
+        var away = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.Timing : null;
         var motions = new List<Motion>();
         var hide = new List<WindowId>();
         var side = Pixels(swipe.Delta < 0 ? -span : span);

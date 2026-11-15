@@ -1,6 +1,6 @@
 namespace Winland.Application;
 
-/// <summary>The pointer: key and mouse binds, focus follows mouse, and resizing by the border.</summary>
+/// <summary>The pointer: key and mouse binds and focus follows mouse.</summary>
 public sealed partial class WindowManager
 {
     private string? _resizeCursor;
@@ -131,7 +131,7 @@ public sealed partial class WindowManager
         var traveled = Advance(moved.Position, now);
 
         // Focusing another Monitor changes the focused window, so the window to focus is chosen after it.
-        if (MonitorAt(moved.Position) is { } screen && screen.Id != FocusedId())
+        if (_config.Input.FollowMouse && MonitorAt(moved.Position) is { } screen && screen.Id != FocusedId())
             return new PointerAim(traveled, true, null);
 
         return new PointerAim(traveled, false, Choose(moved, traveled));
@@ -156,9 +156,7 @@ public sealed partial class WindowManager
             _config.Input.FollowMouse,
             traveled,
             under,
-            Floats(under),
             _focus.Focused,
-            Floats(_focus.Focused),
             _lastMouse);
         if (decision.RememberMouse)
             _lastMouse = decision.LastMouse;
@@ -196,7 +194,7 @@ public sealed partial class WindowManager
 
         var recent = _lastMoveAt is long seen && now >= seen && now - seen < 500;
         _lastMoveAt = now;
-        if (_config.Input.FollowMouse == 1 && recent)
+        if (_config.Input.FollowMouse && recent)
             _traveled += step;
         else
             _traveled = 0;
