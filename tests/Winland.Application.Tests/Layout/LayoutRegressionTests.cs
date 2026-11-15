@@ -23,19 +23,6 @@ public class LayoutRegressionTests
         Assert.Equal(new Size(200, 100), SizeOf(Client(placed, 1).Bounds));
     }
 
-    [Fact]
-    public void PreselectKeepsItsDirectionForTheOpeningSplit()
-    {
-        var core = new WindowManager();
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new Dispatch("layoutmsg", "preselect u"));
-
-        var opened = core.Handle(new WindowAppeared(new WindowId(2), Area));
-
-        Assert.Equal(new Rectangle(0, 0, 1000, 400), BoundsOf(opened, 2));
-        Assert.Equal(new Rectangle(0, 400, 1000, 400), BoundsOf(opened, 1));
-    }
-
     private static Size SizeOf(Rectangle box) => new(box.Width, box.Height);
 
     [Fact]
@@ -90,20 +77,6 @@ public class LayoutRegressionTests
         layout.TryBounds(new WindowId(3), out var after);
 
         Assert.Equal(before.Width, after.Width);
-    }
-
-    [Fact]
-    public void MovingAWindowLeavesTheUsersPreselectForTheNextWindow()
-    {
-        var core = new WindowManager();
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new WindowAppeared(new WindowId(2), Area));
-        core.Handle(new Dispatch("layoutmsg", "preselect r"));
-        core.Handle(new Dispatch("movewindow", "l"));
-
-        var opened = core.Handle(new WindowAppeared(new WindowId(3), Area));
-
-        Assert.Equal(new Rectangle(250, 0, 250, 800), BoundsOf(opened, 3));
     }
 
     private static ScrollingLayout Tape()

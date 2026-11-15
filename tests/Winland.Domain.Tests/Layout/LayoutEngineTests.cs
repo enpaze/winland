@@ -112,8 +112,6 @@ public class LayoutEngineTests
     }
 
     [Theory]
-    [InlineData("dwindle", "splitratio nan exact")]
-    [InlineData("dwindle", "splitratio infinity")]
     [InlineData("scrolling", "colresize nan")]
     [InlineData("scrolling", "colresize +nan")]
     public void ALayoutMessageWithANumberThatIsNotFiniteChangesNothing(string name, string message)

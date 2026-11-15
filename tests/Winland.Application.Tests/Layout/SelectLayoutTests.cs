@@ -194,7 +194,7 @@ public class SelectLayoutTests
         core.Handle(Appeared(1));
         core.Handle(Appeared(2));
         core.Handle(new Dispatch("layoutmsg", "togglesplit"));
-        core.Handle(new Dispatch("splitratio", "0.3"));
+        core.Handle(new Dispatch("resizeactive", "0 100"));
         return core;
     }
 

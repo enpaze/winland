@@ -305,7 +305,6 @@ public sealed partial class WindowManager
             Configure configure => Apply(configure.Document),
             AccentChanged accent => NoteAccent(accent),
             RestoredAdopted => ArrangeRestored(),
-            Preselect preselect => View(CurrentWorkspace().Layout.Preselect(preselect.Direction)),
             MonitorsChanged changed => SetMonitors(changed.Monitors),
         };
 

@@ -91,65 +91,14 @@ public class DwindleLayoutTests
         var desk = new TestDesktop();
         desk.Spawn("a");
 
-        Assert.NotEqual("ok", desk.Dispatch("layoutmsg", "swapsplit"));
-        Assert.NotEqual("ok", desk.Dispatch("layoutmsg", "splitratio 1 exact"));
+        Assert.NotEqual("ok", desk.Dispatch("layoutmsg", "togglesplit"));
 
         desk.Spawn("b");
         desk.Ok("focuswindow", "class:a");
-        desk.Ok("layoutmsg", "splitratio -0.2");
-        desk.ExpectActive("22,22", "743,1036");
-
-        desk.Ok("layoutmsg", "splitratio 1.6 exact");
-        desk.ExpectActive("22,22", "1495,1036");
-
-        foreach (var bad in new[] { "splitratio fhne exact", "splitratio exact", "splitratio -....9", "splitratio ..9", "splitratio" })
-            Assert.NotEqual("ok", desk.Dispatch("layoutmsg", bad));
+        desk.ExpectActive("22,22", "931,1036");
 
         desk.Ok("layoutmsg", "togglesplit");
-        desk.ExpectActive("22,22", "1876,823");
-
-        desk.Ok("layoutmsg", "swapsplit");
-        desk.ExpectActive("22,859", "1876,199");
-    }
-
-    [Fact]
-    public void DwindleRotateSplit()
-    {
-        var desk = new TestDesktop();
-        Assert.Equal("ok", desk.Send("keyword general:gaps_in 0"));
-        Assert.Equal("ok", desk.Send("keyword general:gaps_out 0"));
-        Assert.Equal("ok", desk.Send("keyword general:border_size 0"));
-        desk.Spawn("a");
-        desk.Spawn("b");
-
-        ExpectAny(desk, "0,0", "960,1080");
-
-        desk.Ok("layoutmsg", "rotatesplit");
-        ExpectAny(desk, "0,0", "1920,540");
-
-        desk.Ok("layoutmsg", "rotatesplit");
-        ExpectAny(desk, "960,0", "960,1080");
-
-        desk.Ok("layoutmsg", "rotatesplit");
-        ExpectAny(desk, "0,540", "1920,540");
-
-        desk.Ok("layoutmsg", "rotatesplit");
-        ExpectAny(desk, "0,0", "960,1080");
-
-        desk.Ok("layoutmsg", "rotatesplit 180");
-        ExpectAny(desk, "960,0", "960,1080");
-
-        desk.Ok("layoutmsg", "rotatesplit 270");
-        ExpectAny(desk, "0,540", "1920,540");
-
-        desk.Ok("layoutmsg", "rotatesplit 360");
-        ExpectAny(desk, "0,0", "1920,540");
-
-        desk.Ok("layoutmsg", "rotatesplit -90");
-        ExpectAny(desk, "0,0", "960,1080");
-
-        desk.Ok("layoutmsg", "rotatesplit -180");
-        ExpectAny(desk, "960,0", "960,1080");
+        desk.ExpectActive("22,22", "1876,511");
     }
 
     [Fact]

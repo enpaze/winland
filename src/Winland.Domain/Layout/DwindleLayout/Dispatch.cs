@@ -182,24 +182,8 @@ internal sealed partial class DwindleLayout
             return [];
         }
 
-        if (Is(tokens[0], "preselect"))
-        {
-            if (tokens.Length >= 2)
-                return Preselect(tokens[1]);
-
-            LayoutMessageError = "error: no direction for preselect";
-            return [];
-        }
-        if (Is(tokens[0], DwindleMessages.ToggleSplit))
+        if (Is(tokens[0], "togglesplit"))
             return ToggleSplit(active);
-        if (Is(tokens[0], DwindleMessages.SwapSplit))
-            return SwapSplit(active);
-        if (Is(tokens[0], DwindleMessages.RotateSplit))
-            return RotateSplit(active, tokens);
-        if (Is(tokens[0], "movetoroot"))
-            return MoveToRoot(active, tokens);
-        if (Is(tokens[0], DwindleMessages.SplitRatio))
-            return SplitRatio(active, tokens);
 
         LayoutMessageError = "error: bad layoutmsg '" + tokens[0] + "'";
         return [];
@@ -211,7 +195,7 @@ internal sealed partial class DwindleLayout
             return [];
         if (node.Parent is null || Covers(node.Id!.Value))
         {
-            LayoutMessageError = "error: can't " + DwindleMessages.ToggleSplit + " in the current workspace";
+            LayoutMessageError = "error: can't togglesplit in the current workspace";
             return [];
         }
 
@@ -220,149 +204,6 @@ internal sealed partial class DwindleLayout
             return [];
 
         node.Parent.SplitTop = !node.Parent.SplitTop;
-        Refit();
-        return Placements();
-    }
-
-    private IReadOnlyList<Placement> SwapSplit(WindowId? active)
-    {
-        if (!TryNode(active, out var node))
-            return [];
-        if (node.Parent is null || Covers(node.Id!.Value))
-        {
-            LayoutMessageError = "error: can't " + DwindleMessages.SwapSplit + " in the current workspace";
-            return [];
-        }
-
-        (node.Parent.First, node.Parent.Second) = (node.Parent.Second, node.Parent.First);
-        Refit();
-        return Placements();
-    }
-
-    private IReadOnlyList<Placement> RotateSplit(WindowId? active, string[] tokens)
-    {
-        var angle = 90;
-        if (tokens.Length >= 2 && !int.TryParse(tokens[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out angle))
-        {
-            LayoutMessageError = "error: bad layoutmsg '" + DwindleMessages.RotateSplit + "'";
-            return [];
-        }
-        if (!TryNode(active, out var node) || node.Parent is null || Covers(node.Id!.Value))
-            return [];
-
-        var steps = ((angle / 90 % 4) + 4) % 4;
-        var parent = node.Parent;
-        var swap = false;
-        switch (steps)
-        {
-            case 1:
-                if (parent.SplitTop)
-                    swap = true;
-                parent.SplitTop = !parent.SplitTop;
-                break;
-            case 2:
-                swap = true;
-                break;
-            case 3:
-                if (!parent.SplitTop)
-                    swap = true;
-                parent.SplitTop = !parent.SplitTop;
-                break;
-        }
-
-        if (swap)
-            (parent.First, parent.Second) = (parent.Second, parent.First);
-
-        Refit();
-        return Placements();
-    }
-
-    private IReadOnlyList<Placement> MoveToRoot(WindowId? active, string[] tokens)
-    {
-        var window = active;
-        if (tokens.Length >= 2)
-        {
-            var selected = WindowSelector.Find(tokens[1], active, _clients);
-            if (selected is WindowId found)
-                window = found;
-        }
-
-        var stable = tokens.Length < 3 || !Is(tokens[2], "unstable");
-
-        if (!TryNode(window, out var node) || !MoveNodeToRoot(node, stable))
-        {
-            LayoutMessageError = "error: can't movetoroot in the current workspace";
-            return [];
-        }
-
-        return Placements();
-    }
-
-    private bool MoveNodeToRoot(Node node, bool stable)
-    {
-        var parent = node.Parent;
-        if (Covers(node.Id!.Value) || parent?.Parent is null || parent.First is null || parent.Second is null)
-            return false;
-
-        var nodeIndex = ReferenceEquals(parent.First, node) ? 0 : 1;
-        var ancestor = node;
-        var root = parent;
-        while (root.Parent is not null)
-        {
-            ancestor = root;
-            root = root.Parent;
-        }
-
-        if (root.First is null || root.Second is null)
-            return false;
-
-        var ancestorIsFirst = ReferenceEquals(root.First, ancestor);
-        var swap = ancestorIsFirst ? root.Second : root.First;
-        if (nodeIndex == 0)
-            parent.First = swap;
-        else
-            parent.Second = swap;
-
-        if (ancestorIsFirst)
-            root.Second = node;
-        else
-            root.First = node;
-
-        swap.Parent = parent;
-        node.Parent = root;
-
-        if (stable)
-            (root.First, root.Second) = (root.Second, root.First);
-
-        Refit();
-        return true;
-    }
-
-    // a missing ratio is refused first, then a Client with no sibling, then a bad ratio.
-    private IReadOnlyList<Placement> SplitRatio(WindowId? active, string[] tokens)
-    {
-        if (tokens.Length < 2)
-        {
-            LayoutMessageError = "error: " + DwindleMessages.SplitRatio + " requires an arg";
-            return [];
-        }
-
-        if (!TryNode(active, out var node) || node.Parent is null)
-        {
-            LayoutMessageError = "error: cannot alter split ratio on no / single node";
-            return [];
-        }
-
-        if (!double.TryParse(tokens[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var delta) || !double.IsFinite(delta))
-        {
-            LayoutMessageError = "error: bad layoutmsg '" + DwindleMessages.SplitRatio + "'";
-            return [];
-        }
-
-        var exact = tokens.Length >= 3 && tokens[2].StartsWith("exact", StringComparison.OrdinalIgnoreCase);
-
-        var ratio = exact ? delta : node.Parent.SplitRatio + delta;
-        node.Parent.SplitRatio = Math.Clamp(ratio, 0.1, 1.9);
         Refit();
         return Placements();
     }

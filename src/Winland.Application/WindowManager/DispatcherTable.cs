@@ -55,6 +55,7 @@ public sealed partial class WindowManager
 
             // Layouts
             ["layoutmsg"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
+            ["togglesplit"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
             ["layout"] = new(static (m, _, a) => m.SelectLayout(a)),
             ["cyclelayout"] = new(static (m, _, a) => m.CycleWorkspaceLayout(a)),
 
@@ -67,10 +68,6 @@ public sealed partial class WindowManager
             // Accepted with no effect. A mouse bind's resizewindow runs in the drag code, not here.
             ["resizewindow"] = new(static (m, _, _) => m.View([])),
         };
-
-        // A dwindle layout message is also a dispatcher of its own name.
-        foreach (var message in DwindleMessages.Names)
-            table[message] = new(static (m, n, a) => m.LayoutDispatch(n, a));
 
         return table.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
     }
