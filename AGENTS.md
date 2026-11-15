@@ -40,7 +40,6 @@ A keyboard-driven tiling window manager for Windows 11. It manages windows on to
 ## Conventions
 
 - Option and Dispatcher names are Winland's, documented in `docs/behavior.md` (ADR 0002). An unknown keyword warns and is skipped.
-- [Domain docs](docs/agents/domain.md) describe glossary vocabulary and decision records.
 - Don't add a file catalog or a narration of control flow to the docs.
 
 ### Running a build on this computer
@@ -50,6 +49,20 @@ Before starting, stopping or isolating a dev build, read [Run a dev build](docs/
 - A running Winland takes over the user's windows. Start it only when the user asked to see a change, and stop it when you are done.
 - Use `scripts/run.ps1` for every start and stop. For isolated tests, give it your own `WINLAND_PIPE`, `WINLAND_STATE` and a `-Config` that ignores every window except your test windows.
 - `-Elevated` waits for UAC approval, which an agent cannot give.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in GitHub Issues for `enpaze/winland`. Read `docs/agents/issue-tracker.md` before working with tickets.
+
+### Triage labels
+
+Use the five default triage labels. Read `docs/agents/triage-labels.md` before triaging issues.
+
+### Domain docs
+
+Single-context: root `GLOSSARY.md` and `docs/adr/`. Read `docs/agents/domain.md` before exploring the codebase.
 
 ## Notes
 
