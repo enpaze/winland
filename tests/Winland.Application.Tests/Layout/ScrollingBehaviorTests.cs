@@ -71,17 +71,6 @@ public class ScrollingBehaviorTests
     }
 
     [Fact]
-    public void ScrollWindowRule()
-    {
-        var desk = new TestDesktop(Scrolling + "windowrule = scrolling_width 0.1, class:^(kitty_scroll)$\n");
-        desk.Spawn("kitty_scroll");
-        desk.Spawn("kitty_scroll");
-
-        Assert.Equal(2, desk.Clients().Length);
-        Assert.Equal("179,1036", desk.ActivePlace().Size);
-    }
-
-    [Fact]
     public void ScrollLAYOUTHANDLEDFullscreen()
     {
         var desk = new TestDesktop(Scrolling);
@@ -150,8 +139,8 @@ public class ScrollingBehaviorTests
         ExpectClient(desk, "tiledOne", floating: false, acceptsInput: true, fullscreen: 2, visible: true);
         ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
 
-        desk.Set("windowrule", "float, class:^(floating.*)$");
-        desk.Set("windowrule", "size 950 500, class:^(floating.*)$");
+        desk.Set("windowrule", "float, class:floating*");
+        desk.Set("windowrule", "size 950 500, class:floating*");
         desk.Spawn("floatingOne");
         desk.Spawn("floatingTwo");
         ExpectClient(desk, "floatingOne", floating: true, acceptsInput: true, fullscreen: 0, over: true);
@@ -452,7 +441,7 @@ public class ScrollingBehaviorTests
     // Shared by the layout handled and default handled cases. The default handled one asks for the default fullscreen.
     private static void FloatingOntopFullscreenWorkspaceFocusRetention(string handler)
     {
-        var desk = new TestDesktop(Scrolling + "windowrule = float, class:^(kitty_floated)$\n");
+        var desk = new TestDesktop(Scrolling + "windowrule = float, class:kitty_floated\n");
         desk.Ok("workspace", "1");
 
         foreach (var mode in new[] { "0", "1" })

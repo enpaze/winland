@@ -395,26 +395,6 @@ public class ScrollingLayoutTests
         Assert.DoesNotContain(back.Placements, placement => placement.Client == Client(back, 1).Id);
     }
 
-    [Fact]
-    public void ScrollingWidthRuleSizesTheNewColumn()
-    {
-        var core = Configured("""
-            general:layout = scrolling
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
-            windowrule = scrolling_width 0.25, class:^(app)$
-            """);
-        core.Handle(Appeared(1, Area));
-
-        var outcome = core.Handle(new WindowAppeared(Window(2), Area)
-        {
-            Traits = WindowTraits.Normal with { Class = "app" },
-        });
-
-        Assert.Equal(new Rectangle(625, 0, 250, 800), BoundsOf(outcome, 2));
-    }
-
     private static ScrollingLayout Open() => Open(Area);
 
     private static ScrollingLayout Open(Rectangle area)

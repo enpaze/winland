@@ -69,20 +69,6 @@ public class GroupTests
     }
 
     [Fact]
-    public void AGroupWhoseShownMemberIsNotDecoratedHasNoBarAndKeepsItsTile()
-    {
-        var core = Opened(First);
-        var tile = ClientOf(core.Execute("dispatch resizewindow").Effect, First).Bounds;
-        core.Execute("dispatch togglegroup");
-
-        var plain = core.Handle(new Configure(ConfigParser.Parse("windowrule = decorate 0, class:.*\n")));
-
-        Assert.Empty(plain.GroupBars);
-        Assert.Equal(tile, ClientOf(plain, First).Bounds);
-        Assert.Single(core.Handle(new Configure(ConfigParser.Parse(""))).GroupBars);
-    }
-
-    [Fact]
     public void AGroupIsOneTileWithSeveralClients()
     {
         var core = Opened(First);

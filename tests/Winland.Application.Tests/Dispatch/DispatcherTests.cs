@@ -47,8 +47,8 @@ public class DispatcherTests
     public void MoveFocusFromAFloatingClientLooksByAngle(string layout)
     {
         var core = Floats("general:layout = " + layout + "\n");
-        core.Handle(FloatingAt(2, 400, 150));
-        core.Handle(FloatingAt(1, 100, 100));
+        ShowFloat(core, 2, 400, 150);
+        ShowFloat(core, 1, 100, 100);
 
         Assert.Equal(new WindowId(2), FocusToward(core, "r"));
     }
@@ -59,7 +59,7 @@ public class DispatcherTests
         var core = Floats("");
         Appear(core, 1);
         Appear(core, 2);
-        core.Handle(FloatingAt(3, 760, 100));
+        ShowFloat(core, 3, 760, 100);
 
         Assert.Null(FocusToward(core, "r"));
     }
@@ -375,12 +375,18 @@ public class DispatcherTests
     }
 
     private static WindowManager Floats(string extra) =>
-        new(ConfigParser.Parse(Gapless + extra + "windowrule = float, class:^(box)$\nwindowrule = move window_x window_y, class:^(box)$\n"));
+        new(ConfigParser.Parse(Gapless + extra + "windowrule = float, class:box\n"));
 
-    private static WindowAppeared FloatingAt(long window, int x, int y) =>
-        new(new WindowId(window), Wide)
+    private static void ShowFloat(WindowManager core, long window, int x, int y)
+    {
+        var id = new WindowId(window);
+        var bounds = new Rectangle(x, y, 200, 200);
+        core.Handle(new WindowAppeared(id, Wide)
         {
-            Bounds = new Rectangle(x, y, 200, 200),
+            Bounds = bounds,
             Traits = WindowTraits.Normal with { Class = "box" },
-        };
+        });
+        core.Handle(new WindowMoveStarted(id, new Point(x, y)));
+        core.Handle(new WindowMoveEnded(id, new Point(x, y), bounds));
+    }
 }

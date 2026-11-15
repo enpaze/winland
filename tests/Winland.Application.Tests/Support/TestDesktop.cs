@@ -35,8 +35,8 @@ internal sealed class TestDesktop
         input {
             follow_mouse = 1
         }
-        windowrule = float, class:^(wr_kitty)$
-        windowrule = size 200 200, class:^(wr_kitty)$
+        windowrule = float, class:wr_kitty
+        windowrule = size 200 200, class:wr_kitty
         """;
 
     /// <summary>Where the desktop's one Monitor, HEADLESS-2, is.</summary>

@@ -46,7 +46,7 @@ public sealed partial class WindowManager
     /// <summary>
     /// The rectangle a new Client opens at. A floating Client is centered in the floating work area
     /// unless a <c>move</c> rule places it. <c>size</c> sets its size.
-    /// Expressions are in pixels and monitor-local.
+    /// A bare number is pixels, monitor-local for a position. A percentage is that share of the work area.
     /// </summary>
     private Rectangle PlaceOnMap(WindowAppeared appeared, WindowDecision decision, LiveWorkspace desk, Rectangle area)
     {
@@ -56,22 +56,24 @@ public sealed partial class WindowManager
         var sized = desired.Width > 2 && desired.Height > 2;
         var width = sized || !decision.Floating ? desired.Width : DefaultFloatWidth;
         var height = sized || !decision.Floating ? desired.Height : DefaultFloatHeight;
-        var pointer = appeared.Pointer ?? Cursor?.Read() ?? new Point(monitor.X + (monitor.Width / 2), monitor.Y + (monitor.Height / 2));
-        if (placement.Size is { } size
-            && size.TryEvaluate(Variables(monitor, desired with { Width = width, Height = height }, pointer), out var sizedWidth, out var sizedHeight)
-            && sizedWidth >= 1
-            && sizedHeight >= 1)
+        if (placement.Size is { } size)
         {
-            width = Pixels(sizedWidth);
-            height = Pixels(sizedHeight);
+            var sizedWidth = size.X.Of(area.Width);
+            var sizedHeight = size.Y.Of(area.Height);
+            if (sizedWidth >= 1 && sizedHeight >= 1)
+            {
+                width = sizedWidth;
+                height = sizedHeight;
+            }
         }
 
         (width, height) = Clamp(width, height, decision.MinSize, decision.MaxSize);
         Rectangle placed;
-        if (placement.Move is { } move
-            && move.TryEvaluate(Variables(monitor, desired with { Width = width, Height = height }, pointer), out var x, out var y))
+        if (placement.Move is { } move)
         {
-            placed = new Rectangle(monitor.X + Pixels(x), monitor.Y + Pixels(y), width, height);
+            var x = move.X.Percent ? area.X + move.X.Of(area.Width) : monitor.X + move.X.Of(0);
+            var y = move.Y.Percent ? area.Y + move.Y.Of(area.Height) : monitor.Y + move.Y.Of(0);
+            placed = new Rectangle(x, y, width, height);
         }
         else if (decision.Floating && appeared.Traits.PlacesItself && !placement.Center)
         {
@@ -107,30 +109,6 @@ public sealed partial class WindowManager
             ? bounds
             : null;
 
-    // A min_size or max_size rule written as an expression is read once the window's Monitor is known, as the pinned
-    // release reads it when the window opens. A size below 1 leaves the limit unset, and a later number wins.
-    private WindowDecision EvaluateSizeRules(WindowAppeared appeared, WindowDecision decision, LiveWorkspace desk, Rectangle area)
-    {
-        if (decision.MinSizeExpression is null && decision.MaxSizeExpression is null)
-            return decision;
-
-        var monitor = MonitorById(desk.Monitor) is { Arranged.Enabled: true } screen ? screen.Bounds : area;
-        var pointer = appeared.Pointer ?? Cursor?.Read() ?? new Point(monitor.X + (monitor.Width / 2), monitor.Y + (monitor.Height / 2));
-        var variables = Variables(monitor, appeared.Bounds, pointer);
-        Size? Read(ExpressionPair? expression) =>
-            expression is { } pair && pair.TryEvaluate(variables, out var width, out var height) && width >= 1 && height >= 1
-                ? new Size(Pixels(width), Pixels(height))
-                : null;
-
-        var sizes = decision.Sizes with
-        {
-            Min = decision.Sizes.Min ?? Read(decision.MinSizeExpression),
-            Max = decision.Sizes.Max ?? Read(decision.MaxSizeExpression),
-        };
-        var limits = sizes.Floating(appeared.Traits.MinSize, appeared.Traits.MaxSize);
-        return decision with { Sizes = sizes, MinSize = limits.Min, MaxSize = limits.Max };
-    }
-
     private void NotePlaced(WindowId window, LiveWorkspace desk, WindowDecision decision, bool restored)
     {
         var now = Clock();
@@ -161,18 +139,6 @@ public sealed partial class WindowManager
         var placements = desk.Layout.PlaceFloating(resized.Window, placed.Bounds);
         return _workspaces.Shown.IsShown(desk.Id) ? Present(desk, covered, placements) : View([]);
     }
-
-    private static Dictionary<string, double> Variables(Rectangle monitor, Rectangle window, Point cursor) => new(StringComparer.Ordinal)
-    {
-        ["monitor_w"] = monitor.Width,
-        ["monitor_h"] = monitor.Height,
-        ["window_x"] = window.X - monitor.X,
-        ["window_y"] = window.Y - monitor.Y,
-        ["window_w"] = window.Width,
-        ["window_h"] = window.Height,
-        ["cursor_x"] = cursor.X - monitor.X,
-        ["cursor_y"] = cursor.Y - monitor.Y,
-    };
 
     private static int Pixels(double value) =>
         (int)Math.Round(Math.Clamp(value, int.MinValue / 2, int.MaxValue / 2), MidpointRounding.AwayFromZero);

@@ -49,7 +49,7 @@ public class ReclassTests
     [Fact]
     public void ARuleOnTheClassAppliesOnceTheClassMatches()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, class:.*Video.*\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, class:*Video*\n"));
         var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "Browser" } });
         Assert.Equal(255, Assert.Single(opened.Decorations).Alpha);
 
@@ -80,57 +80,6 @@ public class ReclassTests
         using var active = JsonDocument.Parse(core.Execute("j/activewindow").Text);
         Assert.Equal("new", active.RootElement.GetProperty("class").GetString());
         Assert.Equal("kitty", active.RootElement.GetProperty("initialClass").GetString());
-    }
-
-    [Fact]
-    public void AnInitialClassRuleKeepsMatchingAfterTheClassChanges()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, initial_class:^Browser$\n"));
-        var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "Browser" } });
-        Assert.Equal(127, Assert.Single(opened.Decorations).Alpha, tolerance: 1);
-
-        var reclassed = core.Handle(new WindowClassChanged(new WindowId(1), "Notes"));
-
-        Assert.Equal(127, Assert.Single(reclassed.Decorations).Alpha, tolerance: 1);
-        Assert.Equal("Browser", Assert.Single(reclassed.State.Clients).InitialClass);
-    }
-
-    [Fact]
-    public void AnEmptyInitialClassDoesNotTakeTheLaterClass()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, initial_class:^$\n"));
-        var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "" } });
-        Assert.Equal(127, Assert.Single(opened.Decorations).Alpha, tolerance: 1);
-
-        var reclassed = core.Handle(new WindowClassChanged(new WindowId(1), "Notes"));
-
-        Assert.Equal("", Assert.Single(reclassed.State.Clients).InitialClass);
-        Assert.Equal(127, Assert.Single(reclassed.Decorations).Alpha, tolerance: 1);
-    }
-
-    [Fact]
-    public void AnInitialClassRuleDoesNotMatchTheNewClass()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, initial_class:.*Video.*\n"));
-        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "Browser" } });
-
-        var reclassed = core.Handle(new WindowClassChanged(new WindowId(1), "A Video - Browser"));
-
-        Assert.Equal(255, Assert.Single(reclassed.Decorations).Alpha);
-    }
-
-    [Fact]
-    public void ARuleOnTheClassAndTheInitialClassNeedsBoth()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, class:.*Video.*, initial_class:^Browser$\n"));
-        var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "Browser" } });
-        Assert.Equal(255, Assert.Single(opened.Decorations).Alpha);
-
-        var matched = core.Handle(new WindowClassChanged(new WindowId(1), "A Video"));
-        Assert.Equal(127, Assert.Single(matched.Decorations).Alpha, tolerance: 1);
-
-        var missed = core.Handle(new WindowClassChanged(new WindowId(1), "Notes"));
-        Assert.Equal(255, Assert.Single(missed.Decorations).Alpha);
     }
 
     [Fact]

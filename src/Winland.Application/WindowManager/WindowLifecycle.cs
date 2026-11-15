@@ -120,7 +120,6 @@ public sealed partial class WindowManager
             _restoredShown.Add(desk.Id);
         var area = WorkArea(desk, appeared.WorkArea);
         _area = area;
-        decision = EvaluateSizeRules(appeared, decision, desk, area);
         var bounds = restored is null ? PlaceOnMap(appeared, decision, desk, area) : restored.Bounds ?? appeared.Bounds;
         var covered = desk.Covered();
         if (decision.ScrollingWidth is double scrollingWidth)

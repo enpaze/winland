@@ -29,37 +29,6 @@ public class WindowBehaviorTests
     }
 
     [Fact]
-    public void WindowFocusOnFullscreenConflict()
-    {
-        var desk = new TestDesktop();
-        desk.Spawn("kitty_A");
-        desk.Spawn("kitty_B");
-
-        // A window that asks for the focus gets it.
-        desk.Set("windowrule", "focus_on_activate 1, class:.*");
-
-        // Unfullscreen on conflict.
-        desk.Ok("focuswindow", "class:kitty_A");
-        desk.Ok("fullscreen", "0 set");
-        ExpectFocused(desk, "kitty_A", 2);
-
-        desk.Ok("focuswindow", "class:kitty_A");
-        ExpectFocused(desk, "kitty_A", 2);
-
-        desk.Ok("focuswindow", "class:kitty_B");
-        ExpectFocused(desk, "kitty_B", 0);
-
-        var activating = desk.Spawn("kitty_activating");
-        desk.Ok("focuswindow", "class:kitty_A");
-        desk.Ok("fullscreen", "0 set");
-        ExpectFocused(desk, "kitty_A", 2);
-        Activate(desk, activating);
-        ExpectFocused(desk, "kitty_activating", 0);
-        desk.CloseActive();
-        Assert.Equal(2, desk.Clients().Length);
-    }
-
-    [Fact]
     public void FocusFloatingOrTilingUnderFullscreen()
     {
         var desk = new TestDesktop("""
@@ -121,34 +90,6 @@ public class WindowBehaviorTests
         Assert.Equal(3, desk.Clients().Length);
 
         Assert.Equal("kitty_B", desk.ActiveClass());
-    }
-
-    [Fact]
-    public void WindowRuleFocusOnActivate()
-    {
-        var desk = new TestDesktop();
-        desk.Spawn("kitty_default");
-
-        // Without the rule a window that asks for the focus does not get it.
-
-        var antifocus = desk.Spawn("kitty_antifocus");
-        ExpectFocused(desk, "kitty_antifocus", 0);
-        desk.Ok("focuswindow", "class:kitty_default");
-        ExpectFocused(desk, "kitty_default", 0);
-
-        Activate(desk, antifocus);
-        Assert.NotEqual("kitty_antifocus", desk.ActiveClass());
-
-        // With the rule it does.
-        desk.Set("windowrule", "focus_on_activate 1, class:kitty_superfocus");
-
-        var superfocus = desk.Spawn("kitty_superfocus");
-        ExpectFocused(desk, "kitty_superfocus", 0);
-        desk.Ok("focuswindow", "class:kitty_default");
-        ExpectFocused(desk, "kitty_default", 0);
-
-        Activate(desk, superfocus);
-        ExpectFocused(desk, "kitty_superfocus", 0);
     }
 
     [Fact]
@@ -270,102 +211,6 @@ public class WindowBehaviorTests
     }
 
     [Fact]
-    public void ExecRulesWorkspaceOverride()
-    {
-        var desk = new TestDesktop("windowrule = workspace 2, class:kitty_exec_override\n");
-
-        Launch(desk, "[workspace 3] kitty --class kitty_exec_override", pid: Pid(1));
-        ExpectProcess(desk.Spawn("kitty_exec_override"), Pid(1));
-        Assert.Single(desk.Clients());
-
-        var active = desk.ActiveWindow();
-        Assert.Equal("kitty_exec_override", TestDesktop.ClassOf(active));
-        Assert.Equal(3, TestDesktop.WorkspaceId(active));
-
-        CloseAll(desk);
-    }
-
-    [Fact]
-    public void ExecRulesTagMutation()
-    {
-        var desk = new TestDesktop("""
-            windowrule = workspace 2, class:kitty_tag_mutate
-            windowrule = tag test_tag, class:kitty_tag_mutate
-            """);
-
-        Launch(desk, "[workspace 3] kitty --class kitty_tag_mutate", pid: Pid(1));
-        ExpectProcess(desk.Spawn("kitty_tag_mutate"), Pid(1));
-        Assert.Single(desk.Clients());
-
-        var active = desk.ActiveWindow();
-        Assert.Equal("kitty_tag_mutate", TestDesktop.ClassOf(active));
-        Assert.Equal(3, TestDesktop.WorkspaceId(active));
-
-        CloseAll(desk);
-    }
-
-    [Fact]
-    public void ExecRulesDescendantProcess()
-    {
-        var desk = new TestDesktop();
-
-        // The shell is the launched process, and kitty is its child.
-        Launch(desk, "[workspace 2 silent] kitty --class kitty_exec_workspace & wait", pid: 4001);
-        Started(desk, window: 1, parent: 4001);
-        ExpectProcess(desk.Spawn("kitty_exec_workspace"), Pid(1));
-        Assert.Single(desk.Clients());
-
-        desk.Ok("focuswindow", "class:kitty_exec_workspace");
-
-        var active = desk.ActiveWindow();
-        Assert.Equal("kitty_exec_workspace", TestDesktop.ClassOf(active));
-        Assert.Equal(2, TestDesktop.WorkspaceId(active));
-
-        // The options in the rule block follow the command's own rules.
-        Launch(desk, "[workspace 3; border_size 7; workspace special:exec_rules silent; no_initial_focus; no_focus] kitty --class kitty_exec_special & wait", pid: 4101);
-        Started(desk, window: 2, parent: 4101);
-        ExpectProcess(desk.Spawn("kitty_exec_special"), Pid(2));
-        Assert.Equal(2, desk.Clients().Length);
-
-        active = desk.ActiveWindow();
-        Assert.Equal("kitty_exec_workspace", TestDesktop.ClassOf(active));
-        Assert.Equal(2, TestDesktop.WorkspaceId(active));
-
-        Assert.Equal("special:exec_rules", WorkspaceName(desk.Client("kitty_exec_special")));
-
-        CloseAll(desk);
-    }
-
-    [Fact]
-    public void ExecRulesPendingIsolation()
-    {
-        var desk = new TestDesktop();
-
-        // Both launches are pending before either window opens.
-        Launch(desk, "[workspace 2 silent] sleep 1 && kitty --class kitty_exec_first", pid: 5001);
-        Launch(desk, "[workspace special:exec_rules_pending silent; no_initial_focus; no_focus] sleep 2 && kitty --class kitty_exec_second", pid: 5101);
-
-        Started(desk, window: 1, parent: 5001);
-        ExpectProcess(desk.Spawn("kitty_exec_first"), Pid(1));
-        Assert.Single(desk.Clients());
-
-        desk.Ok("focuswindow", "class:kitty_exec_first");
-
-        var active = desk.ActiveWindow();
-        Assert.Equal("kitty_exec_first", TestDesktop.ClassOf(active));
-        Assert.Equal(2, TestDesktop.WorkspaceId(active));
-
-        Started(desk, window: 2, parent: 5101);
-        ExpectProcess(desk.Spawn("kitty_exec_second"), Pid(2));
-        Assert.Equal(2, desk.Clients().Length);
-
-        Assert.Equal("kitty_exec_first", desk.ActiveClass());
-        Assert.Equal("special:exec_rules_pending", WorkspaceName(desk.Client("kitty_exec_second")));
-
-        CloseAll(desk);
-    }
-
-    [Fact]
     public void PinnedRetainsPositionOnWorkspaceChange()
     {
         var desk = new TestDesktop();
@@ -480,14 +325,6 @@ public class WindowBehaviorTests
         // Fully on screen.
         desk.Place(desk.ActiveId(), -10, 0, 100, 100);
         Assert.Equal("2,2", desk.ActivePlace().At);
-
-        desk.CloseActive();
-
-        // The reference places a new floating window at 0,0 rather than 2,2: the border is not known yet when the rules run.
-        Launch(desk, "[float; size 100 100; move -10 0] kitty", pid: Pid(2));
-        ExpectProcess(desk.Spawn("kitty"), Pid(2));
-        Assert.Equal("0,0", desk.ActivePlace().At);
-        desk.CloseActive();
     }
 
     [Fact]
@@ -521,27 +358,6 @@ public class WindowBehaviorTests
         CloseAll(desk);
     }
 
-    [Fact]
-    public void FloatingMoveExpression()
-    {
-        var desk = new TestDesktop("""
-            windowrule = float, class:kitty_floatingmove
-            windowrule = size 800 600, class:kitty_floatingmove
-            windowrule = move (monitor_w-window_w-10) (monitor_h-window_h-10), class:kitty_floatingmove
-            """);
-
-        desk.Spawn("kitty_floatingmove");
-        Assert.Single(desk.Clients());
-
-        // The active monitor is the first: 1920x1080 at 0,0.
-        var expected = $"{TestDesktop.First.X + TestDesktop.First.Width - 800 - 10},{TestDesktop.First.Y + TestDesktop.First.Height - 600 - 10}";
-
-        Assert.True(TestDesktop.Floating(desk.ActiveWindow()));
-        desk.ExpectActive(expected, "800,600");
-
-        CloseAll(desk);
-    }
-
     private static string Address(JsonElement client) => client.GetProperty("address").GetString() ?? "";
 
     private static string WorkspaceName(JsonElement client) =>
@@ -565,12 +381,6 @@ public class WindowBehaviorTests
         Assert.Equal(fullscreen, TestDesktop.Fullscreen(active));
     }
 
-    // The window asks for the foreground by itself, as kitty does when the reference removes its file.
-    // The test plugin activates with a fresh serial: on Windows, a window taking the foreground right after a click in
-    // the focused Client of another program.
-    private static void Activate(TestDesktop desk, WindowId window) =>
-        desk.Handle(new WindowFocused(window, FocusCause.User) { Clicked = desk.ActiveId() });
-
     // The test plugin's click with a button held down, and with it let go, where the pointer is.
     private static void Press(TestDesktop desk, string button) =>
         desk.Handle(new PointerButtonPressed(button) { Position = desk.Pointer });
@@ -582,24 +392,6 @@ public class WindowBehaviorTests
     {
         foreach (var client in desk.Clients())
             desk.Handle(new WindowClosed(IdOf(client)));
-    }
-
-    // The process of the nth window a TestDesktop opens.
-    private static int Pid(int window) => 1000 + window;
-
-    // Checks that the window is the one the launch counted on, so its process is the one the launch recorded.
-    private static void ExpectProcess(WindowId window, int pid) => Assert.Equal(pid, 1000 + window.Value);
-
-    // A launched shell starts the process of the nth window, as the adapter notes a new process and its parent.
-    private static void Started(TestDesktop desk, int window, int parent) => desk.WindowManager.NoteLineage(Pid(window), [parent]);
-
-    // Runs exec and records the process it starts, as the adapter does.
-    private static void Launch(TestDesktop desk, string arguments, int pid)
-    {
-        var outcome = desk.Handle(new Dispatch("exec", arguments));
-        Assert.Null(outcome.Error);
-        foreach (var launch in outcome.Launches)
-            desk.WindowManager.NoteLaunched(pid, launch);
     }
 
     private static int MonitorId(TestDesktop desk, string name)

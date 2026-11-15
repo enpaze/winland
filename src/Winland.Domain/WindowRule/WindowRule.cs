@@ -6,28 +6,22 @@ public sealed record WindowRule(
     string? ClassPattern,
     string? TitlePattern,
     string? ExePattern,
-    string? AumidPattern = null,
     bool Enabled = true,
-    Size? Size = null,
-    double? ScrollingWidth = null,
     OpacityRule? Opacity = null,
     FullscreenRule? Fullscreen = null,
-    RulePlacement? Placement = null,
-    IReadOnlyDictionary<string, object>? Props = null,
-    string? InitialTitlePattern = null,
-    string? InitialClassPattern = null);
+    RulePlacement? Placement = null);
 
 /// <summary>
 /// The argument of a <c>move</c>, <c>size</c> or <c>monitor</c> rule.
 /// </summary>
-public sealed record RulePlacement(ExpressionPair? Expression = null, string? Monitor = null);
+public sealed record RulePlacement(RulePoint? Point = null, string? Monitor = null);
 
 /// <summary>
 /// Where a new Client opens: <c>move</c> and <c>center</c> replace each other, so at most one is set.
 /// </summary>
 internal readonly record struct MapPlacement(
-    ExpressionPair? Move = null,
-    ExpressionPair? Size = null,
+    RulePoint? Move = null,
+    RulePoint? Size = null,
     bool Center = false,
     string? Monitor = null);
 

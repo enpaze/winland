@@ -1,23 +1,18 @@
 using System.Globalization;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Winland.Domain;
 
 internal static partial class WindowRuleParser
 {
-    // The effects TryParseEffect and its helpers read, for the hint a mistyped one gets. A test keeps every name parsing.
+    // The effects TryParseEffect reads, for the hint a mistyped one gets. A test keeps every name parsing.
     internal static readonly string[] EffectNames =
     [
-        "float", "tile", "ignore", "no_initial_focus", "no_focus", "opaque", "pin", "workspace", "min_size",
-        "max_size", "scrolling_width", "opacity", "fullscreen", "maximize", "move", "size", "center", "monitor",
-        "border_size", "rounding", "border_color",
-        .. WindowProp.All.Where(prop => prop.IsRuleEffect).Select(prop => prop.Name),
+        "float", "tile", "ignore", "no_focus", "pin", "workspace", "opacity", "fullscreen", "maximize",
+        "move", "size", "center", "monitor",
     ];
 
-    // The fields TryParseMatch reads.
-    private static readonly string[] MatchFields =
-        ["class", "initial_class", "title", "initial_title", "exe", "aumid"];
+    private static readonly string[] MatchFields = ["class", "title", "exe"];
 
     internal static bool TryParse(string value, out WindowRule? rule, out string error)
     {
@@ -35,39 +30,25 @@ internal static partial class WindowRuleParser
             return false;
         }
 
-        if (!TryParseEffect(value[..comma].Trim(), out var effect, out var workspace, out var enabled, out var size, out var scrollingWidth, out var opacity, out var fullscreen, out var placement, out var props, out error))
+        if (!TryParseEffect(value[..comma].Trim(), out var effect, out var workspace, out var enabled, out var opacity, out var fullscreen, out var placement, out error))
             return false;
 
         string? classPattern = null;
         string? titlePattern = null;
-        string? initialTitlePattern = null;
-        string? initialClassPattern = null;
         string? exePattern = null;
-        string? aumidPattern = null;
         foreach (var part in SplitFields(value[(comma + 1)..]))
         {
-            if (!TryParseMatch(part, ref classPattern, ref titlePattern, ref initialTitlePattern, ref initialClassPattern, ref exePattern, ref aumidPattern, out error))
+            if (!TryParseMatch(part, ref classPattern, ref titlePattern, ref exePattern, out error))
                 return false;
         }
 
-        // Winland never applies a rule that has nothing to match on.
-        if (classPattern is null && titlePattern is null && initialTitlePattern is null && initialClassPattern is null && exePattern is null && aumidPattern is null)
+        if (classPattern is null && titlePattern is null && exePattern is null)
         {
             error = "Malformed window rule.";
             return false;
         }
 
-        rule = new WindowRule(effect, workspace, classPattern, titlePattern, exePattern, aumidPattern, enabled, size, scrollingWidth, opacity, fullscreen, placement, props, initialTitlePattern, initialClassPattern);
-        return true;
-    }
-
-    internal static bool TryParseBare(string text, out WindowRule? rule, out string error)
-    {
-        rule = null;
-        if (!TryParseEffect(text, out var effect, out var workspace, out var enabled, out var size, out var scrollingWidth, out var opacity, out var fullscreen, out var placement, out var props, out error))
-            return false;
-
-        rule = new WindowRule(effect, workspace, null, null, null, Enabled: enabled, Size: size, ScrollingWidth: scrollingWidth, Opacity: opacity, Fullscreen: fullscreen, Placement: placement, Props: props);
+        rule = new WindowRule(effect, workspace, classPattern, titlePattern, exePattern, enabled, opacity, fullscreen, placement);
         return true;
     }
 
@@ -76,20 +57,12 @@ internal static partial class WindowRuleParser
         bool? adopt = null;
         bool? floating = null;
         string? workspace = null;
-        bool? noInitialFocus = null;
         bool? noFocus = null;
-        Size? ruleMin = null;
-        Size? ruleMax = null;
-        ExpressionPair? minExpression = null;
-        ExpressionPair? maxExpression = null;
-        double? scrollingWidth = null;
         OpacityRule? opacity = null;
-        bool? opaque = null;
         bool? fullscreen = null;
         bool? maximize = null;
         bool? pin = null;
         var placement = default(MapPlacement);
-        Dictionary<string, object>? props = null;
         foreach (var rule in rules)
         {
             if (!Matches(rule, traits))
@@ -97,14 +70,6 @@ internal static partial class WindowRuleParser
 
             if (!rule.Enabled && rule.Effect is WindowRuleEffect.Float or WindowRuleEffect.Tile or WindowRuleEffect.Ignore)
                 continue;
-
-            if (rule.Effect == WindowRuleEffect.Prop && rule.Props is not null)
-            {
-                props ??= new Dictionary<string, object>(StringComparer.Ordinal);
-                foreach (var (key, value) in rule.Props)
-                    props[key] = value;
-                continue;
-            }
 
             switch (rule.Effect)
             {
@@ -123,28 +88,11 @@ internal static partial class WindowRuleParser
                     adopt = true;
                     workspace = rule.Workspace;
                     break;
-                case WindowRuleEffect.NoInitialFocus:
-                    noInitialFocus = rule.Enabled;
-                    break;
                 case WindowRuleEffect.NoFocus:
                     noFocus = rule.Enabled;
                     break;
-                case WindowRuleEffect.MinSize:
-                    ruleMin = rule.Size;
-                    minExpression = rule.Size is null ? rule.Placement?.Expression : null;
-                    break;
-                case WindowRuleEffect.MaxSize:
-                    ruleMax = rule.Size;
-                    maxExpression = rule.Size is null ? rule.Placement?.Expression : null;
-                    break;
-                case WindowRuleEffect.ScrollingWidth:
-                    scrollingWidth = rule.ScrollingWidth;
-                    break;
                 case WindowRuleEffect.Opacity:
                     opacity = rule.Opacity;
-                    break;
-                case WindowRuleEffect.Opaque:
-                    opaque = rule.Enabled;
                     break;
                 case WindowRuleEffect.Fullscreen:
                     fullscreen = rule.Enabled;
@@ -161,9 +109,8 @@ internal static partial class WindowRuleParser
             }
         }
 
-        var sizes = new SizeRule(ruleMin, ruleMax);
+        var sizes = new SizeRule(null, null);
         var limits = sizes.Floating(traits.MinSize, traits.MaxSize);
-        // A rule is the reason only when it changed the answer.
         var admission = Excluded(traits)
             ?? (adopt == false ? Admission.Ignored
                 : Declined(traits) is Admission declined ? (adopt == true ? Admission.Rule : declined)
@@ -178,22 +125,16 @@ internal static partial class WindowRuleParser
             admission is Admission.Default or Admission.Rule,
             floating ?? floatReason != FloatReason.Default,
             workspace,
-            noInitialFocus ?? false,
-            noFocus ?? false,
-            limits.Min,
-            limits.Max,
-            scrollingWidth,
-            opacity,
-            opaque ?? false,
-            RequestedFullscreen(fullscreen, maximize),
-            pin ?? traits.Topmost,
-            placement,
-            sizes,
-            props,
-            minExpression,
-            maxExpression,
-            admission,
-            floatReason);
+            NoFocus: noFocus ?? false,
+            MinSize: limits.Min,
+            MaxSize: limits.Max,
+            Opacity: opacity,
+            FullscreenRequest: RequestedFullscreen(fullscreen, maximize),
+            Pin: pin ?? traits.Topmost,
+            Placement: placement,
+            Sizes: sizes,
+            Admission: admission,
+            FloatReason: floatReason);
     }
 
     private static bool TryParseEffect(
@@ -201,20 +142,14 @@ internal static partial class WindowRuleParser
         out WindowRuleEffect effect,
         out string? workspace,
         out bool enabled,
-        out Size? size,
-        out double? scrollingWidth,
         out OpacityRule? opacity,
         out FullscreenRule? fullscreen,
         out RulePlacement? placement,
-        out IReadOnlyDictionary<string, object>? props,
         out string error)
     {
-        props = null;
         effect = default;
         workspace = null;
         enabled = true;
-        size = null;
-        scrollingWidth = null;
         opacity = null;
         fullscreen = null;
         placement = null;
@@ -241,14 +176,8 @@ internal static partial class WindowRuleParser
             case "ignore":
                 effect = WindowRuleEffect.Ignore;
                 break;
-            case "no_initial_focus":
-                effect = WindowRuleEffect.NoInitialFocus;
-                break;
             case "no_focus":
                 effect = WindowRuleEffect.NoFocus;
-                break;
-            case "opaque":
-                effect = WindowRuleEffect.Opaque;
                 break;
             case "pin":
                 effect = WindowRuleEffect.Pin;
@@ -268,38 +197,6 @@ internal static partial class WindowRuleParser
 
                 effect = WindowRuleEffect.Workspace;
                 workspace = argument;
-                error = "";
-                return true;
-            case "min_size":
-            case "max_size":
-                effect = name == "min_size" ? WindowRuleEffect.MinSize : WindowRuleEffect.MaxSize;
-                error = "";
-                if (argument is not null && TryParseSize(argument, out var parsed))
-                {
-                    size = parsed;
-                    return true;
-                }
-
-                // either size may be an expression, read when the window opens.
-                if (argument is not null && ExpressionPair.TryParse(argument, out var expression))
-                {
-                    placement = new RulePlacement(Expression: expression);
-                    return true;
-                }
-
-                error = "Malformed window rule.";
-                return false;
-            case "scrolling_width":
-                if (argument is null
-                    || !double.TryParse(argument, NumberStyles.Float, CultureInfo.InvariantCulture, out var width)
-                    || !double.IsFinite(width))
-                {
-                    error = "Malformed window rule.";
-                    return false;
-                }
-
-                effect = WindowRuleEffect.ScrollingWidth;
-                scrollingWidth = width;
                 error = "";
                 return true;
             case "opacity":
@@ -330,15 +227,6 @@ internal static partial class WindowRuleParser
                 error = "";
                 return true;
             default:
-                if (TryParsePropRule(name, argument, out props, out error))
-                {
-                    effect = WindowRuleEffect.Prop;
-                    return true;
-                }
-
-                if (error.Length > 0)
-                    return false;
-
                 if (TryParsePlacement(name, argument, out effect, out enabled, out placement, out error))
                     return true;
 
@@ -347,8 +235,7 @@ internal static partial class WindowRuleParser
                 return false;
         }
 
-        if (effect is WindowRuleEffect.Float or WindowRuleEffect.Tile or WindowRuleEffect.Ignore
-            or WindowRuleEffect.NoInitialFocus or WindowRuleEffect.NoFocus or WindowRuleEffect.Opaque or WindowRuleEffect.Pin)
+        if (effect is WindowRuleEffect.Float or WindowRuleEffect.Tile or WindowRuleEffect.Ignore or WindowRuleEffect.NoFocus or WindowRuleEffect.Pin)
         {
             if (argument is null)
             {
@@ -423,21 +310,6 @@ internal static partial class WindowRuleParser
         return null;
     }
 
-    private static bool TryParseSize(string text, out Size size)
-    {
-        size = default;
-        var parts = text.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 2
-            || !int.TryParse(parts[0], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var width)
-            || !int.TryParse(parts[1], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var height)
-            || width < 1
-            || height < 1)
-            return false;
-
-        size = new Size(width, height);
-        return true;
-    }
-
     private static bool TryParseEnabled(string text, out bool enabled)
     {
         if (text.Equals("true", StringComparison.OrdinalIgnoreCase)
@@ -466,10 +338,7 @@ internal static partial class WindowRuleParser
         string text,
         ref string? classPattern,
         ref string? titlePattern,
-        ref string? initialTitlePattern,
-        ref string? initialClassPattern,
         ref string? exePattern,
-        ref string? aumidPattern,
         out string error)
     {
         var colon = text.IndexOf(':');
@@ -481,9 +350,9 @@ internal static partial class WindowRuleParser
 
         var key = text[..colon];
         var value = text[(colon + 1)..];
-        if (value.Length == 0 || !IsPattern(value))
+        if (value.Length == 0)
         {
-            error = value.Length == 0 ? "Malformed window rule." : "Invalid window rule pattern.";
+            error = "Malformed window rule.";
             return false;
         }
 
@@ -492,20 +361,11 @@ internal static partial class WindowRuleParser
             case "class":
                 classPattern = value;
                 break;
-            case "initial_class":
-                initialClassPattern = value;
-                break;
             case "title":
                 titlePattern = value;
                 break;
-            case "initial_title":
-                initialTitlePattern = value;
-                break;
             case "exe":
                 exePattern = value;
-                break;
-            case "aumid":
-                aumidPattern = value;
                 break;
             default:
                 error = $"Unsupported window rule match '{key}'.{DidYouMean.For(key, MatchFields)}";
@@ -516,8 +376,8 @@ internal static partial class WindowRuleParser
         return true;
     }
 
-    // The match fields, split at each comma that starts a new field, so a pattern such as title:a{1,2} keeps its comma.
-    // An empty piece, from a trailing or doubled comma, is dropped.
+    // The match fields, split at each comma that starts a new field. A comma that does not start a field stays in the
+    // pattern, so title:a, b is one field when " b" is not itself a field. An empty piece is dropped.
     private static List<string> SplitFields(string text)
     {
         var fields = new List<string>();
@@ -541,43 +401,11 @@ internal static partial class WindowRuleParser
     private static bool Matches(WindowRule rule, WindowTraits traits) =>
         Matches(rule.ClassPattern, traits.Class)
         && Matches(rule.TitlePattern, traits.Title)
-        && Matches(rule.InitialTitlePattern, traits.InitialTitle ?? traits.Title)
-        && Matches(rule.InitialClassPattern, traits.InitialClass ?? traits.Class)
-        && Matches(rule.ExePattern, traits.Exe, ignoreCase: true)
-        && Matches(rule.AumidPattern, traits.Aumid);
+        && Matches(rule.ExePattern, traits.Exe);
 
-    // Winland matches a rule's pattern against the whole field, and a
-    // "negative:" prefix passes only when the rest of the pattern does not match.
-    private const string NegativePrefix = "negative:";
+    private static bool Matches(string? pattern, string text) =>
+        pattern is null || FieldMatch.Is(pattern, text);
 
-    private static bool Matches(string? pattern, string text, bool ignoreCase = false)
-    {
-        if (pattern is null)
-            return true;
-
-        var negative = pattern.StartsWith(NegativePrefix, StringComparison.Ordinal);
-        try
-        {
-            var body = Body(pattern, negative);
-            return WholeMatch.Of(ignoreCase ? $"(?i:{body})" : body).IsMatch(text) != negative;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            return false;
-        }
-    }
-
-    private static bool IsPattern(string pattern) =>
-        WholeMatch.IsValid(Body(pattern, pattern.StartsWith(NegativePrefix, StringComparison.Ordinal)));
-
-    private static string Body(string pattern, bool negative) =>
-        negative ? pattern[NegativePrefix.Length..] : pattern;
-
-    // What Winland leaves alone unless a rule adopts it, or null for a window it adopts.
     private static Admission? Declined(WindowTraits traits) =>
         !traits.Titled ? Admission.Untitled
         : traits.Tool ? Admission.Tool
@@ -598,59 +426,55 @@ internal static partial class WindowRuleParser
         : null;
 
     /// <summary>
-    /// A <c>windowrule</c> line that floats or tiles a window with these traits: it matches the window's AUMID, else its
-    /// class and program, else its title, each as literal text. Null when none of them can be written so that the line
-    /// reads back as one rule that matches the window.
+    /// A <c>windowrule</c> line that floats or tiles a window with these traits. It matches the executable, else the
+    /// class, else the title, as literal text. Null when that field cannot be written so the line reads back as one
+    /// rule that matches the window.
     /// </summary>
     internal static string? Draft(bool floating, WindowTraits traits)
     {
-        List<(string Field, string Text)> fields = [];
-        if (traits.Aumid.Length > 0)
+        string? field;
+        string text;
+        if (traits.Exe.Length > 0)
         {
-            fields.Add(("aumid", traits.Aumid));
+            field = "exe";
+            text = traits.Exe;
         }
-        else if (traits.Class.Length > 0 || traits.Exe.Length > 0)
+        else if (traits.Class.Length > 0)
         {
-            if (traits.Class.Length > 0)
-                fields.Add(("class", traits.Class));
-            if (traits.Exe.Length > 0)
-                fields.Add(("exe", traits.Exe));
+            field = "class";
+            text = traits.Class;
         }
         else if (traits.Title.Length > 0)
         {
-            fields.Add(("title", traits.Title));
+            field = "title";
+            text = traits.Title;
+        }
+        else
+        {
+            return null;
         }
 
-        if (fields.Count == 0)
+        if (!CanDraft(text))
             return null;
 
-        var line = "windowrule = " + (floating ? "float" : "tile") + ", "
-            + string.Join(", ", fields.Select(field => field.Field + ":" + Literal(field.Text)));
-
-        // The line is read back as the config reads it, so a draft that would match something else is never offered.
+        var line = "windowrule = " + (floating ? "float" : "tile") + ", " + field + ":" + text;
         var read = ConfigParser.Parse(line + "\n");
         return read.Warnings.Count == 0 && read.WindowRules is [var rule] && Matches(rule, traits) ? line : null;
     }
 
-    // Text as a pattern that matches only that text. A regex metacharacter gets a backslash. A character the config
-    // line reads as something else, such as a comma, '#', '$', a brace, a backslash, a space at either end or a colon,
-    // which could start a negative: prefix, and a control or other unusual character, is written as its \x or \u escape.
-    private static string Literal(string text)
+    // A field that contains the wildcard, or a character the config line would read as something else, cannot be a
+    // literal pattern.
+    private static bool CanDraft(string text)
     {
-        var pattern = new StringBuilder(text.Length);
-        for (var i = 0; i < text.Length; i++)
+        if (text.Length == 0 || text.Trim() != text)
+            return false;
+
+        foreach (var c in text)
         {
-            var c = text[i];
-            if (char.IsLetterOrDigit(c) || c == '_' || (c == ' ' && i > 0 && i < text.Length - 1) || "-/@%&=<>!~;'".Contains(c, StringComparison.Ordinal))
-                pattern.Append(c);
-            else if (".*+?|()[]^".Contains(c, StringComparison.Ordinal))
-                pattern.Append('\\').Append(c);
-            else if (c <= 0xFF)
-                pattern.Append(CultureInfo.InvariantCulture, $"\\x{(int)c:X2}");
-            else
-                pattern.Append(CultureInfo.InvariantCulture, $"\\u{(int)c:X4}");
+            if (c is '*' or ',' or '#' or '$' or '{' or '}' or '\\' or ':' or '\n' or '\r')
+                return false;
         }
 
-        return pattern.ToString();
+        return true;
     }
 }

@@ -19,20 +19,6 @@ public class FocusTests
     }
 
     [Fact]
-    public void FocusOnActivateAcceptsTheApplication()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = focus_on_activate, class:.*\n"));
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new WindowAppeared(new WindowId(2), Area));
-
-        var stolen = core.Handle(new WindowFocused(new WindowId(1), FocusCause.User) { Clicked = new WindowId(2) });
-
-        Assert.Null(stolen.Focus);
-        Assert.Equal(["activewindow>>,", "activewindowv2>>1"], Lines(stolen));
-        Assert.Equal(new WindowId(1), Active(core));
-    }
-
-    [Fact]
     public void AWindowTakingTheForegroundWithoutInputIsRefusedEvenWithFocusOnActivate()
     {
         var core = new WindowManager(ConfigParser.Parse("misc:focus_on_activate = true\n"));
@@ -93,35 +79,10 @@ public class FocusTests
     }
 
     [Theory]
-    [InlineData("no_initial_focus")]
-    public void ANewClientWithNoInitialFocusDoesNotTakeFocus(string effect)
-    {
-        var core = new WindowManager(ConfigParser.Parse($"windowrule = {effect}, class:^(popup)$\n"));
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-
-        var opened = core.Handle(new WindowAppeared(new WindowId(2), Area)
-        {
-            Traits = WindowTraits.Normal with { Class = "popup" },
-        });
-
-        Assert.Contains(opened.State.Clients, client => client.Window == new WindowId(2));
-        Assert.Equal(new WindowId(1), opened.Focus);
-        Assert.Equal(["openwindow>>2,1,,popup,"], Lines(opened));
-
-        var mapped = core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));
-        Assert.Equal(new WindowId(1), mapped.Focus);
-        Assert.Equal(new WindowId(1), Active(core));
-
-        var clicked = core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));
-        Assert.Null(clicked.Focus);
-        Assert.Equal(new WindowId(2), Active(core));
-    }
-
-    [Theory]
     [InlineData("no_focus")]
     public void NoFocusRefusesTheClient(string effect)
     {
-        var core = new WindowManager(ConfigParser.Parse($"windowrule = {effect}, class:^(bar)$\n"));
+        var core = new WindowManager(ConfigParser.Parse($"windowrule = {effect}, class:bar\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         var opened = core.Handle(new WindowAppeared(new WindowId(2), Area)
         {
@@ -140,8 +101,8 @@ public class FocusTests
     public void ALaterRuleCanAllowFocusAgain()
     {
         var core = new WindowManager(ConfigParser.Parse(
-            "windowrule = no_focus, class:^(bar)$\n" +
-            "windowrule = no_focus 0, class:^(bar)$\n"));
+            "windowrule = no_focus, class:bar\n" +
+            "windowrule = no_focus 0, class:bar\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
         var opened = core.Handle(new WindowAppeared(new WindowId(2), Area)
@@ -156,7 +117,7 @@ public class FocusTests
     [Fact]
     public void OurOwnForegroundRequestIsAccepted()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = stayfocused, class:^(pin)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = stayfocused, class:pin\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
             Traits = WindowTraits.Normal with { Class = "pin" },
@@ -172,7 +133,7 @@ public class FocusTests
     [Fact]
     public void MoveFocusSkipsAClientThatRefusesFocus()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = no_focus, class:^(bar)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = no_focus, class:bar\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area)
         {

@@ -55,7 +55,7 @@ public class BorderRingTests
     }
 
     [Fact]
-    public void NoRingWithoutABorderInFullscreenOrWithDecorateOff()
+    public void NoRingWithoutABorderOrInFullscreen()
     {
         var none = new WindowManager(ConfigParser.Parse("general:border_size = 0\n"));
         none.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "", 0, 0, 1920, 1080, 1, true, Area)]));
@@ -67,9 +67,6 @@ public class BorderRingTests
         Assert.NotNull(Assert.Single(core.Handle(new WindowAppeared(new WindowId(1), Area)).Decorations).Ring);
 
         Assert.Null(Assert.Single(core.Execute("dispatch fullscreen 0").Effect.Decorations).Ring);
-        core.Execute("dispatch fullscreen 0");
-        core.Handle(new Configure(ConfigParser.Parse("general:border_size = 2\nwindowrule = decorate 0, class:.*\n")));
-        Assert.Null(Assert.Single(core.Execute("dispatch resizewindow").Effect.Decorations).Ring);
     }
 
 }

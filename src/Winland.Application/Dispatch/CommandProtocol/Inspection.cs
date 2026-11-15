@@ -56,7 +56,7 @@ public static partial class CommandProtocol
         "exclusive_fullscreen" => "it is in exclusive fullscreen",
         "not_adopted" => "a window like this is managed, but Winland has not adopted this one",
         "native" => "no window rule can make it a Client",
-        "unwritable" => "none of its class, program, AUMID or title can be written as a rule",
+        "unwritable" => "none of its executable, class, or title can be written as a rule",
         "no_window" => "no window under the pointer",
         "no_client" => "no Client matches",
         "closed" => "the window closed",

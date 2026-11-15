@@ -250,21 +250,6 @@ public class SizeLimitTests
     }
 
     [Fact]
-    public void MinSizeRuleLeavesATileAlone()
-    {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = min_size 1400 100, class:^(wide)$\n"));
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(2), Area)
-        {
-            Traits = WindowTraits.Normal with { Class = "wide" },
-        });
-
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
-    }
-
-    [Fact]
     public void AWindowsOwnMinimumStillHoldsATile()
     {
         var core = new WindowManager();
@@ -276,88 +261,6 @@ public class SizeLimitTests
         });
 
         Assert.Equal(new Rectangle(520, 0, 1400, 1080), BoundsOf(outcome, 2));
-    }
-
-    [Fact]
-    public void AMinSizeRuleOutlastsTheWindowChangingItsOwnLimits()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:^(note)$\nwindowrule = min_size 500 400, class:^(note)$\n"));
-        core.Handle(new WindowAppeared(new WindowId(1), Area)
-        {
-            Traits = WindowTraits.Normal with { Class = "note" },
-            Bounds = new Rectangle(100, 100, 300, 200),
-        });
-
-        // The window lowers its own maximum below the rule's minimum. The rule's minimum still holds it.
-        var changed = core.Handle(new WindowLimitsChanged(new WindowId(1), new Size(100, 100), new Size(600, 300)));
-
-        var client = Assert.Single(changed.State.Clients);
-        Assert.Equal(new Size(500, 400), SizeOf(client.Bounds));
-    }
-
-    private static Size SizeOf(Rectangle bounds) => new(bounds.Width, bounds.Height);
-
-    [Fact]
-    public void MaxSizeRuleFloatsTheWindow()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = max_size 400 300, class:^(small)$\n"));
-        var bounds = new Rectangle(12, 16, 200, 120);
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(2), Area)
-        {
-            Traits = WindowTraits.Normal with { Class = "small" },
-            Bounds = bounds,
-        });
-
-        Assert.True(Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(2)).Floating);
-        Assert.Equal(new Rectangle(760, 390, 400, 300), BoundsOf(outcome, 2));
-    }
-
-    [Fact]
-    public void MaxSizeRuleWinsOverNoMaxSize()
-    {
-        var core = new WindowManager(ConfigParser.Parse("""
-            windowrule = max_size 400 300, class:^(small)$
-            windowrule = no_max_size, class:^(small)$
-            """));
-        var bounds = new Rectangle(8, 8, 100, 80);
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(1), Area)
-        {
-            Traits = WindowTraits.Normal with { Class = "small" },
-            Bounds = bounds,
-        });
-
-        Assert.True(Assert.Single(outcome.State.Clients).Floating);
-        Assert.Equal(new Rectangle(760, 390, 400, 300), BoundsOf(outcome, 1));
-    }
-
-    [Fact]
-    public void LaterMinSizeReplacesAnEarlierOne()
-    {
-        var core = new WindowManager(ConfigParser.Parse("""
-            windowrule = float, class:^(wide)$
-            windowrule = min_size 1400 100, class:^(wide)$
-            windowrule = min_size 100 100, class:^(wide)$
-            """));
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(1), Area)
-        {
-            Traits = WindowTraits.Normal with { Class = "wide", MinSize = new Size(1400, 100) },
-            Bounds = new Rectangle(100, 100, 300, 200),
-        });
-
-        Assert.Equal(new Size(300, 200), SizeOf(BoundsOf(outcome, 1)));
-    }
-
-    [Fact]
-    public void MalformedSizeRuleWarnsAndTheConfigStillLoads()
-    {
-        var document = ConfigParser.Parse("windowrule = min_size 400, class:^(wide)$\ngeneral:gaps_in = 0\n");
-
-        Assert.Empty(document.WindowRules);
-        Assert.Contains(document.Warnings, warning => warning.Line == 1 && warning.Message == "Malformed window rule.");
     }
 
     [Fact]
@@ -419,39 +322,5 @@ public class SizeLimitTests
         var placed = insets.OuterFor(tile);
         Assert.Equal(outerMin.Width, placed.Width);
         Assert.Equal(tile.Height + insets.Top + insets.Bottom, placed.Height);
-    }
-
-    [Fact]
-    public void MaxSizeAndNoInitialFocusApplyTogether()
-    {
-        var core = new WindowManager(ConfigParser.Parse("""
-            windowrule = max_size 400 300, class:^(small)$
-            windowrule = no_initial_focus, class:^(small)$
-            """));
-        var bounds = new Rectangle(12, 16, 200, 120);
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(2), Area)
-        {
-            Traits = WindowTraits.Normal with { Class = "small" },
-            Bounds = bounds,
-        });
-
-        var client = Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(2));
-        Assert.True(client.Floating);
-        Assert.Equal(new Rectangle(760, 390, 400, 300), BoundsOf(outcome, 2));
-        Assert.Equal(new WindowId(1), outcome.Focus);
-        Assert.Equal(new WindowId(1), core.Handle(new Dispatch("killactive")).Close);
-    }
-
-    [Fact]
-    public void ASizeLimitRuleTakesExpressions()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:.*\nwindowrule = min_size monitor_w*0.5 monitor_h*0.5, class:.*\n"));
-
-        var outcome = core.Handle(new WindowAppeared(new WindowId(1), Area) { Bounds = new Rectangle(0, 0, 200, 100) });
-
-        var bounds = BoundsOf(outcome, 1);
-        Assert.Equal((960, 540), (bounds.Width, bounds.Height));
     }
 }

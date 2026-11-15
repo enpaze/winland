@@ -12,10 +12,10 @@ public class WindowStateTests
     public void ClosingAWindowLeavesNoPerWindowStateBehind()
     {
         var core = new WindowManager(ConfigParser.Parse("""
-            windowrule = float, class:^(stick)$
-            windowrule = pin, class:^(stick)$
-            windowrule = opacity 0.8, class:^(stick)$
-            windowrule = no_initial_focus, class:^(quiet)$
+            windowrule = float, class:stick
+            windowrule = pin, class:stick
+            windowrule = opacity 0.8, class:stick
+            windowrule = no_focus, class:quiet
             """));
         core.Restore(new RecoverySnapshot(
         [

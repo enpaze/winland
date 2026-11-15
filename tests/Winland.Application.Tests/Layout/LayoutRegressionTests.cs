@@ -88,18 +88,6 @@ public class LayoutRegressionTests
     }
 
     [Fact]
-    public void DwindleMinimumIncludesTheClientsOwnBorder()
-    {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = border_size 20, class:wide\n"));
-        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "wide", MinSize = new Size(480, 100) } });
-
-        var split = core.Handle(new WindowAppeared(new WindowId(2), Area));
-
-        Assert.Equal(new Rectangle(520, 0, 480, 800), BoundsOf(split, 2));
-        Assert.Equal(new Rectangle(20, 20, 480, 760), BoundsOf(split, 1));
-    }
-
-    [Fact]
     public void DwindleAdoptionWithoutAMonitorKeepsTheFullMonitorForSizePrediction()
     {
         var layout = new DwindleLayout();

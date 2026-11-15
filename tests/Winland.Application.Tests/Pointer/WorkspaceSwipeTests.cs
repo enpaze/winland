@@ -4,9 +4,8 @@ namespace Winland.Application.Tests;
 
 /// <summary>
 /// A nine-finger horizontal workspace swipe, step by step, and a swipe ending as cancelled. The fixture holds three
-/// empty persistent Workspaces on the focused Monitor and shows the middle one, and holds the Workspace shown before
-/// it. A test checks what the replies show: which Workspaces exist, which one each Monitor shows, and on which
-/// Monitor each is.
+/// Workspaces on the focused Monitor and shows the middle one. A test checks what the replies show: which Workspaces
+/// exist, which one each Monitor shows, and on which Monitor each is.
 /// </summary>
 public class WorkspaceSwipeTests
 {
@@ -80,38 +79,39 @@ public class WorkspaceSwipeTests
         /// <summary>The reference's run: the swipe options and gesture, then the fixture.</summary>
         internal static Fixture Run()
         {
-            var swipe = new Fixture(new TestDesktop(Options + Hold("1", "9901", "9902", "9903")), "9901", "9902", "9903");
-            swipe.Prepare();
-            return swipe;
-        }
-
-        /// <summary>
-        /// The reference's run on two new outputs side by side, with the fixture on the first and Workspace 9910
-        /// shown on the second. The first output shows Workspace 2 before the fixture, and the plugin holds it.
-        /// </summary>
-        internal static Fixture RunOnOutputs()
-        {
-            var desk = new TestDesktop(Options + $"""
-                monitor = {OriginOutput}, 1920x1080@60, 20000x0, 1
-                monitor = {PeerOutput}, 1920x1080@60, 21920x0, 1
-                workspace = 2, monitor:{OriginOutput}, default:true, persistent:true
-                workspace = 9901, monitor:{OriginOutput}, persistent:true
-                workspace = 9902, monitor:{OriginOutput}, persistent:true
-                workspace = 9903, monitor:{OriginOutput}, persistent:true
-                workspace = 9910, monitor:{PeerOutput}, default:true, persistent:true
-
-                """);
-            desk.AddMonitor(OriginOutput, new Rectangle(20000, 0, 1920, 1080));
-            desk.AddMonitor(PeerOutput, new Rectangle(21920, 0, 1920, 1080));
-            desk.Ok("focusmonitor", OriginOutput);
+            var desk = new TestDesktop(Options);
+            foreach (var name in new[] { "9901", "9902", "9903" })
+            {
+                desk.Ok("workspace", name);
+                desk.Spawn("hold" + name);
+            }
 
             var swipe = new Fixture(desk, "9901", "9902", "9903");
             swipe.Prepare();
             return swipe;
         }
 
-        private static string Hold(params string[] workspaces) =>
-            string.Concat(workspaces.Select(workspace => $"workspace = {workspace}, persistent:true\n"));
+        /// <summary>The same fixture on two new outputs side by side, shown on the first.</summary>
+        internal static Fixture RunOnOutputs()
+        {
+            var desk = new TestDesktop(Options + $"""
+                monitor = {OriginOutput}, 1920x1080@60, 20000x0, 1
+                monitor = {PeerOutput}, 1920x1080@60, 21920x0, 1
+
+                """);
+            desk.AddMonitor(OriginOutput, new Rectangle(20000, 0, 1920, 1080));
+            desk.AddMonitor(PeerOutput, new Rectangle(21920, 0, 1920, 1080));
+            desk.Ok("focusmonitor", OriginOutput);
+            foreach (var name in new[] { "9901", "9902", "9903" })
+            {
+                desk.Ok("workspace", name);
+                desk.Spawn("hold" + name);
+            }
+
+            var swipe = new Fixture(desk, "9901", "9902", "9903");
+            swipe.Prepare();
+            return swipe;
+        }
 
         internal void Begin() => TestDesktop.Handle(new SwipeBegan(9));
 

@@ -214,7 +214,7 @@ public class RecoveryTests
         [
             new RecoveredClient(new WindowId(5), new WorkspaceId("4"), MonitorId.Primary, true, "Notepad", "Notes", 10),
         ]);
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 9, class:^(Notepad)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 9, class:Notepad\n"));
         core.Restore(snapshot);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(5), Area)
@@ -330,7 +330,7 @@ public class RecoveryTests
     [Fact]
     public void AFloatingPinnedClientComesBackFloatingPinnedAndWhereItWas()
     {
-        var prior = new WindowManager(ConfigParser.Parse("windowrule = float, class:^(stick)$\n"));
+        var prior = new WindowManager(ConfigParser.Parse("windowrule = float, class:stick\n"));
         prior.Handle(new WindowAppeared(new WindowId(1), Area)
         {
             Bounds = new Rectangle(0, 0, 400, 300),
@@ -393,7 +393,7 @@ public class RecoveryTests
         Assert.Null(recorded.Pinned);
         Assert.Null(recorded.Fullscreen);
 
-        var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:^(stick)$\nwindowrule = pin, class:^(stick)$\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:stick\nwindowrule = pin, class:stick\n"));
         core.Restore(snapshot);
         var back = core.Handle(new WindowAppeared(new WindowId(5), Area)
         {
