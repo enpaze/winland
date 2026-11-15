@@ -17,7 +17,6 @@ internal sealed class TestDesktop
             border_size = 2
             col.active_border = rgba(33ccffee)
             col.inactive_border = rgba(595959aa)
-            resize_on_border = false
             layout = dwindle
         }
         decoration {

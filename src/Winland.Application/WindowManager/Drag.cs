@@ -47,7 +47,7 @@ public sealed partial class WindowManager
         };
 
         _interaction = gesture;
-        NoteBorderCursor(pointer);
+        NoteDragCursor();
         return PickUp(window, gesture, pointer);
     }
 
@@ -66,7 +66,7 @@ public sealed partial class WindowManager
         }
 
         gesture.Cursor = DragCursor(desk, window, gesture.Resize, pointer);
-        NoteBorderCursor(pointer);
+        NoteDragCursor();
         placements.AddRange(desk.Layout.Drag(window, gesture.Step(PointerDragPhase.Begin, pointer)));
         return placements;
     }
@@ -86,7 +86,7 @@ public sealed partial class WindowManager
     {
         _interaction = null;
         // The drag's cursor gives way to whatever the pointer is over once it drops.
-        NoteBorderCursor(pointer);
+        NoteDragCursor();
         // The Group under the pointer is found while the dragged window is still lifted.
         var drop = !gesture.Resize ? GroupDrop(gesture.Window, gesture.WasTiled, pointer) : null;
         if (drop is null && !gesture.Resize && DropOnMonitor(gesture, pointer) is { } carried)
@@ -352,25 +352,6 @@ public sealed partial class WindowManager
         try
         {
             return DragTarget(pointer) is not null;
-        }
-        finally
-        {
-            _gate.Exit();
-        }
-    }
-
-    /// <summary>
-    /// Whether a press at <paramref name="pointer"/> grabs the ring around a tile that <c>general:resize_on_border</c>
-    /// resizes by. The hook asks before it lets a press through, so a core busy with a step answers no at once.
-    /// </summary>
-    public bool OnBorder(Point pointer)
-    {
-        if (!_gate.TryEnter())
-            return false;
-
-        try
-        {
-            return _interaction is null && ActiveOptions().ResizeOnBorder && TryBorderTarget(pointer, out _, out _, out _, out _);
         }
         finally
         {

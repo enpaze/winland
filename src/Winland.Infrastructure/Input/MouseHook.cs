@@ -32,8 +32,6 @@ public sealed class MouseHook : IDisposable
     private readonly HashSet<string> _passed = new(StringComparer.OrdinalIgnoreCase);
     private readonly DiscreteScroll _discreteWheel = new();
 
-    // Buttons pressed on the ring around a tile, whose press and release go to the core to resize it.
-    private readonly HashSet<string> _bordered = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
     public MouseHook(WindowManager core, KeyboardHook keys)
@@ -85,10 +83,6 @@ public sealed class MouseHook : IDisposable
     {
         if (_keys.Drag.Abandon() is BindDrag.Active drag)
             _keys.PostGesture(drag.Dispatcher, drag.Arguments, position, PointerDragPhase.End, drag.Button);
-
-        foreach (var button in _bordered)
-            _keys.PostInput(new PointerButtonReleased(button) { Position = position, BindsHandled = true });
-        _bordered.Clear();
     }
 
     public void Dispose()
@@ -174,13 +168,6 @@ public sealed class MouseHook : IDisposable
 
     internal bool OnButton(string button, bool up, Point position)
     {
-        if (up && _bordered.Remove(button))
-        {
-            _keys.Enqueue(_core.Decide(new PointerButtonReleased(button) { Position = position }, _keys.Session));
-            _keys.PostInput(new PointerButtonReleased(button) { Position = position, BindsHandled = true });
-            return true;
-        }
-
         if (up)
         {
             if (button == "mouse:272" && _core.AwaitsDragRelease)
@@ -222,14 +209,6 @@ public sealed class MouseHook : IDisposable
 
                 _keys.PostDispatch(dispatch.Dispatcher, dispatch.Arguments);
             }
-        }
-        else if (!decision.Consumed && _keys.Drag.Current is null && _core.OnBorder(position))
-        {
-            // A press on a tile's ring resizes it. Its bind was already decided here.
-            _bordered.Add(button);
-            _keys.Enqueue(decision);
-            _keys.PostInput(new PointerButtonPressed(button) { Position = position, BindsHandled = true });
-            return true;
         }
         else
         {

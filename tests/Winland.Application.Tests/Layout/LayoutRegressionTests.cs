@@ -112,32 +112,22 @@ public class LayoutRegressionTests
     }
 
     [Theory]
-    [InlineData("dwindle", false)]
-    [InlineData("scrolling", false)]
-    [InlineData("dwindle", true)]
-    [InlineData("scrolling", true)]
-    public void FloatingPointerResizeKeepsTheClientsLimits(string name, bool border)
+    [InlineData("dwindle")]
+    [InlineData("scrolling")]
+    public void FloatingPointerResizeKeepsTheClientsLimits(string name)
     {
-        var core = Configured($"general:layout = {name}\ngeneral:resize_on_border = true");
+        var core = Configured($"general:layout = {name}\n");
         core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
             Traits = WindowTraits.Normal with { Dialog = true, MinSize = new Size(200, 100), MaxSize = new Size(400, 300) },
             Bounds = new Rectangle(0, 0, 300, 200),
         });
-        var start = new Point(650, 500);
-        if (border)
-            core.Handle(new PointerButtonPressed("mouse:272") { Position = start });
-        else
-            core.Handle(new PointerGesture("resizewindow", new Point(640, 490), PointerDragPhase.Begin, "mouse:273"));
+        core.Handle(new PointerGesture("resizewindow", new Point(640, 490), PointerDragPhase.Begin, "mouse:273"));
 
-        var grown = border
-            ? core.Handle(new PointerMoved(new Point(900, 700)))
-            : core.Handle(new PointerGesture("resizewindow", new Point(900, 700), PointerDragPhase.Move, "mouse:273"));
+        var grown = core.Handle(new PointerGesture("resizewindow", new Point(900, 700), PointerDragPhase.Move, "mouse:273"));
 
         Assert.Equal(new Size(400, 300), SizeOf(Client(grown, 1).Bounds));
-        var shrunk = border
-            ? core.Handle(new PointerMoved(new Point(400, 350)))
-            : core.Handle(new PointerGesture("resizewindow", new Point(400, 350), PointerDragPhase.Move, "mouse:273"));
+        var shrunk = core.Handle(new PointerGesture("resizewindow", new Point(400, 350), PointerDragPhase.Move, "mouse:273"));
         Assert.Equal(new Size(200, 100), SizeOf(Client(shrunk, 1).Bounds));
     }
 }

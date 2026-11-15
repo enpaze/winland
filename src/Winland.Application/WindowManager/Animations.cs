@@ -43,7 +43,7 @@ public sealed partial class WindowManager
 
         // A window the pointer drags follows it at once, and the windows its Layout moves to make room for it, when it
         // is lifted out or dropped, animate. A mouse resize moves every window at once.
-        if (_interaction is not (Gesture { Resize: true } or BorderDrag or NativeSize))
+        if (_interaction is not (Gesture { Resize: true } or NativeSize))
         {
             var held = (_interaction as Gesture)?.Window;
             foreach (var placement in outcome.Placements)

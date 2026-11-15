@@ -1,7 +1,7 @@
 namespace Winland.Domain;
 
 /// <summary>
-/// Hit testing and resizing from a window border. The pointer positions are supplied by the caller.
+/// Hit testing around a window, and resizing from the corner a drag grabbed. The pointer positions are supplied by the caller.
 /// </summary>
 internal static class BorderPointer
 {
@@ -13,63 +13,13 @@ internal static class BorderPointer
         && point.X < box.X + box.Width
         && point.Y < box.Y + box.Height;
 
-    public static int Reach(LayoutOptions options) =>
-        options.ResizeOnBorder ? Math.Max(0, options.BorderSize) + options.GrabArea : 0;
-
-    /// <summary>
-    /// How far around a window a wheel turn still counts as meant for it: the border, and the grab area around it when
-    /// <c>resize_on_border</c> is on, as Winland extends a window's input past its surface by its decorations.
-    /// </summary>
-    public static int AxisReach(LayoutOptions options) =>
-        Math.Max(0, options.BorderSize) + (options.ResizeOnBorder ? options.GrabArea : 0);
-
     /// <summary>The point of <paramref name="box"/> nearest <paramref name="point"/>, one pixel in from the far edges.</summary>
     public static Point Clamp(Rectangle box, Point point) => new(
         Math.Clamp(point.X, box.X, Math.Max(box.X, box.X + box.Width - 1)),
         Math.Clamp(point.Y, box.Y, Math.Max(box.Y, box.Y + box.Height - 1)));
 
-    /// <summary>Corner icon zone. The configured corner radius is not applied, so only the border and a 10 pixel leeway count.</summary>
-    public static int Corner(LayoutOptions options) => Math.Max(0, options.BorderSize) + 10;
-
     public static bool InGrab(Rectangle window, Point pointer, int reach) =>
         reach > 0 && Contains(Expand(window, reach), pointer) && !Contains(window, pointer);
-
-    public static BorderSide Side(Rectangle window, Point pointer, int corner)
-    {
-        var top = pointer.Y < window.Y + corner;
-        var bottom = pointer.Y >= window.Y + window.Height - corner;
-        var left = pointer.X < window.X + corner;
-        var right = pointer.X >= window.X + window.Width - corner;
-        if (top)
-        {
-            if (left)
-                return BorderSide.TopLeft;
-
-            if (right)
-                return BorderSide.TopRight;
-
-            return BorderSide.Top;
-        }
-
-        if (bottom)
-        {
-            if (left)
-                return BorderSide.BottomLeft;
-
-            if (right)
-                return BorderSide.BottomRight;
-
-            return BorderSide.Bottom;
-        }
-
-        if (left)
-            return BorderSide.Left;
-
-        if (right)
-            return BorderSide.Right;
-
-        return BorderSide.None;
-    }
 
     public static string? Cursor(BorderSide side) => side switch
     {

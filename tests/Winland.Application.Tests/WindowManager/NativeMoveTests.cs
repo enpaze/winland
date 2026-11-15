@@ -187,36 +187,4 @@ public class NativeMoveTests
         Assert.Equal(new WindowId(1), Assert.Single(started.State.Clients).Window);
         Assert.False(Assert.Single(core.Handle(new WindowMoveEnded(new WindowId(1), new Point(500, 100))).State.Clients).Floating);
     }
-
-    [Fact]
-    public void AClientThatClosesDuringABorderResizeEndsTheResize()
-    {
-        var core = Flat("general:resize_on_border = true\n");
-        Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
-        var bounds = Client(core.Handle(new Dispatch("resizewindow")), 1).Bounds;
-        core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(bounds.X + bounds.Width + 5, bounds.Y + 50) });
-        core.Handle(new WindowClosed(new WindowId(1)));
-
-        var moved = core.Handle(new PointerMoved(new Point(bounds.X + bounds.Width + 40, bounds.Y + 60)));
-
-        Assert.False(moved.Consumed);
-    }
-
-    [Fact]
-    public void ABorderPressDuringASystemMoveDoesNotStartAResize()
-    {
-        var core = Flat("general:resize_on_border = true\n");
-        Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
-        var bounds = Client(core.Handle(new Dispatch("resizewindow")), 1).Bounds;
-        core.Handle(new WindowMoveStarted(new WindowId(1), new Point(bounds.X + 10, bounds.Y + 10)));
-
-        var pressed = core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(bounds.X + bounds.Width + 5, bounds.Y + 50) });
-        var moved = core.Handle(new PointerMoved(new Point(bounds.X + bounds.Width + 40, bounds.Y + 60)));
-
-        Assert.False(pressed.Consumed);
-        Assert.False(moved.Consumed);
-        Assert.Equal(bounds, Client(moved, 1).Bounds);
-    }
 }

@@ -21,11 +21,6 @@ public sealed record LayoutOptions
     internal int BorderFor(ClientId client) =>
         ClientBorder?.Invoke(client) is int own ? Scale(Math.Max(0, own), BorderScale) : BorderSize;
 
-    public bool ResizeOnBorder { get; init; }
-
-    /// <summary>How far past a window's border the pointer still grabs it, in pixels: 15 logical pixels.</summary>
-    internal int GrabArea => Scale(15, BorderScale);
-
     /// <summary><c>general:layout</c>: the Layout a Workspace uses when no workspace rule names one.</summary>
     public string Layout { get; init; } = "dwindle";
 
@@ -46,7 +41,6 @@ public sealed record LayoutOptions
         Of("general:gaps_in", OptionValue.Gaps, o => o.GapsIn, (o, v) => o with { GapsIn = v }),
         Of("general:gaps_out", OptionValue.Gaps, o => o.GapsOut, (o, v) => o with { GapsOut = v }),
         Of("general:border_size", OptionValue.Int(0, 20), o => o.BorderSize, (o, v) => o with { BorderSize = v }),
-        Of("general:resize_on_border", OptionValue.Bool, o => o.ResizeOnBorder, (o, v) => o with { ResizeOnBorder = v }),
     ]);
 
     public static LayoutOptions From(ConfigDocument document) => Options.From(Documented, document);

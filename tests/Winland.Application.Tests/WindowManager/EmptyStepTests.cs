@@ -174,29 +174,6 @@ public class EmptyStepTests
         Assert.NotEmpty(focused.Decorations);
     }
 
-    [Fact]
-    public void LeavingAResizeGrabIsNotEmpty()
-    {
-        var core = Configured("""
-            general:resize_on_border = true
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
-            """);
-        core.Handle(new WindowAppeared(OneWindow, Area));
-        core.Handle(new Dispatch("togglefloating"));
-        var reached = core.Handle(new PointerMoved(new Point(1280, 540)));
-        var along = core.Handle(new PointerMoved(new Point(1280, 560)));
-
-        var left = core.Handle(new PointerMoved(new Point(700, 400)));
-
-        Assert.Equal("right_side", reached.ResizeCursor);
-        Assert.False(reached.IsEmpty);
-        Assert.True(along.IsEmpty);
-        Assert.Null(left.ResizeCursor);
-        Assert.False(left.IsEmpty);
-    }
-
     [Theory]
     [InlineData("clients")]
     [InlineData("j/clients")]

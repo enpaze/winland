@@ -24,7 +24,7 @@ public sealed partial class WindowManager
         if (input is KeyReleased released && _interaction is Gesture gesture && gesture.Button.Equals(released.Key, StringComparison.OrdinalIgnoreCase))
         {
             var ended = EndGesture(gesture, _pointer ?? gesture.Origin);
-            NoteBorderCursor(_pointer ?? gesture.Origin);
+            NoteDragCursor();
             var after = RunBind(match);
             return ended.Then(after) with { Consumed = true };
         }
@@ -45,7 +45,7 @@ public sealed partial class WindowManager
 
     private Outcome PressPointer(PointerButtonPressed pressed)
     {
-        var match = pressed.BindsHandled ? new BindDecision(false, null) : _keyState.Decide(_config.Binds, pressed);
+        var match = _keyState.Decide(_config.Binds, pressed);
 
         // A drag already running keeps the pointer. A second drag button does not start another one.
         if (_interaction is null && TryDragHit(match, out var drag) && (TabUnder(drag, pressed.Position) ?? DragTarget(pressed.Position)) is WindowId target)
@@ -58,17 +58,7 @@ public sealed partial class WindowManager
             return begun.Count == 0 ? ran : ran with { Placements = Outcome.Union(ran.Placements, begun, ran.State) };
         }
 
-        if (_interaction is null && !match.Consumed && TryBorderTarget(pressed.Position, out var hit, out var bounds, out var floating, out _))
-        {
-            Outcome? ran = match.Dispatcher is null && match.Dispatches.Count == 0 ? null : RunBind(match);
-            var border = StartBorder(pressed, hit, bounds, floating);
-            if (ran is null || ran.Placements.Count == 0 || border.Placements.Count > 0)
-                return border;
-
-            return border with { Placements = ran.Placements };
-        }
-
-        NoteBorderCursor(pressed.Position);
+        NoteDragCursor();
         if (_interaction is null && TryDragHit(match, out _) && OnlyDrag(match))
             return RunBind(match) with { Consumed = false };
 
@@ -81,18 +71,11 @@ public sealed partial class WindowManager
             return EndNativeMove(new WindowMoveEnded(move.Window, released.Position, null));
 
         Outcome? ended = null;
-        if (_interaction is BorderDrag border && border.Button.Equals(released.Button, StringComparison.OrdinalIgnoreCase))
-        {
-            _interaction = null;
-            ended = EndBorder(border, released.Position);
-        }
-        else if (_interaction is Gesture gesture && gesture.Button.Equals(released.Button, StringComparison.OrdinalIgnoreCase))
-        {
+        if (_interaction is Gesture gesture && gesture.Button.Equals(released.Button, StringComparison.OrdinalIgnoreCase))
             ended = EndGesture(gesture, released.Position);
-        }
 
-        NoteBorderCursor(released.Position);
-        var ran = released.BindsHandled ? View([]) : RunBind(_keyState.Decide(_config.Binds, released));
+        NoteDragCursor();
+        var ran = RunBind(_keyState.Decide(_config.Binds, released));
         if (ended is null)
             return ran;
 
@@ -106,10 +89,7 @@ public sealed partial class WindowManager
     private Outcome MovePointer(PointerMoved moved)
     {
         _ = _keyState.Decide(_config.Binds, moved);
-        NoteBorderCursor(moved.Position);
-        if (_interaction is BorderDrag border)
-            return MoveBorder(border, moved.Position);
-
+        NoteDragCursor();
         if (_interaction is NativeMove move)
             move.Pointer = moved.Position;
 
@@ -127,7 +107,7 @@ public sealed partial class WindowManager
     private bool Glides(PointerMoved moved, Outcome last, out PointerAim aim)
     {
         _ = _keyState.Decide(_config.Binds, moved);
-        NoteBorderCursor(moved.Position);
+        NoteDragCursor();
         aim = Track(moved);
         if (aim.Monitor || aim.Focus is not null || _resizeCursor != last.ResizeCursor)
             return false;
@@ -319,70 +299,8 @@ public sealed partial class WindowManager
         return Math.Sqrt((dx * dx) + (dy * dy));
     }
 
-    private Outcome StartBorder(PointerButtonPressed pressed, WindowId window, Rectangle bounds, bool floating)
-    {
-        var (left, top) = BorderPointer.GrabbedCorner(pressed.Position, bounds);
-        _interaction = new BorderDrag(window, pressed.Button, floating, pressed.Position, bounds, left, top);
-        var desk = LayoutWorkspace(window);
-        Give(window, desk);
-        NoteBorderCursor(pressed.Position);
-        IReadOnlyList<Placement> begun = floating
-            ? []
-            : desk.Layout.Drag(window, new PointerDrag(true, PointerDragPhase.Begin, pressed.Position));
-        return View(begun, consumed: true, focus: window);
-    }
-
-    private Outcome MoveBorder(BorderDrag border, Point pointer)
-    {
-        var desk = LayoutWorkspace(border.Window);
-        if (border.Floating)
-        {
-            var next = BorderPointer.Resize(border.Start, border.Origin, pointer, border.Left, border.Top);
-            return View(desk.Layout.PlaceFloating(border.Window, next), consumed: true) with { Live = true };
-        }
-
-        return View(
-            desk.Layout.Drag(border.Window, new PointerDrag(true, PointerDragPhase.Move, pointer)),
-            consumed: true) with { Live = true };
-    }
-
-    private Outcome EndBorder(BorderDrag border, Point pointer)
-    {
-        var desk = LayoutWorkspace(border.Window);
-        if (!border.Floating)
-        {
-            return View(
-                desk.Layout.Drag(border.Window, new PointerDrag(true, PointerDragPhase.End, pointer)),
-                consumed: true);
-        }
-
-        return View(desk.Layout.Visible(), consumed: true);
-    }
-
-    private void NoteBorderCursor(Point pointer)
-    {
-        if (_interaction is Gesture gesture)
-        {
-            _resizeCursor = gesture.Cursor;
-            return;
-        }
-
-        if (!ActiveOptions().ResizeOnBorder)
-        {
-            _resizeCursor = null;
-            return;
-        }
-
-        if (_interaction is BorderDrag border)
-        {
-            _resizeCursor = BorderPointer.Cursor(BorderPointer.GrabbedSide(border.Left, border.Top));
-            return;
-        }
-
-        _resizeCursor = TryBorderTarget(pointer, out _, out _, out _, out var side)
-            ? BorderPointer.Cursor(side)
-            : null;
-    }
+    // A drag shows its own cursor while it holds a window. Nothing else changes the pointer.
+    private void NoteDragCursor() => _resizeCursor = (_interaction as Gesture)?.Cursor;
 
     // The Workspace the pointer is over: the special workspace open on the Monitor under it, else that Monitor's, else
     // the focused one when no Monitor is under it.
@@ -394,34 +312,20 @@ public sealed partial class WindowManager
         return CurrentWorkspace();
     }
 
-    private bool TryBorderTarget(Point pointer, out WindowId window, out Rectangle bounds, out bool floating, out BorderSide side)
-    {
-        window = default;
-        bounds = default;
-        floating = false;
-        side = BorderSide.None;
-
-        // The ring is as wide as the Monitor under the pointer scales it, which is where the windows it searches are.
-        var options = MonitorAt(pointer) is { Arranged.Enabled: true } screen ? _config.Layout.ScaledBy(screen.Arranged.Scale) : ActiveOptions();
-        return TryRingTarget(pointer, options, BorderPointer.Reach(options), out window, out bounds, out floating, out side);
-    }
-
     /// <summary>
-    /// The window whose ring of <c>reach</c> pixels around its tile holds the pointer, with the tile, and the side the
-    /// pointer is on. The pointer inside a window's tile is that window's own, so it has no ring.
+    /// The window whose ring of <c>reach</c> pixels around its tile holds the pointer, with the tile. The pointer inside
+    /// a window's tile is that window's own, so it has no ring.
     /// </summary>
-    private bool TryRingTarget(Point pointer, LayoutOptions options, int reach, out WindowId window, out Rectangle bounds, out bool floating, out BorderSide side)
+    private bool TryRingTarget(Point pointer, int reach, out WindowId window, out Rectangle bounds)
     {
         window = default;
         bounds = default;
-        floating = false;
-        side = BorderSide.None;
         if (reach <= 0)
             return false;
 
         // The pointer meets the special workspace open on the Monitor under it before that Monitor's Workspace, as the
-        // Winland looks on the Monitor under the pointer. A maximized or fullscreen Client takes no border resize
-        // and hides the tiles behind it, but a floating window allowed over it keeps its ring.
+        // Winland looks on the Monitor under the pointer. A maximized or fullscreen Client has no ring and hides the
+        // tiles behind it, but a floating window allowed over it keeps its ring.
         var desk = PointerWorkspace(pointer);
         var showing = desk.Showing();
         var covering = CoveringClient(desk, showing);
@@ -440,17 +344,14 @@ public sealed partial class WindowManager
         // The floating windows are tried from the top of the stacking order down.
         clients = [.. clients.Where(client => !client.Floating), .. clients.Where(client => client.Floating).OrderBy(client => _stacking.IndexOf(client.Window))];
 
-        // Floating windows lie above the tiles, so a floating ring over a tile is still that window's grab.
-        if (TryRing(desk, clients, pointer, reach, options, floatingOnly: true, out var inside, out window, out bounds, out side))
-        {
-            floating = true;
+        // Floating windows lie above the tiles, so a floating ring over a tile is still that window's.
+        if (TryRing(desk, clients, pointer, reach, floatingOnly: true, out var inside, out window, out bounds))
             return true;
-        }
 
         if (inside)
             return false;
 
-        return TryRing(desk, clients, pointer, reach, options, floatingOnly: false, out _, out window, out bounds, out side);
+        return TryRing(desk, clients, pointer, reach, floatingOnly: false, out _, out window, out bounds);
     }
 
     private static bool TryRing(
@@ -458,12 +359,10 @@ public sealed partial class WindowManager
         IReadOnlyList<Client> clients,
         Point pointer,
         int reach,
-        LayoutOptions options,
         bool floatingOnly,
         out bool inside,
         out WindowId window,
-        out Rectangle bounds,
-        out BorderSide side)
+        out Rectangle bounds)
     {
         inside = false;
         for (var i = clients.Count - 1; i >= 0; i--)
@@ -483,13 +382,11 @@ public sealed partial class WindowManager
                 continue;
 
             window = client.Window;
-            side = BorderPointer.Side(bounds, pointer, BorderPointer.Corner(options));
             return true;
         }
 
         window = default;
         bounds = default;
-        side = BorderSide.None;
         return false;
     }
 
@@ -502,19 +399,4 @@ public sealed partial class WindowManager
         return _config.Layout;
     }
 
-    private sealed class BorderDrag(WindowId window, string button, bool floating, Point origin, Rectangle start, bool left, bool top)
-        : PointerInteraction(window)
-    {
-        public string Button { get; } = button;
-
-        public bool Floating { get; } = floating;
-
-        public Point Origin { get; } = origin;
-
-        public Rectangle Start { get; } = start;
-
-        public bool Left { get; } = left;
-
-        public bool Top { get; } = top;
-    }
 }
