@@ -164,8 +164,6 @@ public class TextRepliesTests
         Assert.Equal(
             "[\"line 1: Unsupported keyword 'blur'.\",\"line 3: Invalid modifier 'X'.\",\"Could not read config.\"]",
             core.Execute("j/configerrors").Text);
-        Assert.Equal("ok", core.Execute("keyword general:border_size 4").Text);
-        Assert.StartsWith(path + ":1:", core.Execute("configerrors").Text, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -68,7 +68,7 @@ public class BorderRingTests
 
         Assert.Null(Assert.Single(core.Execute("dispatch fullscreen 0").Effect.Decorations).Ring);
         core.Execute("dispatch fullscreen 0");
-        core.Execute("setprop address:0x1 decorate 0");
+        core.Handle(new Configure(ConfigParser.Parse("general:border_size = 2\nwindowrule = decorate 0, class:.*\n")));
         Assert.Null(Assert.Single(core.Execute("dispatch resizewindow").Effect.Decorations).Ring);
     }
 

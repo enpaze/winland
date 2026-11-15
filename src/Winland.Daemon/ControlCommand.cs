@@ -28,12 +28,6 @@ static class ControlCommand
 
     internal static int WriteReply(string line, string reply)
     {
-        if (CommandProtocol.Parse(line) is CommandParsed { Request: BatchRequest })
-        {
-            Console.WriteLine(reply);
-            return reply.Split("\n\n\n", StringSplitOptions.TrimEntries).Any(part => part.StartsWith("error:", StringComparison.Ordinal)) ? 1 : 0;
-        }
-
         // A reply with nothing in it means the server failed before it could answer.
         if (reply.Length == 0 || reply.StartsWith("error:", StringComparison.Ordinal))
         {

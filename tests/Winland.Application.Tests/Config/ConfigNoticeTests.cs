@@ -75,16 +75,6 @@ public class ConfigNoticeTests
     }
 
     [Fact]
-    public void ALiveKeywordLeavesTheNotice()
-    {
-        var core = Loaded("blur = on\n");
-        var before = Notice(core);
-
-        Assert.Equal("ok", core.Execute("keyword general:gaps_in 8").Text);
-        Assert.Equal(before, Notice(core));
-    }
-
-    [Fact]
     public void AFailedReloadLeavesTheNotice()
     {
         var core = Loaded("blur = on\n");

@@ -12,7 +12,7 @@ internal static partial class WindowRuleParser
     {
         props = null;
         error = "";
-        if (WindowProps.IsRuleEffect(name, PropKind.Bool))
+        if (WindowProp.IsOnOffEffect(name))
         {
             var enabled = true;
             if (argument is not null && !TryParseEnabled(argument, out enabled))

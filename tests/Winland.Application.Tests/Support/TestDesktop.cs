@@ -4,8 +4,8 @@ namespace Winland.Application.Tests;
 
 /// <summary>
 /// A desktop around a core that answers as the Windows adapter does: one 1920x1080 Monitor, a shared config,
-/// Workspace 1 focused and the pointer in the middle of the Monitor. A test drives it with pipe lines and input
-/// events, and reads the replies.
+/// Workspace 1 focused and the pointer in the middle of the Monitor. A test drives it with pipe lines, input events
+/// and edits of its config, and reads the replies.
 /// </summary>
 internal sealed class TestDesktop
 {
@@ -56,6 +56,7 @@ internal sealed class TestDesktop
     private readonly Dictionary<ClientId, WindowId> _clients = [];
     private readonly List<Monitor> _monitors = [];
     private State _state = new([]);
+    private string _text;
 
     /// <summary>
     /// Builds the desktop. <paramref name="extra"/> is config after <see cref="Config"/>: the options a test sets
@@ -63,12 +64,12 @@ internal sealed class TestDesktop
     /// </summary>
     internal TestDesktop(string extra = "")
     {
-        var text = Config + "\n" + extra;
+        _text = Config + "\n" + extra;
         WindowManager = new WindowManager { Cursor = new PointerReader(this) };
-        WindowManager.ReadConfig = () => new ConfigRead(ConfigParser.Parse(text));
+        WindowManager.ReadConfig = () => new ConfigRead(ConfigParser.Parse(_text));
         WindowManager.DescribeWindow = window =>
             (window ?? UnderPointer) is WindowId read && _described.TryGetValue(read, out var described) ? described : null;
-        Handle(new Configure(ConfigParser.Parse(text)));
+        Handle(new Configure(ConfigParser.Parse(_text)));
         Pointer = new Point(960, 540);
         AddMonitor("HEADLESS-2", First);
         Handle(new PointerMoved(Pointer));
@@ -76,9 +77,21 @@ internal sealed class TestDesktop
 
     internal WindowManager WindowManager { get; }
 
-    /// <summary>Makes <c>reload</c> read <see cref="Config"/> alone, and drop the options the test built the desktop with.</summary>
-    internal void ReloadWithoutExtra() =>
-        WindowManager.ReadConfig = () => new ConfigRead(ConfigParser.Parse(Config));
+    /// <summary>Makes <c>reload</c> read <see cref="Config"/> alone, and drop every line the test added to it.</summary>
+    internal void ReloadWithoutExtra() => _text = Config;
+
+    /// <summary>
+    /// The user adds a line to the end of the config, such as <c>general:gaps_in = 0</c>, and saves it: the config is
+    /// read again. The new line must not warn.
+    /// </summary>
+    internal void Set(string keyword, string value)
+    {
+        var warnings = ConfigParser.Parse(_text).Warnings.Count;
+        _text += "\n" + keyword + " = " + value + "\n";
+        var document = ConfigParser.Parse(_text);
+        Assert.Equal(warnings, document.Warnings.Count);
+        Handle(new Configure(document));
+    }
 
     /// <summary>Where the pointer is. It follows the warps the core asks for, as the system cursor does.</summary>
     internal Point Pointer { get; private set; }
@@ -204,9 +217,7 @@ internal sealed class TestDesktop
         return outcome;
     }
 
-    /// <summary>
-    /// Sends one pipe line, such as <c>dispatch focuswindow class:a</c> or <c>keyword general:gaps_in 0</c>.
-    /// </summary>
+    /// <summary>Sends one pipe line, such as <c>dispatch focuswindow class:a</c> or <c>j/clients</c>.</summary>
     internal string Send(string line)
     {
         var reply = WindowManager.Execute(line);
@@ -238,9 +249,6 @@ internal sealed class TestDesktop
 
     internal void Ok(string dispatcher, string arguments = "") =>
         Assert.Equal("ok", Dispatch(dispatcher, arguments));
-
-    internal void Keyword(string keyword, string value) =>
-        Assert.Equal("ok", Send($"keyword {keyword} {value}"));
 
     internal JsonElement ActiveWindow() => Json(Send("j/activewindow"));
 

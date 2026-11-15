@@ -202,7 +202,7 @@ public sealed partial class WindowManager
         // The window's own limits changed. A min_size or max_size rule still wins over them.
         var rule = _props.Sizes(changed.Window)?.Rule ?? default;
         var tiled = RememberSizes(changed.Window, rule, changed.MinSize, changed.MaxSize);
-        var floating = _props.EffectiveSizes(changed.Window, rule).Floating(changed.MinSize, changed.MaxSize);
+        var floating = rule.Floating(changed.MinSize, changed.MaxSize);
         var placements = desk.Layout.UpdateLimits(changed.Window, floating.Min, floating.Max, tiled);
         return _workspaces.Shown.IsShown(desk.Id) ? View(placements) : View([]);
     }

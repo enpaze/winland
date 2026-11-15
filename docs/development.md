@@ -76,7 +76,7 @@ A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forc
 
 `winland check [file]` checks a draft, or the default config with no file argument, without starting a Daemon, applying settings or launching programs. It reads sources with the real config reader and leaves missing, empty and nonempty files unchanged. Exit 0 means clean, 1 means diagnostics or a read failure, and 2 means invalid usage. Diagnostics go to standard error, with file and line where available.
 
-`winland dispatch` and `winland getoption` with no name list names from the invoked binary locally; `-j` gives JSON arrays. Named requests still require the running Daemon. `winland [-j] inspect [selector]` reads a Window without changing it; omission targets the pointer, while a selector targets a Client. Not found succeeds, and a malformed selector fails. See [Window inspection](behavior.md#window-inspection) for fields, reason codes and draft-rule limits.
+`winland dispatch` with no name lists the Dispatcher names of the invoked binary locally; `-j` gives a JSON array. A named request still requires the running Daemon. `winland [-j] inspect [selector]` reads a Window without changing it; omission targets the pointer, while a selector targets a Client. Not found succeeds, and a malformed selector fails. See [Window inspection](behavior.md#window-inspection) for fields, reason codes and draft-rule limits.
 
 `winland tweaks --restore` restores the invoking user's recorded Windows controls without uninstalling or stopping the Daemon. Run it in a normal terminal. It refuses elevation, retains the record after a failure and needs no elevation when retried. It cannot be combined with `--off` or `--touchpad`.
 

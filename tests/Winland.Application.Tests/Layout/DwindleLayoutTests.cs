@@ -140,7 +140,7 @@ public class DwindleLayoutTests
     public void DwindleFullscreenMaximiseDispatchers()
     {
         var desk = new TestDesktop();
-        desk.Keyword("general:layout", "dwindle");
+        desk.Set("general:layout", "dwindle");
         desk.Spawn("kitty_A");
         desk.Spawn("kitty_B");
 

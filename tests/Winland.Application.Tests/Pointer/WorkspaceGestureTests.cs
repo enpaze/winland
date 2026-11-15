@@ -29,7 +29,7 @@ public class WorkspaceGestureTests
         touchpad.Swipe("right", 3);
         Assert.False(HasWorkspace(desk, 2));
 
-        desk.Keyword("gestures:workspace_swipe_invert", "0");
+        desk.Set("gestures:workspace_swipe_invert", "0");
 
         touchpad.Swipe("right", 3);
         Assert.True(HasWorkspace(desk, 2));
@@ -37,10 +37,10 @@ public class WorkspaceGestureTests
         touchpad.Swipe("left", 3);
         Assert.False(HasWorkspace(desk, 2));
 
-        desk.Keyword("gestures:workspace_swipe_invert", "1");
+        desk.Set("gestures:workspace_swipe_invert", "1");
 
         // workspace previous after a workspace gesture.
-        desk.Keyword("gestures:workspace_swipe_invert", "0");
+        desk.Set("gestures:workspace_swipe_invert", "0");
         desk.Ok("workspace", "3");
 
         // Workspace 5 is entered from 3, and remembers it.

@@ -150,8 +150,8 @@ public class ScrollingBehaviorTests
         ExpectClient(desk, "tiledOne", floating: false, acceptsInput: true, fullscreen: 2, visible: true);
         ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
 
-        desk.Keyword("windowrule", "float, class:^(floating.*)$");
-        desk.Keyword("windowrule", "size 950 500, class:^(floating.*)$");
+        desk.Set("windowrule", "float, class:^(floating.*)$");
+        desk.Set("windowrule", "size 950 500, class:^(floating.*)$");
         desk.Spawn("floatingOne");
         desk.Spawn("floatingTwo");
         ExpectClient(desk, "floatingOne", floating: true, acceptsInput: true, fullscreen: 0, over: true);

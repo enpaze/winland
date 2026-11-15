@@ -14,7 +14,7 @@ public sealed partial class WindowManager
 
     private int _revision;
 
-    // The notification the last load with config errors showed. A clean load clears it. A live keyword leaves it.
+    // The notification the last load with config errors showed. A clean load clears it.
     private ConfigNotice? _notice;
     private int _noticeGeneration;
 
@@ -73,16 +73,12 @@ public sealed partial class WindowManager
         Interlocked.Increment(ref _revision);
     }
 
-    // loaded is false for a live keyword. That is not a read of the file, so the notification and configerrors stay.
-    private Outcome Apply(ConfigDocument document, bool loaded = true)
+    private Outcome Apply(ConfigDocument document)
     {
         ArgumentNullException.ThrowIfNull(document);
         Use(AppliedConfig.From(document, _accent, _contrast));
-        if (loaded)
-        {
-            _loaded = document;
-            ShowConfigErrors(document);
-        }
+        _loaded = document;
+        ShowConfigErrors(document);
 
         var active = FocusedWorkspace();
         var covered = active.Covered();

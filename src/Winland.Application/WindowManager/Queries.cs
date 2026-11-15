@@ -2,21 +2,17 @@ using System.Globalization;
 
 namespace Winland.Application;
 
-/// <summary>The pipe's requests: queries, <c>keyword</c> and <c>--batch</c>.</summary>
+/// <summary>The pipe's requests: the queries, <c>dispatch</c> and <c>reload</c>.</summary>
 public sealed partial class WindowManager
 {
-    // The last config Winland read. A live keyword leaves it, so configerrors keeps the errors of the file.
+    // The last config Winland read, whose errors configerrors lists.
     private ConfigDocument? _loaded;
 
-    // A batch's flags are added to the flags of each of its commands.
-    private CommandReply ExecuteLine(string? line, CommandFlags added = CommandFlags.None) =>
-        ExecuteLine(CommandProtocol.Parse(line), added);
-
-    private CommandReply ExecuteLine(CommandParse parse, CommandFlags added = CommandFlags.None) =>
+    private CommandReply ExecuteLine(CommandParse parse) =>
         parse switch
         {
             CommandRejected rejected => new CommandReply(rejected.Error, View([])),
-            CommandParsed parsed => Reply(parsed.Request with { Flags = parsed.Request.Flags | added }),
+            CommandParsed parsed => Reply(parsed.Request),
         };
 
     // A query's reply, or null for a request that is not one. A query answers from the current State and changes nothing.
@@ -46,9 +42,6 @@ public sealed partial class WindowManager
             FilesRequest files => Json(files)
                 ? CommandProtocol.FormatFiles(_loaded?.Path, LogFile?.Invoke())
                 : CommandProtocol.FormatFilesText(_loaded?.Path, LogFile?.Invoke()),
-            GetOptionRequest option => OptionTable.Describe(option.Name, _config)
-                ?? DidYouMean.After("error: no such option", option.Name, OptionTable.Names),
-            GetPropRequest prop => ReadProp(prop),
             InspectRequest inspect => Inspect(inspect),
             _ => null,
         };
@@ -64,9 +57,6 @@ public sealed partial class WindowManager
             DispatchRequest dispatch => DispatchReply(dispatch),
             EventsRequest => Answer("") with { Stream = true },
             ReloadRequest => ReloadCommand(),
-            KeywordRequest keyword => ApplyKeyword(keyword),
-            SetPropRequest prop => WriteProp(prop),
-            BatchRequest batch => RunBatch(batch.Payload, batch.Flags),
             _ => throw new InvalidOperationException("No handler for this command."),
         };
     }
@@ -87,61 +77,9 @@ public sealed partial class WindowManager
 
     private string Describe(Func<State, string> format) => format(Snapshot());
 
-    private CommandReply ApplyKeyword(KeywordRequest request)
-    {
-        if (request.Name.Length == 0 || request.Value.Length == 0)
-            return new CommandReply("error: invalid keyword", View([]));
-
-        if (!ConfigParser.AppliesLive(request.Name))
-            return new CommandReply($"error: keyword '{request.Name}' is not applied live", View([]));
-
-        // The line reads the config's variables and curves, and its keys in the layout the config was read in.
-        var parsed = ConfigParser.Parse(
-            request.Name + " = " + request.Value + "\n",
-            layout: KeyLayoutSource?.Invoke(),
-            dispatchers: DispatcherNames,
-            context: _config.Document);
-        if (parsed.Warnings.Count > 0)
-            return new CommandReply("error: " + parsed.Warnings[0].Message, View([]));
-
-        if (parsed.Settings.Count == 0 && parsed.Binds.Count == 0 && parsed.Gestures.Count == 0)
-            return new CommandReply("error: invalid keyword", View([]));
-
-        foreach (var setting in parsed.Settings)
-        {
-            if (!ConfigParser.AppliesLive(setting.Keyword))
-                return new CommandReply($"error: keyword '{setting.Keyword}' is not applied live", View([]));
-        }
-
-        var outcome = Apply((_config.Document ?? ConfigDocument.Empty).Merge(parsed), loaded: false);
-        return new CommandReply("ok", outcome);
-    }
-
-    private CommandReply RunBatch(string payload, CommandFlags flags)
-    {
-        var commands = CommandProtocol.SplitBatch(payload);
-        if (commands.Count == 0)
-            return new CommandReply("", View([]));
-
-        var parts = new string[commands.Count];
-        Outcome? effect = null;
-        for (var i = 0; i < commands.Count; i++)
-        {
-            var parsed = CommandProtocol.Parse(commands[i]);
-            var reply = parsed is CommandParsed { Request: BatchRequest }
-                ? Answer("error: nested batch")
-                : ExecuteLine(parsed, flags);
-            parts[i] = reply.Text;
-            effect = effect is null ? reply.Effect : effect.Then(reply.Effect);
-        }
-
-        return new CommandReply(string.Join("\n\n\n", parts), effect ?? View([]));
-    }
-
-    private bool TrySelect(string selector, out Client client, out LiveWorkspace? desk)
+    private bool TrySelect(string selector, out Client client)
     {
         client = null!;
-        desk = null;
         WindowId? window;
         if (TryAddress(selector, out var addressed))
             window = addressed;
@@ -159,7 +97,6 @@ public sealed partial class WindowManager
                     continue;
 
                 client = item;
-                desk = candidate;
                 return true;
             }
         }

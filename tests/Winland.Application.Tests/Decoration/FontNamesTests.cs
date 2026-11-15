@@ -23,7 +23,7 @@ public class FontNamesTests
 
         Assert.Equal("Consolas", Assert.Single(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
 
-        core.Execute("keyword group:groupbar:font_family Fira Code");
+        core.Handle(new Configure(ConfigParser.Parse("misc:font_family = Monospace\ngroup:groupbar:font_family = Fira Code\n")));
         Assert.Equal("Fira Code", Assert.Single(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
     }
 }

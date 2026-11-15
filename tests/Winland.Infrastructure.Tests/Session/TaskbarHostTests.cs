@@ -23,10 +23,6 @@ public class TaskbarHostTests
         files.Write("general:hide_taskbar = false\n");
         Assert.Equal("ok", host.Reload().Text);
         Assert.Equal(1, bars.Restores);
-
-        Assert.Equal("ok", host.Command("keyword general:hide_taskbar true"));
-        Assert.Equal(2, bars.Hides);
-        Assert.Equal(1, bars.Restores);
     }
 
     [Fact]

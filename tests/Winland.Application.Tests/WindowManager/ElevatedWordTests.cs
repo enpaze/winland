@@ -44,21 +44,6 @@ public class ElevatedWordTests
         Assert.Equal([Warned], bound.Events.OfType<ConfigWarned>());
     }
 
-    [Theory]
-    [InlineData("SUPER, X, exec, [elevated] cmd")]
-    [InlineData("SUPER, X, exec, [float; elevated] cmd")]
-    public void AKeywordCanAddABindThatNamesElevated(string value)
-    {
-        var core = new WindowManager();
-
-        Assert.Equal("ok", core.Execute("keyword bind " + value).Text);
-        core.Handle(new KeyPressed("Super_L"));
-        var pressed = core.Handle(new KeyPressed("X"));
-
-        Assert.Equal("cmd", pressed.Launch?.CommandLine);
-        Assert.Equal([Warned], pressed.Events.OfType<ConfigWarned>());
-    }
-
     [Fact]
     public void ElevatedInsideARuleBlockWarnsAndKeepsTheOtherRules()
     {

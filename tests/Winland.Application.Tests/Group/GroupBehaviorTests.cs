@@ -37,10 +37,10 @@ public class GroupBehaviorTests
         Assert.Equal(1, desk.Clients().Count(client => TestDesktop.Fullscreen(client) == 0));
 
         desk.Ok("togglegroup");
-        desk.Keyword("group:groupbar:enabled", "1");
+        desk.Set("group:groupbar:enabled", "1");
         Assert.Equal(("22,43", "1876,1015"), desk.PlaceOf("a"));
 
-        desk.Keyword("group:groupbar:enabled", "0");
+        desk.Set("group:groupbar:enabled", "0");
         Assert.Equal(("22,22", "1876,1036"), desk.PlaceOf("a"));
 
         desk.CloseAll();
@@ -87,7 +87,7 @@ public class GroupBehaviorTests
         desk.ExpectActive("22,22", "1876,1036");
 
         desk.Ok("togglegroup");
-        desk.Keyword("group:groupbar:disable_when_only", "true");
+        desk.Set("group:groupbar:disable_when_only", "true");
         desk.ExpectActive("22,22", "1876,1036");
 
         desk.Spawn("kittyB");
@@ -100,7 +100,7 @@ public class GroupBehaviorTests
         desk.Ok("focuswindow", "class:kittyA");
         desk.ExpectActive("22,22", "1876,1036");
 
-        desk.Keyword("group:groupbar:disable_when_only", "false");
+        desk.Set("group:groupbar:disable_when_only", "false");
         desk.ExpectActive("22,43", "1876,1015");
     }
 

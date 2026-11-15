@@ -136,9 +136,7 @@ public class SelectLayoutTests
         desk.Ok("pin");
         desk.Spawn("small");
         desk.Handle(new WindowMinimized(desk.Window("small")));
-        desk.Dispatch("setprop", "class:tiled opacity 0.5");
         desk.Ok("focuswindow", "class:tiled");
-        var opacity = desk.Send("getprop class:tiled opacity");
 
         foreach (var layout in new[] { "scrolling", "floating", "dwindle" })
         {
@@ -154,7 +152,6 @@ public class SelectLayoutTests
             Assert.True(pinned.Floating);
             Assert.True(pinned.Pinned);
             Assert.True(Client(selected, desk.Window("small").Value).Minimized);
-            Assert.Equal(opacity, desk.Send("getprop class:tiled opacity"));
         }
     }
 

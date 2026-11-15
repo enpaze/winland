@@ -112,9 +112,9 @@ public sealed partial class WindowManager
         return moved;
     }
 
-    private BorderColor BorderOf(WindowId window, bool active, bool honorProps = true)
+    private BorderColor BorderOf(WindowId window, bool active)
     {
-        if (honorProps && _props.Own(window, active ? WindowProp.ActiveBorderColor : WindowProp.InactiveBorderColor) is { } set)
+        if (_props.Own(window, active ? WindowProp.ActiveBorderColor : WindowProp.InactiveBorderColor) is { } set)
             return set;
 
         if (WorkspaceContaining(window)?.GroupOf(window) is not null)

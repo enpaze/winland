@@ -453,6 +453,5 @@ public class SizeLimitTests
 
         var bounds = BoundsOf(outcome, 1);
         Assert.Equal((960, 540), (bounds.Width, bounds.Height));
-        Assert.Contains("960", core.Execute("getprop active min_size").Text, StringComparison.Ordinal);
     }
 }

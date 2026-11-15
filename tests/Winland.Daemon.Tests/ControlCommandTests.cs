@@ -7,29 +7,12 @@ public class ControlOutputCollection;
 public class ControlCommandTests
 {
     [Theory]
-    [InlineData("[[BATCH]]dispatch bogus;j/clients", "error: unknown dispatcher\n\n\n[]", 1)]
-    [InlineData("j/[[BATCH]]clients;dispatch bogus", "[]\n\n\nerror: unknown dispatcher", 1)]
-    [InlineData("[[BATCH]]clients;dispatch bogus", "Window 2a -> title:\n\ttitle: title\n\n\n\n\nerror: unknown dispatcher", 1)]
-    [InlineData("[[BATCH]]events", "", 0)]
-    [InlineData("[[BATCH]]events;events", "\n\n\n", 0)]
-    [InlineData("[[BATCH]]j/clients", "[]", 0)]
-    public void ABatchWritesEveryReplyToStandardOutput(string line, string reply, int expectedExit)
-    {
-        var result = WriteReply(line, reply);
-
-        Assert.Equal(expectedExit, result.Exit);
-        Assert.Equal(reply + Environment.NewLine, result.Output);
-        Assert.Equal("", result.Error);
-    }
-
-    [Theory]
-    [InlineData("error: no such option")]
-    [InlineData("error: prop not found")]
+    [InlineData("error: unknown dispatcher 'bogus'")]
     [InlineData("error: no such workspace")]
     [InlineData("")]
     public void ASingleFailureWritesToStandardError(string reply)
     {
-        var result = WriteReply("getoption missing", reply);
+        var result = WriteReply("dispatch bogus", reply);
 
         Assert.Equal(1, result.Exit);
         Assert.Equal("", result.Output);

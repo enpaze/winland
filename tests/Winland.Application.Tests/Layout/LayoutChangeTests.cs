@@ -3,8 +3,6 @@ namespace Winland.Application.Tests;
 /// <summary>Layout options and changing the Layout, driven through pipe lines on a <see cref="TestDesktop"/>.</summary>
 public class LayoutChangeTests
 {
-    private const string MonitorNotHonored = "error: Monitor settings other than a reserved area are not honored.";
-
     [Fact]
     public void SingleWindowAspectRatio()
     {
@@ -22,27 +20,11 @@ public class LayoutChangeTests
     }
 
     [Fact]
-    public void CrashOnGeomUpdate()
-    {
-        var desk = new TestDesktop();
-        desk.Spawn("a");
-        desk.Spawn("a");
-        desk.Spawn("a");
-
-        Assert.Equal(MonitorNotHonored, desk.Send("keyword monitor HEADLESS-2,1920x1080@60,1000x0,1"));
-        desk.Ok("movefocus", "r");
-        Assert.Equal(MonitorNotHonored, desk.Send("keyword monitor HEADLESS-2,1920x1080@60,0x0,1"));
-    }
-
-    [Fact]
     public void LayoutRefreshDuringMonitorTeardown()
     {
         var desk = new TestDesktop();
 
         desk.AddMonitor("HEADLESS-5", TestDesktop.Second);
-
-        Assert.Equal(MonitorNotHonored, desk.Send("keyword monitor HEADLESS-2,1920x1080@60,0x0,1"));
-        Assert.Equal(MonitorNotHonored, desk.Send("keyword monitor HEADLESS-5,1920x1080@60,1920x0,1"));
 
         desk.Ok("focusmonitor", "HEADLESS-5");
         desk.Ok("workspace", "30");
@@ -53,8 +35,7 @@ public class LayoutChangeTests
         desk.Ok("focusmonitor", "HEADLESS-2");
         desk.Ok("workspace", "1");
 
-        Assert.Equal(MonitorNotHonored, desk.Send("keyword monitor HEADLESS-5,disable"));
-        desk.Keyword("general:layout", "scrolling");
+        desk.Set("general:layout", "scrolling");
 
         Assert.Contains("HEADLESS-5", desk.Send("monitors all"), StringComparison.Ordinal);
     }
@@ -100,7 +81,7 @@ public class LayoutChangeTests
         desk.Spawn("kitty_D");
 
         desk.Ok("focuswindow", "class:kitty_C");
-        Assert.Equal("ok", desk.Send("keyword general:layout scrolling"));
+        desk.Set("general:layout", "scrolling");
 
         Assert.Equal("kitty_C", desk.ActiveClass());
     }

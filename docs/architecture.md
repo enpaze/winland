@@ -29,16 +29,16 @@ Nothing in Domain or Application calls Win32. A test drives `WindowManager` with
 | To change | Look in |
 | --- | --- |
 | A dispatcher | `Application/WindowManager/DispatcherTable.cs`. The entry is also the name the config parser accepts, which `Daemon/Config/ConfigFile.cs` passes to it. |
-| A config option | The `*Options.cs` file of its section in `Domain/Config`, for example `LayoutOptions.cs` for `general:gaps_in`. `AppliedConfig.cs` holds every section, and a new section gets one line in `OptionTable.cs`, which the parser and `getoption` read. |
+| A config option | The `*Options.cs` file of its section in `Domain/Config`, for example `LayoutOptions.cs` for `general:gaps_in`. `AppliedConfig.cs` holds every section, and a new section gets one line in `OptionTable.cs`, which the parser reads. |
 | A window rule | `Domain/WindowRule`, with its parser in `Domain/WindowRule/WindowRuleParser`. |
-| A Client's Props and the rule decision it opened with | `Domain/Client/ClientProps.cs`. `getprop`, `setprop` and the config's defaults are in `Application/WindowManager/Props.cs`, and matching the rules again when a window's class or title changes in `DynamicRules.cs`. |
+| What a Client's rules give it and the rule decision it opened with | `Domain/Client/ClientProps.cs`. Matching the rules again, when a window's class or title changes or the config is loaded, is in `Application/WindowManager/DynamicRules.cs`. |
 | A Layout | `Domain/Layout`: one folder per Layout, such as `DwindleLayout/`. What the tiling Layouts keep alike is in `TiledLayout.cs`. |
 | Which Client has focus, what each Workspace gives focus back to, and the focus history | `Domain/Focus/FocusState.cs`. When a window may take focus is in `Application/WindowManager/Focus.cs`. |
 | Which Workspaces there are, their numbers, Guests, and which one a Monitor shows | `Domain/Workspace/WorkspaceSet.cs`, with `ShownWorkspaces.cs` for what each Monitor shows and `workspace previous`. `Application/WindowManager/Hotplug.cs` calls it when Monitors change. |
 | Which windows may stay over a fullscreen or maximized Client | `Domain/Fullscreen/FullscreenCover.cs`. Pinning is in `Application/WindowManager/Pin.cs`. |
 | Binds and keys | `Domain/Bind`. The hooks that feed them are in `Infrastructure/Input`. |
 | The pointer, scrolling and the touchpad | `Domain/Pointer`. |
-| A pipe request, such as a query or `keyword` | The verb in `Application/Dispatch/CommandProtocol/CommandProtocol.cs`, its reply in `Application/WindowManager/Queries.cs`, and the reply text in the other files of `CommandProtocol`. |
+| A pipe request, such as a query or `reload` | The verb in `Application/Dispatch/CommandProtocol/CommandProtocol.cs`, its reply in `Application/WindowManager/Queries.cs`, and the reply text in the other files of `CommandProtocol`. |
 | An event in the Event stream | `Application/WindowManager/EventStream.cs`. |
 | How windows move on screen | `Application/WindowManager/Animations.cs` plans motions, and `Infrastructure/Motion` plays them. |
 

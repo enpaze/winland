@@ -38,7 +38,7 @@ public sealed record Outcome(
     /// <summary>What the Dispatcher that produced this outcome does beyond the outcome itself, or null when no Dispatcher ran.</summary>
     public DispatcherTraits? Traits { get; init; }
 
-    /// <summary>Clients to close, in order. A bind or batch that runs several commands can close several.</summary>
+    /// <summary>Clients to close, in order. A key with several binds can close several.</summary>
     public IReadOnlyList<WindowId> Closes { get; init; } = [];
 
     /// <summary>The first Client to close, or null. Setting it replaces <see cref="Closes"/> with that one Client.</summary>

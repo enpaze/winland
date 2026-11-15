@@ -12,7 +12,6 @@ public class NativeDragTests
         var desk = new TestDesktop();
         var client = desk.Spawn("xdg-interactive");
         var pid = desk.Client("xdg-interactive").GetProperty("pid").GetInt64();
-        desk.Ok("setprop", $"pid:{pid} no_anim 1");
         desk.Ok("focuswindow", $"pid:{pid}");
 
         SetClientGeometry(desk, pid, new Rectangle(300, 300, 500, 400));

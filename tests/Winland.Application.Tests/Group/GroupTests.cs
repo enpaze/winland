@@ -39,11 +39,11 @@ public class GroupTests
         var tile = ClientOf(core.Execute("dispatch resizewindow").Effect, First).Bounds;
         core.Execute("dispatch togglegroup");
 
-        var plain = core.Execute("setprop address:0x1 decorate 0").Effect;
+        var plain = core.Handle(new Configure(ConfigParser.Parse("windowrule = decorate 0, class:.*\n")));
 
         Assert.Empty(plain.GroupBars);
         Assert.Equal(tile, ClientOf(plain, First).Bounds);
-        Assert.Single(core.Execute("setprop address:0x1 decorate 1").Effect.GroupBars);
+        Assert.Single(core.Handle(new Configure(ConfigParser.Parse(""))).GroupBars);
     }
 
     [Fact]

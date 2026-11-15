@@ -209,8 +209,6 @@ public class EmptyStepTests
     [InlineData("version")]
     [InlineData("configerrors")]
     [InlineData("files")]
-    [InlineData("getoption general:gaps_in")]
-    [InlineData("getprop address:0x1 opacity")]
     public void AQueryAnswersAndChangesNothing(string query)
     {
         var (core, laid) = Tiled();
@@ -224,17 +222,6 @@ public class EmptyStepTests
         Assert.Equal(2, reply.Effect.State.Clients.Count);
         Assert.Equal(before, core.Execute("j/clients").Text);
         Assert.True(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_100).IsEmpty);
-    }
-
-    [Fact]
-    public void AQueryAnswersTheSameInABatchAsOnItsOwn()
-    {
-        var (core, _) = Tiled();
-
-        var alone = core.Execute("j/clients").Text;
-        var batched = core.Execute("[[BATCH]]j/clients");
-
-        Assert.Equal(alone, batched.Text);
     }
 
     [Fact]

@@ -80,21 +80,6 @@ public class CoreRegressionTests
     }
 
     [Fact]
-    public void ReloadRematchesOpenClientsAndKeepsSetpropOverrides()
-    {
-        var core = new WindowManager();
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new WindowAppeared(new WindowId(2), Area));
-        core.Execute("setprop address:0x2 border_size 7");
-
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("windowrule = border_size 12, class:.*\nwindowrule = no_focus, class:.*")));
-
-        Assert.Equal("12", core.Execute("getprop address:0x1 border_size").Text);
-        Assert.Equal("7", core.Execute("getprop address:0x2 border_size").Text);
-        Assert.Equal("true", core.Execute("getprop address:0x1 no_focus").Text);
-    }
-
-    [Fact]
     public void ClosingTheLastSpecialClientOnAnotherMonitorLeavesFocusHere()
     {
         var core = new WindowManager();

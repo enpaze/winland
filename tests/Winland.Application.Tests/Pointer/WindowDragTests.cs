@@ -69,7 +69,7 @@ public class WindowDragTests
 
         foreach (var threshold in new[] { 0, 40 })
         {
-            desk.Keyword("binds:drag_threshold", threshold.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            desk.Set("binds:drag_threshold", threshold.ToString(System.Globalization.CultureInfo.InvariantCulture));
             desk.Place("drag_threshold", 200, 200, 300, 200);
             MoveCursor(desk, 350, 300);
             Click(desk, pressed: true);

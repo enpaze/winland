@@ -39,9 +39,6 @@ public class AccentNoticeTests
             host.NoteAccent();
 
             Assert.Equal(2, reads);
-            Assert.Equal(
-                "{\"option\":\"general:col.active_border\",\"str\":\"0xFF112233\",\"set\":false}",
-                core.Execute("getoption general:col.active_border").Text);
         }
         finally
         {
@@ -62,14 +59,8 @@ public class AccentNoticeTests
 
             host.NoteAccent();
 
-            Assert.Equal(
-                "{\"option\":\"general:col.active_border\",\"str\":\"0xFFAABBCC\",\"set\":true}",
-                core.Execute("getoption general:col.active_border").Text);
 
             core.Handle(new Configure(ConfigParser.Parse("")));
-            Assert.Equal(
-                "{\"option\":\"general:col.active_border\",\"str\":\"0xFF112233\",\"set\":false}",
-                core.Execute("getoption general:col.active_border").Text);
         }
         finally
         {

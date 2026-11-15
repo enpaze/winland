@@ -210,11 +210,10 @@ public class FocusTests
     [Fact]
     public void AWorkspaceShownAgainDoesNotFocusAWindowThatTakesNoFocus()
     {
-        var core = new WindowManager();
+        var core = new WindowManager(ConfigParser.Parse("windowrule = no_focus, class:quiet\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Execute("dispatch workspace 2");
-        core.Handle(new WindowAppeared(new WindowId(2), Area));
-        core.Execute("setprop address:0x2 no_focus true");
+        core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Class = "quiet" } });
         core.Execute("dispatch workspace 1");
 
         core.Execute("dispatch workspace 2");

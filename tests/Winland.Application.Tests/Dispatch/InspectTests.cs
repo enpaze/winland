@@ -120,7 +120,7 @@ public class InspectTests
         Assert.Equal("tool", inspected.GetProperty("reason").GetString());
         var rule = inspected.GetProperty("rule").GetString()!;
         Assert.Equal(@"windowrule = float, class:palette, exe:paint\.exe", rule);
-        Assert.Equal("ok", desktop.Send("keyword windowrule " + rule["windowrule = ".Length..]));
+        desktop.Set("windowrule", rule["windowrule = ".Length..]);
         desktop.Spawn("palette", traits: tool);
         Assert.True(TestDesktop.Floating(desktop.Client("palette")));
         Assert.Equal("rule", Inspect(desktop, "class:palette").GetProperty("reason").GetString());
