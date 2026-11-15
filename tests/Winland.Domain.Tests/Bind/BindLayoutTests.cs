@@ -23,16 +23,4 @@ public class BindLayoutTests
         Assert.True(pressed.Consumed);
         Assert.True(released.Consumed);
     }
-
-    [Fact]
-    public void ReleaseAndRepeatBindsUseTheLayoutTheConfigWasParsedWith()
-    {
-        var table = BindTable.From(ConfigParser.Parse("binde = SUPER, Q, exec, repeat\nbindr = SUPER, Q, exec, release\n", layout: ConfigLayout));
-        var session = new BindSession();
-        session.Decide(table, new KeyPressed("Super_L"));
-
-        session.Decide(table, new KeyPressed("й") { ScanCode = 24 });
-        Assert.Equal("repeat", session.Decide(table, new KeyPressed("й") { ScanCode = 24 }).Arguments);
-        Assert.Equal("release", session.Decide(table, new KeyReleased("й") { ScanCode = 24 }).Arguments);
-    }
 }

@@ -128,37 +128,6 @@ public class StuckModifierTests
     }
 
     [Fact]
-    public void RepeatThatStartsConsumingDoesNotSwallowTheReleaseOfAPassedPress()
-    {
-        var (core, session) = Load("binde = SUPER, T, killactive");
-        Assert.False(core.Decide(new KeyPressed("T"), session).Consumed);
-        core.Decide(new KeyPressed("Super_L"), session);
-
-        var repeat = core.Decide(new KeyPressed("T"), session);
-        var up = core.Decide(new KeyReleased("T"), session);
-
-        Assert.Equal("killactive", repeat.Dispatcher);
-        Assert.True(repeat.Mask);
-        Assert.False(up.Consumed);
-    }
-
-    [Fact]
-    public void ReleaseBindOnTheModifierItselfPassesBothEdgesAndMasksTheRelease()
-    {
-        var (core, session) = Load("bindr = SUPER, Super_L, exec, launcher");
-
-        var down = core.Decide(new KeyPressed("Super_L"), session);
-        var up = core.Decide(new KeyReleased("Super_L"), session);
-
-        // The OS saw this Super, so it sees the release too, after a mask so Start does not open.
-        Assert.False(down.Consumed);
-        Assert.False(down.Mask);
-        Assert.False(up.Consumed);
-        Assert.True(up.Mask);
-        Assert.Equal("exec", up.Dispatcher);
-    }
-
-    [Fact]
     public void ReleaseBindOnASuperAlreadyMaskedByAChordSendsNoSecondMask()
     {
         var (core, session) = Load("""
@@ -271,62 +240,6 @@ public class StuckModifierTests
         Assert.True(core.Decide(new KeyPressed("T"), session).Consumed);
     }
 
-    [Theory]
-    [InlineData("bindn")]
-    public void ChordWithAConsumingAndASecondBindRunsBothMasksOnceAndPassesSuper(string second)
-    {
-        var (core, session) = Load($"bind = SUPER, F23, exec, first\n{second} = SUPER, F23, exec, second\n");
-        core.Decide(new KeyPressed("Super_L"), session);
-
-        var down = core.Decide(new KeyPressed("F23"), session);
-        var repeat = core.Decide(new KeyPressed("F23"), session);
-        var up = core.Decide(new KeyReleased("F23"), session);
-        var superUp = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.Equal(new BindDispatch[] { new("exec", "first"), new("exec", "second") }, down.Dispatches);
-        Assert.True(down.Consumed);
-        Assert.True(down.Mask);
-        Assert.True(repeat.Consumed);
-        Assert.False(repeat.Mask);
-        Assert.True(up.Consumed);
-        Assert.False(superUp.Consumed);
-    }
-
-    [Fact]
-    public void ChordWhoseBindsAllPassLetsEveryEdgeThroughUnmasked()
-    {
-        var (core, session) = Load("bindn = SUPER, F23, exec, first\nbindn = SUPER, F23, exec, second\n");
-        core.Decide(new KeyPressed("Super_L"), session);
-
-        var down = core.Decide(new KeyPressed("F23"), session);
-        var up = core.Decide(new KeyReleased("F23"), session);
-        var superUp = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.Equal(2, down.Dispatches.Count);
-        Assert.False(down.Consumed);
-        Assert.False(down.Mask);
-        Assert.False(up.Consumed);
-        Assert.False(superUp.Consumed);
-    }
-
-    [Fact]
-    public void NonConsumingSuperDragPassesTheButtonAndSuper()
-    {
-        var (core, session) = Load("bindmn = SUPER, mouse:272, movewindow");
-        core.Decide(new KeyPressed("Super_L"), session);
-
-        var down = core.Decide(new PointerButtonPressed("mouse:272") { Position = new Point(0, 0) }, session);
-        core.Decide(new PointerMoved(new Point(200, 200)), session);
-        var up = core.Decide(new PointerButtonReleased("mouse:272") { Position = new Point(200, 200) }, session);
-        var superUp = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.Equal("movewindow", down.Dispatcher);
-        Assert.False(down.Consumed);
-        Assert.False(down.Mask);
-        Assert.False(up.Consumed);
-        Assert.False(superUp.Consumed);
-    }
-
     [Fact]
     public void SuperMouseChordAfterASuperKeyChordIsNotMaskedTwice()
     {
@@ -362,19 +275,6 @@ public class StuckModifierTests
         Assert.False(chord.Mask);
         Assert.True(up.Consumed);
         Assert.False(core.Decide(new KeyPressed("F23"), session).Consumed);
-    }
-
-    [Fact]
-    public void NonConsumingModifierOnlyBindPassesBothEdges()
-    {
-        var (core, session) = Load("bindn = , Super_L, exec, menu");
-
-        var down = core.Decide(new KeyPressed("Super_L"), session);
-        var up = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.Equal("exec", down.Dispatcher);
-        Assert.False(down.Consumed);
-        Assert.False(up.Consumed);
     }
 
     // The worker runs a decision's dispatchers; submap changes land in the core's session.

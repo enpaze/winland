@@ -73,7 +73,7 @@ public class TextRepliesTests
             """
             bind = SUPER, W, killactive
             bind = SUPER SHIFT, 1, workspace, 1
-            bindle = SUPER, minus, resizeactive, -40 0
+            bind = SUPER, minus, resizeactive, -40 0
             bindd = SUPER, Q, Close the window, killactive
             bindm = SUPER, mouse:273, resizewindow 1
             """));
@@ -83,7 +83,7 @@ public class TextRepliesTests
         Assert.Equal(
             "bind = SUPER, W, killactive\n"
             + "bind = SUPER SHIFT, 1, workspace, 1\n"
-            + "bindle = SUPER, minus, resizeactive, -40 0\n"
+            + "bind = SUPER, minus, resizeactive, -40 0\n"
             + "bindd = SUPER, Q, Close the window, killactive\n"
             + "bindm = SUPER, mouse:273, resizewindow 1",
             binds);
@@ -113,20 +113,14 @@ public class TextRepliesTests
             bind = SUPER, N, exec, echo ## literal
             bind = SUPER, E, exec, [float; tile] notepad
             bind = SUPER, Z, mouse, movewindow
-            bindl = SUPER, L, exec, lock
-            bindr = SUPER, Super_L, exec, release
-            binde = SUPER, Right, resizeactive, 20 0
-            bindn = , Escape, exec, quiet
-            bindle = SUPER, Up, resizeactive, 0 -20
             bindd = SUPER, Q, Close the window, killactive
-            binddl = SUPER, X, Cut, exec, cut
             bindm = SUPER, mouse:272, movewindow
             bindm = SUPER, mouse:273, resizewindow 1
             bindmd = SUPER, mouse:274, Move, movewindow
             """);
         Assert.Empty(document.Warnings);
         var binds = document.Binds.OfType<Bind>().ToArray();
-        Assert.Equal(26, binds.Length);
+        Assert.Equal(20, binds.Length);
 
         var text = CommandProtocol.FormatBindsText(binds);
         var again = ConfigParser.Parse(text);

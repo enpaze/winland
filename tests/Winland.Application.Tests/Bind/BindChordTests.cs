@@ -17,39 +17,6 @@ public class BindChordTests
     }
 
     [Fact]
-    public void NonConsumingModifierKeyBindStillCompletesTheNextChord()
-    {
-        var core = Load("bindn = , Super_L, exec, menu\nbind = SUPER, Q, killactive\nbindm = SUPER, mouse:272, movewindow\n");
-        Appear(core, 1);
-
-        var super = Press(core, "Super_L");
-        Assert.False(super.Consumed);
-        Assert.Equal("menu", super.Launch?.CommandLine);
-        Assert.False(Release(core, "Super_L").Consumed);
-
-        Press(core, "Super_L");
-        var keyed = Press(core, "Q");
-        var button = core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(1, 2) });
-
-        Assert.Equal(new WindowId(1), keyed.Close);
-        Assert.False(Release(core, "Super_L").Consumed);
-    }
-
-    [Fact]
-    public void EmptyDispatcherConsumesBesideANonConsumingBind()
-    {
-        var core = Load("bindn = , Q, exec, notepad\nbind = , Q,\n");
-        Appear(core, 1);
-
-        var pressed = Press(core, "Q");
-
-        Assert.True(pressed.Consumed);
-        Assert.Equal("notepad", pressed.Launch?.CommandLine);
-        Assert.Null(pressed.Close);
-        Assert.True(Release(core, "Q").Consumed);
-    }
-
-    [Fact]
     public void ClickBindOnASharedChordStaysQuietOnceThePointerLeaves()
     {
         var core = Load("binds:drag_threshold = 10\nbind = , V, exec, notepad\nbindc = , V, killactive\n");
@@ -79,37 +46,6 @@ public class BindChordTests
         var released = Release(core, "V");
 
         Assert.Null(released.Close);
-    }
-
-    [Fact]
-    public void RepeatFiresOnlyTheBindMarkedRepeat()
-    {
-        var core = Load("bind = , Q, exec, notepad\nbinde = , Q, killactive\n");
-        Appear(core, 1);
-
-        var first = Press(core, "Q");
-        var second = Press(core, "Q");
-
-        Assert.Equal("notepad", first.Launch?.CommandLine);
-        Assert.Equal(new WindowId(1), first.Close);
-        Assert.Null(second.Launch);
-        Assert.Equal(new WindowId(1), second.Close);
-    }
-
-    [Fact]
-    public void NonConsumingRepeatKeepsPassingTheKey()
-    {
-        var core = Load("bindne = , Q, exec, notepad");
-        Appear(core, 1);
-
-        var first = Press(core, "Q");
-        var second = Press(core, "Q");
-
-        Assert.False(first.Consumed);
-        Assert.Equal("notepad", first.Launch?.CommandLine);
-        Assert.False(second.Consumed);
-        Assert.Equal("notepad", second.Launch?.CommandLine);
-        Assert.False(Release(core, "Q").Consumed);
     }
 
     [Fact]

@@ -62,8 +62,6 @@ public static partial class ConfigParser
         private readonly HashSet<string> _openSources = new(StringComparer.OrdinalIgnoreCase);
         private string? _source;
         private string? _rootFolder;
-        private bool _inSubmap;
-        private bool _warnedSubmaps;
 
         // The variables and curves of a config read before.
         public void Know(ConfigDocument context)
@@ -205,18 +203,6 @@ public static partial class ConfigParser
                 return;
             }
 
-            if (lhs == "submap")
-            {
-                _inSubmap = rhs != "reset";
-                if (_inSubmap && !_warnedSubmaps)
-                {
-                    Warn(lineNumber, "Submaps are not supported. Their binds are skipped until submap = reset.");
-                    _warnedSubmaps = true;
-                }
-
-                return;
-            }
-
             if (lhs == "unbind")
             {
                 HandleUnbind(rhs, lineNumber);
@@ -231,8 +217,7 @@ public static partial class ConfigParser
 
             if (lhs.StartsWith("bind", StringComparison.Ordinal) && !lhs.Contains(':'))
             {
-                if (!_inSubmap)
-                    HandleBind(lhs, rhs, lineNumber);
+                HandleBind(lhs, rhs, lineNumber);
                 return;
             }
 

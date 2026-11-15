@@ -35,11 +35,12 @@ public class ConfigSyntaxTests
     }
 
     [Fact]
-    public void SubmapBindsAreSkippedUntilResetWithOneWarning()
+    public void SubmapIsAnUnsupportedKeywordLikeAnyOtherAndSkipsNothing()
     {
-        var document = ConfigParser.Parse("submap = resize\nbind = , H, movefocus, l\nbind = , L, movefocus, r\nsubmap = other\nbind = , Q, exit\nsubmap = reset\nbind = SUPER, Q, killactive\n");
+        var document = ConfigParser.Parse("submap = resize\nbind = SUPER, Q, killactive\nsubmap = reset\n");
 
-        Assert.Contains("submaps", Assert.Single(document.Warnings).Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(2, document.Warnings.Count);
+        Assert.All(document.Warnings, warning => Assert.StartsWith("Unsupported keyword 'submap'.", warning.Message, StringComparison.Ordinal));
         Assert.Equal("killactive", Assert.IsType<Bind>(Assert.Single(document.Binds)).Dispatcher);
     }
 
@@ -84,14 +85,14 @@ public class ConfigSyntaxTests
     }
 
     [Fact]
-    public void TheBypassBindFlagWarnsAndTheRepeatBindBesideItStillApplies()
+    public void AnUnknownBindFlagWarnsAndTheBindBesideItStillApplies()
     {
-        var document = ConfigParser.Parse("bindp = SUPER, Q, killactive\nbinde = SUPER, L, resizeactive, 10 0\n");
+        var document = ConfigParser.Parse("bindp = SUPER, Q, killactive\nbind = SUPER, L, resizeactive, 10 0\n");
 
         var warning = Assert.Single(document.Warnings);
         Assert.Equal(1, warning.Line);
         Assert.Equal("Bind flag 'p' is not supported.", warning.Message);
-        Assert.Equal(BindFlag.Repeat, Assert.IsType<Bind>(Assert.Single(document.Binds)).Flags);
+        Assert.Equal("L", Assert.IsType<Bind>(Assert.Single(document.Binds)).Key);
     }
 
     [Fact]

@@ -2,19 +2,39 @@ namespace Winland.Application.Tests;
 
 public class BindFlagTests
 {
-    [Fact]
-    public void NonConsumingBindRunsAndLetsTheKeyThrough()
+    [Theory]
+    [InlineData("binde", 'e')]
+    [InlineData("bindr", 'r')]
+    [InlineData("bindl", 'l')]
+    [InlineData("bindn", 'n')]
+    [InlineData("binddl", 'l')]
+    public void ARepeatReleaseLockedOrPassThroughFlagWarnsAndTheBindIsSkipped(string keyword, char flag)
     {
-        var core = Load("bindn = SUPER, Q, killactive");
+        var description = keyword[4..].Contains('d', StringComparison.Ordinal) ? "Close, " : "";
+
+        var document = ConfigParser.Parse($"{keyword} = SUPER, Q, {description}killactive\n");
+
+        Assert.Equal($"Bind flag '{flag}' is not supported.", Assert.Single(document.Warnings).Message);
+        Assert.Empty(document.Binds);
+    }
+
+    [Fact]
+    public void ABindRunsOnceOnThePressAndSwallowsTheHeldKeyAndItsRelease()
+    {
+        var core = Load("bind = SUPER, Q, killactive");
         Appear(core, 1);
         Press(core, "Super_L");
 
-        var outcome = Press(core, "Q");
+        var press = Press(core, "Q");
+        var held = Press(core, "Q");
+        var release = Release(core, "Q");
 
-        Assert.False(outcome.Consumed);
-        Assert.Equal(new WindowId(1), outcome.Close);
-        Assert.False(Release(core, "Q").Consumed);
-        Assert.False(Release(core, "Super_L").Consumed);
+        Assert.Equal(new WindowId(1), press.Close);
+        Assert.True(press.Consumed);
+        Assert.Null(held.Close);
+        Assert.True(held.Consumed);
+        Assert.Null(release.Close);
+        Assert.True(release.Consumed);
     }
 
     [Fact]

@@ -193,60 +193,6 @@ public class BindTests
     }
 
     [Fact]
-    public void RepeatBindFiresOnEachPressWhileHeld()
-    {
-        var core = Load("binde = SUPER, Q, killactive");
-        Appear(core, 1);
-        Press(core, "Super_L");
-
-        AssertRan(Press(core, "Q"), 1);
-        AssertRan(Press(core, "Q"), 1);
-        AssertCaught(Release(core, "Q"));
-    }
-
-    [Fact]
-    public void ReleaseBindFiresWhenTheKeyGoesUp()
-    {
-        var core = Load("bindr = SUPER, Q, killactive");
-        Appear(core, 1);
-        Press(core, "Super_L");
-
-        AssertCaught(Press(core, "Q"));
-        AssertRan(Release(core, "Q"), 1);
-        AssertPassed(Release(core, "Super_L"));
-    }
-
-    [Fact]
-    public void ReleaseBindMatchesTheModifiersItsKeyWentDownUnder()
-    {
-        var core = Load("bindr = SUPER, Q, killactive");
-        Appear(core, 1);
-        Press(core, "Super_L");
-        AssertCaught(Press(core, "Q"));
-        AssertPassed(Press(core, "Shift_L"));
-
-        var outcome = Release(core, "Q");
-
-        Assert.True(outcome.Consumed);
-        Assert.Equal(new WindowId(1), outcome.Close);
-    }
-
-    [Fact]
-    public void ReleaseBindIsShadowedByAnotherKeyReleasedWhileItsKeyIsHeld()
-    {
-        var core = Load("bindr = SUPER, Q, killactive");
-        Appear(core, 1);
-        Press(core, "Super_L");
-        AssertCaught(Press(core, "Q"));
-        AssertPassed(Release(core, "Super_L"));
-
-        var outcome = Release(core, "Q");
-
-        Assert.True(outcome.Consumed);
-        Assert.Null(outcome.Close);
-    }
-
-    [Fact]
     public void ModifierReleaseBindDoesNotRunAfterABindUsedTheModifier()
     {
         var core = Load("bindr = ALT, Alt_L, exec, notepad\nbind = ALT, P, killactive\n");
@@ -261,29 +207,18 @@ public class BindTests
     }
 
     [Fact]
-    public void LockedBindRunsWhileInputIsInhibitedAndANormalBindDoesNot()
+    public void ABindDoesNotRunWhileInputIsInhibitedAndRunsAgainAfter()
     {
-        var core = Load("bind = SUPER, Q, killactive\nbindl = SUPER, M, killactive\n");
+        var core = Load("bind = SUPER, Q, killactive\n");
         Appear(core, 1);
         core.KeyState.Inhibit(true);
         Press(core, "Super_L");
 
         AssertPassed(Press(core, "Q"));
         Release(core, "Q");
-        AssertRan(Press(core, "M"), 1);
 
-        Release(core, "M");
         core.KeyState.Inhibit(false);
         AssertRan(Press(core, "Q"), 1);
-    }
-
-    [Fact]
-    public void LockedBindAlsoRunsWhenInputIsNotInhibited()
-    {
-        var core = Load("bindl = , M, killactive");
-        Appear(core, 1);
-
-        AssertRan(Press(core, "M"), 1);
     }
 
     [Fact]

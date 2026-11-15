@@ -150,11 +150,7 @@ public static partial class CommandProtocol
 
         var mouse = bind.Flags.HasFlag(BindFlag.Mouse) || bind.Key.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase);
         return new BindJson(
-            bind.Flags.HasFlag(BindFlag.Locked),
             mouse,
-            bind.Flags.HasFlag(BindFlag.Release),
-            bind.Flags.HasFlag(BindFlag.Repeat),
-            bind.Flags.HasFlag(BindFlag.NonConsuming),
             bind.Description is not null,
             ModMask(bind.Modifiers),
             key,
@@ -170,11 +166,7 @@ public static partial class CommandProtocol
     };
 
     private sealed record BindJson(
-        [property: JsonPropertyName("locked")] bool Locked,
         [property: JsonPropertyName("mouse")] bool Mouse,
-        [property: JsonPropertyName("release")] bool Release,
-        [property: JsonPropertyName("repeat")] bool Repeat,
-        [property: JsonPropertyName("non_consuming")] bool NonConsuming,
         [property: JsonPropertyName("has_description")] bool HasDescription,
         [property: JsonPropertyName("modmask")] int Modmask,
         [property: JsonPropertyName("key")] string Key,

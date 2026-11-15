@@ -30,16 +30,8 @@ public static class BindText
     private static string Flags(Bind bind)
     {
         var flags = "";
-        if (bind.Flags.HasFlag(BindFlag.Locked))
-            flags += 'l';
-        if (bind.Flags.HasFlag(BindFlag.Release))
-            flags += 'r';
-        if (bind.Flags.HasFlag(BindFlag.Repeat))
-            flags += 'e';
         if (bind.Flags.HasFlag(BindFlag.Mouse))
             flags += 'm';
-        if (bind.Flags.HasFlag(BindFlag.NonConsuming))
-            flags += 'n';
         if (bind.Description is not null)
             flags += 'd';
 

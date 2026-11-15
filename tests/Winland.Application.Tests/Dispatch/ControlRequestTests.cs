@@ -135,7 +135,7 @@ public class ControlRequestTests
     {
         const string description = "hyprctl binds JSON regression";
         var desk = new TestDesktop();
-        desk.Keyword("bindled", $"SUPER, F12, {description}, exec, true");
+        desk.Keyword("bindd", $"SUPER, F12, {description}, exec, true");
 
         var binds = Json(desk.Send("j/binds")).EnumerateArray().ToArray();
         Assert.Single(binds, bind => bind.GetProperty("key").GetString() == "F12");
@@ -144,7 +144,7 @@ public class ControlRequestTests
             && bind.GetProperty("has_description").GetBoolean()
             && bind.GetProperty("description").GetString() == description);
 
-        Assert.Contains($"bindled = SUPER, F12, {description}, exec, true", desk.Send("binds").Split('\n'));
+        Assert.Contains($"bindd = SUPER, F12, {description}, exec, true", desk.Send("binds").Split('\n'));
 
         Assert.Equal("ok", desk.Send("keyword unbind SUPER, F12"));
     }
