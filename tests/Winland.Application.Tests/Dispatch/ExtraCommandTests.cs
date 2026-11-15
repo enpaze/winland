@@ -296,8 +296,7 @@ public class ExtraCommandTests
 
     [Theory]
     [InlineData(new[] { "dispatch", "resizeactive", "-0.1", "0" }, "dispatch resizeactive -0.1 0")]
-    [InlineData(new[] { "dispatch", "moveactive", "-50,", "0" }, "dispatch moveactive -50, 0")]
-    [InlineData(new[] { "dispatch", "resizeactive", "-1.5,", "-2.25" }, "dispatch resizeactive -1.5, -2.25")]
+    [InlineData(new[] { "dispatch", "resizeactive", "-1.5", "-2.25" }, "dispatch resizeactive -1.5 -2.25")]
     [InlineData(new[] { "-j", "dispatch", "resizeactive", "-12", "0" }, "j/dispatch resizeactive -12 0")]
     public void ControlToolPassesNegativeNumbersThrough(string[] args, string expected)
     {
@@ -310,6 +309,7 @@ public class ExtraCommandTests
     [InlineData("-1.")]
     [InlineData("-1.2.3")]
     [InlineData("-")]
+    [InlineData("-50,")]
     public void ControlToolRefusesAFlagThatIsNotANumber(string arg)
     {
         Assert.False(ControlInvocation.TryCreate(["dispatch", "resizeactive", arg], out _, out _));

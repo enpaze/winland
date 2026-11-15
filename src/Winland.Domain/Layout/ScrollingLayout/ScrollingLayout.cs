@@ -226,12 +226,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
 
     public override IReadOnlyList<Placement> Placed() => Placements();
 
-    public IReadOnlyList<Placement> Preselect(string direction)
-    {
-        ArgumentNullException.ThrowIfNull(direction);
-        return [];
-    }
-
     public void NoteFocus(WindowId window) => Follow(window, pointer: false);
 
     public void NotePointerFocus(WindowId window) => Follow(window, pointer: true);

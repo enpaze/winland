@@ -3,7 +3,7 @@ using System.Collections.Frozen;
 namespace Winland.Application;
 
 /// <summary>
-/// Every dispatcher Winland runs, in one table: what it runs, whether its arguments are free text, and its
+/// Every dispatcher Winland runs, in one table: what it runs, whether its arguments may hold a comma, and its
 /// <see cref="DispatcherTraits"/>. The table is also the list of names the config parser accepts.
 /// To add a dispatcher, add its entry here.
 /// </summary>
@@ -11,12 +11,12 @@ public sealed partial class WindowManager
 {
     /// <summary>
     /// What a dispatcher runs, given the Window Manager, the name it was called by and its arguments.
-    /// <paramref name="FreeText"/> when the arguments may hold a comma: a command line, or the window
-    /// <c>focuswindow</c> names. Every other dispatcher acts on the Focused window and refuses one.
+    /// <paramref name="AllowsComma"/> for a command line and for the window <c>focuswindow</c> names. No other
+    /// dispatcher has a comma in its arguments.
     /// </summary>
     private sealed record Dispatcher(
         Func<WindowManager, string, string, Outcome> Run,
-        bool FreeText = false,
+        bool AllowsComma = false,
         DispatcherTraits Traits = DispatcherTraits.None);
 
     private static readonly FrozenDictionary<string, Dispatcher> Table = BuildTable();
@@ -29,20 +29,20 @@ public sealed partial class WindowManager
         var table = new Dictionary<string, Dispatcher>(StringComparer.OrdinalIgnoreCase)
         {
             // Programs and the daemon
-            ["exec"] = new(static (m, _, a) => m.Exec(a), FreeText: true),
+            ["exec"] = new(static (m, _, a) => m.Exec(a), AllowsComma: true),
             ["exit"] = new(static (m, _, _) => m.ExitDaemon()),
 
             // Workspaces and Monitors
             ["workspace"] = new(static (m, _, a) => m.WorkspaceDispatch(a)),
             ["togglespecialworkspace"] = new(static (m, _, a) => m.ToggleSpecial(a)),
-            ["movetoworkspace"] = new(static (m, _, a) => m.MoveWindowToWorkspace(a, silent: false)),
-            ["movetoworkspacesilent"] = new(static (m, _, a) => m.MoveWindowToWorkspace(a, silent: true)),
+            ["movetoworkspace"] = new(static (m, _, a) => m.MoveTo(a, silent: false, consumed: false)),
+            ["movetoworkspacesilent"] = new(static (m, _, a) => m.MoveTo(a, silent: true, consumed: false)),
             ["focusmonitor"] = new(static (m, _, a) => m.FocusMonitorDispatch(a), Traits: DispatcherTraits.WarpsToEmptyMonitor),
             ["movecurrentworkspacetomonitor"] = new(static (m, _, a) => m.MoveCurrentWorkspace(a)),
 
             // Focus
             ["movefocus"] = new(static (m, _, a) => m.MoveFocusDirection(a), Traits: DispatcherTraits.WarpsToFocused | DispatcherTraits.WarpsToEmptyMonitor),
-            ["focuswindow"] = new(static (m, _, a) => m.FocusWindow(a), FreeText: true),
+            ["focuswindow"] = new(static (m, _, a) => m.FocusWindow(a), AllowsComma: true),
 
             // Windows
             ["killactive"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),

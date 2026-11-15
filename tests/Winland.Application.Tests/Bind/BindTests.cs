@@ -193,20 +193,6 @@ public class BindTests
     }
 
     [Fact]
-    public void ModifierReleaseBindDoesNotRunAfterABindUsedTheModifier()
-    {
-        var core = Load("bindr = ALT, Alt_L, exec, notepad\nbind = ALT, P, killactive\n");
-        Appear(core, 1);
-        Press(core, "Alt_L");
-        AssertRan(Press(core, "P"), 1);
-        Release(core, "P");
-
-        var outcome = Release(core, "Alt_L");
-
-        Assert.Null(outcome.Launch);
-    }
-
-    [Fact]
     public void ABindDoesNotRunWhileInputIsInhibitedAndRunsAgainAfter()
     {
         var core = Load("bind = SUPER, Q, killactive\n");

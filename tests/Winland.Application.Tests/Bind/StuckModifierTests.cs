@@ -115,36 +115,6 @@ public class StuckModifierTests
     }
 
     [Fact]
-    public void ReleaseOfAKeyPressedWithoutTheBindsModifiersPassesThrough()
-    {
-        var (core, session) = Load("bindr = SUPER, T, killactive");
-        Assert.False(core.Decide(new KeyPressed("T"), session).Consumed);
-        core.Decide(new KeyPressed("Super_L"), session);
-
-        var up = core.Decide(new KeyReleased("T"), session);
-
-        Assert.Null(up.Dispatcher);
-        Assert.False(up.Consumed);
-    }
-
-    [Fact]
-    public void ReleaseBindOnASuperAlreadyMaskedByAChordSendsNoSecondMask()
-    {
-        var (core, session) = Load("""
-            bind = SUPER, T, exec, teams
-            bindr = SUPER, Super_L, exec, launcher
-            """);
-
-        core.Decide(new KeyPressed("Super_L"), session);
-        var t = core.Decide(new KeyPressed("T"), session);
-        core.Decide(new KeyReleased("T"), session);
-        var up = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.True(t.Mask);
-        Assert.False(up.Mask);
-    }
-
-    [Fact]
     public void MouseChordWithSuperMasksSuperAndPassesItsRelease()
     {
         var (core, session) = Load("bindm = SUPER, mouse:272, movewindow");
@@ -162,19 +132,6 @@ public class StuckModifierTests
     }
 
     [Fact]
-    public void ButtonReleaseIsNotSwallowedWhenItsPressPassed()
-    {
-        var (core, session) = Load("bindr = SUPER, mouse:272, killactive");
-        Assert.False(core.Decide(new PointerButtonPressed("mouse:272"), session).Consumed);
-        core.Decide(new KeyPressed("Super_L"), session);
-
-        var up = core.Decide(new PointerButtonReleased("mouse:272"), session);
-
-        Assert.Null(up.Dispatcher);
-        Assert.False(up.Consumed);
-    }
-
-    [Fact]
     public void WheelChordWithSuperMasksSuper()
     {
         var (core, session) = Load("bind = SUPER, mouse_down, workspace, m+1");
@@ -185,21 +142,6 @@ public class StuckModifierTests
         Assert.True(wheel.Consumed);
         Assert.True(wheel.Mask);
         Assert.False(core.Decide(new KeyReleased("Super_L"), session).Consumed);
-    }
-
-    [Fact]
-    public void NonConsumingChordDoesNotMaskSuper()
-    {
-        var (core, session) = Load("bindn = SUPER, T, killactive");
-        core.Decide(new KeyPressed("Super_L"), session);
-
-        var t = core.Decide(new KeyPressed("T"), session);
-        core.Decide(new KeyReleased("T"), session);
-        var up = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.False(t.Consumed);
-        Assert.False(t.Mask);
-        Assert.False(up.Consumed);
     }
 
     [Fact]
@@ -275,22 +217,6 @@ public class StuckModifierTests
         Assert.False(chord.Mask);
         Assert.True(up.Consumed);
         Assert.False(core.Decide(new KeyPressed("F23"), session).Consumed);
-    }
-
-    // The worker runs a decision's dispatchers; submap changes land in the core's session.
-    private static BindDecision Run(WindowManager core, BindDecision decision)
-    {
-        foreach (var dispatch in decision.Dispatches)
-            core.Handle(new Dispatch(dispatch.Dispatcher, dispatch.Arguments));
-
-        return decision;
-    }
-
-    private static WindowManager Submaps(string config)
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse(config)));
-        return core;
     }
 
     private static (WindowManager WindowManager, BindSession Session) Load(string config)

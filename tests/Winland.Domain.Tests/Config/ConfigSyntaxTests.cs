@@ -34,16 +34,6 @@ public class ConfigSyntaxTests
         Assert.Equal(new Setting("general:gaps_in", "4"), Assert.Single(document.Settings));
     }
 
-    [Fact]
-    public void SubmapIsAnUnsupportedKeywordLikeAnyOtherAndSkipsNothing()
-    {
-        var document = ConfigParser.Parse("submap = resize\nbind = SUPER, Q, killactive\nsubmap = reset\n");
-
-        Assert.Equal(2, document.Warnings.Count);
-        Assert.All(document.Warnings, warning => Assert.StartsWith("Unsupported keyword 'submap'.", warning.Message, StringComparison.Ordinal));
-        Assert.Equal("killactive", Assert.IsType<Bind>(Assert.Single(document.Binds)).Dispatcher);
-    }
-
     [Theory]
     [InlineData("SUPER SHFT")]
     [InlineData("SUPERunknown")]

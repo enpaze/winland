@@ -48,7 +48,7 @@ public sealed partial class WindowManager
     private Outcome FloatWindow(string arguments)
     {
         if (arguments.Trim().Length > 0)
-            return FocusedOnly("togglefloating");
+            return Rejected("error: togglefloating takes no argument");
 
         if (ActiveWindow() is not WindowId id || Find(id) is not Client client || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
@@ -66,9 +66,6 @@ public sealed partial class WindowManager
             ? Present(desk, covered, placements)
             : View([]);
     }
-
-    private Outcome MoveWindowToWorkspace(string arguments, bool silent) =>
-        MoveTo(arguments, silent, consumed: false);
 
     private Outcome SwapWindow(string arguments)
     {

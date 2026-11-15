@@ -3,8 +3,6 @@ namespace Winland.Application;
 /// <summary>A window's life as a Client: it appears, changes title or class, minimizes, restores and closes.</summary>
 public sealed partial class WindowManager
 {
-    // The window a dispatcher given a window acts on in place of the active one, while it runs.
-
     private static IReadOnlyList<WindowRule> JoinRules(IReadOnlyList<WindowRule> rules, IReadOnlyList<WindowRule> followed)
     {
         if (followed.Count == 0)

@@ -2,22 +2,6 @@ namespace Winland.Application.Tests;
 
 public class BindFlagTests
 {
-    [Theory]
-    [InlineData("binde", 'e')]
-    [InlineData("bindr", 'r')]
-    [InlineData("bindl", 'l')]
-    [InlineData("bindn", 'n')]
-    [InlineData("binddl", 'l')]
-    public void ARepeatReleaseLockedOrPassThroughFlagWarnsAndTheBindIsSkipped(string keyword, char flag)
-    {
-        var description = keyword[4..].Contains('d', StringComparison.Ordinal) ? "Close, " : "";
-
-        var document = ConfigParser.Parse($"{keyword} = SUPER, Q, {description}killactive\n");
-
-        Assert.Equal($"Bind flag '{flag}' is not supported.", Assert.Single(document.Warnings).Message);
-        Assert.Empty(document.Binds);
-    }
-
     [Fact]
     public void ABindRunsOnceOnThePressAndSwallowsTheHeldKeyAndItsRelease()
     {

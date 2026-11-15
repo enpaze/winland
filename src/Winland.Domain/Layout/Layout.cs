@@ -84,9 +84,6 @@ internal interface Layout
     /// </summary>
     IReadOnlyList<Placement> Arrange(IReadOnlyDictionary<WindowId, Rectangle> tiles) => [];
 
-    /// <summary>Sets the direction of the next split on this Workspace.</summary>
-    IReadOnlyList<Placement> Preselect(string direction);
-
     /// <summary>The Client focus moves to, in the requested direction.</summary>
     WindowId? MoveFocus(WindowId active, string arguments);
 

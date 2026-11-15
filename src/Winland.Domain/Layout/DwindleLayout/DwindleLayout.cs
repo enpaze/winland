@@ -5,7 +5,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
     private readonly Dictionary<ClientId, Node> _nodes = [];
     private readonly Dictionary<ClientId, Suspension> _suspended = [];
     private LayoutOptions _options = LayoutOptions.Unconfigured;
-    private PendingSplit _preselect;
     private Node? _root;
     private ClientId? _splitTarget;
     private Rectangle _area;
@@ -58,14 +57,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
 
         bounds = default;
         return false;
-    }
-
-    public IReadOnlyList<Placement> Preselect(string direction)
-    {
-        ArgumentNullException.ThrowIfNull(direction);
-        if (direction.Length > 0)
-            _preselect = ParseDirection(direction);
-        return [];
     }
 
     public IReadOnlyList<Placement> Add(
@@ -311,14 +302,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return (dx * (double)dx) + (dy * (double)dy);
     }
 
-    private static PendingSplit ParseDirection(string direction) => direction[0] switch
-    {
-        'l' => PendingSplit.Left,
-        'r' => PendingSplit.Right,
-        'u' or 't' => PendingSplit.Up,
-        'd' or 'b' => PendingSplit.Down,
-        _ => PendingSplit.None,
-    };
 
     private static Node Leaf(Node node)
     {

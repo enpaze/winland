@@ -239,5 +239,3 @@ public sealed record WindowAppeared(WindowId Window, Rectangle WorkArea) : Event
     /// <summary>The full path of the window's program, or empty when it could not be read. The traits' exe is only the file name.</summary>
     public string Executable { get; init; } = "";
 }
-
-/// <summary>The click <c>kill</c> waits for, at <paramref name="Position"/>, or Escape when it is null.</summary>

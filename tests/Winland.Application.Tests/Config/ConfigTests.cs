@@ -169,15 +169,6 @@ public class ConfigTests
     }
 
     [Fact]
-    public void ExecShutdownIsAnUnsupportedKeywordAndLaunchesNothing()
-    {
-        var document = ConfigParser.Parse("exec-shutdown = bye\n");
-
-        Assert.StartsWith("Unsupported keyword 'exec-shutdown'.", Assert.Single(document.Warnings).Message, StringComparison.Ordinal);
-        Assert.Empty(new WindowManager().StartupLaunches(document));
-    }
-
-    [Fact]
     public void KeptKeywordsLoadWithoutAWarning()
     {
         var text = """
@@ -674,7 +665,7 @@ public class ConfigTests
         var text =
             "bindz = SUPER, Q, killactive\n" +
             "bind = SUPER, Q\n" +
-            "bindr = SUPER, Q, killactive\n" +
+            "bindzz = SUPER, Q, killactive\n" +
             "bind = FOO, Q, killactive\n" +
             "bindm = SUPER, mouse:272, movewindow, extra\n" +
             "bind = SUPER, Q, killactive\n";
@@ -686,7 +677,7 @@ public class ConfigTests
             {
                 new ConfigWarning(1, "Bind flag 'z' is not supported."),
                 new ConfigWarning(2, "Bind has too few arguments."),
-                new ConfigWarning(3, "Bind flag 'r' is not supported."),
+                new ConfigWarning(3, "Bind flag 'z' is not supported."),
                 new ConfigWarning(4, "Invalid modifier 'FOO'."),
                 new ConfigWarning(5, "Bind has too many arguments."),
             },

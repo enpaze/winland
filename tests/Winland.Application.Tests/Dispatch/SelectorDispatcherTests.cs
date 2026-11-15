@@ -71,7 +71,7 @@ public class SelectorDispatcherTests
     [InlineData("fullscreen 1,address:0x2")]
     [InlineData("togglegroup ,class:b")]
     [InlineData("changegroupactive f,class:b")]
-    public void ADispatcherGivenAnotherWindowIsRefusedAndChangesNothing(string line)
+    public void ADispatcherGivenAWindowIsRefusedAndChangesNothing(string line)
     {
         var desk = new TestDesktop();
         desk.Spawn("a");

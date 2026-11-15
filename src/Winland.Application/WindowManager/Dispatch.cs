@@ -34,8 +34,7 @@ public sealed partial class WindowManager
         return [new BindDispatch(match.Dispatcher, match.Arguments)];
     }
 
-    // Runs a dispatcher from the table and stamps its outcome with the entry's traits. A comma only ever came before a
-    // window selector, so a dispatcher that acts on the Focused window refuses one.
+    // Runs a dispatcher from the table and stamps its outcome with the entry's traits.
     private Outcome Execute(string name, string arguments)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -44,14 +43,11 @@ public sealed partial class WindowManager
         if (!Table.TryGetValue(name, out var dispatcher))
             return View([]) with { Error = DidYouMean.After("error: unknown dispatcher '" + name + "'", name, Table.Keys) };
 
-        if (!dispatcher.FreeText && arguments.Contains(',', StringComparison.Ordinal))
-            return FocusedOnly(name);
+        if (!dispatcher.AllowsComma && arguments.Contains(',', StringComparison.Ordinal))
+            return Rejected("error: " + name + " does not take a comma");
 
         return dispatcher.Run(this, name, arguments) with { Traits = dispatcher.Traits };
     }
-
-    private Outcome FocusedOnly(string name) =>
-        Rejected("error: " + name + " acts on the focused window");
 
     private Outcome WorkspaceDispatch(string arguments)
     {

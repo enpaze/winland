@@ -134,7 +134,7 @@ public sealed partial class WindowManager
             return null;
         }
 
-        return OutOfGroup(desk, group, window, direction: null);
+        return OutOfGroup(desk, group, window);
     }
 
     // The member whose tab a move drag starts on, in a Group of more than one, or null.

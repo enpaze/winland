@@ -133,13 +133,9 @@ public static class ControlInvocation
         }
     }
 
-    // A negative number is an argument, not a flag: "-20", "-0.1", and "-50," as the
-    // first of two numbers, the way the reference control tool reads them.
+    // A negative number is an argument, not a flag: "-20" and "-0.1".
     private static bool IsNumber(string text)
     {
-        if (text.EndsWith(','))
-            text = text[..^1];
-
         var i = 0;
         if (text.Length > 1 && text[0] == '-')
             i = 1;

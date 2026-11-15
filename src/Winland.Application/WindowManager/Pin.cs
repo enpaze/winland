@@ -16,7 +16,7 @@ public sealed partial class WindowManager
     private Outcome PinWindow(string arguments)
     {
         if (PinRequest(arguments) is not PinAction action)
-            return FocusedOnly("pin");
+            return Rejected("error: pin takes toggle, enable or disable");
 
         if (ActiveWindow() is not WindowId id || Find(id) is not Client client || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
@@ -140,7 +140,7 @@ public sealed partial class WindowManager
     private bool StaysVisible(LiveWorkspace desk, WindowId window, bool minimized) =>
         _pins.StaysVisible(window, minimized, _workspaces.Shown.ShowsAWorkspace(desk.Monitor));
 
-    // Nothing toggles the pin. Any other word is not an action, and pin takes no window.
+    // No word toggles the pin. Any other word is not an action.
     private static PinAction? PinRequest(string arguments) => arguments.Trim() switch
     {
         "" or "toggle" => PinAction.Toggle,

@@ -200,7 +200,7 @@ public sealed partial class WindowManager
     private Outcome MoveOutOfGroup(string text)
     {
         if (text.Length > 0 && text != "active")
-            return FocusedOnly("moveoutofgroup");
+            return Rejected("error: moveoutofgroup takes no argument");
 
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
@@ -208,18 +208,16 @@ public sealed partial class WindowManager
         if (desk.GroupOf(id) is not WindowGroup group)
             return Rejected("error: window not in a group");
 
-        return OutOfGroup(desk, group, id, direction: null);
+        return OutOfGroup(desk, group, id);
     }
 
-    private Outcome OutOfGroup(LiveWorkspace desk, WindowGroup group, WindowId window, string? direction)
+    private Outcome OutOfGroup(LiveWorkspace desk, WindowGroup group, WindowId window)
     {
         var covered = desk.Covered();
         var exit = desk.Leave(group, window, out var taken);
         if (exit == GroupExit.Detached)
         {
             desk.Layout.NoteFocus(group.Shown);
-            if (direction is not null)
-                desk.Layout.Preselect(direction);
             desk.Receive(window, taken, WorkArea(desk, _area));
         }
 

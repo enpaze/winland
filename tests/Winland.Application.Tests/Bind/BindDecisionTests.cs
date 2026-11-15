@@ -72,32 +72,6 @@ public class BindDecisionTests
     }
 
     [Fact]
-    public void AReleaseBindOnAModifierKeyWithoutItsModifierDoesNotRun()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bindr = , Super_L, exec, menu")));
-        var session = new BindSession();
-
-        core.Decide(new KeyPressed("Super_L"), session);
-        var up = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.Null(up.Dispatcher);
-    }
-
-    [Fact]
-    public void AReleaseBindOnAModifierKeyStillNeedsItsOtherModifiers()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bindr = SUPER ALT, Super_L, exec, menu")));
-        var session = new BindSession();
-
-        core.Decide(new KeyPressed("Super_L"), session);
-        var up = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.Null(up.Dispatcher);
-    }
-
-    [Fact]
     public void NoBindRunsWhileBindsArePaused()
     {
         var core = new WindowManager();

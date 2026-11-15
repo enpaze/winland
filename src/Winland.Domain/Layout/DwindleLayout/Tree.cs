@@ -12,7 +12,7 @@ internal sealed partial class DwindleLayout
             SplitTop = SplitsTop(opening.Box),
         };
 
-        var direction = requested ?? TakePreselect();
+        var direction = requested ?? PendingSplit.None;
         if (direction != PendingSplit.None)
         {
             AssignDirection(parent, opening, node, direction);
@@ -25,14 +25,6 @@ internal sealed partial class DwindleLayout
         opening.Parent = parent;
         node.Parent = parent;
         Refit();
-    }
-
-    private PendingSplit TakePreselect()
-    {
-        var direction = _preselect;
-        if (direction != PendingSplit.None)
-            _preselect = PendingSplit.None;
-        return direction;
     }
 
     private static void AssignDirection(Node parent, Node opening, Node node, PendingSplit direction)
