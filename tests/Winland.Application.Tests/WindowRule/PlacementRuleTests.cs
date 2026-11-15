@@ -135,7 +135,7 @@ public class PlacementRuleTests
     }
 
     [Fact]
-    public void MoveAndSizeOnlyApplyToFloatingClientsAndSizeIsThePseudoSize()
+    public void MoveAndSizeOnlyApplyToFloatingClients()
     {
         var core = new WindowManager(ConfigParser.Parse("""
             general:gaps_in = 0
@@ -150,11 +150,9 @@ public class PlacementRuleTests
             Traits = WindowTraits.Normal with { Class = "box" },
             Bounds = Own,
         });
-        var pseudo = core.Handle(new Pseudo(new WindowId(1)));
 
         Assert.False(Assert.Single(tiled.State.Clients).Floating);
         Assert.Equal(Area, BoundsOf(tiled, 1));
-        Assert.Equal(new Rectangle(760, 390, 400, 300), BoundsOf(pseudo, 1));
     }
 
     [Fact]

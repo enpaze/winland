@@ -37,7 +37,6 @@ public class ConfigTests
     [Theory]
     [InlineData("exec")]
     [InlineData("exec-once")]
-    [InlineData("exec-shutdown")]
     [InlineData("monitor")]
     public void HandlersCanRepeat(string keyword)
     {
@@ -175,7 +174,6 @@ public class ConfigTests
         var text = """
             exec = app
             exec-once = app
-            exec-shutdown = app
             monitor = , addreserved, 0, 0, 0, 0
             windowrule = float, class:^(kitty)$
             windowrule = tile, class:^(kitty)$
@@ -569,14 +567,11 @@ public class ConfigTests
     }
 
     [Fact]
-    public void BindFlagsAndDescriptionAreParsed()
+    public void TheMouseFlagAndADescriptionAreParsed()
     {
         var text =
-            "binde = SUPER, H, movefocus, l\n" +
-            "bindl = , XF86AudioMute, exec, wpctl set-mute\n" +
             "bindm = SUPER, mouse:272, movewindow\n" +
-            "bindd = SUPER, Return, Open a terminal, exec, kitty\n" +
-            "bindel = SUPER SHIFT, E, exec, notepad\n";
+            "bindd = SUPER, Return, Open a terminal, exec, kitty\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -584,11 +579,8 @@ public class ConfigTests
         Assert.Equal(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "H", "movefocus", "l", BindFlag.Repeat, null),
-                new Bind(Modifier.None, "XF86AudioMute", "exec", "wpctl set-mute", BindFlag.Locked, null),
                 new Bind(Modifier.Super, "mouse:272", "movewindow", "", BindFlag.Mouse, null),
                 new Bind(Modifier.Super, "Return", "exec", "kitty", BindFlag.None, "Open a terminal"),
-                new Bind(Modifier.Super | Modifier.Shift, "E", "exec", "notepad", BindFlag.Repeat | BindFlag.Locked, null),
             },
             document.Binds);
     }
@@ -673,7 +665,7 @@ public class ConfigTests
         var text =
             "bindz = SUPER, Q, killactive\n" +
             "bind = SUPER, Q\n" +
-            "bindre = SUPER, Q, killactive\n" +
+            "bindzz = SUPER, Q, killactive\n" +
             "bind = FOO, Q, killactive\n" +
             "bindm = SUPER, mouse:272, movewindow, extra\n" +
             "bind = SUPER, Q, killactive\n";
@@ -685,7 +677,7 @@ public class ConfigTests
             {
                 new ConfigWarning(1, "Bind flag 'z' is not supported."),
                 new ConfigWarning(2, "Bind has too few arguments."),
-                new ConfigWarning(3, "Bind flags conflict."),
+                new ConfigWarning(3, "Bind flag 'z' is not supported."),
                 new ConfigWarning(4, "Invalid modifier 'FOO'."),
                 new ConfigWarning(5, "Bind has too many arguments."),
             },

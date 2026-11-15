@@ -33,9 +33,7 @@ public class OutcomeConsumerTests
             nameof(Outcome.Cursor), // SessionEffects
             nameof(Outcome.ResizeCursor), // not applied: behavior.md says the system pointer is not changed
             nameof(Outcome.Error), // command replies
-            nameof(Outcome.Kills), // WindowAdapter.ApplyCore
             nameof(Outcome.Exit), // WindowAdapter.ApplyCore
-            nameof(Outcome.Relays), // SessionEffects
             nameof(Outcome.ZOrder), // WindowAdapter.ApplyCore
             nameof(Outcome.IsEmpty), // WindowAdapter.Apply
         ];

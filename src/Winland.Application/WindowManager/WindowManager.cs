@@ -160,9 +160,6 @@ public sealed partial class WindowManager
             return ConfigLaunches(config, LaunchParser.LaunchMoment.Reload, LaunchWorkspace());
     }
 
-    public static IReadOnlyList<Launch> ShutdownLaunches(ConfigDocument config) =>
-        ConfigLaunches(config, LaunchParser.LaunchMoment.Shutdown);
-
     public void NoteLaunched(int processId, Launch launch)
     {
         ArgumentNullException.ThrowIfNull(launch);
@@ -288,11 +285,10 @@ public sealed partial class WindowManager
             WindowSizing sizing => ContinueNativeSize(sizing),
             WindowMoveStarted started => BeginNativeMove(started),
             WindowMoveEnded ended => EndNativeMove(ended),
-            ClickKillChosen chosen => ChooseKill(chosen),
             SwipeBegan => BeginSwipe(),
             SwipeUpdated updated => UpdateSwipe(updated),
             SwipeEnded => EndSwipe(),
-            Dispatch dispatched => ExecuteTriggered(dispatched.Name, dispatched.Arguments, dispatched.Trigger),
+            Dispatch dispatched => Execute(dispatched.Name, dispatched.Arguments),
             WindowFlashed flashed => Flash(flashed.Window),
             WindowFocused focused => Consider(focused),
             WindowClosed closed => Close(closed.Window, closed.Cloaked),
@@ -306,8 +302,6 @@ public sealed partial class WindowManager
             Configure configure => Apply(configure.Document),
             AccentChanged accent => NoteAccent(accent),
             RestoredAdopted => ArrangeRestored(),
-            Preselect preselect => View(CurrentWorkspace().Layout.Preselect(preselect.Direction)),
-            Pseudo pseudo => ChangePseudo(pseudo.Window),
             MonitorsChanged changed => SetMonitors(changed.Monitors),
         };
 

@@ -15,9 +15,10 @@ public sealed partial class WindowManager
 
     private Outcome PinWindow(string arguments)
     {
-        var (action, selector) = PinRequest(arguments);
-        var window = Select(selector, emptyMeansActive: true);
-        if (window is not WindowId id || Find(id) is not Client client || WorkspaceContaining(id) is not LiveWorkspace desk)
+        if (PinRequest(arguments) is not PinAction action)
+            return Rejected("error: pin takes toggle, enable or disable");
+
+        if (ActiveWindow() is not WindowId id || Find(id) is not Client client || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
 
         if (!client.Floating || client.Fullscreen != FullscreenMode.None)
@@ -139,22 +140,12 @@ public sealed partial class WindowManager
     private bool StaysVisible(LiveWorkspace desk, WindowId window, bool minimized) =>
         _pins.StaysVisible(window, minimized, _workspaces.Shown.ShowsAWorkspace(desk.Monitor));
 
-    private static (PinAction Action, string Selector) PinRequest(string arguments)
+    // No word toggles the pin. Any other word is not an action.
+    private static PinAction? PinRequest(string arguments) => arguments.Trim() switch
     {
-        var text = arguments.Trim();
-        if (text.Length == 0)
-            return (PinAction.Toggle, "");
-
-        var space = text.IndexOfAny([' ', '\t']);
-        var head = space < 0 ? text : text[..space];
-        var rest = space < 0 ? "" : text[(space + 1)..].Trim();
-        var action = head switch
-        {
-            "toggle" => PinAction.Toggle,
-            "enable" or "on" => PinAction.Enable,
-            "disable" or "off" => PinAction.Disable,
-            _ => (PinAction?)null,
-        };
-        return action is PinAction chosen ? (chosen, rest) : (PinAction.Toggle, text);
-    }
+        "" or "toggle" => PinAction.Toggle,
+        "enable" or "on" => PinAction.Enable,
+        "disable" or "off" => PinAction.Disable,
+        _ => null,
+    };
 }

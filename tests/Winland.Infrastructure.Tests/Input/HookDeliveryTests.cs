@@ -14,24 +14,6 @@ public class HookDeliveryTests
     }
 
     [Fact]
-    public void ANonConsumingBindOnAResizeRingRunsOnPressAndRelease()
-    {
-        var core = BorderCore("bindn = , mouse:272, exec, press\nbindnr = , mouse:272, exec, release\n");
-        var outcomes = new List<Outcome>();
-        using var keys = new KeyboardHook(core, outcomes.Add);
-        using var mouse = new MouseHook(core, keys);
-        var position = new Point(960, 540);
-        Assert.True(core.OnBorder(position));
-
-        Assert.True(mouse.OnButton("mouse:272", false, position));
-        Assert.True(mouse.OnButton("mouse:272", true, position));
-        keys.Dispose();
-        keys.Pump();
-
-        Assert.Equal(["press", "release"], outcomes.SelectMany(outcome => outcome.Launches).Select(launch => launch.CommandLine));
-    }
-
-    [Fact]
     public void RecoveringAMissedBorderReleaseStopsResizing()
     {
         var core = BorderCore("");

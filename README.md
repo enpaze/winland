@@ -37,7 +37,6 @@ The starter uses `$mainMod = SUPER` and describes each bind. Run `winland binds`
 | Win+F | Fullscreen |
 | Win+Alt+F | Maximize |
 | Win+O | Pop the window out (float and pin it) |
-| Win+P | Show the window at its own size in its tile |
 | Win+J | Flip the split direction |
 | Win+K / Win+Alt+K | Next / previous layout |
 | Win+Alt+Minus / Win+Alt+Equal | Make the window narrower / wider by 25 pixels |
@@ -141,7 +140,7 @@ These talk to the running Winland.
 | --- | --- |
 | `winland dispatch <name> [args]` | Run a Dispatcher, such as `winland dispatch workspace 2` |
 | `winland dispatch layout <dwindle\|scrolling\|floating>` | Select the Shown workspace's Layout |
-| `winland dispatch moveintogroup <selector>` | Join another Client's Group or create one around it on the same Workspace |
+| `winland dispatch moveintogroup <l\|r\|u\|d>` | Join the Group of the Client in that direction |
 | `winland reload` | Read the config again |
 | `winland keyword <name> <value>` | Change one option until the next reload |
 | `winland getoption <name>` | Show an option's value |
@@ -156,7 +155,6 @@ These talk to the running Winland.
 | `winland files` | Show the config Winland read and the log it writes |
 | `winland getprop <window> <property>` | Show a window property |
 | `winland setprop <window> <property> <value>` | Set a window property |
-| `winland kill` | Click a window to end its program. Escape cancels |
 | `winland version` | Show the version |
 | `winland events` | Print every event as it happens, one per line |
 | `winland --batch "<command>; <command>"` | Run several commands in one go |

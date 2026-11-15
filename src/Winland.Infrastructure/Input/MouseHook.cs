@@ -31,7 +31,6 @@ public sealed class MouseHook : IDisposable
     // Buttons whose press a drag bind let through, with no window to drag, so their release goes through too.
     private readonly HashSet<string> _passed = new(StringComparer.OrdinalIgnoreCase);
     private readonly DiscreteScroll _discreteWheel = new();
-    private readonly HashSet<string> _killed = new(StringComparer.Ordinal);
 
     // Buttons pressed on the ring around a tile, whose press and release go to the core to resize it.
     private readonly HashSet<string> _bordered = new(StringComparer.OrdinalIgnoreCase);
@@ -175,17 +174,6 @@ public sealed class MouseHook : IDisposable
 
     internal bool OnButton(string button, bool up, Point position)
     {
-        // kill: the armed click goes to the core, not to the window, and so does its release.
-        if (up && _killed.Remove(button))
-            return true;
-
-        if (!up && _core.ClickKillArmed)
-        {
-            _killed.Add(button);
-            _keys.PostInput(new ClickKillChosen(position));
-            return true;
-        }
-
         if (up && _bordered.Remove(button))
         {
             _keys.Enqueue(_core.Decide(new PointerButtonReleased(button) { Position = position }, _keys.Session));
@@ -232,7 +220,7 @@ public sealed class MouseHook : IDisposable
                 if (dispatch.Dispatcher.Equals(dispatcher, StringComparison.OrdinalIgnoreCase) && dispatch.Arguments == arguments)
                     continue;
 
-                _keys.PostDispatch(dispatch.Dispatcher, dispatch.Arguments, decision.Trigger);
+                _keys.PostDispatch(dispatch.Dispatcher, dispatch.Arguments);
             }
         }
         else if (!decision.Consumed && _keys.Drag.Current is null && _core.OnBorder(position))

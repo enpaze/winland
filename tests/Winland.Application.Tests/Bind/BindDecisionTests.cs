@@ -71,82 +71,18 @@ public class BindDecisionTests
         Assert.False(core.Decide(new KeyPressed("E"), session).Consumed);
     }
 
-    // Winland folds the released key's own modifier into the mask on release,
-    // so the classic "bindr = SUPER, Super_L" runs when Super is let go.
-    [Theory]
-    [InlineData("bindr = SUPER, Super_L, exec, menu", "Super_L")]
-    [InlineData("bindr = ALT, Alt_R, exec, menu", "Alt_R")]
-    [InlineData("bindr = CTRL SHIFT, Shift_L, exec, menu", "Shift_L")]
-    public void AReleaseBindOnAModifierKeyRunsWhenThatKeyIsLetGo(string config, string key)
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse(config)));
-        var session = new BindSession();
-        if (config.Contains("CTRL", StringComparison.Ordinal))
-            core.Decide(new KeyPressed("Control_L"), session);
-
-        var down = core.Decide(new KeyPressed(key), session);
-        var up = core.Decide(new KeyReleased(key), session);
-
-        Assert.Null(down.Dispatcher);
-        Assert.Equal("exec", up.Dispatcher);
-    }
-
-    // On release the mask holds the released key's own modifier, so a release bind that leaves it out
-    // does not run, and one release runs only the bind that names it.
     [Fact]
-    public void OnlyTheReleaseBindNamingTheKeysOwnModifierRuns()
+    public void NoBindRunsWhileBindsArePaused()
     {
         var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("""
-            bindr = , Super_L, exec, bare
-            bindr = SUPER, Super_L, exec, named
-            """)));
-        var session = new BindSession();
-
-        core.Decide(new KeyPressed("Super_L"), session);
-        var up = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.Equal("exec", up.Dispatcher);
-        Assert.Equal("named", up.Arguments);
-    }
-
-    [Fact]
-    public void AReleaseBindOnAModifierKeyWithoutItsModifierDoesNotRun()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bindr = , Super_L, exec, menu")));
-        var session = new BindSession();
-
-        core.Decide(new KeyPressed("Super_L"), session);
-        var up = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.Null(up.Dispatcher);
-    }
-
-    [Fact]
-    public void AReleaseBindOnAModifierKeyStillNeedsItsOtherModifiers()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bindr = SUPER ALT, Super_L, exec, menu")));
-        var session = new BindSession();
-
-        core.Decide(new KeyPressed("Super_L"), session);
-        var up = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.Null(up.Dispatcher);
-    }
-
-    [Fact]
-    public void DecisionHonorsInhibitAndTheLockedFlag()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = , Q, killactive\nbindl = , M, killactive\n")));
+        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = , Q, killactive\n")));
         var session = new BindSession();
         session.Inhibit(true);
 
-        Assert.False(core.Decide(new KeyPressed("Q"), session).Consumed);
-        Assert.Equal("killactive", core.Decide(new KeyPressed("M"), session).Dispatcher);
+        var paused = core.Decide(new KeyPressed("Q"), session);
+
+        Assert.False(paused.Consumed);
+        Assert.Null(paused.Dispatcher);
     }
 
     [Fact]
@@ -220,44 +156,6 @@ public class BindDecisionTests
             decision.Dispatches);
     }
 
-    [Fact]
-    public void KeyIsConsumedWhenAnyMatchingBindConsumes()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bindn = , Q, exec, first\nbind = , Q, killactive\n")));
-        var session = new BindSession();
-
-        var decision = core.Decide(new KeyPressed("Q"), session);
-        var release = core.Decide(new KeyReleased("Q"), session);
-
-        Assert.True(decision.Consumed);
-        Assert.Equal(
-            new BindDispatch[]
-            {
-                new("exec", "first"),
-                new("killactive", ""),
-            },
-            decision.Dispatches);
-        Assert.True(release.Consumed);
-        Assert.Null(release.Dispatcher);
-    }
-
-    [Fact]
-    public void NonConsumingBindRunsWithoutSwallowingTheKey()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bindn = , Q, exec, notepad\n")));
-        var session = new BindSession();
-
-        var decision = core.Decide(new KeyPressed("Q"), session);
-        var release = core.Decide(new KeyReleased("Q"), session);
-
-        Assert.False(decision.Consumed);
-        Assert.Equal("exec", decision.Dispatcher);
-        Assert.Equal(new BindDispatch[] { new("exec", "notepad") }, decision.Dispatches);
-        Assert.False(release.Consumed);
-    }
-
     [Theory]
     [InlineData("Super_L")]
     [InlineData("Super_R")]
@@ -327,50 +225,6 @@ public class BindDecisionTests
     }
 
     [Fact]
-    public void ModifierReleaseBindFiresWhenThatKeyGoesUp()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bindr = SUPER, Super_L, killactive\n")));
-        var session = new BindSession();
-
-        var press = core.Decide(new KeyPressed("Super_L"), session);
-        var release = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.False(press.Consumed);
-        Assert.Null(press.Dispatcher);
-        Assert.Equal("killactive", release.Dispatcher);
-        Assert.False(release.Consumed);
-    }
-
-    // The press matches the release bind without Super, so Winland swallows it, and the
-    // release, with Super still held, matches nothing and is swallowed with it.
-    [Fact]
-    public void AReleaseBindLeavingOutTheKeysModifierSwallowsTheKeyAndRunsNothing()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bindr = , Super_L, killactive\n")));
-        var session = new BindSession();
-
-        var press = core.Decide(new KeyPressed("Super_L"), session);
-        var release = core.Decide(new KeyReleased("Super_L"), session);
-
-        Assert.True(press.Consumed);
-        Assert.True(release.Consumed);
-        Assert.Null(release.Dispatcher);
-    }
-
-    [Fact]
-    public void ModifierRepeatBindFiresAgainWhileHeld()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("binde = , Super_L, killactive\n")));
-        var session = new BindSession();
-
-        Assert.Equal("killactive", core.Decide(new KeyPressed("Super_L"), session).Dispatcher);
-        Assert.Equal("killactive", core.Decide(new KeyPressed("Super_L"), session).Dispatcher);
-    }
-
-    [Fact]
     public void EmptyDispatcherConsumesTheKeyAndRunsNothing()
     {
         var core = new WindowManager();
@@ -397,19 +251,5 @@ public class BindDecisionTests
         Assert.True(decision.Consumed);
         Assert.Equal("killactive", decision.Dispatcher);
         Assert.Equal(new BindDispatch[] { new("killactive", "") }, decision.Dispatches);
-    }
-
-    [Fact]
-    public void PressBindsRunOnPressAndReleaseBindsRunOnRelease()
-    {
-        var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = , Q, killactive\nbindr = , Q, workspace, 2\n")));
-        var session = new BindSession();
-
-        var press = core.Decide(new KeyPressed("Q"), session);
-        var release = core.Decide(new KeyReleased("Q"), session);
-
-        Assert.Equal(new BindDispatch[] { new("killactive", "") }, press.Dispatches);
-        Assert.Equal(new BindDispatch[] { new("workspace", "2") }, release.Dispatches);
     }
 }

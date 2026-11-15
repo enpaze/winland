@@ -15,8 +15,10 @@ public class OwnedWindowTests
         var desk = new TestDesktop();
         var parent = desk.Spawn("child-test-parent");
 
-        desk.Ok("togglefloating", "class:child-test-parent");
-        desk.Ok("pin", "enable class:child-test-parent");
+        desk.Ok("focuswindow", "class:child-test-parent");
+        desk.Ok("togglefloating");
+        desk.Ok("focuswindow", "class:child-test-parent");
+        desk.Ok("pin", "enable");
 
         // The reference's child names its parent, as a Windows dialog names its owner.
         desk.Spawn("child-test-child", traits: Child, owner: parent);

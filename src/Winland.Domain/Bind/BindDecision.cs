@@ -4,9 +4,6 @@ public readonly record struct BindDecision(bool Consumed, string? Dispatcher, st
 {
     public IReadOnlyList<BindDispatch> Dispatches { get; init; } = [];
 
-    /// <summary>The key edge that ran these dispatchers. Null for a wheel notch.</summary>
-    public BindTrigger? Trigger { get; init; }
-
     /// <summary>
     /// Inject a mask key now, while a Super or Alt the OS saw is still held. This chord was
     /// swallowed, so without it the shell takes the modifier's release as a lone tap and
@@ -23,6 +20,3 @@ public readonly record struct BindDispatch(string Dispatcher, string Arguments)
     /// </summary>
     public bool Drag { get; init; }
 }
-
-/// <summary>The key or button edge that ran a bind.</summary>
-public readonly record struct BindTrigger(string Key, int Code, bool Pressed);

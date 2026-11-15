@@ -48,9 +48,6 @@ public static partial class CommandProtocol
             case MonitorLayoutChanged:
                 // Winland tells monitor.layout_changed to the config only.
                 break;
-            case ClientKilled killed:
-                lines.Add("kill>>" + EventAddress(killed.Window));
-                break;
             case ClientUrgent urgent:
                 lines.Add("urgent>>" + EventAddress(urgent.Window));
                 break;

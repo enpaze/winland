@@ -3,18 +3,22 @@ namespace Winland.Application.Tests;
 public class BindFlagTests
 {
     [Fact]
-    public void NonConsumingBindRunsAndLetsTheKeyThrough()
+    public void ABindRunsOnceOnThePressAndSwallowsTheHeldKeyAndItsRelease()
     {
-        var core = Load("bindn = SUPER, Q, killactive");
+        var core = Load("bind = SUPER, Q, killactive");
         Appear(core, 1);
         Press(core, "Super_L");
 
-        var outcome = Press(core, "Q");
+        var press = Press(core, "Q");
+        var held = Press(core, "Q");
+        var release = Release(core, "Q");
 
-        Assert.False(outcome.Consumed);
-        Assert.Equal(new WindowId(1), outcome.Close);
-        Assert.False(Release(core, "Q").Consumed);
-        Assert.False(Release(core, "Super_L").Consumed);
+        Assert.Equal(new WindowId(1), press.Close);
+        Assert.True(press.Consumed);
+        Assert.Null(held.Close);
+        Assert.True(held.Consumed);
+        Assert.Null(release.Close);
+        Assert.True(release.Consumed);
     }
 
     [Fact]

@@ -86,12 +86,6 @@ public static partial class ConfigParser
                     return;
                 }
 
-                if ((flags & (BindFlag.Repeat | BindFlag.Release | BindFlag.Locked)) != 0)
-                {
-                    Warn(lineNumber, "Bind flags conflict.");
-                    return;
-                }
-
                 flags |= BindFlag.Mouse;
             }
 
@@ -142,20 +136,8 @@ public static partial class ConfigParser
             {
                 switch (flag)
                 {
-                    case 'l':
-                        parsed |= BindFlag.Locked;
-                        break;
-                    case 'r':
-                        parsed |= BindFlag.Release;
-                        break;
-                    case 'e':
-                        parsed |= BindFlag.Repeat;
-                        break;
                     case 'm':
                         parsed |= BindFlag.Mouse;
-                        break;
-                    case 'n':
-                        parsed |= BindFlag.NonConsuming;
                         break;
                     case 'd':
                         hasDescription = true;
@@ -164,20 +146,6 @@ public static partial class ConfigParser
                         error = $"Bind flag '{flag}' is not supported.";
                         return false;
                 }
-            }
-
-            var release = parsed.HasFlag(BindFlag.Release);
-            var repeat = parsed.HasFlag(BindFlag.Repeat);
-            if (release && repeat)
-            {
-                error = "Bind flags conflict.";
-                return false;
-            }
-
-            if (parsed.HasFlag(BindFlag.Mouse) && (repeat || release || parsed.HasFlag(BindFlag.Locked)))
-            {
-                error = "Bind flags conflict.";
-                return false;
             }
 
             error = "";

@@ -209,35 +209,6 @@ public class LayoutOptionTests
     }
 
     [Fact]
-    public void PreselectOverridesTheNextSplitDirectionWhilePreserveKeepsIt()
-    {
-        var core = Configured(FlatConfig("""
-            dwindle:preserve_split = true
-            """));
-        core.Handle(Appeared(1, Tall));
-        core.Handle(new Preselect("l"));
-
-        var outcome = core.Handle(Appeared(2, Tall));
-
-        Assert.Equal(new Rectangle(540, 0, 540, 1920), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 0, 540, 1920), BoundsOf(outcome, 2));
-    }
-
-    [Fact]
-    public void ANonDirectionClearsPreselect()
-    {
-        var core = Configured(FlatConfig(""));
-        core.Handle(Appeared(1, Tall));
-        core.Handle(new Preselect("l"));
-        core.Handle(new Preselect("x"));
-
-        var outcome = core.Handle(Appeared(2, Tall));
-
-        Assert.Equal(new Rectangle(0, 0, 1080, 960), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 960, 1080, 960), BoundsOf(outcome, 2));
-    }
-
-    [Fact]
     public void AnotherLayoutNameStillTilesWithDwindle()
     {
         var core = Configured(FlatConfig("""

@@ -28,7 +28,6 @@ public static partial class CommandProtocol
         new("configerrors", "", (rest, _) => Bare(rest, new ConfigErrorsRequest())),
         new("files", "", (rest, _) => Bare(rest, new FilesRequest())),
         new("getoption", "<name>", (rest, _) => new GetOptionRequest(SplitOnce(rest).First)),
-        new("kill", "", (rest, _) => Bare(rest, new ClickKillRequest())),
         new("keyword", "<name> <value>", (rest, _) =>
         {
             var (name, value) = SplitOnce(rest);
@@ -153,7 +152,6 @@ public sealed record FilesRequest : CommandRequest;
 public sealed record GetOptionRequest(string Name) : CommandRequest;
 
 
-public sealed record ClickKillRequest : CommandRequest;
 
 public sealed record KeywordRequest(string Name, string Value) : CommandRequest;
 

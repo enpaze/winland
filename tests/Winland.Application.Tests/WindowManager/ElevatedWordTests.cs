@@ -10,14 +10,12 @@ public class ElevatedWordTests
     {
         var document = ConfigParser.Parse(
             "exec = [elevated] every\n" +
-            "exec-once = [elevated] once\n" +
-            "exec-shutdown = [float; elevated] bye\n");
+            "exec-once = [elevated] once\n");
 
         Assert.Equal(
             [
                 new ConfigWarning(1, "Unsupported window rule 'elevated'."),
                 new ConfigWarning(2, "Unsupported window rule 'elevated'."),
-                new ConfigWarning(3, "Unsupported window rule 'elevated'."),
             ],
             document.Warnings);
 
@@ -31,9 +29,6 @@ public class ElevatedWordTests
         Assert.Equal(
             [new Launch("every", null) { InitialWorkspace = WorkspaceId.Initial }],
             core.ReloadLaunches(document));
-        var shutdown = Assert.Single(WindowManager.ShutdownLaunches(document));
-        Assert.Equal("bye", shutdown.CommandLine);
-        Assert.Equal([new WindowRule(WindowRuleEffect.Float, null, null, null, null)], shutdown.Rules);
     }
 
     [Fact]

@@ -20,16 +20,6 @@ public sealed partial class BindSession
     // Held Super and Alt keys that already got a mask key during this hold.
     private readonly HashSet<string> _maskedKeys = new(StringComparer.OrdinalIgnoreCase);
 
-    // Release binds on one key that a held key already fully matches when another key is caught or let go. They do not
-    // run on that key's release.
-    private readonly HashSet<Bind> _shadowed = new(ReferenceEqualityComparer.Instance);
-
-    // The modifiers each held key or button went down under. Its release binds match against them.
-    private readonly Dictionary<string, Modifier> _pressedUnder = new(StringComparer.OrdinalIgnoreCase);
-
-    // The scan code each held key went down with.
-    private readonly Dictionary<string, int> _scanCodes = new(StringComparer.OrdinalIgnoreCase);
-
     public Modifier Held { get; private set; }
     private volatile bool _inhibited;
     private volatile int _buttonsHeld;
@@ -44,12 +34,6 @@ public sealed partial class BindSession
     public bool ButtonsHeld => _buttonsHeld > 0;
 
     public void Inhibit(bool inhibited) => _inhibited = inhibited;
-
-    internal int ScanCodeOf(string key)
-    {
-        lock (_gate)
-            return _scanCodes.TryGetValue(key, out var code) ? code : 0;
-    }
 
     /// <summary>Forgets that <paramref name="key"/> was caught, when the hook gives its press back to the OS.</summary>
     public void ForgetCaught(string key)

@@ -88,7 +88,7 @@ public class WindowStateTests
     // left out: the next rule pass empties it.
     private static readonly string[] Stores =
     [
-        "_props._entries", "_awaitingMapFocus", "_urgent", "_focus._history", "_focus.Unmanaged", "_restored", "_pins", "_stacking",
+        "_props._entries", "_awaitingMapFocus", "_focus._history", "_focus.Unmanaged", "_restored", "_pins", "_stacking",
         "_cover._flags", "_cover._scrolling", "_interaction", "_owners", "_disabled", "_shownMaximized", "_lastMouse", "_mapPlaced",
         "_workspaces._all[].Focus", "_workspaces._all[]._groups", "_workspaces._all[]._waiting",
     ];

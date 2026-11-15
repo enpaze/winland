@@ -4,9 +4,7 @@ namespace Winland.Domain;
 public enum BindFlag
 {
     None = 0,
-    Locked = 1 << 0,
-    Release = 1 << 1,
-    Repeat = 1 << 2,
-    Mouse = 1 << 3,
-    NonConsuming = 1 << 4,
+
+    /// <summary>A drag: the bind moves or resizes the window under the pointer while its button or key is held.</summary>
+    Mouse = 1 << 0,
 }

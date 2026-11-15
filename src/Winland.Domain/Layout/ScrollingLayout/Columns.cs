@@ -160,24 +160,15 @@ internal sealed partial class ScrollingLayout
         }
     }
 
-    // A tile that is not pseudo keeps its border inside the aspect padding. A pseudo tile is centered in the gapped
-    // tile first, then loses its border.
+    // A tile keeps its border inside the aspect padding.
     private Rectangle CellBox(ClientId id, double x, double y, double width, double height)
     {
-        if (!_pseudo.IsOn(id))
-        {
-            var border = _layoutOptions.BorderFor(id);
-            x += border;
-            y += border;
-            width = Math.Max(0, width - (border * 2.0));
-            height = Math.Max(0, height - (border * 2.0));
-            return _layoutOptions.KeepAspect(Pixels(x, y, width, height), _area, TiledCount());
-        }
-
-        var gapped = Pixels(x, y, width, height);
-        var framed = _layoutOptions.KeepAspect(gapped, _area, TiledCount());
-        _natural.TryGetValue(id, out var natural);
-        return _pseudo.Frame(id, framed, natural, _layoutOptions.BorderFor(id));
+        var border = _layoutOptions.BorderFor(id);
+        x += border;
+        y += border;
+        width = Math.Max(0, width - (border * 2.0));
+        height = Math.Max(0, height - (border * 2.0));
+        return _layoutOptions.KeepAspect(Pixels(x, y, width, height), _area, TiledCount());
     }
 
     private int TiledCount()

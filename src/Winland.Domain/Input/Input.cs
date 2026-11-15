@@ -183,15 +183,7 @@ public sealed record ConfigLoaded(ConfigDocument Config) : Command;
 
 public sealed record Configure(ConfigDocument Document) : Command;
 
-public sealed record Dispatch(string Name, string Arguments = "") : Command
-{
-    /// <summary>The key edge that ran this dispatcher from a bind. Null for a pipe command.</summary>
-    public BindTrigger? Trigger { get; init; }
-}
-
-public sealed record Preselect(string Direction) : Command;
-
-public sealed record Pseudo(WindowId Window) : Command;
+public sealed record Dispatch(string Name, string Arguments = "") : Command;
 
 /// <summary>The wheel turned over the tab bar of the Group <paramref name="Shown"/> shows, towards its next member or back.</summary>
 public sealed record GroupBarScrolled(WindowId Shown, bool Forward) : Command;
@@ -247,6 +239,3 @@ public sealed record WindowAppeared(WindowId Window, Rectangle WorkArea) : Event
     /// <summary>The full path of the window's program, or empty when it could not be read. The traits' exe is only the file name.</summary>
     public string Executable { get; init; } = "";
 }
-
-/// <summary>The click <c>kill</c> waits for, at <paramref name="Position"/>, or Escape when it is null.</summary>
-public sealed record ClickKillChosen(Point? Position) : Event;

@@ -63,33 +63,6 @@ public class DispatcherRegressionTests
     }
 
     [Fact]
-    public void SwapAcrossTwoShownWorkspacesKeepsFocusOnTheSourceMonitor()
-    {
-        var core = new WindowManager();
-        core.Handle(new MonitorsChanged([Display("left", 0, 1000, 800), Display("right", 1000, 1000, 800)]));
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new WindowAppeared(new WindowId(2), new Rectangle(1000, 0, 1000, 800)));
-        core.Handle(new Dispatch("focuswindow", "address:0x1"));
-
-        var swapped = core.Handle(new Dispatch("swapwindow", "address:0x2"));
-
-        Assert.Equal(new WindowId(2), swapped.Focus);
-        Assert.Equal(new MonitorId(0), swapped.State.ActiveMonitor);
-    }
-
-    [Fact]
-    public void MoveToWorkspaceKeepsCommasInTheWindowSelector()
-    {
-        var core = new WindowManager();
-        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "Hello, World" } });
-
-        var moved = core.Handle(new Dispatch("movetoworkspace", "2,title:Hello, World"));
-
-        Assert.Null(moved.Error);
-        Assert.Equal("2", Client(moved, 1).Workspace.Name);
-    }
-
-    [Fact]
     public void PropertiesCanAddressAHiddenGroupMember()
     {
         var core = new WindowManager();
@@ -122,27 +95,6 @@ public class DispatcherRegressionTests
 
         Assert.Equal(1, Client(moved, 1).Workspace.Monitor);
         Assert.Equal(new Rectangle(1200, 100, 300, 200), Client(moved, 1).Bounds);
-    }
-
-    [Theory]
-    [InlineData(false, "floating", 2)]
-    [InlineData(false, "tiled", 3)]
-    [InlineData(true, "floating", 2)]
-    [InlineData(true, "tiled", 3)]
-    public void CyclingWithoutFocusUsesTheCurrentWorkspaceAndItsFilters(bool special, string kind, long expected)
-    {
-        var core = Configured("windowrule = no_focus, class:quiet");
-        if (special)
-        {
-            core.Handle(new WindowAppeared(new WindowId(99), Area));
-            core.Handle(new Dispatch("togglespecialworkspace", "tools"));
-        }
-        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "quiet" } });
-        core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Dialog = true } });
-        core.Handle(new WindowAppeared(new WindowId(3), Area));
-        core.Handle(new WindowFocused(new WindowId(100), FocusCause.User));
-
-        Assert.Equal(new WindowId(expected), core.Handle(new Dispatch("cyclenext", kind)).Focus);
     }
 
     [Fact]

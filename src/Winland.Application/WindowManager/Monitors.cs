@@ -56,37 +56,6 @@ public sealed partial class WindowManager
         return false;
     }
 
-    // The window after or before this one on its Workspace in the order they opened, wrapping around, as Winland's
-    // window cycle walks them. A minimized window and one with nofocus are passed over, and a hidden Group member is
-    // not in the Layout to begin with. floating, when given, takes only floating windows or only tiles.
-    private WindowId? CycleFrom(LiveWorkspace desk, WindowId? current, bool previous, bool? floating = null)
-    {
-        var clients = desk.Layout.Clients;
-        var start = -1;
-        for (var i = 0; i < clients.Count; i++)
-        {
-            if (clients[i].Window == current)
-                start = i;
-        }
-
-        for (var step = 1; step <= (start < 0 ? clients.Count : clients.Count - 1); step++)
-        {
-            var index = start < 0 ? step - 1 : previous
-                ? (start - step + clients.Count) % clients.Count
-                : (start + step) % clients.Count;
-            var client = clients[index];
-            if (client.Minimized || HasNoFocus(client.Window))
-                continue;
-
-            if (floating is bool wanted && client.Floating != wanted)
-                continue;
-
-            return client.Window;
-        }
-
-        return null;
-    }
-
     private Outcome MoveWindowDirection(string arguments)
     {
         if (TryMonitorArgument(arguments, out var monitorText, out var silent))
@@ -109,9 +78,6 @@ public sealed partial class WindowManager
             return Present(desk, covered, stayed);
         }
 
-        // A direction onto the neighbouring Monitor follows only for the focused window. Another window is assigned
-        // there and the focus stays.
-        var stay = !DirectionFollows();
         if (MonitorHolding(desk) is LiveMonitor origin
             && desk.Layout.TryBounds(window, out var box))
         {
@@ -121,7 +87,7 @@ public sealed partial class WindowManager
             var focal = MonitorSelector.Focal(Ideal(desk, window, box), direction);
             var hit = MonitorSelector.At(Targets(), focal);
             if (hit is MonitorTarget other && other.Id != origin.Id && MonitorOf(other) is LiveMonitor across)
-                return MoveActiveOnto(across, stay, focal);
+                return MoveActiveOnto(across, silent: false, focal);
         }
 
         var placements = desk.Layout.MoveWindow(window, arguments);
@@ -131,13 +97,10 @@ public sealed partial class WindowManager
             && TargetOf(home) is MonitorTarget from
             && MonitorSelector.InDirection(Targets(), from, direction) is MonitorTarget neighbor
             && MonitorOf(neighbor) is LiveMonitor next)
-            return MoveActiveOnto(next, stay);
+            return MoveActiveOnto(next, silent: false);
 
         return Present(desk, covered, placements);
     }
-
-    // A named window is followed when it is the focused one, or when the dispatcher names no window.
-    private bool DirectionFollows() => _actingOn is not WindowId acting || _focus.Focused == acting;
 
     private Outcome FocusMonitorDispatch(string arguments)
     {

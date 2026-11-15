@@ -238,23 +238,6 @@ public class FocusTests
     }
 
     [Fact]
-    public void AWindowOpenedOnAMonitorWithoutFocusIsNotFirstInTheFocusHistory()
-    {
-        var core = new WindowManager();
-        var left = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 800, 600);
-        var right = Display(@"\\.\DISPLAY2", "Samsung", 800, 0, 800, 600);
-        core.Handle(new MonitorsChanged([left, right]));
-        core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
-        core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
-        core.Handle(new WindowAppeared(new WindowId(3), left.WorkArea));
-
-        var outcome = core.Handle(new Dispatch("focusurgentorlast"));
-
-        // Client 2 was never focused. The history is 3 then 1, and Winland takes its second oldest end: the focused Client itself.
-        Assert.Equal(new WindowId(3), outcome.Focus);
-    }
-
-    [Fact]
     public void TheForegroundReportOfTheFocusedClientChangesNothing()
     {
         var core = new WindowManager();

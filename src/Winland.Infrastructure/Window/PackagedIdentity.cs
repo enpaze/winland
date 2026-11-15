@@ -69,19 +69,6 @@ internal static class PackagedIdentity
         return new Resolved(WindowAdapter.ClassName(child), childExe, aumid, UnresolvedFrame: false, childProcess);
     }
 
-    /// <summary>
-    /// The process that owns a window's content, read now: the hosted app for a Store frame, 0 for a
-    /// frame that hosts none, and the window's own process for anything else.
-    /// </summary>
-    internal static uint OwnerProcess(HWND hwnd)
-    {
-        var processId = ProcessId(hwnd);
-        if (processId == 0 || !IsFrame(WindowAdapter.ClassName(hwnd), ExeFile(processId)))
-            return processId;
-
-        return TryFindHostedChild(hwnd, processId, out _, out var childProcess) ? childProcess : 0;
-    }
-
     /// <summary>Whether <paramref name="hwnd"/> is a Store app's CoreWindow inside the frame <paramref name="root"/>.</summary>
     internal static bool IsHostedApp(HWND hwnd, HWND root) =>
         WindowAdapter.ClassName(hwnd) == CoreClass && WindowAdapter.ClassName(root) == FrameClass;

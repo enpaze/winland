@@ -75,7 +75,7 @@ public class NativeDragTests
     {
         desk.Ok("focuswindow", $"pid:{pid}");
         if (!TestDesktop.Floating(desk.ActiveWindow()))
-            desk.Ok("togglefloating", $"pid:{pid}");
+            desk.Ok("togglefloating");
 
         desk.Place(desk.ActiveId(), geometry.X, geometry.Y, geometry.Width, geometry.Height);
         desk.Ok("focuswindow", $"pid:{pid}");

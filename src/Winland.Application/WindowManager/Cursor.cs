@@ -33,8 +33,7 @@ public sealed partial class WindowManager
         };
     }
 
-    // movefocus, cyclenext and focusurgentorlast move the cursor to the middle of the window they
-    // focus, as Winland's switch to a window does.
+    // movefocus moves the cursor to the middle of the window it focuses, as Winland's switch to a window does.
     // Leaving a fullscreen window for another on its Workspace does not, and cursor:no_warps stops it.
     private WarpTo? SwitchWarp(Captured before, Outcome outcome)
     {

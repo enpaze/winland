@@ -3,29 +3,6 @@ namespace Winland.Application;
 /// <summary>A window's life as a Client: it appears, changes title or class, minimizes, restores and closes.</summary>
 public sealed partial class WindowManager
 {
-    // The window a dispatcher given a window acts on in place of the active one, while it runs.
-    private WindowId? _actingOn;
-
-    private Outcome ExecuteOn(string name, string arguments, string selector)
-    {
-        if (selector.Length == 0)
-            return Execute(name, arguments);
-
-        if (WindowSelector.Find(selector, ActiveWindow(), EveryClient()) is not WindowId target)
-            return Rejected("error: window not found");
-
-        var outer = _actingOn;
-        _actingOn = target;
-        try
-        {
-            return Execute(name, arguments);
-        }
-        finally
-        {
-            _actingOn = outer;
-        }
-    }
-
     private static IReadOnlyList<WindowRule> JoinRules(IReadOnlyList<WindowRule> rules, IReadOnlyList<WindowRule> followed)
     {
         if (followed.Count == 0)
@@ -43,9 +20,6 @@ public sealed partial class WindowManager
 
     private WindowId? ActiveWindow()
     {
-        if (_actingOn is WindowId acting)
-            return Find(acting) is null ? null : acting;
-
         if (_focus.Focused is not WindowId active)
             return null;
 
@@ -349,17 +323,6 @@ public sealed partial class WindowManager
             return View([], hide: [restored.Window]);
 
         return Present(desk, covered, placements);
-    }
-
-    private Outcome ChangePseudo(WindowId window)
-    {
-        var desk = WorkspaceContaining(window);
-        if (desk is null)
-            return View([]);
-
-        var covered = desk.Covered();
-        var placements = desk.Layout.TogglePseudo(window);
-        return _workspaces.Shown.IsShown(desk.Id) ? Present(desk, covered, placements) : View([]);
     }
 
     // A window changed its class. The class it had when it appeared stays, for initialClass. Its Client takes the new

@@ -8,7 +8,7 @@ public class WorkspaceGestureTests
         """;
 
     private static string Config(string extra = "") =>
-        ModifierReleaseBindTests.ConfigBinds + "\n" + ConfigGestures + "\n" + extra;
+        ConfigGestures + "\n" + extra;
 
     [Fact]
     public void Gestures()

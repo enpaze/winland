@@ -113,18 +113,6 @@ internal sealed class FloatingLayout : Layout, IDragOwner
 
     public IReadOnlyList<Placement> Placed() => _inner.Placed();
 
-    public IReadOnlyList<Placement> Preselect(string direction)
-    {
-        ArgumentNullException.ThrowIfNull(direction);
-        return [];
-    }
-
-    public IReadOnlyList<Placement> TogglePseudo(WindowId window)
-    {
-        _ = window;
-        return [];
-    }
-
     public WindowId? MoveFocus(WindowId active, string arguments) => _inner.MoveFocus(active, arguments);
 
     public IReadOnlyList<Placement> MoveWindow(WindowId window, string arguments) => _inner.MoveWindow(window, arguments);

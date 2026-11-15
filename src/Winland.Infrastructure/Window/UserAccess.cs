@@ -26,23 +26,6 @@ public static class UserAccess
         return type == TOKEN_ELEVATION_TYPE.TokenElevationTypeLimited;
     }
 
-    internal static unsafe bool CanSendTo(uint processId)
-    {
-        if (!Elevated.Value)
-            return true;
-        if (processId == 0)
-            return false;
-        using var process = PInvoke.OpenProcess_SafeHandle(PROCESS_ACCESS_RIGHTS.PROCESS_QUERY_LIMITED_INFORMATION, false, processId);
-        if (process.IsInvalid || !PInvoke.OpenProcessToken(process, TOKEN_ACCESS_MASK.TOKEN_QUERY, out var token))
-            return false;
-        using (token)
-        {
-            uint elevated;
-            return PInvoke.GetTokenInformation(token, TOKEN_INFORMATION_CLASS.TokenElevation, &elevated, sizeof(uint), out _)
-                && elevated == 0;
-        }
-    }
-
     public static T Run<T>(Func<T> action)
     {
         ArgumentNullException.ThrowIfNull(action);

@@ -8,7 +8,7 @@ public class ExtraCommandTests
 
     private const string SuperKill =
         """
-        [{"locked":false,"mouse":false,"release":false,"repeat":false,"non_consuming":false,"has_description":false,"modmask":64,"key":"Q","keycode":0,"description":"","dispatcher":"killactive","arg":""}]
+        [{"mouse":false,"has_description":false,"modmask":64,"key":"Q","keycode":0,"description":"","dispatcher":"killactive","arg":""}]
         """;
 
     [Fact]
@@ -137,7 +137,6 @@ public class ExtraCommandTests
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(42), new Rectangle(0, 0, 200, 100)));
 
-        Assert.Equal("ok", core.Execute("kill").Text);
         Assert.Equal("error: not enough args", core.Execute("getprop").Text);
         Assert.Equal("error: window not found", core.Execute("getprop missing opacity").Text);
         Assert.Equal("1", core.Execute("getprop active opacity").Text);
@@ -296,10 +295,9 @@ public class ExtraCommandTests
     }
 
     [Theory]
-    [InlineData(new[] { "dispatch", "splitratio", "-0.1" }, "dispatch splitratio -0.1")]
-    [InlineData(new[] { "dispatch", "moveactive", "-50,", "0" }, "dispatch moveactive -50, 0")]
-    [InlineData(new[] { "dispatch", "resizeactive", "-1.5,", "-2.25" }, "dispatch resizeactive -1.5, -2.25")]
-    [InlineData(new[] { "-j", "dispatch", "splitratio", "-12" }, "j/dispatch splitratio -12")]
+    [InlineData(new[] { "dispatch", "resizeactive", "-0.1", "0" }, "dispatch resizeactive -0.1 0")]
+    [InlineData(new[] { "dispatch", "resizeactive", "-1.5", "-2.25" }, "dispatch resizeactive -1.5 -2.25")]
+    [InlineData(new[] { "-j", "dispatch", "resizeactive", "-12", "0" }, "j/dispatch resizeactive -12 0")]
     public void ControlToolPassesNegativeNumbersThrough(string[] args, string expected)
     {
         Assert.True(ControlInvocation.TryCreate(args, out var line, out _));
@@ -311,9 +309,10 @@ public class ExtraCommandTests
     [InlineData("-1.")]
     [InlineData("-1.2.3")]
     [InlineData("-")]
+    [InlineData("-50,")]
     public void ControlToolRefusesAFlagThatIsNotANumber(string arg)
     {
-        Assert.False(ControlInvocation.TryCreate(["dispatch", "splitratio", arg], out _, out _));
+        Assert.False(ControlInvocation.TryCreate(["dispatch", "resizeactive", arg], out _, out _));
     }
 
     [Fact]
@@ -322,26 +321,6 @@ public class ExtraCommandTests
         var effect = new WindowManager().Execute("[[BATCH]]dispatch exec a ; dispatch exec b").Effect;
 
         Assert.Equal(["a", "b"], effect.Launches.Select(launch => launch.CommandLine));
-    }
-
-    [Fact]
-    public void ABatchKeepsThePlacementOfEveryMovedFloatingWindow()
-    {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:^(box)$\n"));
-        foreach (var window in new long[] { 1, 2 })
-        {
-            core.Handle(new WindowAppeared(new WindowId(window), new Rectangle(0, 0, 1920, 1080))
-            {
-                Traits = WindowTraits.Normal with { Class = "box" },
-                Bounds = new Rectangle(5, 7, 100 + (100 * (int)window), 150),
-            });
-        }
-
-        var effect = core.Execute(
-            "[[BATCH]]dispatch centerwindow ,address:0x1 ; dispatch centerwindow ,address:0x2").Effect;
-
-        Assert.Equal(new Rectangle(860, 465, 200, 150), PlacedAt(effect, 1));
-        Assert.Equal(new Rectangle(810, 465, 300, 150), PlacedAt(effect, 2));
     }
 
     [Fact]

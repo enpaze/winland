@@ -193,12 +193,6 @@ public class WorkspaceSelectorTests
         var missing = core.Execute("dispatch layoutmsg");
         Assert.Equal("error: bad layoutmsg", missing.Text);
 
-        var angle = core.Execute("dispatch rotatesplit sideways");
-        Assert.Equal("error: bad layoutmsg 'rotatesplit'", angle.Text);
-
-        var ratio = core.Execute("dispatch splitratio");
-        Assert.Equal("error: splitratio requires an arg", ratio.Text);
-
         var ran = core.Execute("dispatch layoutmsg togglesplit");
         Assert.Equal("ok", ran.Text);
         Assert.Equal(new Rectangle(0, 0, 1920, 540), BoundsOf(ran.Effect, 1));

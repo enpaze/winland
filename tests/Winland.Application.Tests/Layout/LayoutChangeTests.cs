@@ -65,7 +65,8 @@ public class LayoutChangeTests
         var desk = new TestDesktop();
         desk.Spawn("kitty");
 
-        desk.Ok("togglefloating", "class:kitty");
+        desk.Ok("focuswindow", "class:kitty");
+        desk.Ok("togglefloating");
         desk.Place("kitty", 420, 420, 1337, 69);
         desk.ExpectActive("420,420", "1337,69");
 
@@ -81,7 +82,8 @@ public class LayoutChangeTests
         desk.ExpectActive("581,420", "1337,69");
 
         desk.Ok("workspace", "1");
-        desk.Ok("pin", "enable class:kitty");
+        desk.Ok("focuswindow", "class:kitty");
+        desk.Ok("pin", "enable");
         desk.Ok("workspace", "2");
         desk.Ok("fullscreen", "0");
         desk.Ok("fullscreen", "0");

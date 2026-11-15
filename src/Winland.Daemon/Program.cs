@@ -219,8 +219,6 @@ static int Run(string? path, RollingLogWriter log)
         watching.Dispose();
         StopOnce();
         AppDomain.CurrentDomain.UnhandledException -= onCrash;
-        LaunchConfigured(core, WindowManager.ShutdownLaunches(current));
-
         Console.WriteLine("Winland stopped.");
     }
 }

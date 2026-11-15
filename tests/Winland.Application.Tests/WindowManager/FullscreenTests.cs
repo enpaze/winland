@@ -83,20 +83,6 @@ public class FullscreenTests
     }
 
     [Fact]
-    public void TheTreeStaysPutWhileFullscreenAndASplitDoesNotMoveTheNeighbor()
-    {
-        var core = Desk();
-        OpenWindows(core, 2);
-        var left = Bounds(core, 1);
-        core.Handle(new Dispatch("fullscreen"));
-
-        var resized = core.Handle(new Dispatch("splitratio", "0.2"));
-
-        Assert.Equal(MonitorBounds, BoundsOf(resized, 2));
-        Assert.Equal(left, BoundsOf(resized, 1));
-    }
-
-    [Fact]
     public void TreeEditsOnACoveringClientAreRefusedAndTheSlotComesBack()
     {
         var core = Desk();
@@ -106,9 +92,6 @@ public class FullscreenTests
         core.Handle(new Dispatch("fullscreen"));
 
         Assert.Equal("error: can't togglesplit in the current workspace", core.Handle(new Dispatch("layoutmsg", "togglesplit")).Error);
-        Assert.Equal("error: can't swapsplit in the current workspace", core.Handle(new Dispatch("layoutmsg", "swapsplit")).Error);
-        Assert.Null(core.Handle(new Dispatch("layoutmsg", "rotatesplit")).Error);
-        Assert.Equal("error: can't movetoroot in the current workspace", core.Handle(new Dispatch("layoutmsg", "movetoroot")).Error);
         Assert.Equal("error: can't move fullscreen window", core.Handle(new Dispatch("movewindow", "l")).Error);
         Assert.Equal("error: Can't swap fullscreen window", core.Handle(new Dispatch("swapwindow", "l")).Error);
         core.Handle(new Dispatch("fullscreen"));

@@ -315,7 +315,6 @@ public class MouseDragTests
 
     [Theory]
     [InlineData("bind = SUPER, mouse:272, mouse, killactive", "The mouse dispatcher takes movewindow or resizewindow.")]
-    [InlineData("bindr = SUPER, mouse:272, mouse, movewindow", "Bind flags conflict.")]
     public void TheMouseDispatcherRejectsWhatCannotDrag(string line, string warning)
     {
         var document = ConfigParser.Parse(line + "\n");

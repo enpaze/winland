@@ -42,7 +42,7 @@ public sealed partial class KeyboardHook : IDisposable
             foreach (var dispatch in decision.Dispatches)
             {
                 if (dispatch.Dispatcher.Length > 0 && !dispatch.Drag)
-                    PostDispatch(dispatch.Dispatcher, dispatch.Arguments, decision.Trigger);
+                    PostDispatch(dispatch.Dispatcher, dispatch.Arguments);
             }
 
             return (false, decision);

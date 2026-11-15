@@ -93,29 +93,10 @@ public sealed partial class WindowManager
             : View([]);
     }
 
-    private Outcome MoveGroupWindow(string text)
-    {
-        if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
-            return Rejected("error: no window found");
-
-        if (desk.GroupOf(id) is not WindowGroup group)
-            return Rejected("error: window not in a group");
-
-        var other = text is "b" or "prev"
-            ? (group.Current == 0 ? group.Count - 1 : group.Current - 1)
-            : (group.Current + 1 >= group.Count ? 0 : group.Current + 1);
-        group.MoveShownTo(other);
-        return View([]);
-    }
-
     private Outcome MoveIntoGroup(string text)
     {
         if (!TryGroupDirection(text, out var direction))
-        {
-            return text.Length == 0
-                ? Rejected("error: unsupported direction: ")
-                : MoveIntoGroupOf(text);
-        }
+            return Rejected("error: unsupported direction: " + text);
 
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
@@ -134,28 +115,6 @@ public sealed partial class WindowManager
             return View([]);
 
         return IntoGroup(desk, desk.Covered(), id, neighbor);
-    }
-
-    // moveintogroup with a window selector: the acting Client joins the Group of the Client it names, on its own
-    // Workspace, and a plain Client becomes a Group around it once the acting Client has left its place.
-    private Outcome MoveIntoGroupOf(string selector)
-    {
-        if (WindowSelector.Malformed(selector) is { } problem)
-            return Rejected("error: " + problem);
-
-        if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
-            return Rejected("error: no window found");
-
-        if (WindowSelector.Find(selector, id, EveryClient()) is not WindowId destination)
-            return Rejected("error: window not found");
-
-        if (destination == id)
-            return Rejected("error: can't group a window with itself");
-
-        if (WorkspaceContaining(destination) != desk)
-            return Rejected("error: window is on another workspace");
-
-        return IntoGroup(desk, desk.Covered(), id, destination);
     }
 
     // Joins the Group of destination, or makes one around it. The Group is made only after the window has left its place.
@@ -240,25 +199,25 @@ public sealed partial class WindowManager
 
     private Outcome MoveOutOfGroup(string text)
     {
-        var window = text != "active" && text.Length > 1 ? Select(text, emptyMeansActive: false) : ActiveWindow();
-        if (window is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
+        if (text.Length > 0)
+            return Rejected("error: moveoutofgroup takes no argument");
+
+        if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
 
         if (desk.GroupOf(id) is not WindowGroup group)
             return Rejected("error: window not in a group");
 
-        return OutOfGroup(desk, group, id, direction: null);
+        return OutOfGroup(desk, group, id);
     }
 
-    private Outcome OutOfGroup(LiveWorkspace desk, WindowGroup group, WindowId window, string? direction)
+    private Outcome OutOfGroup(LiveWorkspace desk, WindowGroup group, WindowId window)
     {
         var covered = desk.Covered();
         var exit = desk.Leave(group, window, out var taken);
         if (exit == GroupExit.Detached)
         {
             desk.Layout.NoteFocus(group.Shown);
-            if (direction is not null)
-                desk.Layout.Preselect(direction);
             desk.Receive(window, taken, WorkArea(desk, _area));
         }
 

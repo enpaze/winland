@@ -14,7 +14,7 @@ public sealed partial class WindowManager
             if (dispatch.Dispatcher.Length == 0)
                 continue;
 
-            var next = ExecuteTriggered(dispatch.Dispatcher, dispatch.Arguments, match.Trigger);
+            var next = Execute(dispatch.Dispatcher, dispatch.Arguments);
             outcome = outcome is null ? next : outcome.Then(next);
         }
 
@@ -34,21 +34,7 @@ public sealed partial class WindowManager
         return [new BindDispatch(match.Dispatcher, match.Arguments)];
     }
 
-    private Outcome ExecuteTriggered(string name, string arguments, BindTrigger? trigger)
-    {
-        _trigger = trigger;
-        try
-        {
-            return Execute(name, arguments);
-        }
-        finally
-        {
-            _trigger = null;
-        }
-    }
-
-    // Runs a dispatcher from the table and stamps its outcome with the entry's traits. One that takes a window and is given
-    // one after a comma runs on that window.
+    // Runs a dispatcher from the table and stamps its outcome with the entry's traits.
     private Outcome Execute(string name, string arguments)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -57,10 +43,10 @@ public sealed partial class WindowManager
         if (!Table.TryGetValue(name, out var dispatcher))
             return View([]) with { Error = DidYouMean.After("error: unknown dispatcher '" + name + "'", name, Table.Keys) };
 
-        var outcome = dispatcher.TakesWindow && arguments.IndexOf(',', StringComparison.Ordinal) is var comma and >= 0
-            ? ExecuteOn(name, arguments[..comma], arguments[(comma + 1)..].Trim())
-            : dispatcher.Run(this, name, arguments);
-        return outcome with { Traits = dispatcher.Traits };
+        if (!dispatcher.AllowsComma && arguments.Contains(',', StringComparison.Ordinal))
+            return Rejected("error: " + name + " does not take a comma");
+
+        return dispatcher.Run(this, name, arguments) with { Traits = dispatcher.Traits };
     }
 
     private Outcome WorkspaceDispatch(string arguments)

@@ -81,7 +81,7 @@ public sealed partial class KeyboardHook : IDisposable
                 return;
             }
 
-            _apply(_core.Handle(new Dispatch(queued.Dispatcher, queued.Arguments) { Trigger = queued.Trigger }));
+            _apply(_core.Handle(new Dispatch(queued.Dispatcher, queued.Arguments)));
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -120,22 +120,22 @@ public sealed partial class KeyboardHook : IDisposable
         if (decision.Dispatches.Count > 0)
         {
             foreach (var dispatch in decision.Dispatches)
-                PostDispatch(dispatch.Dispatcher, dispatch.Arguments, decision.Trigger);
+                PostDispatch(dispatch.Dispatcher, dispatch.Arguments);
 
             return;
         }
 
         if (!string.IsNullOrEmpty(decision.Dispatcher))
-            PostDispatch(decision.Dispatcher, decision.Arguments, decision.Trigger);
+            PostDispatch(decision.Dispatcher, decision.Arguments);
     }
 
     /// <summary>The drag a mouse bind started, from a mouse button or a key, which pointer moves carry on.</summary>
     internal BindDrag Drag { get; } = new();
 
-    internal void PostDispatch(string dispatcher, string arguments, BindTrigger? trigger = null)
+    internal void PostDispatch(string dispatcher, string arguments)
     {
         if (dispatcher.Length > 0)
-            _queued.Post(new Queued(QueuedKind.Dispatch, dispatcher, arguments, Trigger: trigger));
+            _queued.Post(new Queued(QueuedKind.Dispatch, dispatcher, arguments));
     }
 
     internal void PostGesture(string dispatcher, string arguments, Point position, PointerDragPhase phase, string button) =>
@@ -164,6 +164,5 @@ public sealed partial class KeyboardHook : IDisposable
         string Button = "",
         long TimeMs = 0,
         bool HasTime = false,
-        Input? Event = null,
-        BindTrigger? Trigger = null);
+        Input? Event = null);
 }

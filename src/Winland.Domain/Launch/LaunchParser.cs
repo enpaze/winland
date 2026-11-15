@@ -35,24 +35,18 @@ internal static class LaunchParser
         var launches = new List<Launch>();
         foreach (var setting in config.Settings)
         {
-            if (!TryClassify(setting.Keyword, out var once, out var shutdown))
+            // exec runs at startup and on every reload. exec-once runs at startup only.
+            var once = setting.Keyword == "exec-once";
+            if (!once && setting.Keyword != "exec")
                 continue;
-
-            var include = moment switch
-            {
-                LaunchMoment.Startup => !shutdown,
-                LaunchMoment.Reload => !once && !shutdown,
-                LaunchMoment.Shutdown => shutdown,
-                _ => false,
-            };
-            if (!include)
+            if (once && moment == LaunchMoment.Reload)
                 continue;
 
             var parsed = Parse(setting.Value);
             if (parsed.Launch is not { } launch)
                 continue;
 
-            if (!once && !shutdown)
+            if (!once)
                 launch = launch with { InitialWorkspace = initialWorkspace };
             launches.Add(launch);
         }
@@ -83,34 +77,10 @@ internal static class LaunchParser
         return !fatal;
     }
 
-    private static bool TryClassify(string keyword, out bool once, out bool shutdown)
-    {
-        switch (keyword)
-        {
-            case "exec":
-                once = false;
-                shutdown = false;
-                return true;
-            case "exec-once":
-                once = true;
-                shutdown = false;
-                return true;
-            case "exec-shutdown":
-                once = false;
-                shutdown = true;
-                return true;
-            default:
-                once = false;
-                shutdown = false;
-                return false;
-        }
-    }
-
     internal enum LaunchMoment
     {
         Startup,
         Reload,
-        Shutdown,
     }
 }
 

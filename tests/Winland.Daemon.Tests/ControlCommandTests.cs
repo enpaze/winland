@@ -25,7 +25,7 @@ public class ControlCommandTests
     [Theory]
     [InlineData("error: no such option")]
     [InlineData("error: prop not found")]
-    [InlineData("error: sendshortcut: invalid args")]
+    [InlineData("error: no such workspace")]
     [InlineData("")]
     public void ASingleFailureWritesToStandardError(string reply)
     {

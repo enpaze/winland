@@ -17,27 +17,22 @@ public sealed partial class WindowManager
         string argument,
         bool silent,
         bool consumed,
-        WindowId? chosen = null,
-        bool windowChosen = false,
         Point? focal = null)
     {
         // A named Workspace that does not exist is an error, as it is for the workspace dispatcher.
         if (!WorkspaceAddress.TryResolve(argument, Context(), out var resolved))
             return View([], consumed: consumed) with { Error = WorkspaceAddress.IsNamed(argument) ? "error: no such workspace" : null };
 
-        return MoveTo(resolved, silent, consumed, chosen, windowChosen, focal);
+        return MoveTo(resolved, silent, consumed, focal);
     }
 
     private Outcome MoveTo(
         WorkspaceId target,
         bool silent,
         bool consumed,
-        WindowId? chosen = null,
-        bool windowChosen = false,
         Point? focal = null)
     {
-        var window = windowChosen ? chosen : ActiveWindow();
-        if (window is not WindowId id)
+        if (ActiveWindow() is not WindowId id)
             return View([], consumed: consumed);
 
         // A pinned Client is never moved onto a special workspace, which still opens that special

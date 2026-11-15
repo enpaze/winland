@@ -24,12 +24,14 @@ public class ControlRequestTests
         ExpectProp(desk, "min_size", "100 50", """{"min_size": [100,50]}""");
 
         // The size expressions are read on a floating window, then it goes back to tiled.
-        desk.Dispatch("togglefloating", "class:kitty");
+        desk.Ok("focuswindow", "class:kitty");
+        desk.Dispatch("togglefloating");
         SetProp(desk, "max_size", "90+10 25*2");
         ExpectProp(desk, "max_size", "100 50", """{"max_size": [100,50]}""");
         SetProp(desk, "min_size", "window_w*0.5 window_h-10");
         ExpectProp(desk, "min_size", "50 40", """{"min_size": [50,40]}""");
-        desk.Dispatch("togglefloating", "class:kitty");
+        desk.Ok("focuswindow", "class:kitty");
+        desk.Dispatch("togglefloating");
 
         ExpectProp(desk, "opacity", "1", """{"opacity": 1}""");
         SetProp(desk, "opacity", "0.3");
@@ -133,7 +135,7 @@ public class ControlRequestTests
     {
         const string description = "hyprctl binds JSON regression";
         var desk = new TestDesktop();
-        desk.Keyword("bindled", $"SUPER, F12, {description}, exec, true");
+        desk.Keyword("bindd", $"SUPER, F12, {description}, exec, true");
 
         var binds = Json(desk.Send("j/binds")).EnumerateArray().ToArray();
         Assert.Single(binds, bind => bind.GetProperty("key").GetString() == "F12");
@@ -142,7 +144,7 @@ public class ControlRequestTests
             && bind.GetProperty("has_description").GetBoolean()
             && bind.GetProperty("description").GetString() == description);
 
-        Assert.Contains($"bindled = SUPER, F12, {description}, exec, true", desk.Send("binds").Split('\n'));
+        Assert.Contains($"bindd = SUPER, F12, {description}, exec, true", desk.Send("binds").Split('\n'));
 
         Assert.Equal("ok", desk.Send("keyword unbind SUPER, F12"));
     }

@@ -5,7 +5,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
     private readonly Dictionary<ClientId, Node> _nodes = [];
     private readonly Dictionary<ClientId, Suspension> _suspended = [];
     private LayoutOptions _options = LayoutOptions.Unconfigured;
-    private PendingSplit _preselect;
     private Node? _root;
     private ClientId? _splitTarget;
     private Rectangle _area;
@@ -58,25 +57,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
 
         bounds = default;
         return false;
-    }
-
-    public IReadOnlyList<Placement> Preselect(string direction)
-    {
-        ArgumentNullException.ThrowIfNull(direction);
-        if (direction.Length > 0)
-            _preselect = ParseDirection(direction);
-        return [];
-    }
-
-    public IReadOnlyList<Placement> TogglePseudo(WindowId window)
-    {
-        var id = new ClientId(window.Value);
-        if (!_clients.Exists(client => client.Id == id))
-            return [];
-
-        _pseudo.Toggle(id);
-
-        return Placements();
     }
 
     public IReadOnlyList<Placement> Add(
@@ -143,7 +123,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
     public override IReadOnlyList<Placement> Remove(WindowId window)
     {
         var id = new ClientId(window.Value);
-        _pseudo.Forget(id);
         _natural.Remove(id);
         _limits.Remove(id);
         _drag.Forget(id);
@@ -254,8 +233,8 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         var right = box.X + box.Width == area.X + area.Width ? 0 : gaps.Right;
         var bottom = box.Y + box.Height == area.Y + area.Height ? 0 : gaps.Bottom;
         var presented = _options.KeepAspect(Shrink(box, left, top, right, bottom), _area, _nodes.Count);
-        _natural.TryGetValue(id, out var natural);
-        presented = _pseudo.Frame(id, presented, natural, _options.BorderFor(id));
+        var border = _options.BorderFor(id);
+        presented = Shrink(presented, border, border, border, border);
         return _limits.TryGetValue(id, out var limits) ? limits.ForTiles.Raise(presented, area) : presented;
     }
 
@@ -318,15 +297,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         var dy = point.Y < box.Y ? box.Y - point.Y : point.Y >= box.Y + box.Height ? point.Y - (box.Y + box.Height) : 0;
         return (dx * (double)dx) + (dy * (double)dy);
     }
-
-    private static PendingSplit ParseDirection(string direction) => direction[0] switch
-    {
-        'l' => PendingSplit.Left,
-        'r' => PendingSplit.Right,
-        'u' or 't' => PendingSplit.Up,
-        'd' or 'b' => PendingSplit.Down,
-        _ => PendingSplit.None,
-    };
 
     private static Node Leaf(Node node)
     {
