@@ -72,7 +72,7 @@ The effects are these. `float`, `tile`, `ignore`, `pin`, `no_focus`, `no_initial
 
 The `opacity` rule and `opaque` change the window's alpha. `decorate` with 0 takes away the border and a Group's tab bar. `no_focus` keeps the window from taking focus. `focus_on_activate` allows a fresh activation from another program to focus that window. `min_size` and `max_size` hold its size. `border_color`, `border_size` and `rounding` change how it is drawn. `no_blur` turns that Client's acrylic backdrop off, `no_anim` moves, fades and recolors the window at once. A window has these from its rules alone. Nothing changes them while Winland runs but a load of the config, which matches the rules of every open window again.
 
-`border_size`, `rounding`, `border_color`, `animation`, and the on/off effects such as `no_blur` or `decorate 0` take a value. An on/off effect with no value is on. `border_color` takes one color for the active border, or two colors for the active and the inactive borders. An angle, or any further color, warns and the rule is skipped. A value that does not parse warns and the rule is skipped. A window's own `border_size` replaces the configured border around its tile, multiplied by its Monitor's scale like the configured one.
+`border_size`, `rounding`, `border_color`, and the on/off effects such as `no_blur` or `decorate 0` take a value. An on/off effect with no value is on. `border_color` takes one color for the active border, or two colors for the active and the inactive borders. An angle, or any further color, warns and the rule is skipped. A value that does not parse warns and the rule is skipped. A window's own `border_size` replaces the configured border around its tile, multiplied by its Monitor's scale like the configured one.
 
 ## Exec rule blocks
 
@@ -82,7 +82,7 @@ A rule block, effects between brackets and separated by `;` before the command, 
 
 The `exec` dispatcher and `exec-once` run the command through `cmd.exe /d /s /c "<command>"`, so cmd syntax such as `&&` and redirection works and every quote in the command is kept as written.
 
-A console program started through `exec` shares cmd's console, which has no window, the way a program started by `sh -c` has no terminal, so a background tool stays out of sight and its redirections and pipes work. To see a console program, start it inside a terminal, for example `exec = wt pwsh`.
+A console program started through `exec` shares cmd's console, which has no window, the way a program started by `sh -c` has no terminal, so a background tool stays out of sight and its redirections and pipes work. To see a console program, start it inside a terminal, for example `exec-once = wt pwsh`.
 
 Every program Winland starts runs as the normal user. An elevated Winland drops its administrator rights for the launch, so `exec-once`, a bind's `exec`, and a command on the pipe all start the program de-elevated. A program that needs administrator rights asks for them itself. It gets the user's environment as Windows has it when it starts, as a program Explorer starts does, so a PATH changed since Winland started is the new one and none of Winland's own variables are passed on. It starts at normal priority. `exec-once` runs once each time Winland starts, after the session is laid out, so a restart runs it again.
 

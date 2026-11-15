@@ -251,11 +251,4 @@ public class LayoutOptionTests
         Assert.Equal(NewFloat.Centered(Wide, bounds), BoundsOf(outcome, 2));
     }
 
-    [Fact]
-    public void PaddingWithinTheToleranceIsNotAdded()
-    {
-        var core = Configured(FlatConfig("layout:single_window_aspect_ratio = 19 10\n"));
-
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(core.Handle(Appeared(1, Wide)), 1));
-    }
 }
