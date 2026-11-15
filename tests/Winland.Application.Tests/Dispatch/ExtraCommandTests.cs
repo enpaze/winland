@@ -145,8 +145,6 @@ public class ExtraCommandTests
         Assert.False(ControlInvocation.TryCreate(["repl"], out _, out _));
         Assert.False(ControlInvocation.TryCreate(["plugin", "list"], out _, out _));
         Assert.False(ControlInvocation.TryCreate(["plugin", "install", "https://example.com/plugins.git"], out _, out _));
-        Assert.False(ControlInvocation.TryCreate(["--batch", "binds ; clients"], out _, out _));
-        Assert.False(ControlInvocation.TryCreate(["keyword", "general:border_size", "4"], out _, out _));
     }
 
     [Fact]

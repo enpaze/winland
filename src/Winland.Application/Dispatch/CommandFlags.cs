@@ -15,20 +15,14 @@ internal static class CommandFlagReader
         if (slash < 0)
             return CommandFlags.None;
 
-        for (var i = 0; i < slash; i++)
-        {
-            if (char.IsWhiteSpace(text[i]))
-                return CommandFlags.None;
-        }
-
+        // Only flags come before the slash. Anything else there is part of the request, which is read as it is.
         var flags = CommandFlags.None;
         for (var i = 0; i < slash; i++)
         {
-            flags |= text[i] switch
-            {
-                'j' => CommandFlags.Json,
-                _ => CommandFlags.None,
-            };
+            if (text[i] != 'j')
+                return CommandFlags.None;
+
+            flags |= CommandFlags.Json;
         }
 
         text = text[(slash + 1)..].TrimStart();

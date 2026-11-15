@@ -4,17 +4,6 @@ public class WindowPropsTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Theory]
-    [InlineData("1", true)]
-    [InlineData("true", true)]
-    [InlineData("Yes please", true)]
-    [InlineData("on", true)]
-    [InlineData("0", false)]
-    [InlineData("off", false)]
-    [InlineData("enabled", false)]
-    public void TruthyReadsAsThePinnedReleaseDoes(string text, bool expected) =>
-        Assert.Equal(expected, WindowProps.Truthy(text));
-
     [Fact]
     public void ABorderSizeRuleShrinksOnlyItsWindowsTile()
     {

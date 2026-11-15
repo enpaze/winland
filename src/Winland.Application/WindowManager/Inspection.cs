@@ -21,7 +21,7 @@ public sealed partial class WindowManager
             if (WindowSelector.Malformed(request.Selector) is { } problem)
                 return "error: invalid selector: " + problem;
 
-            if (!TrySelect(request.Selector, out var client, out _))
+            if (!TrySelect(request.Selector, out var client))
                 return Format(new InspectJson("not_found", target, Reason: "no_client"));
 
             selected = client.Window;

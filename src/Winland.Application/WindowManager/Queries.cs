@@ -77,10 +77,9 @@ public sealed partial class WindowManager
 
     private string Describe(Func<State, string> format) => format(Snapshot());
 
-    private bool TrySelect(string selector, out Client client, out LiveWorkspace? desk)
+    private bool TrySelect(string selector, out Client client)
     {
         client = null!;
-        desk = null;
         WindowId? window;
         if (TryAddress(selector, out var addressed))
             window = addressed;
@@ -98,7 +97,6 @@ public sealed partial class WindowManager
                     continue;
 
                 client = item;
-                desk = candidate;
                 return true;
             }
         }
