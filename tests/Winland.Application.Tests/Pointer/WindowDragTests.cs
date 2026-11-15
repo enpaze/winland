@@ -57,59 +57,6 @@ public class WindowDragTests
         Click(desk, pressed: false);
     }
 
-    [Fact]
-    public void DragThresholdSurvivesScrollEvents()
-    {
-        var desk = new TestDesktop(DragOnLeftButton);
-        desk.Spawn("drag_threshold");
-        Assert.Single(desk.Clients());
-        desk.Ok("focuswindow", "class:drag_threshold");
-        desk.Ok("togglefloating");
-        desk.Place("drag_threshold", 200, 200, 300, 200);
-
-        foreach (var threshold in new[] { 0, 40 })
-        {
-            desk.Set("binds:drag_threshold", threshold.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            desk.Place("drag_threshold", 200, 200, 300, 200);
-            MoveCursor(desk, 350, 300);
-            Click(desk, pressed: true);
-            ExpectDragState(desk, active: true, reached: threshold == 0);
-
-            if (threshold > 0)
-            {
-                // Motion below the threshold does not pick up the window.
-                MoveCursor(desk, 360, 300);
-                ExpectDragState(desk, active: true, reached: false);
-                Assert.True(Nearly(Active(desk).X, 200));
-            }
-
-            MoveCursor(desk, 410, 300);
-            ExpectDragState(desk, active: true, reached: true);
-            var before = Active(desk);
-
-            // Scroll events do not end the drag.
-            Scroll(desk, 120);
-            ExpectDragState(desk, active: true, reached: true);
-            Scroll(desk, -120);
-            ExpectDragState(desk, active: true, reached: true);
-
-            // A small move follows at once, without crossing the threshold again.
-            MoveCursor(desk, 420, 300);
-            var after = Active(desk);
-            Assert.True(Nearly(after.X, before.X + 10));
-            Assert.True(Nearly(after.Y, before.Y));
-
-            Click(desk, pressed: false);
-            ExpectDragState(desk, active: false, reached: false);
-
-            // A new drag starts with its own threshold, not the last drag's.
-            Click(desk, pressed: true);
-            ExpectDragState(desk, active: true, reached: threshold == 0);
-            Click(desk, pressed: false);
-            ExpectDragState(desk, active: false, reached: false);
-        }
-    }
-
     private static Rectangle Active(TestDesktop desk) => desk.Placed(desk.ActiveId());
 
     // Three quarters across and down the active window.

@@ -43,12 +43,6 @@ public sealed partial class WindowManager
     /// <summary>The full path of the log file Winland writes now, or null while it writes none. <c>files</c> reports it.</summary>
     public Func<string?>? LogFile { get; set; }
 
-    /// <summary>
-    /// Whether saving the config reloads it. <c>misc:disable_autoreload</c> turns it off, and turning it back on takes
-    /// a reload by hand.
-    /// </summary>
-    public bool ReloadsOnSave => !_config.Session.DisableAutoreload;
-
     /// <summary><c>general:hide_taskbar</c>: the taskbars are hidden and set to auto-hide while Winland runs.</summary>
     public bool HideTaskbar => _config.Session.HideTaskbar;
 

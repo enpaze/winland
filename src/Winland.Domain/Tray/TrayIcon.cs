@@ -6,10 +6,8 @@ namespace Winland.Domain;
 /// The notification-area icon. It shows the number of the Workspace the focused Monitor is showing,
 /// and its menu runs Winland.
 /// </summary>
-public sealed record TrayIcon(bool Shown, string Number)
+public sealed record TrayIcon(string Number)
 {
-    public const string Keyword = "general:tray_icon";
-
     /// <summary>
     /// The menu. Open log is there only when <paramref name="logExists"/>: Winland writes the log file only with
     /// <c>debug:disable_logs</c> false and no elevation, so most of the time there is nothing to open.
@@ -31,8 +29,8 @@ public sealed record TrayIcon(bool Shown, string Number)
     /// <summary>The tooltip: the program, which a lone number in the overflow does not say, and the Workspace the icon is showing.</summary>
     public string Tip => "Winland, Workspace " + Number;
 
-    /// <summary>The icon for <paramref name="shown"/> and the Workspace the focused Monitor is showing.</summary>
-    public static TrayIcon For(bool shown, WorkspaceId workspace) => new(shown, Text(workspace));
+    /// <summary>The icon for the Workspace the focused Monitor is showing.</summary>
+    public static TrayIcon For(WorkspaceId workspace) => new(Text(workspace));
 
     /// <summary>
     /// The text the icon draws. A numbered Workspace contributes its number, including a Guest's number on

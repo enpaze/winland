@@ -19,8 +19,8 @@ public class EmptyStepTests
         Decorations = [new Decoration(One, new BorderColor(255, 0, 0, 0), CornerPreference.Round)],
         GroupBars = [new GroupBar(OneWindow, Tile, [new GroupTab(OneWindow, "a", true)], GroupBarStyle.Documented)],
         ConfigNotice = new ConfigNotice("title", "text", null, 1),
-        Tray = new TrayIcon(true, "1"),
-        Cursor = new CursorBehavior(true, 0),
+        Tray = new TrayIcon("1"),
+        Cursor = new CursorBehavior(true),
         ResizeCursor = "right_side",
     };
 
@@ -46,9 +46,9 @@ public class EmptyStepTests
         [nameof(Outcome.ResetDecorations)] = (o => o with { ResetDecorations = [OneWindow] }, false),
         [nameof(Outcome.GroupBars)] = (o => o with { GroupBars = [] }, false),
         [nameof(Outcome.ConfigNotice)] = (o => o with { ConfigNotice = null }, false),
-        [nameof(Outcome.Tray)] = (o => o with { Tray = new TrayIcon(true, "2") }, false),
+        [nameof(Outcome.Tray)] = (o => o with { Tray = new TrayIcon("2") }, false),
         [nameof(Outcome.Warp)] = (o => o with { Warp = new WarpTo(new Point(5, 5)) }, false),
-        [nameof(Outcome.Cursor)] = (o => o with { Cursor = new CursorBehavior(false, 0) }, false),
+        [nameof(Outcome.Cursor)] = (o => o with { Cursor = new CursorBehavior(false) }, false),
         [nameof(Outcome.ResizeCursor)] = (o => o with { ResizeCursor = null }, false),
         [nameof(Outcome.Error)] = (o => o with { Error = "error: no such workspace" }, false),
         [nameof(Outcome.Exit)] = (o => o with { Exit = true }, false),

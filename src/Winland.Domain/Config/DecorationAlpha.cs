@@ -9,7 +9,7 @@ public static class DecorationAlpha
     public static byte Compute(DecorationOptions options, OpacityInput input, OpacityRule? rule, bool opaque)
     {
         ArgumentNullException.ThrowIfNull(options);
-        var configured = input.Fullscreen ? options.FullscreenOpacity
+        var configured = input.Fullscreen ? 1f
             : input.Active ? options.ActiveOpacity
             : options.InactiveOpacity;
         var factor = rule is null

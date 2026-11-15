@@ -3,34 +3,11 @@ namespace Winland.Infrastructure.Tests;
 public partial class CursorIdleTests
 {
     [Fact]
-    public void CursorHidesOnlyAfterTheIdleTimeAndReturnsOnMovement()
-    {
-        var clock = new ManualClock();
-        var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, clock);
-        idle.Configure(new CursorBehavior(false, 5));
-
-        clock.Now += TimeSpan.FromSeconds(5);
-        idle.Tick();
-        Assert.Equal(0, cursor.Hides);
-
-        clock.Now += TimeSpan.FromMilliseconds(1);
-        idle.Tick();
-        Assert.Equal(1, cursor.Hides);
-        Assert.True(cursor.Hidden);
-
-        idle.Moved();
-        Assert.False(cursor.Hidden);
-        Assert.Equal(1, cursor.Shows);
-    }
-
-    [Fact]
     public void KeyPressHidesUntilThePointerMoves()
     {
-        var clock = new ManualClock();
         var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, clock);
-        idle.Configure(new CursorBehavior(true, 0));
+        var idle = new CursorIdle(cursor);
+        idle.Configure(new CursorBehavior(true));
 
         idle.KeyPressed();
         Assert.True(cursor.Hidden);
@@ -43,29 +20,12 @@ public partial class CursorIdleTests
     public void KeyPressDoesNothingWhenHidingIsOff()
     {
         var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, new ManualClock());
-        idle.Configure(new CursorBehavior(false, 0));
+        var idle = new CursorIdle(cursor);
+        idle.Configure(new CursorBehavior(false));
 
         idle.KeyPressed();
-        idle.Tick();
 
         Assert.Equal(0, cursor.Hides);
-        Assert.False(cursor.Hidden);
-    }
-
-    [Fact]
-    public void TurningTheTimeoutOffShowsTheCursor()
-    {
-        var clock = new ManualClock();
-        var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, clock);
-        idle.Configure(new CursorBehavior(false, 1));
-        clock.Now += TimeSpan.FromSeconds(2);
-        idle.Tick();
-        Assert.True(cursor.Hidden);
-
-        idle.Configure(new CursorBehavior(false, 0));
-
         Assert.False(cursor.Hidden);
     }
 
@@ -73,8 +33,8 @@ public partial class CursorIdleTests
     public void WarpMovesTheCursorAndKeepsItHiddenUntilTheMouseMoves()
     {
         var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, new ManualClock());
-        idle.Configure(new CursorBehavior(true, 0));
+        var idle = new CursorIdle(cursor);
+        idle.Configure(new CursorBehavior(true));
         idle.KeyPressed();
 
         idle.Warp(new Point(12, 34));
@@ -87,43 +47,40 @@ public partial class CursorIdleTests
     }
 
     [Fact]
-    public void WithoutATimeoutTheCursorNeverHidesForBeingStill()
+    public void TheCursorNeverHidesForBeingStill()
     {
-        var clock = new ManualClock();
         var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, clock);
-        idle.Configure(new CursorBehavior(false, 0));
+        var idle = new CursorIdle(cursor);
+        idle.Configure(new CursorBehavior(true));
 
-        clock.Now += TimeSpan.FromHours(1);
-        idle.Tick();
+        idle.Moved();
 
         Assert.Equal(0, cursor.Hides);
+        Assert.False(cursor.Hidden);
     }
 
     [Fact]
     public void TurningHideOnKeyOffShowsTheCursor()
     {
         var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, new ManualClock());
-        idle.Configure(new CursorBehavior(true, 0));
+        var idle = new CursorIdle(cursor);
+        idle.Configure(new CursorBehavior(true));
         idle.KeyPressed();
 
-        idle.Configure(new CursorBehavior(false, 0));
+        idle.Configure(new CursorBehavior(false));
 
         Assert.False(cursor.Hidden);
     }
 
-    // Revealing on exit shows a cursor hidden both for being still and by a key.
+    // Revealing on exit shows a cursor hidden both by a key and by touch.
     [Fact]
     public void RevealShowsTheCursorHoweverItWasHidden()
     {
-        var clock = new ManualClock();
         var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, clock);
-        idle.Configure(new CursorBehavior(true, 1));
+        var idle = new CursorIdle(cursor);
+        idle.Configure(new CursorBehavior(true));
         idle.KeyPressed();
-        clock.Now += TimeSpan.FromSeconds(2);
-        idle.Tick();
+        idle.Touched();
 
         idle.Reveal();
 
@@ -138,8 +95,8 @@ public partial class CursorIdleTests
     {
         var first = new FakeCursor();
         var second = new FakeCursor();
-        var idle = new CursorIdle(first, new ManualClock());
-        idle.Configure(new CursorBehavior(true, 0));
+        var idle = new CursorIdle(first);
+        idle.Configure(new CursorBehavior(true));
 
         idle.Use(second);
         idle.KeyPressed();
@@ -148,50 +105,7 @@ public partial class CursorIdleTests
         Assert.True(second.Hidden);
         Assert.Throws<ArgumentNullException>(() => idle.Use(null!));
         Assert.Throws<ArgumentNullException>(() => idle.Configure(null!));
-        Assert.Throws<ArgumentNullException>(() => new CursorIdle(null!, new ManualClock()));
-        Assert.Throws<ArgumentNullException>(() => new CursorIdle(first, null!));
-        Assert.Throws<ArgumentNullException>(() => new CursorIdleTimer(null!));
-    }
-
-    [Fact]
-    public void TheTimerHidesAStillCursorAndStopsWhenDisposed()
-    {
-        var clock = new ManualClock();
-        var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, clock);
-        idle.Configure(new CursorBehavior(false, 1));
-        clock.Now += TimeSpan.FromSeconds(2);
-
-        var timer = new CursorIdleTimer(idle);
-        var hidden = SpinWait.SpinUntil(() => cursor.Hidden, TimeSpan.FromSeconds(10));
-        timer.Dispose();
-        idle.Moved();
-        clock.Now += TimeSpan.FromSeconds(2);
-        Thread.Sleep(600);
-
-        Assert.True(hidden);
-        Assert.False(cursor.Hidden);
-    }
-
-    [Fact]
-    public void TheTimerStartsOnceAnIdleTimeIsSet()
-    {
-        var clock = new ManualClock();
-        var cursor = new FakeCursor();
-        var idle = new CursorIdle(cursor, clock);
-        using var timer = new CursorIdleTimer(idle);
-        Assert.False(idle.Watches);
-
-        idle.Configure(new CursorBehavior(false, 1));
-        timer.Follow();
-        clock.Now += TimeSpan.FromSeconds(2);
-
-        Assert.True(SpinWait.SpinUntil(() => cursor.Hidden, TimeSpan.FromSeconds(10)));
-    }
-
-    private sealed class ManualClock : IClock
-    {
-        public DateTimeOffset Now { get; set; } = new(2026, 10, 15, 8, 0, 0, TimeSpan.Zero);
+        Assert.Throws<ArgumentNullException>(() => new CursorIdle(null!));
     }
 
     private sealed class FakeCursor : ICursorSurface

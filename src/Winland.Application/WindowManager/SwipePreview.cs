@@ -22,7 +22,7 @@ public sealed partial class WindowManager
 
         var preview = _swipePreview ??= new SwipePreview(swipe.Begin);
         var (vertical, span) = SwipeSpan(screen?.Bounds ?? _area);
-        var offset = -swipe.Delta / Math.Max(1, _config.Swipe.Distance) * span;
+        var offset = -swipe.Delta / SwipeDistance * span;
         var motions = new List<Motion>();
         Offset(swipe.Begin, offset, vertical, preview, motions);
 

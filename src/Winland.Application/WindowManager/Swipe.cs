@@ -7,6 +7,9 @@ public sealed partial class WindowManager
     private const int DirectionLockThreshold = 10;
     private const int MinSpeedToForce = 30;
 
+    // Pixels of touchpad travel that slide one whole Workspace.
+    private const int SwipeDistance = 300;
+
     private readonly SwipeRecognizer _swipeGesture = new();
     private WorkspaceSwipe? _workspaceSwipe;
 
@@ -26,7 +29,7 @@ public sealed partial class WindowManager
         if (step.Along is not double along || _swipeGesture.Active is null || _workspaceSwipe is not { } swipe)
             return View([]);
 
-        return StepWorkspaceSwipe(swipe, swipe.Delta + (_config.Swipe.Invert ? -along : along), Math.Max(1, updated.Steps));
+        return StepWorkspaceSwipe(swipe, swipe.Delta - along, Math.Max(1, updated.Steps));
     }
 
     private Outcome EndSwipe() =>
@@ -45,7 +48,7 @@ public sealed partial class WindowManager
     // is the same however many waited together.
     private Outcome StepWorkspaceSwipe(WorkspaceSwipe swipe, double delta, int steps)
     {
-        var distance = Math.Max(1, _config.Swipe.Distance);
+        const int distance = SwipeDistance;
         var step = swipe.Delta - delta;
         swipe.Delta = delta;
         swipe.AverageSpeed = ((swipe.AverageSpeed * swipe.SpeedPoints) + Math.Abs(step)) / (swipe.SpeedPoints + steps);
@@ -90,7 +93,7 @@ public sealed partial class WindowManager
 
     private Outcome FinishWorkspaceSwipe(WorkspaceSwipe swipe)
     {
-        var distance = Math.Max(1, _config.Swipe.Distance);
+        const int distance = SwipeDistance;
         var (left, right) = Neighbours(swipe.Monitor);
         var begin = swipe.Begin;
 

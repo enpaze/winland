@@ -44,12 +44,11 @@ public sealed partial class WindowManager
             Cursor = DragCursor(desk, window, IsResize(drag.Dispatcher), pointer),
             WasTiled = LayoutWorkspace(window).ClientOf(window) is { Floating: false },
             KeepRatio = IsResize(drag.Dispatcher) && KeepsRatio(drag.Arguments),
-            PickedUp = _config.BindOptions.DragThreshold <= 0,
         };
 
         _interaction = gesture;
         NoteBorderCursor(pointer);
-        return gesture.PickedUp ? PickUp(window, gesture, pointer) : [];
+        return PickUp(window, gesture, pointer);
     }
 
     // A Client picked up while fullscreen or maximized leaves that mode first. A floating one
@@ -76,21 +75,6 @@ public sealed partial class WindowManager
     {
         gesture.Pointer = pointer;
         var layout = LayoutWorkspace(gesture.Window).Layout;
-        if (!gesture.PickedUp)
-        {
-            if (!PastThreshold(gesture.Origin, pointer, _config.BindOptions.DragThreshold))
-                return View([], consumed: true);
-
-            // The drag starts where the pointer crossed the threshold, so the Client does not jump.
-            gesture.PickedUp = true;
-            var lifted = PickUp(gesture.Window, gesture, pointer);
-            var dragged = layout.Drag(gesture.Window, gesture.Step(PointerDragPhase.Move, pointer));
-            if (FollowDraggedMonitor(gesture) is { } carried)
-                return carried with { Placements = [.. lifted, .. carried.Placements], Live = true };
-
-            return View([.. lifted, .. dragged], consumed: true) with { Live = true };
-        }
-
         var moved = layout.Drag(gesture.Window, gesture.Step(PointerDragPhase.Move, pointer));
         if (FollowDraggedMonitor(gesture) is { } crossed)
             return crossed with { Live = true };
@@ -104,13 +88,11 @@ public sealed partial class WindowManager
         // The drag's cursor gives way to whatever the pointer is over once it drops.
         NoteBorderCursor(pointer);
         // The Group under the pointer is found while the dragged window is still lifted.
-        var drop = gesture.PickedUp && !gesture.Resize ? GroupDrop(gesture.Window, gesture.WasTiled, pointer) : null;
-        if (drop is null && gesture.PickedUp && !gesture.Resize && DropOnMonitor(gesture, pointer) is { } carried)
+        var drop = !gesture.Resize ? GroupDrop(gesture.Window, gesture.WasTiled, pointer) : null;
+        if (drop is null && !gesture.Resize && DropOnMonitor(gesture, pointer) is { } carried)
             return carried;
 
-        IReadOnlyList<Placement> ended = gesture.PickedUp
-            ? LayoutWorkspace(gesture.Window).Layout.Drag(gesture.Window, gesture.Step(PointerDragPhase.End, pointer))
-            : [];
+        var ended = LayoutWorkspace(gesture.Window).Layout.Drag(gesture.Window, gesture.Step(PointerDragPhase.End, pointer));
         // A window that already joined another Workspace during the drag is focused there when it is dropped, as a drop
         // onto that Monitor did. A resize leaves the focused Monitor where it was.
         var followed = gesture.MovedWorkspace && !gesture.Resize && FocusDragged(gesture.Window);
@@ -259,8 +241,7 @@ public sealed partial class WindowManager
         if (BarDrop(dragged, wasTiled, pointer, GroupBars(Snapshot())) is { } onBar)
             return onBar;
 
-        if (_config.Groups.DragIntoGroup != 1
-            || WorkspaceContaining(dragged) is not LiveWorkspace from
+        if (WorkspaceContaining(dragged) is not LiveWorkspace from
             || WindowUnderExcept(pointer, dragged) is not WindowId under
             || WorkspaceContaining(under) is not LiveWorkspace home
             || home.GroupOf(under) is not WindowGroup group
@@ -275,7 +256,7 @@ public sealed partial class WindowManager
     // The drop and the mark a bar shows while a drag holds the window both come from here, so they agree.
     private DropTarget? BarDrop(WindowId dragged, bool wasTiled, Point pointer, IReadOnlyList<GroupBar> bars)
     {
-        if (_config.Groups.DragIntoGroup == 0 || WorkspaceContaining(dragged) is not LiveWorkspace from)
+        if (WorkspaceContaining(dragged) is not LiveWorkspace from)
             return null;
 
         foreach (var bar in bars)
@@ -301,7 +282,7 @@ public sealed partial class WindowManager
     private (WindowId Window, bool WasTiled, Point Pointer)? HeldForDrop() =>
         _interaction switch
         {
-            Gesture { PickedUp: true, Resize: false } gesture => (gesture.Window, gesture.WasTiled, gesture.Pointer),
+            Gesture { Resize: false } gesture => (gesture.Window, gesture.WasTiled, gesture.Pointer),
             NativeMove move => (move.Window, !move.Floating, move.Pointer),
             _ => null,
         };
@@ -412,13 +393,6 @@ public sealed partial class WindowManager
             _released = null;
     }
 
-    private static bool PastThreshold(Point origin, Point pointer, int threshold)
-    {
-        var dx = (long)pointer.X - origin.X;
-        var dy = (long)pointer.Y - origin.Y;
-        return (dx * dx) + (dy * dy) > (long)threshold * threshold;
-    }
-
     // resizewindow 1 keeps the aspect ratio.
     private static bool KeepsRatio(string arguments) =>
         int.TryParse(arguments.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var mode) && mode == 1;
@@ -483,8 +457,6 @@ public sealed partial class WindowManager
         public bool KeepRatio { get; init; }
 
         public bool WasTiled { get; init; }
-
-        public bool PickedUp { get; set; }
 
         /// <summary>Where the pointer holds the window now.</summary>
         public Point Pointer { get; set; }

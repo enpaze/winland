@@ -143,20 +143,6 @@ public class FullscreenTests
     }
 
     [Fact]
-    public void FullscreenOpacityAppliesOnlyToModeTwo()
-    {
-        var core = new WindowManager(ConfigParser.Parse("decoration:fullscreen_opacity = 0.5\n"));
-        core.Handle(new MonitorsChanged([Screen()]));
-        core.Handle(new WindowAppeared(new WindowId(1), Work));
-
-        var maximized = core.Handle(new Dispatch("fullscreen", "1"));
-        Assert.Equal(255, DecorationOf(maximized, 1).Alpha);
-
-        var fullscreen = core.Handle(new Dispatch("fullscreen", "2"));
-        Assert.Equal(128, DecorationOf(fullscreen, 1).Alpha);
-    }
-
-    [Fact]
     public void ClientsReportTheModesAndTheWorkspace()
     {
         var core = Desk();

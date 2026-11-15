@@ -23,8 +23,8 @@ public sealed partial class WindowManager
 
             var scaled = style.ScaledBy(MonitorById(desk.Monitor)?.Arranged.Scale ?? 1, _textScale);
 
-            // The bar's own font_family wins, and misc:font_family stands in for an empty one.
-            scaled = scaled with { FontFamily = FontNames.Windows(scaled.FontFamily.Length == 0 ? _config.Session.FontFamily : scaled.FontFamily) };
+            // An empty font_family is Windows' own interface font.
+            scaled = scaled with { FontFamily = FontNames.Windows(scaled.FontFamily.Length == 0 ? "Sans" : scaled.FontFamily) };
             var showing = desk.Showing();
             foreach (var group in desk.Groups)
             {
@@ -116,9 +116,6 @@ public sealed partial class WindowManager
     {
         if (_props.Own(window, active ? WindowProp.ActiveBorderColor : WindowProp.InactiveBorderColor) is { } set)
             return set;
-
-        if (WorkspaceContaining(window)?.GroupOf(window) is not null)
-            return active ? _config.Groups.ActiveBorder : _config.Groups.InactiveBorder;
 
         return active ? _config.Decoration.ActiveBorder : _config.Decoration.InactiveBorder;
     }

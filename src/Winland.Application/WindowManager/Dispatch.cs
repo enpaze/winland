@@ -58,7 +58,7 @@ public sealed partial class WindowManager
             return OpenSpecial(target, null);
 
         var from = FocusedId();
-        var switched = SwitchTo(BackAndForth(target), focus: null, consumed: false);
+        var switched = SwitchTo(target, focus: null, consumed: false);
         NoteCrossMonitorWarp(from, switched);
         return switched;
     }

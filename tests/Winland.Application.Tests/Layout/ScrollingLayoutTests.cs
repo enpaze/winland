@@ -291,7 +291,6 @@ public class ScrollingLayoutTests
         var options = ScrollingOptions.From(ConfigParser.Parse(""));
 
         Assert.Equal(0.5, options.ColumnWidth);
-        Assert.Equal(DefaultColumnWidths, options.ExplicitColumnWidths);
     }
 
     [Fact]
@@ -299,11 +298,9 @@ public class ScrollingLayoutTests
     {
         var options = ScrollingOptions.From(ConfigParser.Parse("""
             scrolling:column_width = 2
-            scrolling:explicit_column_widths = 0.2, 0.4
             """));
 
         Assert.Equal(1, options.ColumnWidth);
-        Assert.Equal(ParsedColumnWidths, options.ExplicitColumnWidths);
 
         var narrow = ScrollingOptions.From(ConfigParser.Parse("scrolling:column_width = 0.01\n"));
         Assert.Equal(0.1, narrow.ColumnWidth);

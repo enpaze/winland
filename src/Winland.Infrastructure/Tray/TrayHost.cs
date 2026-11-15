@@ -90,9 +90,6 @@ internal static class TrayHost
             if (_armed == 0)
                 return;
 
-            if (_worker is null && !icon.Shown && notice is null)
-                return;
-
             _pending = icon;
             _pendingNotice = notice;
             if (_worker is null)
@@ -234,7 +231,7 @@ internal static class TrayHost
             _posted = false;
         }
 
-        var plan = TrayBalloon.For(wanted is { Shown: true }, notice, _shownGeneration, _closedGeneration);
+        var plan = TrayBalloon.For(wanted is not null, notice, _shownGeneration, _closedGeneration);
         if (!plan.ShowIcon)
         {
             TakeDown();
@@ -465,7 +462,7 @@ internal static class TrayHost
         {
             // The shell that held the icon is gone. Add it again; modifying the old one never comes back.
             _added = false;
-            if (_shown is { Shown: true } icon)
+            if (_shown is { } icon)
                 Present(hwnd, icon);
             else if (_temporary && _shownGeneration != 0 && _shownGeneration != _closedGeneration)
                 Present(hwnd, "!", "Winland");

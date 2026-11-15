@@ -313,17 +313,6 @@ public class GroupTests
     }
 
     [Fact]
-    public void GroupedWindowsUseTheGroupBorderColors()
-    {
-        var core = Grouped("""
-            group:col.border_active = rgb(102030)
-            """);
-
-        var grouped = core.Execute("dispatch changegroupactive 2");
-        Assert.Equal(new BorderColor(0xFF, 0x10, 0x20, 0x30), Decoration(grouped.Effect, Second).Border);
-    }
-
-    [Fact]
     public void DisabledGroupBarTakesNoSpace()
     {
         var core = Opened("group:groupbar:enabled = false\n", First);

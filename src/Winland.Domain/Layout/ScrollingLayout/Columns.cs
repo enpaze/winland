@@ -168,7 +168,7 @@ internal sealed partial class ScrollingLayout
         y += border;
         width = Math.Max(0, width - (border * 2.0));
         height = Math.Max(0, height - (border * 2.0));
-        return _layoutOptions.KeepAspect(Pixels(x, y, width, height), _area, TiledCount());
+        return Pixels(x, y, width, height);
     }
 
     private int TiledCount()

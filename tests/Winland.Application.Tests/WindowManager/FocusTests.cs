@@ -21,7 +21,7 @@ public class FocusTests
     [Fact]
     public void FocusOnActivateAcceptsTheApplication()
     {
-        var core = new WindowManager(ConfigParser.Parse("misc:focus_on_activate = true\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = focus_on_activate, class:.*\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
@@ -184,15 +184,6 @@ public class FocusTests
 
         Assert.Null(moved.Focus);
         Assert.Equal(new WindowId(1), Active(core));
-    }
-
-    [Fact]
-    public void FocusOnActivateIsHonoredInABlock()
-    {
-        var document = ConfigParser.Parse("misc {\n    focus_on_activate = true\n    middle_click_paste = true\n}\n");
-
-        Assert.Equal(new Setting("misc:focus_on_activate", "true"), Assert.Single(document.Settings));
-        Assert.Equal(new ConfigWarning(3, "Unsupported keyword 'misc:middle_click_paste'."), Assert.Single(document.Warnings));
     }
 
     [Fact]

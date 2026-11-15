@@ -81,11 +81,9 @@ internal sealed partial class ScrollingLayout
         return Placements();
     }
 
-    private void StepConfigured(Column column, bool forward)
+    private static void StepConfigured(Column column, bool forward)
     {
-        var widths = _scrolling.ExplicitColumnWidths;
-        if (widths.Count == 0)
-            return;
+        var widths = ScrollingOptions.StepWidths;
 
         if (forward)
         {

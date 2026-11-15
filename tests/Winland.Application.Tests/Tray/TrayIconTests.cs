@@ -8,7 +8,6 @@ public class TrayIconTests
         var outcome = new WindowManager().Execute("dispatch workspace 1").Effect;
 
         Assert.NotNull(outcome.Tray);
-        Assert.True(outcome.Tray.Shown);
         Assert.Equal("1", outcome.Tray.Number);
         Assert.Equal("Winland, Workspace 1", outcome.Tray.Tip);
     }
@@ -59,53 +58,6 @@ public class TrayIconTests
 
         Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), right.State.ActiveWorkspace);
         Assert.Equal("1", right.Tray!.Number);
-    }
-
-    [Fact]
-    public void TheOptionDefaultsToShown()
-    {
-        var core = new WindowManager();
-
-        Assert.True(core.Execute("dispatch workspace 1").Effect.Tray!.Shown);
-    }
-
-    [Theory]
-    [InlineData("false", false)]
-    [InlineData("true", true)]
-    [InlineData("0", false)]
-    [InlineData("1", true)]
-    [InlineData("yes", true)]
-    [InlineData("no", false)]
-    public void TheOptionAcceptsABool(string value, bool shown)
-    {
-        var core = new WindowManager(ConfigParser.Parse($"general:tray_icon = {value}\n"));
-
-        Assert.Empty(ConfigParser.Parse($"general:tray_icon = {value}\n").Warnings);
-        Assert.Equal(shown, core.Execute("dispatch workspace 1").Effect.Tray!.Shown);
-    }
-
-    [Fact]
-    public void AnInvalidBoolWarnsAndKeepsThePreviousValue()
-    {
-        var document = ConfigParser.Parse("""
-            general:tray_icon = false
-            general:tray_icon = perhaps
-            """);
-        Assert.Equal(new ConfigWarning(2, "Invalid value 'perhaps' for general:tray_icon."), Assert.Single(document.Warnings));
-        Assert.False(new WindowManager(document).Execute("dispatch workspace 1").Effect.Tray!.Shown);
-    }
-
-    [Fact]
-    public void AReloadAppliesTheOptionAtOnce()
-    {
-        var core = new WindowManager(ConfigParser.Parse("general:tray_icon = false\n"));
-        Assert.False(core.Execute("dispatch workspace 1").Effect.Tray!.Shown);
-
-        core.ReadConfig = () => new ConfigRead(ConfigParser.Parse("general:tray_icon = true\n"));
-        var reloaded = core.Execute("reload");
-
-        Assert.Equal("ok", reloaded.Text);
-        Assert.True(reloaded.Effect.Tray!.Shown);
     }
 
     [Fact]

@@ -14,16 +14,16 @@ public class FontNamesTests
         Assert.Equal(font, FontNames.Windows(family));
 
     [Fact]
-    public void AnUnnamedTabBarUsesTheGlobalFont()
+    public void AnUnnamedTabBarUsesTheWindowsInterfaceFont()
     {
-        var core = new WindowManager(ConfigParser.Parse("misc:font_family = Monospace\n"));
+        var core = new WindowManager(ConfigParser.Parse(""));
         core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "", 0, 0, 1920, 1080, 1, true, new Rectangle(0, 0, 1920, 1040))]));
         core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 800, 600)));
         core.Execute("dispatch togglegroup");
 
-        Assert.Equal("Consolas", Assert.Single(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
+        Assert.Equal("Segoe UI", Assert.Single(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
 
-        core.Handle(new Configure(ConfigParser.Parse("misc:font_family = Monospace\ngroup:groupbar:font_family = Fira Code\n")));
+        core.Handle(new Configure(ConfigParser.Parse("group:groupbar:font_family = Fira Code\n")));
         Assert.Equal("Fira Code", Assert.Single(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
     }
 }

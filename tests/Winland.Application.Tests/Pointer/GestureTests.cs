@@ -60,40 +60,6 @@ public class GestureTests
         Assert.Equal(new ConfigWarning(1, $"Invalid gesture: {action}."), Assert.Single(document.Warnings));
     }
 
-    [Theory]
-    [InlineData("gestures:close_max_timeout = 1000")]
-    [InlineData("gestures:workspace_swipe_touch = true")]
-    [InlineData("gestures:workspace_swipe_touch_invert = true")]
-    [InlineData("gestures:scrolling:move_snap_to_grid = true")]
-    [InlineData("gestures:scrolling:move_snap_cursor = true")]
-    public void OptionsForRemovedGesturesWarnAndAreSkipped(string line)
-    {
-        var document = ConfigParser.Parse(line + "\n");
-
-        Assert.Equal(GestureOptions.Documented, GestureOptions.From(document));
-        Assert.Contains("Unsupported keyword", Assert.Single(document.Warnings).Message);
-    }
-
-    [Fact]
-    public void GestureOptionsAreHonored()
-    {
-        var document = ConfigParser.Parse("""
-            gestures {
-                workspace_swipe_distance = 5000
-                workspace_swipe_invert = false
-            }
-            """);
-
-        Assert.Empty(document.Warnings);
-        Assert.Equal(
-            new GestureOptions
-            {
-                Distance = 2000,
-                Invert = false,
-            },
-            GestureOptions.From(document));
-    }
-
     [Fact]
     public void FingersLeftPastTheCancelRatioSwitchesToTheNextWorkspace()
     {
@@ -120,25 +86,6 @@ public class GestureTests
         var core = Twin(Horizontal);
 
         Assert.Equal(new WorkspaceId("2"), Swipe(core, 3, Steps(2, -60, 0)).State.ActiveWorkspace);
-    }
-
-    [Fact]
-    public void DistanceSetsTheThreshold()
-    {
-        var core = Twin(Horizontal + "gestures:workspace_swipe_distance = 100\n");
-
-        var ended = Swipe(core, 3, Steps(6, -10, 0));
-
-        Assert.Equal(new WorkspaceId("2"), ended.State.ActiveWorkspace);
-    }
-
-    [Fact]
-    public void InvertOffMakesFingersRightGoToTheNextWorkspace()
-    {
-        var core = Twin(Horizontal + "gestures:workspace_swipe_invert = false\n");
-
-        Assert.Equal(WorkspaceId.Initial, Swipe(core, 3, Steps(20, -10, 0)).State.ActiveWorkspace);
-        Assert.Equal(new WorkspaceId("2"), Swipe(core, 3, Steps(20, 10, 0)).State.ActiveWorkspace);
     }
 
     [Fact]

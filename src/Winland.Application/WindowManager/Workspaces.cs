@@ -318,17 +318,6 @@ public sealed partial class WindowManager
         _crossMonitorWarp = new WarpTo(new Point(bounds.X + (bounds.Width / 2), bounds.Y + (bounds.Height / 2)));
     }
 
-    // binds:workspace_back_and_forth: asking for the Workspace the focused Monitor shows goes to the previous one
-    // instead. Without a previous one the Monitor stays where it is.
-    private WorkspaceId BackAndForth(WorkspaceId target)
-    {
-        var monitor = FocusedId();
-        if (_config.BindOptions.BackAndForth == 0 || target != _workspaces.Shown.ActiveOn(monitor))
-            return target;
-
-        return Previous(monitor, perMonitor: _config.BindOptions.BackAndForth == 2) ?? target;
-    }
-
     private WorkspaceId? Previous(MonitorId monitor, bool perMonitor) => _workspaces.Shown.Previous(monitor, perMonitor);
 
     private WorkspaceAddress.Context Context() => Context(FocusedId());

@@ -51,10 +51,6 @@ public class WorkspaceSwipeTests
     private sealed class Fixture
     {
         private const string Options = """
-            gestures {
-                workspace_swipe_distance = 300
-                workspace_swipe_invert = false
-            }
             gesture = 9, horizontal, workspace
 
             """;
@@ -119,7 +115,8 @@ public class WorkspaceSwipeTests
 
         internal void Begin() => TestDesktop.Handle(new SwipeBegan(9));
 
-        internal void Update(double delta) => TestDesktop.Handle(new SwipeUpdated(9, delta, 0));
+        // The checks speak of how far the strip of Workspaces travels. The fingers move the other way.
+        internal void Update(double delta) => TestDesktop.Handle(new SwipeUpdated(9, -delta, 0));
 
         internal void End(bool cancelled) => TestDesktop.Handle(new SwipeEnded(cancelled));
 

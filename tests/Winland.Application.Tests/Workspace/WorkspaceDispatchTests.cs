@@ -78,11 +78,6 @@ public class WorkspaceDispatchTests
         desk.Dispatch("workspace", "1");
         Assert.Equal("1 (1)", ActiveLabel(desk));
 
-        desk.Set("binds:workspace_back_and_forth", "true");
-        desk.Ok("workspace", "1");
-        Assert.Equal("3 (3)", ActiveLabel(desk));
-        desk.Set("binds:workspace_back_and_forth", "false");
-
         desk.Ok("workspace", "special:HELLO");
         Assert.Contains("special:HELLO", Monitors(desk).Select(SpecialOn));
 
@@ -119,7 +114,6 @@ public class WorkspaceDispatchTests
 
         desk.CloseAll();
 
-        MultimonBaf(desk);
         MultimonFocus(desk);
         WorkspaceHistoryMultiMon(desk);
 
@@ -149,46 +143,6 @@ public class WorkspaceDispatchTests
             desk.Ok("workspace", "previous");
             Assert.Equal(before, desk.Send("activewindow"));
         }
-    }
-
-    private static void MultimonBaf(TestDesktop desk)
-    {
-        desk.Set("binds:workspace_back_and_forth", "0");
-
-        desk.Ok("focusmonitor", "HEADLESS-2");
-        desk.Ok("workspace", "1");
-        desk.Spawn("a");
-        desk.Ok("workspace", "2");
-        desk.Spawn("a");
-
-        desk.Ok("focusmonitor", "HEADLESS-3");
-        desk.Ok("workspace", "3");
-        desk.Spawn("a");
-
-        desk.Ok("focusmonitor", "HEADLESS-2");
-        desk.Set("binds:workspace_back_and_forth", "1");
-
-        // previous is global. Workspace 2 again returns to Workspace 3, which HEADLESS-3 is showing.
-        desk.Ok("workspace", "2");
-        ExpectActive(desk, "3 (3)", "HEADLESS-3");
-
-        desk.Ok("workspace", "4");
-        desk.Ok("workspace", "5");
-        desk.Ok("workspace", "5");
-        ExpectActive(desk, "4 (4)", "HEADLESS-3");
-
-        desk.Set("binds:workspace_back_and_forth", "2");
-
-        // per_monitor stays on this Monitor. Asking again for 4 returns to 5.
-        desk.Ok("workspace", "4");
-        ExpectActive(desk, "5 (5)", "HEADLESS-3");
-
-        desk.Ok("focusmonitor", "HEADLESS-2");
-        desk.Ok("workspace", "6");
-        desk.Ok("workspace", "6");
-        ExpectActive(desk, "2 (2)", "HEADLESS-2");
-
-        desk.CloseAll();
     }
 
     private static void MultimonFocus(TestDesktop desk)

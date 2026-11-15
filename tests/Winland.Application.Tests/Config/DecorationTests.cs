@@ -44,7 +44,6 @@ public class DecorationTests
         Assert.True(options.Blur);
         Assert.Equal(1f, options.ActiveOpacity);
         Assert.Equal(1f, options.InactiveOpacity);
-        Assert.Equal(1f, options.FullscreenOpacity);
     }
 
     [Fact]

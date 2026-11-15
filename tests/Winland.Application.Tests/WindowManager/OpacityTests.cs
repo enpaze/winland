@@ -11,13 +11,11 @@ public class OpacityTests
             decoration:active_opacity = 0.8
             decoration:active_opacity = 2
             decoration:inactive_opacity = -0.4
-            decoration:fullscreen_opacity = 0.9
-            decoration:fullscreen_opacity = no
+            decoration:inactive_opacity = no
             """));
 
         Assert.Equal(1f, options.ActiveOpacity);
         Assert.Equal(0f, options.InactiveOpacity);
-        Assert.Equal(0.9f, options.FullscreenOpacity);
     }
 
     [Fact]
@@ -26,12 +24,11 @@ public class OpacityTests
         var document = ConfigParser.Parse("""
             decoration:active_opacity = 0.8
             decoration:inactive_opacity = 0.4
-            decoration:fullscreen_opacity = 0.9
             decoration:blur:enabled = true
             """);
 
         Assert.Empty(document.Warnings);
-        Assert.Equal(4, document.Settings.Count);
+        Assert.Equal(3, document.Settings.Count);
     }
 
     [Fact]
@@ -161,27 +158,25 @@ public class OpacityTests
     }
 
     [Fact]
-    public void FullscreenSelectsItsFraction()
+    public void AFullscreenClientIsOpaqueWhateverTheConfiguredOpacities()
     {
         var options = DecorationOptions.Documented with
         {
             ActiveOpacity = 0.8f,
             InactiveOpacity = 0.4f,
-            FullscreenOpacity = 0.9f,
         };
 
-        Assert.Equal(230, DecorationAlpha.Compute(options, new OpacityInput(Active: true, Fullscreen: true), null, false));
-        Assert.Equal(230, DecorationAlpha.Compute(options, new OpacityInput(Active: false, Fullscreen: true), null, false));
+        Assert.Equal(255, DecorationAlpha.Compute(options, new OpacityInput(Active: true, Fullscreen: true), null, false));
+        Assert.Equal(255, DecorationAlpha.Compute(options, new OpacityInput(Active: false, Fullscreen: true), null, false));
         Assert.Equal(204, DecorationAlpha.Compute(options, new OpacityInput(Active: true), null, false));
     }
 
     [Fact]
-    public void OneOpacityValueIsCopiedBeforeItMultipliesFullscreen()
+    public void AnOpacityRuleStillAppliesToAFullscreenClient()
     {
         var rule = new OpacityRule(0.5f, 0.5f, 0.5f);
-        var options = DecorationOptions.Documented with { FullscreenOpacity = 0.5f };
 
-        Assert.Equal(64, DecorationAlpha.Compute(options, new OpacityInput(Active: true, Fullscreen: true), rule, false));
+        Assert.Equal(128, DecorationAlpha.Compute(DecorationOptions.Documented, new OpacityInput(Active: true, Fullscreen: true), rule, false));
     }
 
     [Fact]

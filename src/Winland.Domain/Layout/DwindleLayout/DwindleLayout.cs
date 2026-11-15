@@ -232,7 +232,7 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         var top = box.Y == area.Y ? 0 : gaps.Top;
         var right = box.X + box.Width == area.X + area.Width ? 0 : gaps.Right;
         var bottom = box.Y + box.Height == area.Y + area.Height ? 0 : gaps.Bottom;
-        var presented = _options.KeepAspect(Shrink(box, left, top, right, bottom), _area, _nodes.Count);
+        var presented = Shrink(box, left, top, right, bottom);
         var border = _options.BorderFor(id);
         presented = Shrink(presented, border, border, border, border);
         return _limits.TryGetValue(id, out var limits) ? limits.ForTiles.Raise(presented, area) : presented;

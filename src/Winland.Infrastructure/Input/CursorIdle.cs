@@ -1,15 +1,5 @@
 namespace Winland.Infrastructure;
 
-public interface IClock
-{
-    DateTimeOffset Now { get; }
-}
-
-public sealed class SystemClock : IClock
-{
-    public DateTimeOffset Now => DateTimeOffset.UtcNow;
-}
-
 public interface ICursorSurface
 {
     void Warp(Point position);
@@ -19,30 +9,20 @@ public interface ICursorSurface
     void Show();
 }
 
-/// <summary>
-/// Hides the cursor after it has been still, on a key press, and on touch until the mouse moves. Tests advance
-/// <see cref="IClock"/>.
-/// </summary>
+/// <summary>Hides the cursor on a key press, and on touch, until the mouse moves.</summary>
 public sealed class CursorIdle
 {
-    private readonly IClock _clock;
     private readonly Lock _gate = new();
     private ICursorSurface _cursor;
-    private DateTimeOffset _lastMove;
-    private TimeSpan _timeout;
     private bool _hideOnKey;
     private bool _touchHidden;
-    private bool _idleHidden;
     private bool _keyHidden;
     private bool _hidden;
 
-    public CursorIdle(ICursorSurface cursor, IClock clock)
+    public CursorIdle(ICursorSurface cursor)
     {
         ArgumentNullException.ThrowIfNull(cursor);
-        ArgumentNullException.ThrowIfNull(clock);
         _cursor = cursor;
-        _clock = clock;
-        _lastMove = clock.Now;
     }
 
     public void Use(ICursorSurface cursor)
@@ -58,13 +38,8 @@ public sealed class CursorIdle
         lock (_gate)
         {
             _hideOnKey = behavior.HideOnKeyPress;
-            _timeout = behavior.InactiveTimeoutSeconds > 0
-                ? TimeSpan.FromSeconds(behavior.InactiveTimeoutSeconds)
-                : TimeSpan.Zero;
             if (!_hideOnKey)
                 _keyHidden = false;
-            if (_timeout == TimeSpan.Zero)
-                _idleHidden = false;
             Publish();
         }
     }
@@ -73,17 +48,7 @@ public sealed class CursorIdle
     // Not under the lock: the move it makes reaches the mouse hook at once, which takes the lock in Moved.
     public void Warp(Point position) => _cursor.Warp(position);
 
-    public void Moved()
-    {
-        lock (_gate)
-        {
-            _lastMove = _clock.Now;
-            _idleHidden = false;
-            _keyHidden = false;
-            _touchHidden = false;
-            Publish();
-        }
-    }
+    public void Moved() => Reveal();
 
     /// <summary>Touch pressed down: the cursor hides until the mouse moves.</summary>
     public void Touched()
@@ -107,34 +72,10 @@ public sealed class CursorIdle
         }
     }
 
-    /// <summary>Whether the cursor hides after a time without moving, so <see cref="Tick"/> has something to do.</summary>
-    public bool Watches
-    {
-        get
-        {
-            lock (_gate)
-                return _timeout > TimeSpan.Zero;
-        }
-    }
-
-    public void Tick()
-    {
-        lock (_gate)
-        {
-            if (_timeout <= TimeSpan.Zero)
-                return;
-
-            if (_clock.Now - _lastMove > _timeout)
-                _idleHidden = true;
-            Publish();
-        }
-    }
-
     public void Reveal()
     {
         lock (_gate)
         {
-            _idleHidden = false;
             _keyHidden = false;
             _touchHidden = false;
             Publish();
@@ -143,7 +84,7 @@ public sealed class CursorIdle
 
     private void Publish()
     {
-        var hide = _idleHidden || _keyHidden || _touchHidden;
+        var hide = _keyHidden || _touchHidden;
         if (hide == _hidden)
             return;
 
@@ -152,55 +93,5 @@ public sealed class CursorIdle
             _cursor.Hide();
         else
             _cursor.Show();
-    }
-}
-
-public sealed class CursorIdleTimer : IDisposable
-{
-    private static readonly TimeSpan Period = TimeSpan.FromMilliseconds(200);
-
-    private readonly CursorIdle _idle;
-    private readonly Timer _timer;
-    private readonly Lock _gate = new();
-    private bool _running;
-    private int _disposed;
-
-    public CursorIdleTimer(CursorIdle idle)
-    {
-        ArgumentNullException.ThrowIfNull(idle);
-        _idle = idle;
-        _timer = new Timer(OnTick);
-        Follow();
-    }
-
-    /// <summary>Ticks while the cursor hides after a time without moving, and stops when it no longer does.</summary>
-    public void Follow()
-    {
-        lock (_gate)
-        {
-            var watches = _idle.Watches;
-            if (watches == _running || Volatile.Read(ref _disposed) != 0)
-                return;
-
-            _running = watches;
-            _ = watches ? _timer.Change(Period, Period) : _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
-        }
-    }
-
-    public void Dispose()
-    {
-        lock (_gate)
-        {
-            Volatile.Write(ref _disposed, 1);
-            _timer.Dispose();
-        }
-    }
-
-    private void OnTick(object? state)
-    {
-        if (Volatile.Read(ref _disposed) != 0)
-            return;
-
-        _idle.Tick();
     }
 }
