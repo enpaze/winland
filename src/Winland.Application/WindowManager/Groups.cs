@@ -59,11 +59,11 @@ public sealed partial class WindowManager
         return ShowMember(desk, group, index);
     }
 
-    // The wheel over a Group's tab bar shows the next or previous member, with group:groupbar:scrolling, and moves the focus
-    // only from a shown member that had it, as Winland's moveCurrent does.
+    // The wheel over a Group's tab bar shows the next or previous member, and moves the focus only from a shown member
+    // that had it.
     private Outcome ScrollGroupBar(GroupBarScrolled scrolled)
     {
-        if (!_config.Groups.Bar.Scrolling || WorkspaceContaining(scrolled.Shown) is not LiveWorkspace desk
+        if (WorkspaceContaining(scrolled.Shown) is not LiveWorkspace desk
             || desk.GroupOf(scrolled.Shown) is not WindowGroup group || group.Count < 2)
         {
             return View([]);

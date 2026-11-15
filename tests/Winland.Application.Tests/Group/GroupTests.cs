@@ -313,32 +313,14 @@ public class GroupTests
     }
 
     [Fact]
-    public void DisabledGroupBarTakesNoSpace()
+    public void TheTitleRowHeightShapesTheBar()
     {
-        var core = Opened("group:groupbar:enabled = false\n", First);
-        var tile = ClientOf(core.Execute("dispatch workspace 1").Effect, First).Bounds;
-
-        var made = core.Execute("dispatch togglegroup");
-
-        Assert.Empty(made.Effect.GroupBars);
-        Assert.Equal(tile, Assert.Single(made.Effect.Placements).Bounds);
-    }
-
-    [Fact]
-    public void GroupBarOptionsShapeTheBar()
-    {
-        var core = Opened("""
-            group:groupbar:height = 20
-            group:groupbar:indicator_height = 4
-            group:groupbar:keep_upper_gap = false
-            group:groupbar:gaps_out = 1
-            group:groupbar:render_titles = false
-            """, First);
+        var core = Opened("group:groupbar:height = 20\n", First);
 
         var bar = Assert.Single(core.Execute("dispatch togglegroup").Effect.GroupBars);
 
-        Assert.Equal(1 + 4, bar.Bounds.Height);
-        Assert.False(bar.Style.RenderTitles);
+        // The gap above, the title row, the indicator and the gap below.
+        Assert.Equal(2 + 20 + 3 + 2, bar.Bounds.Height);
     }
 
     [Fact]
@@ -383,13 +365,13 @@ public class GroupTests
     {
         var document = ConfigParser.Parse("""
             group:groupbar:font_size = 10
-            group:drag_into_group = 2
+            group:groupbar:col.active = rgba(ff0000ff)
             """);
 
         Assert.Empty(document.Warnings);
         var options = GroupOptions.From(document);
         Assert.Equal(10, options.Bar.FontSize);
-        Assert.Equal(2, options.DragIntoGroup);
+        Assert.Equal(new BorderColor(0xFF, 0xFF, 0x00, 0x00), options.Bar.Active);
     }
 
     [Theory]

@@ -330,7 +330,7 @@ internal static class GroupBarHost
                 return default;
             case MiddleUpMessage:
                 var closed = bar.Spec.TabAt(x, y);
-                if (bar.Spec.Style.MiddleClickClose && closed >= 0 && bar.Pressed == (x, y))
+                if (closed >= 0 && bar.Pressed == (x, y))
                 {
                     try
                     {
@@ -343,7 +343,7 @@ internal static class GroupBarHost
                 }
                 bar.Pressed = null;
                 return default;
-            case WheelMessage when bar.Spec.Style.Scrolling:
+            case WheelMessage:
                 var delta = (short)(((nuint)wParam >> 16) & 0xFFFF);
                 try
                 {

@@ -8,8 +8,6 @@ public sealed partial class WindowManager
     {
         var bars = new List<GroupBar>();
         var style = _config.Groups.Bar;
-        if (!style.Enabled)
-            return bars;
 
         var clients = new Dictionary<WindowId, Client>(snapshot.Clients.Count);
         foreach (var client in snapshot.Clients)
@@ -28,9 +26,6 @@ public sealed partial class WindowManager
             var showing = desk.Showing();
             foreach (var group in desk.Groups)
             {
-                if (style.DisableWhenOnly && group.Count == 1)
-                    continue;
-
                 if (!clients.TryGetValue(group.Shown, out var shown)
                     || shown.Minimized
                     || shown.Fullscreen == FullscreenMode.Fullscreen
@@ -38,7 +33,7 @@ public sealed partial class WindowManager
                     || _props.Own(group.Shown, WindowProp.Decorate) == false)
                     continue;
 
-                var reserved = scaled.ReservedFor(group.Count);
+                var reserved = scaled.Reserved;
                 var box = shown.Bounds;
                 var strip = shown.Floating
                     ? new Rectangle(box.X, box.Y - reserved, box.Width, reserved)

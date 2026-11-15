@@ -2,9 +2,8 @@ namespace Winland.Domain;
 
 /// <summary>
 /// The tab bar Winland draws over a Group's tile. <see cref="Bounds"/> is the strip in screen pixels.
-/// Each tab names one member, in Group order. From the bottom of the strip up: the gap to the window,
-/// the indicator, the indicator gap, the title row and, with <c>keep_upper_gap</c>, a top gap. A stacked bar
-/// (<c>stacked</c>) gives each member such a row across the whole width, the first member at the top.
+/// Each tab names one member, in Group order, side by side. From the bottom of the strip up: the gap to the window,
+/// the indicator, the title row and a top gap.
 /// </summary>
 public sealed record GroupBar(WindowId Shown, Rectangle Bounds, IReadOnlyList<GroupTab> Tabs, GroupBarStyle Style)
 {
@@ -23,32 +22,21 @@ public sealed record GroupBar(WindowId Shown, Rectangle Bounds, IReadOnlyList<Gr
         && other.Insertion == Insertion
         && other.Tabs.SequenceEqual(Tabs);
 
-    /// <summary>The width of one tab. Tabs share the strip with <c>gaps_in</c> between them, or each takes it all when stacked.</summary>
+    /// <summary>The width of one tab. Tabs share the strip with a gap between them.</summary>
     public int TabWidth =>
-        Tabs.Count == 0 ? 0
-        : Style.Stacked ? Bounds.Width
-        : Math.Max(0, (Bounds.Width - (Style.GapsIn * (Tabs.Count - 1))) / Tabs.Count);
-
-    /// <summary>
-    /// Where tab <paramref name="index"/> comes in the order Winland draws the tabs: left to right, or from
-    /// the bottom up when stacked. Its rounding follows that order.
-    /// </summary>
-    public int DrawOrder(int index) => Style.Stacked ? Tabs.Count - 1 - index : index;
+        Tabs.Count == 0 ? 0 : Math.Max(0, (Bounds.Width - (Style.GapsIn * (Tabs.Count - 1))) / Tabs.Count);
 
     /// <summary>The indicator of tab <paramref name="index"/>, relative to the strip.</summary>
     public Rectangle IndicatorBounds(int index)
     {
-        var y = Bounds.Height - Lift(index) - Style.GapsOut - Style.IndicatorHeight;
+        var y = Bounds.Height - Style.GapsOut - Style.IndicatorHeight;
         return new Rectangle(TabX(index), y, TabWidth, Style.IndicatorHeight);
     }
 
-    /// <summary>The title row of tab <paramref name="index"/>, relative to the strip. Empty when neither titles nor gradients are drawn.</summary>
+    /// <summary>The title row of tab <paramref name="index"/>, relative to the strip.</summary>
     public Rectangle TitleBounds(int index)
     {
-        if (!Style.RenderTitles && !Style.Gradients)
-            return new Rectangle(TabX(index), 0, 0, 0);
-
-        var y = Bounds.Height - Lift(index) - Style.OneBarHeight;
+        var y = Bounds.Height - Style.GapsOut - Style.IndicatorHeight - Style.Height;
         return new Rectangle(TabX(index), y, TabWidth, Style.Height);
     }
 
@@ -57,17 +45,6 @@ public sealed record GroupBar(WindowId Shown, Rectangle Bounds, IReadOnlyList<Gr
     {
         if (Tabs.Count == 0 || x < 0 || y < 0 || x >= Bounds.Width || y >= Bounds.Height)
             return -1;
-
-        // A stacked bar is cut into rows of Winland's bar height plus gaps_out, with that gap at each row's top.
-        if (Style.Stacked)
-        {
-            var row = RowStep;
-            if (row <= 0)
-                return -1;
-
-            var at = (int)(y / row);
-            return at >= Tabs.Count || y - (row * at) < Style.GapsOut ? -1 : at;
-        }
 
         var step = TabWidth + Style.GapsIn;
         if (step <= 0)
@@ -82,28 +59,17 @@ public sealed record GroupBar(WindowId Shown, Rectangle Bounds, IReadOnlyList<Gr
 
     /// <summary>
     /// The place a window dropped at <paramref name="pointer"/>, in screen pixels, joins: the tab after the one whose
-    /// middle it passed, as Winland counts it.
+    /// middle it passed.
     /// </summary>
     public int DropIndex(Point pointer)
     {
-        double relative;
-        double step;
-        if (Style.Stacked)
-        {
-            step = RowStep;
-            relative = pointer.Y - Bounds.Y - (step / 2);
-        }
-        else
-        {
-            step = TabWidth + Style.GapsIn;
-            relative = pointer.X - Bounds.X - (TabWidth / 2);
-        }
-
+        double step = TabWidth + Style.GapsIn;
+        double relative = pointer.X - Bounds.X - (TabWidth / 2);
         return (relative < 0 || step <= 0 ? -1 : (int)(relative / step)) + 1;
     }
 
     /// <summary>
-    /// The mark of <see cref="Insertion"/>, relative to the strip: a line as thick as the indicator across the bar, centred
+    /// The mark of <see cref="Insertion"/>, relative to the strip: a line as thick as the indicator down the bar, centred
     /// where the tabs it falls between meet and kept inside the strip. Empty with no insertion.
     /// </summary>
     public Rectangle InsertionBounds()
@@ -112,27 +78,11 @@ public sealed record GroupBar(WindowId Shown, Rectangle Bounds, IReadOnlyList<Gr
             return default;
 
         var thickness = Math.Max(1, Style.IndicatorHeight);
-        if (Style.Stacked)
-        {
-            var line = Bounds.Height - ((Tabs.Count - index) * Style.OneBarHeight);
-            return new Rectangle(0, Inside(line - (thickness / 2), Bounds.Height - thickness), Bounds.Width, thickness);
-        }
-
         var meet = index == 0 ? 0 : (index * (TabWidth + Style.GapsIn)) - (Style.GapsIn / 2);
-        return new Rectangle(Inside(meet - (thickness / 2), Bounds.Width - thickness), 0, thickness, Bounds.Height);
+        return new Rectangle(Math.Max(0, Math.Min(meet - (thickness / 2), Bounds.Width - thickness)), 0, thickness, Bounds.Height);
     }
 
-    private static int Inside(int at, int last) => Math.Max(0, Math.Min(at, last));
-
-    // Winland's stacked row: the bar height it divides the strip into, plus gaps_out.
-    private double RowStep =>
-        Tabs.Count == 0 ? 0
-        : (((Bounds.Height - (Style.GapsOut * (Style.KeepUpperGap ? 1 : 0))) - (Style.GapsOut * Tabs.Count)) / (double)Tabs.Count) + Style.GapsOut;
-
-    // How far up from the bottom of the strip tab index's row sits.
-    private int Lift(int index) => Style.Stacked ? (Tabs.Count - 1 - index) * Style.OneBarHeight : 0;
-
-    private int TabX(int index) => Style.Stacked ? 0 : index * (TabWidth + Style.GapsIn);
+    private int TabX(int index) => index * (TabWidth + Style.GapsIn);
 }
 
 /// <summary>One member's tab. <see cref="Focused"/> marks the focused window, which the bar colors as active.</summary>
