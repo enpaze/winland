@@ -6,35 +6,9 @@ using System.Text.Json.Serialization;
 
 namespace Winland.Application;
 
-/// <summary>The replies to the smaller requests: binds, version, the cursor, config errors, files, and how a batch splits.</summary>
+/// <summary>The replies to the smaller requests: binds, version, the cursor, config errors and files.</summary>
 public static partial class CommandProtocol
 {
-    public static IReadOnlyList<string> SplitBatch(string payload)
-    {
-        ArgumentNullException.ThrowIfNull(payload);
-
-        // As Winland splits a batch: at every ;, with \; for a ; and \\ for a \ in a command. A backslash
-        // before anything else stays, and each command is trimmed, an empty one too.
-        var commands = new List<string>();
-        var command = new StringBuilder();
-        for (var i = 0; i <= payload.Length; i++)
-        {
-            if (i == payload.Length || payload[i] == ';')
-            {
-                commands.Add(command.ToString().Trim());
-                command.Clear();
-                continue;
-            }
-
-            if (payload[i] == '\\' && i + 1 < payload.Length && payload[i + 1] is '\\' or ';')
-                i++;
-
-            command.Append(payload[i]);
-        }
-
-        return commands;
-    }
-
     public static string FormatBinds(IReadOnlyList<Bind> binds)
     {
         ArgumentNullException.ThrowIfNull(binds);

@@ -52,7 +52,6 @@ public sealed partial class WindowManager
             ["pin"] = new(static (m, _, a) => m.PinWindow(a)),
             ["fullscreen"] = new(static (m, _, a) => m.FullscreenDispatcher(a)),
             ["resizeactive"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
-            ["setprop"] = new(static (m, _, a) => m.SetPropDispatch(a), AllowsComma: true),
 
             // Layouts
             ["layoutmsg"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),

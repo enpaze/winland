@@ -56,7 +56,6 @@ public class ReclassTests
         var reclassed = core.Handle(new WindowClassChanged(new WindowId(1), "A Video - Browser"));
 
         Assert.Equal(127, Assert.Single(reclassed.Decorations).Alpha, tolerance: 1);
-        Assert.Equal("0.5", core.Execute("getprop active opacity").Text);
 
         var restored = core.Handle(new WindowClassChanged(new WindowId(1), "Browser"));
 

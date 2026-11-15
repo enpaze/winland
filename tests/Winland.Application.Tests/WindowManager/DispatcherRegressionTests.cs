@@ -45,45 +45,6 @@ public class DispatcherRegressionTests
         Assert.Equal("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
     }
 
-    [Theory]
-    [InlineData("min_size", "400 300")]
-    [InlineData("max_size", "600 500")]
-    [InlineData("opacity", "0.3")]
-    [InlineData("active_border_color", "rgb(ff0000)")]
-    public void UnsetRestoresTheDefaultForEveryPropertyKind(string property, string value)
-    {
-        var core = new WindowManager();
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-        var original = core.Execute($"getprop active {property}").Text;
-        Assert.Equal("ok", core.Execute($"setprop active {property} {value}").Text);
-
-        Assert.Equal("ok", core.Execute($"setprop active {property} unset").Text);
-
-        Assert.Equal(original, core.Execute($"getprop active {property}").Text);
-    }
-
-    [Fact]
-    public void PropertiesCanAddressAHiddenGroupMember()
-    {
-        var core = new WindowManager();
-        core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new Dispatch("togglegroup"));
-        core.Handle(new WindowAppeared(new WindowId(2), Area));
-
-        Assert.Equal("ok", core.Execute("setprop address:0x1 border_size 9").Text);
-        Assert.Equal("9", core.Execute("getprop address:0x1 border_size").Text);
-    }
-
-    [Fact]
-    public void EveryExecInABatchReportsItsRuleWarnings()
-    {
-        var core = new WindowManager();
-
-        var result = core.Execute("[[BATCH]]dispatch exec [unknown_one] one; dispatch exec [unknown_two] two");
-
-        Assert.Equal(2, result.Effect.Events.OfType<ConfigWarned>().Count());
-    }
-
     [Fact]
     public void ANativeFloatingMoveJoinsTheMonitorUnderItsMiddle()
     {

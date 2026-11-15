@@ -66,9 +66,7 @@ public class TrayIconTests
     {
         var core = new WindowManager();
 
-        Assert.Equal(
-            "{\"option\":\"general:tray_icon\",\"bool\":true,\"set\":false}",
-            core.Execute("getoption general:tray_icon").Text);
+        Assert.True(core.Execute("dispatch workspace 1").Effect.Tray!.Shown);
     }
 
     [Theory]
@@ -84,9 +82,6 @@ public class TrayIconTests
 
         Assert.Empty(ConfigParser.Parse($"general:tray_icon = {value}\n").Warnings);
         Assert.Equal(shown, core.Execute("dispatch workspace 1").Effect.Tray!.Shown);
-        Assert.Equal(
-            "{\"option\":\"general:tray_icon\",\"bool\":" + (shown ? "true" : "false") + ",\"set\":true}",
-            core.Execute("getoption general:tray_icon").Text);
     }
 
     [Fact]
@@ -98,25 +93,13 @@ public class TrayIconTests
             """);
         Assert.Equal(new ConfigWarning(2, "Invalid value 'perhaps' for general:tray_icon."), Assert.Single(document.Warnings));
         Assert.False(new WindowManager(document).Execute("dispatch workspace 1").Effect.Tray!.Shown);
-
-        var core = new WindowManager();
-        var reply = core.Execute("keyword general:tray_icon perhaps");
-
-        Assert.Equal("error: Invalid value 'perhaps' for general:tray_icon.", reply.Text);
-        Assert.True(reply.Effect.Tray!.Shown);
     }
 
     [Fact]
-    public void KeywordAndReloadApplyAtOnce()
+    public void AReloadAppliesTheOptionAtOnce()
     {
-        var core = new WindowManager();
-        var turnedOff = core.Execute("keyword general:tray_icon false");
-
-        Assert.Equal("ok", turnedOff.Text);
-        Assert.False(turnedOff.Effect.Tray!.Shown);
-        Assert.Equal(
-            "{\"option\":\"general:tray_icon\",\"bool\":false,\"set\":true}",
-            core.Execute("getoption general:tray_icon").Text);
+        var core = new WindowManager(ConfigParser.Parse("general:tray_icon = false\n"));
+        Assert.False(core.Execute("dispatch workspace 1").Effect.Tray!.Shown);
 
         core.ReadConfig = () => new ConfigRead(ConfigParser.Parse("general:tray_icon = true\n"));
         var reloaded = core.Execute("reload");

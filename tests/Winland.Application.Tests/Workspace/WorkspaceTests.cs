@@ -355,7 +355,6 @@ public class WorkspaceTests
         var same = core.Execute("dispatch workspace 1").Effect;
 
         Assert.Equal(new WorkspaceId("1"), same.State.ActiveWorkspace);
-        Assert.Equal("{\"option\":\"binds:workspace_back_and_forth\",\"int\":1,\"set\":true}", core.Execute("getoption binds:workspace_back_and_forth").Text);
     }
 
     [Theory]

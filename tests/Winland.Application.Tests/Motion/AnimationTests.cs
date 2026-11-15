@@ -263,19 +263,6 @@ public class AnimationTests
     }
 
     [Fact]
-    public void ASetAnimationStyleReplacesTheCloseStyleAndUnsetGivesItBack()
-    {
-        var core = Load("");
-        Appear(core, 1);
-        core.Execute("setprop address:0x1 animation popin 50%");
-
-        Assert.Equal(new Rectangle(480, 270, 960, 540), Assert.Single(core.Handle(new Dispatch("killactive", "")).Motions).To);
-
-        core.Execute("setprop address:0x1 animation unset");
-        Assert.Equal(new Rectangle(957, 537, 5, 5), Assert.Single(core.Handle(new Dispatch("killactive", "")).Motions).To);
-    }
-
-    [Fact]
     public void ClosingAWindowShrinksAndFadesItBeforeItIsAskedToClose()
     {
         var core = new WindowManager();

@@ -118,7 +118,6 @@ static int Run(string? path, RollingLogWriter log)
 
     var core = new WindowManager { Cursor = new SystemCursor(), FirstStart = firstStart };
     core.ReadConfig = () => ConfigFile.TryRead(configPath);
-    core.KeyLayoutSource = KeyboardLayout.Active;
     core.LogFile = () => log.FilePath;
     ConfigWatcher? watcher = null;
     string? logFile = null;
@@ -331,7 +330,7 @@ static int Usage()
     Console.Error.WriteLine("       winland tweaks --restore");
     Console.Error.Write(ControlInvocation.Usage);
     Console.Error.WriteLine("check reads a config as a start would, and changes nothing: 0 when clean, 1 for any warning or a file it cannot read, 2 for bad usage.");
-    Console.Error.WriteLine("dispatch or getoption with no name lists the names this winland knows. A running Winland can differ.");
+    Console.Error.WriteLine("dispatch with no name lists the Dispatchers this winland knows. A running Winland can differ.");
     Console.Error.WriteLine("WINLAND_NO_ELEVATE=1 or --no-elevate starts without elevation. install --user uses it.");
     Console.Error.WriteLine("Elevated features then do not work. A per-user install never asks for elevation.");
     return 2;

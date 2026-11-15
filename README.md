@@ -118,7 +118,6 @@ The default install runs as administrator and writes no log file. After a crash,
 | `winland --config <file>` | Start Winland with that `.conf` file in place of your config |
 | `winland check [file]` | Validate a config and its sources without starting or changing Winland |
 | `winland [-j] dispatch` | List this binary's Dispatcher names without a Daemon |
-| `winland [-j] getoption` | List this binary's Option names without a Daemon |
 | `winland install` | Install for this PC, running as administrator. Asks for one approval |
 | `winland install --user` | Install for you only, without administrator rights |
 | `winland install --no-logon` | Install without starting Winland at logon. Works with `--user` |
@@ -142,8 +141,6 @@ These talk to the running Winland.
 | `winland dispatch layout <dwindle\|scrolling\|floating>` | Select the Shown workspace's Layout |
 | `winland dispatch moveintogroup <l\|r\|u\|d>` | Join the Group of the Client in that direction |
 | `winland reload` | Read the config again |
-| `winland keyword <name> <value>` | Change one option until the next reload |
-| `winland getoption <name>` | Show an option's value |
 | `winland clients` | List the windows Winland manages |
 | `winland activewindow` | Show the focused window |
 | `winland [-j] inspect [selector]` | Explain the Window under the pointer or a selected Client and offer a draft rule |
@@ -153,11 +150,8 @@ These talk to the running Winland.
 | `winland binds` | List the hotkeys, one config line each |
 | `winland configerrors` | List the config's warnings, each with its file and line |
 | `winland files` | Show the config Winland read and the log it writes |
-| `winland getprop <window> <property>` | Show a window property |
-| `winland setprop <window> <property> <value>` | Set a window property |
 | `winland version` | Show the version |
 | `winland events` | Print every event as it happens, one per line |
-| `winland --batch "<command>; <command>"` | Run several commands in one go |
 
 | Flag | Does |
 | --- | --- |

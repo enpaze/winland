@@ -43,12 +43,9 @@ public sealed partial class WindowManager
     /// <summary>The full path of the log file Winland writes now, or null while it writes none. <c>files</c> reports it.</summary>
     public Func<string?>? LogFile { get; set; }
 
-    /// <summary>The keyboard layout a config is read in, for a <c>keyword</c> line. The United States layout without it.</summary>
-    public Func<KeyLayout>? KeyLayoutSource { get; set; }
-
     /// <summary>
-    /// Whether saving the config reloads it. <c>misc:disable_autoreload</c> turns it off, and turning the option off
-    /// again, with <c>keyword</c> or a reload by hand, turns it back on.
+    /// Whether saving the config reloads it. <c>misc:disable_autoreload</c> turns it off, and turning it back on takes
+    /// a reload by hand.
     /// </summary>
     public bool ReloadsOnSave => !_config.Session.DisableAutoreload;
 

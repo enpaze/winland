@@ -150,7 +150,7 @@ internal static class OptionValue
     }
 }
 
-/// <summary>How one type of Option value is read from a config line, and written in a <c>getoption</c> reply.</summary>
+/// <summary>How one type of Option value is read from a config line, and what it is called and looks like written out.</summary>
 internal sealed record OptionValue<T>(string Kind, OptionReader<T> Read, Func<T, string> Json);
 
 internal delegate bool OptionReader<T>(string text, out T value);

@@ -69,7 +69,7 @@ public sealed partial class WindowManager
         return outcome with { Motions = [.. own, .. planned.Where(motion => !mine.Contains(motion.Window))] };
     }
 
-    // A window's own animation style, from setprop or a window rule, replaces the windowsIn or windowsOut style it opens
+    // A window's own animation style, from a window rule, replaces the windowsIn or windowsOut style it opens
     // or closes with. Its curve and speed stay the node's.
     private string WindowStyleOf(WindowId window, string node) =>
         _props.Own(window, WindowProp.Animation) is { Length: > 0 } own ? own : _config.Animations.StyleOf(node);

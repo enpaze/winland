@@ -6,32 +6,16 @@ public static partial class ConfigParser
     /// A <c>source</c> line that leads back to it is then skipped, and a relative source is compared against its folder.</param>
     /// <param name="dispatchers">The names of the Dispatchers a bind may run, which the Application knows. A bind for any
     /// other name warns, with the name it is close to. With none given, a bind's Dispatcher is not checked.</param>
-    /// <param name="context">
-    /// A config read before, as for a <c>keyword</c> line: its variables and curves can be used, and are not part of
-    /// what is returned.
-    /// </param>
     public static ConfigDocument Parse(
         string text,
         IConfigSource? source = null,
         KeyLayout? layout = null,
         string? path = null,
-        IReadOnlyCollection<string>? dispatchers = null,
-        ConfigDocument? context = null)
+        IReadOnlyCollection<string>? dispatchers = null)
     {
         ArgumentNullException.ThrowIfNull(text);
-        var parser = new Parser(source, layout ?? KeyLayout.UnitedStates, dispatchers);
-        if (context is not null)
-            parser.Know(context);
-
-        return parser.ParseRoot(text, path);
+        return new Parser(source, layout ?? KeyLayout.UnitedStates, dispatchers).ParseRoot(text, path);
     }
-
-    /// <summary>
-    /// False for a line that launches a program or loads a file, which takes effect only when the config is read.
-    /// Every other line, an option or a rule, can be applied at once with <c>keyword</c>.
-    /// </summary>
-    public static bool AppliesLive(string keyword) =>
-        keyword is not ("exec" or "exec-once" or "source");
 
     private sealed partial class Parser(IConfigSource? sourceReader, KeyLayout layout, IReadOnlyCollection<string>? dispatchers)
     {
@@ -63,23 +47,6 @@ public static partial class ConfigParser
         private string? _source;
         private string? _rootFolder;
 
-        // The variables and curves of a config read before.
-        public void Know(ConfigDocument context)
-        {
-            foreach (var (name, value) in context.Variables)
-                _variables[name] = value;
-
-            foreach (var setting in context.Settings)
-            {
-                _ = setting.Keyword switch
-                {
-                    AnimationBook.BezierKeyword => _animations.AddBezier(setting.Value),
-                    AnimationBook.SpringKeyword => _animations.AddSpring(setting.Value),
-                    _ => null,
-                };
-            }
-        }
-
         public ConfigDocument ParseRoot(string text, string? path)
         {
             _source = null;
@@ -99,7 +66,6 @@ public static partial class ConfigParser
                 Gestures = [.. _gestures],
                 Path = path,
                 KeyLayout = layout,
-                Variables = new Dictionary<string, string>(_variables, StringComparer.Ordinal),
             };
         }
 

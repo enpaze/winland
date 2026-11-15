@@ -35,7 +35,7 @@ public class WindowBehaviorTests
         desk.Spawn("kitty_A");
         desk.Spawn("kitty_B");
 
-        desk.Keyword("misc:focus_on_activate", "true");
+        desk.Set("misc:focus_on_activate", "true");
 
         // Unfullscreen on conflict.
         desk.Ok("focuswindow", "class:kitty_A");
@@ -129,8 +129,8 @@ public class WindowBehaviorTests
         desk.Spawn("kitty_default");
 
         // focus_on_activate off on the rule wins.
-        desk.Keyword("misc:focus_on_activate", "true");
-        Assert.Equal("ok", desk.Send("keyword windowrule focus_on_activate 0, class:kitty_antifocus"));
+        desk.Set("misc:focus_on_activate", "true");
+        desk.Set("windowrule", "focus_on_activate 0, class:kitty_antifocus");
 
         var antifocus = desk.Spawn("kitty_antifocus");
         ExpectFocused(desk, "kitty_antifocus", 0);
@@ -141,8 +141,8 @@ public class WindowBehaviorTests
         Assert.NotEqual("kitty_antifocus", desk.ActiveClass());
 
         // focus_on_activate on on the rule wins.
-        desk.Keyword("misc:focus_on_activate", "false");
-        Assert.Equal("ok", desk.Send("keyword windowrule focus_on_activate 1, class:kitty_superfocus"));
+        desk.Set("misc:focus_on_activate", "false");
+        desk.Set("windowrule", "focus_on_activate 1, class:kitty_superfocus");
 
         var superfocus = desk.Spawn("kitty_superfocus");
         ExpectFocused(desk, "kitty_superfocus", 0);
@@ -317,7 +317,6 @@ public class WindowBehaviorTests
         ExpectProcess(desk.Spawn("kitty_exec_workspace"), Pid(1));
         Assert.Single(desk.Clients());
 
-        Assert.Contains("false", desk.Send("getprop class:kitty_exec_workspace no_focus"), StringComparison.Ordinal);
         desk.Ok("focuswindow", "class:kitty_exec_workspace");
 
         var active = desk.ActiveWindow();
@@ -330,19 +329,11 @@ public class WindowBehaviorTests
         ExpectProcess(desk.Spawn("kitty_exec_special"), Pid(2));
         Assert.Equal(2, desk.Clients().Length);
 
-        Assert.Contains("true", desk.Send("getprop class:kitty_exec_special no_focus"), StringComparison.Ordinal);
-        Assert.Contains("7", desk.Send("getprop class:kitty_exec_special border_size"), StringComparison.Ordinal);
-
         active = desk.ActiveWindow();
         Assert.Equal("kitty_exec_workspace", TestDesktop.ClassOf(active));
         Assert.Equal(2, TestDesktop.WorkspaceId(active));
 
-        Assert.Equal("ok", desk.Send("setprop class:kitty_exec_special no_focus false"));
-        desk.Ok("focuswindow", "class:kitty_exec_special");
-
-        active = desk.ActiveWindow();
-        Assert.Equal("kitty_exec_special", TestDesktop.ClassOf(active));
-        Assert.Equal("special:exec_rules", WorkspaceName(active));
+        Assert.Equal("special:exec_rules", WorkspaceName(desk.Client("kitty_exec_special")));
 
         CloseAll(desk);
     }
@@ -360,7 +351,6 @@ public class WindowBehaviorTests
         ExpectProcess(desk.Spawn("kitty_exec_first"), Pid(1));
         Assert.Single(desk.Clients());
 
-        Assert.Contains("false", desk.Send("getprop class:kitty_exec_first no_focus"), StringComparison.Ordinal);
         desk.Ok("focuswindow", "class:kitty_exec_first");
 
         var active = desk.ActiveWindow();
@@ -371,15 +361,8 @@ public class WindowBehaviorTests
         ExpectProcess(desk.Spawn("kitty_exec_second"), Pid(2));
         Assert.Equal(2, desk.Clients().Length);
 
-        Assert.Contains("false", desk.Send("getprop class:kitty_exec_first no_focus"), StringComparison.Ordinal);
-        Assert.Contains("true", desk.Send("getprop class:kitty_exec_second no_focus"), StringComparison.Ordinal);
-
-        Assert.Equal("ok", desk.Send("setprop class:kitty_exec_second no_focus false"));
-        desk.Ok("focuswindow", "class:kitty_exec_second");
-
-        active = desk.ActiveWindow();
-        Assert.Equal("kitty_exec_second", TestDesktop.ClassOf(active));
-        Assert.Equal("special:exec_rules_pending", WorkspaceName(active));
+        Assert.Equal("kitty_exec_first", desk.ActiveClass());
+        Assert.Equal("special:exec_rules_pending", WorkspaceName(desk.Client("kitty_exec_second")));
 
         CloseAll(desk);
     }
@@ -424,7 +407,7 @@ public class WindowBehaviorTests
         Assert.Equal("ok", desk.Send("reload"));
 
         desk.Ok("focusmonitor", "HEADLESS-2");
-        desk.Keyword("windowrule", "monitor HEADLESS-3 silent, class:silent_kitty");
+        desk.Set("windowrule", "monitor HEADLESS-3 silent, class:silent_kitty");
 
         desk.Spawn("silent_kitty");
         Assert.Equal(third, desk.Clients()[0].GetProperty("monitor").GetInt32());
@@ -440,14 +423,14 @@ public class WindowBehaviorTests
         desk.Ok("focuswindow", "class:kitty");
 
         ResetWindow(desk);
-        Assert.Equal("ok", desk.Send("keyword bindm , mouse:273, resizewindow"));
+        desk.Set("bindm", ", mouse:273, resizewindow");
         Press(desk, "mouse:273");
         desk.MovePointer(700, 200);
         Release(desk, "mouse:273");
         Assert.Equal("700,200", desk.PlaceOf("kitty").Size);
 
         ResetWindow(desk);
-        Assert.Equal("ok", desk.Send("keyword bindm , mouse:273, resizewindow 1"));
+        desk.Set("bindm", ", mouse:273, resizewindow 1");
         Press(desk, "mouse:273");
         desk.MovePointer(1280, 100);
         Release(desk, "mouse:273");
@@ -458,7 +441,7 @@ public class WindowBehaviorTests
     public void GetFullscreenHandler()
     {
         var desk = new TestDesktop();
-        Assert.Equal("ok", desk.Send("keyword general:layout dwindle"));
+        desk.Set("general:layout", "dwindle");
 
         desk.Spawn("cat");
 
@@ -472,7 +455,7 @@ public class WindowBehaviorTests
         Assert.Equal("default", Handler(desk));
         desk.Ok("fullscreen", "0");
 
-        Assert.Equal("ok", desk.Send("keyword general:layout scrolling"));
+        desk.Set("general:layout", "scrolling");
 
         desk.Ok("fullscreen", "0");
         Assert.Equal("default", Handler(desk));
@@ -538,31 +521,6 @@ public class WindowBehaviorTests
 
         desk.Ok("togglespecialworkspace", "fallback");
         CloseAll(desk);
-    }
-
-    [Fact]
-    public void WindowRuleBorderColors()
-    {
-        var desk = new TestDesktop("""
-            general:col.active_border = rgba(00ff00ff)
-            general:col.inactive_border = rgba(ff0000ff)
-            windowrule = border_color rgba(ffff00ff) rgba(000000ff), class:border_color_kitty
-            """);
-
-        // Both colors.
-        desk.Spawn("border_color_kitty");
-        desk.Ok("focuswindow", "class:border_color_kitty");
-        Assert.Contains("ffffff00", desk.Send("getprop active active_border_color"), StringComparison.Ordinal);
-        Assert.Contains("ff000000", desk.Send("getprop active inactive_border_color"), StringComparison.Ordinal);
-
-        CloseAll(desk);
-
-        // Both colors, a later rule.
-        desk.Keyword("windowrule", "border_color rgba(ffff00ff) rgba(0000ffff), class:border_color_kitty");
-        desk.Spawn("border_color_kitty");
-        desk.Ok("focuswindow", "class:border_color_kitty");
-        ExpectColor(desk.Send("getprop active active_border_color"), "ffffff00");
-        ExpectColor(desk.Send("getprop active inactive_border_color"), "ff0000ff");
     }
 
     [Fact]
@@ -658,7 +616,7 @@ public class WindowBehaviorTests
     private static void ResetWindow(TestDesktop desk)
     {
         Assert.Equal("ok", desk.Send("reload"));
-        Assert.Equal("ok", desk.Send("keyword unbind , mouse:273"));
+        desk.Set("unbind", ", mouse:273");
         desk.Place("kitty", 0, 0, 640, 400);
         desk.MovePointer(640, 400);
         Assert.Equal(("2,2", "640,400"), desk.PlaceOf("kitty"));
@@ -677,17 +635,5 @@ public class WindowBehaviorTests
         Assert.All(places, place => Assert.Equal("931,1036", place.Size));
         Assert.Contains(places, place => place.At == "22,22");
         Assert.Contains(places, place => place.At == "967,22");
-    }
-
-    private static void ExpectContentProps(TestDesktop desk)
-    {
-        Assert.Contains("10", desk.Send("getprop active border_size"), StringComparison.Ordinal);
-        Assert.Contains("0.5", desk.Send("getprop active opacity"), StringComparison.Ordinal);
-    }
-
-    private static void ExpectColor(string reply, params string[] parts)
-    {
-        foreach (var part in parts)
-            Assert.Contains(part, reply, StringComparison.Ordinal);
     }
 }

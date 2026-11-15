@@ -14,15 +14,9 @@ public class AccentBorderTests
         var core = Configured("");
         var opened = core.Handle(Appeared(1, Area));
         Assert.Equal(new BorderColor(0xFF, 0xFF, 0xFF, 0xFF), Border(opened, 1));
-        Assert.Equal(
-            "{\"option\":\"general:col.active_border\",\"str\":\"0xFFFFFFFF\",\"set\":false}",
-            core.Execute("getoption general:col.active_border").Text);
 
         var followed = core.Handle(new AccentChanged(Accent));
         Assert.Equal(Accent, Border(followed, 1));
-        Assert.Equal(
-            "{\"option\":\"general:col.active_border\",\"str\":\"0xFF112233\",\"set\":false}",
-            core.Execute("getoption general:col.active_border").Text);
 
         var changed = core.Handle(new AccentChanged(new BorderColor(0xFF, 0x01, 0x02, 0x03)));
         Assert.Equal(new BorderColor(0xFF, 0x01, 0x02, 0x03), Border(changed, 1));
@@ -31,18 +25,9 @@ public class AccentBorderTests
         Assert.Equal(Chosen, Border(pinned, 1));
         var ignored = core.Handle(new AccentChanged(Accent));
         Assert.Equal(Chosen, Border(ignored, 1));
-        Assert.Equal(
-            "{\"option\":\"general:col.active_border\",\"str\":\"0xFFAABBCC\",\"set\":true}",
-            core.Execute("getoption general:col.active_border").Text);
 
         var restored = core.Handle(new Configure(ConfigParser.Parse("")));
         Assert.Equal(Accent, Border(restored, 1));
-        Assert.Equal(
-            "{\"option\":\"general:col.active_border\",\"str\":\"0xFF112233\",\"set\":false}",
-            core.Execute("getoption general:col.active_border").Text);
-        Assert.Equal(
-            "{\"option\":\"general:col.inactive_border\",\"str\":\"0xFF404040\",\"set\":false}",
-            core.Execute("getoption general:col.inactive_border").Text);
     }
 
     [Fact]

@@ -22,36 +22,6 @@ public sealed record ConfigDocument(
     /// <summary>The keyboard layout the bind names were resolved in.</summary>
     public KeyLayout KeyLayout { get; init; } = KeyLayout.UnitedStates;
 
-    /// <summary>The <c>$variables</c> the config defined, which a later <c>keyword</c> line can use too.</summary>
-    public IReadOnlyDictionary<string, string> Variables { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
-
-    /// <summary>
-    /// This document with <paramref name="live"/>'s lines applied, as <c>keyword</c> applies them. An option, a keyword
-    /// with a category such as general:gaps_in, replaces its old value. A keyword that may repeat, such as monitor or
-    /// windowrule, adds its line after the ones already read, and a rule for a Workspace that already has one merges
-    /// into it. Everything else is kept, and the warnings are left behind.
-    /// </summary>
-    public ConfigDocument Merge(ConfigDocument live)
-    {
-        ArgumentNullException.ThrowIfNull(live);
-        var workspaceRules = new List<WorkspaceRule>(WorkspaceRules);
-        foreach (var rule in live.WorkspaceRules)
-            Domain.WorkspaceRules.ReplaceOrAdd(workspaceRules, rule);
-
-        return this with
-        {
-            Settings = [.. Settings.Where(setting => !Replaced(setting, live.Settings)), .. live.Settings],
-            Binds = [.. Binds, .. live.Binds],
-            Warnings = [],
-            WindowRules = [.. WindowRules, .. live.WindowRules],
-            WorkspaceRules = workspaceRules,
-            Gestures = [.. Gestures, .. live.Gestures],
-        };
-    }
-
-    private static bool Replaced(Setting setting, IReadOnlyList<Setting> updates) =>
-        setting.Keyword.Contains(':', StringComparison.Ordinal)
-        && updates.Any(update => update.Keyword == setting.Keyword);
 }
 
 public sealed record Setting(string Keyword, string Value);

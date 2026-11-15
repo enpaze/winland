@@ -8,9 +8,6 @@ public class HideTaskbarOptionTests
         var core = new WindowManager();
 
         Assert.False(core.HideTaskbar);
-        Assert.Equal(
-            "{\"option\":\"general:hide_taskbar\",\"bool\":false,\"set\":false}",
-            core.Execute("getoption general:hide_taskbar").Text);
     }
 
     [Theory]
@@ -26,13 +23,10 @@ public class HideTaskbarOptionTests
 
         Assert.Empty(document.Warnings);
         Assert.True(core.HideTaskbar);
-        Assert.Equal(
-            "{\"option\":\"general:hide_taskbar\",\"bool\":true,\"set\":true}",
-            core.Execute("getoption general:hide_taskbar").Text);
     }
 
     [Fact]
-    public void KeywordAndReloadApplyTheOption()
+    public void AReloadAppliesTheOption()
     {
         var text = "general:hide_taskbar = false\n";
         var core = new WindowManager(ConfigParser.Parse("general:hide_taskbar = true\n"))
@@ -40,15 +34,9 @@ public class HideTaskbarOptionTests
             ReadConfig = () => new ConfigRead(ConfigParser.Parse(text)),
         };
 
-        Assert.Equal("ok", core.Execute("keyword general:hide_taskbar false").Text);
-        Assert.False(core.HideTaskbar);
-        Assert.Equal("ok", core.Execute("keyword general:hide_taskbar true").Text);
         Assert.True(core.HideTaskbar);
 
         Assert.Equal("ok", core.Execute("reload").Text);
         Assert.False(core.HideTaskbar);
-        Assert.Equal(
-            "{\"option\":\"general:hide_taskbar\",\"bool\":false,\"set\":true}",
-            core.Execute("getoption general:hide_taskbar").Text);
     }
 }

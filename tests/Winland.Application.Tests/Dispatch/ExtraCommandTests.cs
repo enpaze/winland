@@ -23,20 +23,6 @@ public class ExtraCommandTests
     public void PluginListIsAnUnknownCommand()
     {
         Assert.IsType<CommandRejected>(CommandProtocol.Parse("plugin list"));
-        Assert.Equal("error: Unsupported keyword 'plugin'.", new WindowManager().Execute("keyword plugin plugins\\sample.dll").Text);
-    }
-
-    [Fact]
-    public void AKeywordLineUsesTheConfigsVariablesAndCurves()
-    {
-        var core = new WindowManager(ConfigParser.Parse("""
-            $terminal = wezterm
-            bezier = snappy, 0.2, 0.9, 0.1, 1
-            """));
-
-        Assert.Equal("ok", core.Execute("keyword bind SUPER, T, exec, $terminal").Text);
-        Assert.Contains("wezterm", core.Execute("j/binds").Text, StringComparison.Ordinal);
-        Assert.Equal("ok", core.Execute("keyword animation windows, 1, 5, snappy").Text);
     }
 
     [Fact]
@@ -45,21 +31,25 @@ public class ExtraCommandTests
         var core = new WindowManager();
         Assert.Equal("[]", core.Execute("j/binds").Text);
 
-        Assert.Equal("ok", core.Execute("keyword bind SUPER, Q, killactive").Text);
+        core.Handle(new Configure(ConfigParser.Parse("bind = SUPER, Q, killactive\n")));
         Assert.Equal(SuperKill, core.Execute("j/binds").Text);
 
-        Assert.Equal("ok", core.Execute("keyword bind SUPER SHIFT, E, killactive").Text);
-        var second = Json(core.Execute("j/binds").Text)[1];
+        core.Handle(new Configure(ConfigParser.Parse("""
+            bind = SUPER, Q, killactive
+            bind = SUPER SHIFT, E, killactive
+            bindd = SUPER, F, Close, killactive
+            bind = SUPER, code:42, killactive
+            """)));
+        var binds = Json(core.Execute("j/binds").Text);
+        var second = binds[1];
         Assert.Equal(65, second.GetProperty("modmask").GetInt32());
         Assert.Equal("E", second.GetProperty("key").GetString());
 
-        Assert.Equal("ok", core.Execute("keyword bindd SUPER, F, Close, killactive").Text);
-        var described = Json(core.Execute("j/binds").Text)[2];
+        var described = binds[2];
         Assert.True(described.GetProperty("has_description").GetBoolean());
         Assert.Equal("Close", described.GetProperty("description").GetString());
 
-        Assert.Equal("ok", core.Execute("keyword bind SUPER, code:42, killactive").Text);
-        var coded = Json(core.Execute("j/binds").Text)[3];
+        var coded = binds[3];
         Assert.Equal("", coded.GetProperty("key").GetString());
         Assert.Equal(42, coded.GetProperty("keycode").GetInt32());
     }
@@ -84,30 +74,9 @@ public class ExtraCommandTests
 
         core.Handle(new Configure(ConfigParser.Parse("misc:disable_autoreload = true\n")));
         Assert.False(core.ReloadsOnSave);
-        Assert.Equal("{\"option\":\"misc:disable_autoreload\",\"bool\":true,\"set\":true}", core.Execute("getoption misc:disable_autoreload").Text);
 
-        Assert.Equal("ok", core.Execute("keyword misc:disable_autoreload false").Text);
+        core.Handle(new Configure(ConfigParser.Parse("misc:disable_autoreload = false\n")));
         Assert.True(core.ReloadsOnSave);
-    }
-
-    [Fact]
-    public void ConfigErrorsKeepTheLastLoadAndGetOptionReadsHonoredDefaults()
-    {
-        var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("blur = on\n")));
-        Assert.Equal("[\"line 1: Unsupported keyword 'blur'.\"]", core.Execute("j/configerrors").Text);
-        Assert.Equal("{\"option\":\"general:border_size\",\"int\":2,\"set\":false}", core.Execute("getoption general:border_size").Text);
-        Assert.Equal("{\"option\":\"dwindle:preserve_split\",\"bool\":false,\"set\":false}", core.Execute("getoption dwindle:preserve_split").Text);
-        Assert.Equal("{\"option\":\"general:gaps_in\",\"css\":\"4 4 4 4\",\"set\":false}", core.Execute("getoption general:gaps_in").Text);
-        Assert.Equal("error: no such option", core.Execute("getoption no:such").Text);
-
-        Assert.Equal("ok", core.Execute("keyword general:border_size 4").Text);
-        Assert.Equal("{\"option\":\"general:border_size\",\"int\":4,\"set\":true}", core.Execute("getoption general:border_size").Text);
-        Assert.Equal("[\"line 1: Unsupported keyword 'blur'.\"]", core.Execute("j/configerrors").Text);
-        Assert.Equal("ok", core.Execute("keyword misc:focus_on_activate true").Text);
-        Assert.Equal("{\"option\":\"misc:focus_on_activate\",\"bool\":true,\"set\":true}", core.Execute("getoption misc:focus_on_activate").Text);
-        Assert.Equal("error: Unsupported keyword 'blur'.", core.Execute("keyword blur on").Text);
-        Assert.Equal("error: invalid keyword", core.Execute("keyword general:border_size").Text);
     }
 
     [Fact]
@@ -115,82 +84,10 @@ public class ExtraCommandTests
     {
         var core = new WindowManager();
 
-        Assert.Equal("error: Unsupported keyword 'input:kb_variant'.", core.Execute("keyword input:kb_variant nodeadkeys").Text);
-        Assert.Equal("error: invalid keyword", core.Execute("keyword input:kb_variant ").Text);
+        Assert.Equal("Unsupported keyword 'input:kb_variant'.", Assert.Single(ConfigParser.Parse("input:kb_variant = nodeadkeys\n").Warnings).Message);
         Assert.Equal("error: unknown request", core.Execute("devices").Text);
         Assert.Equal("error: unknown request", core.Execute("j/devices").Text);
         Assert.Equal("error: unknown request", core.Execute("switchxkblayout all next").Text);
-    }
-
-    [Fact]
-    public void GetOptionReportsGapsAsCssWithFourEdges()
-    {
-        var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_out = 10 20\n")));
-
-        Assert.Equal("{\"option\":\"general:gaps_out\",\"css\":\"10 20 10 20\",\"set\":true}", core.Execute("getoption general:gaps_out").Text);
-    }
-
-    [Fact]
-    public void GapsReturnErrorsAndPropsCanBeReadAndSet()
-    {
-        var core = new WindowManager();
-        core.Handle(new WindowAppeared(new WindowId(42), new Rectangle(0, 0, 200, 100)));
-
-        Assert.Equal("error: not enough args", core.Execute("getprop").Text);
-        Assert.Equal("error: window not found", core.Execute("getprop missing opacity").Text);
-        Assert.Equal("1", core.Execute("getprop active opacity").Text);
-        Assert.Equal("{\"opacity\": 1}", core.Execute("j/getprop 0x2a opacity").Text);
-        Assert.Equal("error: prop not found", core.Execute("getprop active float").Text);
-        Assert.Equal("error: invalid prop name", core.Execute("setprop active float true").Text);
-
-        Assert.Equal("ok", core.Execute("setprop active opacity 0.5").Text);
-        Assert.Equal("0.5", core.Execute("getprop active opacity").Text);
-        Assert.Equal("error: invalid opacity", core.Execute("setprop active opacity sideways").Text);
-    }
-
-    [Fact]
-    public void ABatchRejectsNestedBatchesAndContinuesWithTheNextCommand()
-    {
-        var core = new WindowManager();
-
-        var reply = core.Execute("[[BATCH]]j/[[BATCH]]dispatch exec should-not-run;j/clients");
-
-        Assert.Equal("error: nested batch\n\n\n[]", reply.Text);
-        Assert.Empty(reply.Effect.Launches);
-    }
-
-    [Fact]
-    public void DeeplyNestedBatchesAreRejectedWithoutRecursing()
-    {
-        var line = string.Concat(Enumerable.Repeat("[[BATCH]]", 6000)) + "dispatch exec should-not-run";
-
-        var reply = new WindowManager().Execute(line);
-
-        Assert.Equal("error: nested batch", reply.Text);
-        Assert.Empty(reply.Effect.Launches);
-    }
-
-    [Fact]
-    public void BatchJoinsRepliesAndKeepsEscapedSemicolons()
-    {
-        var core = new WindowManager();
-        var joined = core.Execute("[[BATCH]]binds;configerrors").Text;
-        Assert.Equal("no binds\n\n\nno config errors", joined);
-        Assert.Equal("[]\n\n\n[]", core.Execute("j/[[BATCH]]binds;configerrors").Text);
-
-        var escaped = core.Execute(@"[[BATCH]]keyword bind SUPER, Q, exec, [float\; tile] notepad;configerrors").Text;
-        Assert.Equal("ok\n\n\nno config errors", escaped);
-        Assert.Contains("[float; tile] notepad", core.Execute("binds").Text, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void ABatchSplitsAtEverySemicolonAsThePinnedReleaseDoes()
-    {
-        Assert.Equal(["dispatch exec [float", "tile] a", "binds"], CommandProtocol.SplitBatch("dispatch exec [float; tile] a;binds"));
-        Assert.Equal([@"a\b;c", @"d\.e", ""], CommandProtocol.SplitBatch(@" a\\b\;c ; d\.e ;"));
-        Assert.Equal([@"x\"], CommandProtocol.SplitBatch(@"x\"));
-        Assert.Equal([""], CommandProtocol.SplitBatch(""));
     }
 
     [Fact]
@@ -211,26 +108,11 @@ public class ExtraCommandTests
     }
 
     [Fact]
-    public void ControlToolMapsFlagsBatchAndSubcommands()
+    public void ControlToolMapsFlagsAndSubcommands()
     {
         Assert.True(ControlInvocation.TryCreate(["-j", "binds"], out var line, out var events));
         Assert.False(events);
         Assert.Equal("j/binds", line);
-
-        Assert.True(ControlInvocation.TryCreate(["--batch", "binds ; configerrors"], out line, out events));
-        Assert.Equal("[[BATCH]]binds ; configerrors", line);
-
-        Assert.True(ControlInvocation.TryCreate(["-j", "--batch", "binds ; configerrors"], out line, out events));
-        Assert.Equal("j/[[BATCH]]binds ; configerrors", line);
-
-        Assert.True(ControlInvocation.TryCreate(["-j", "--batch", @"notify a\; b; keyword c\\; clients"], out line, out events));
-        Assert.Equal(@"j/[[BATCH]]notify a\; b; keyword c\\; clients", line);
-
-        Assert.True(ControlInvocation.TryCreate(["getoption", "general:border_size"], out line, out events));
-        Assert.Equal("getoption general:border_size", line);
-
-        Assert.True(ControlInvocation.TryCreate(["keyword", "general:border_size", "4"], out line, out events));
-        Assert.Equal("keyword general:border_size 4", line);
 
         Assert.True(ControlInvocation.TryCreate(["dispatch", "resizeactive", "-20", "0"], out line, out events));
         Assert.Equal("dispatch resizeactive -20 0", line);
@@ -253,9 +135,6 @@ public class ExtraCommandTests
         Assert.True(ControlInvocation.TryCreate(["dispatch", "EXEC", "wt", "-p", "pwsh"], out line, out events));
         Assert.Equal("dispatch EXEC wt -p pwsh", line);
 
-        Assert.True(ControlInvocation.TryCreate(["setprop", "active", "float", "true"], out line, out events));
-        Assert.Equal("setprop active float true", line);
-
         Assert.True(ControlInvocation.TryCreate(["events"], out line, out events));
         Assert.True(events);
         Assert.False(ControlInvocation.TryCreate(["-j", "events"], out _, out _));
@@ -266,7 +145,8 @@ public class ExtraCommandTests
         Assert.False(ControlInvocation.TryCreate(["repl"], out _, out _));
         Assert.False(ControlInvocation.TryCreate(["plugin", "list"], out _, out _));
         Assert.False(ControlInvocation.TryCreate(["plugin", "install", "https://example.com/plugins.git"], out _, out _));
-        Assert.False(ControlInvocation.TryCreate(["--batch"], out _, out _));
+        Assert.False(ControlInvocation.TryCreate(["--batch", "binds ; clients"], out _, out _));
+        Assert.False(ControlInvocation.TryCreate(["keyword", "general:border_size", "4"], out _, out _));
     }
 
     [Fact]
@@ -281,17 +161,6 @@ public class ExtraCommandTests
         }
 
         Assert.False(ControlInvocation.TryCreate(["clients", "extra"], out _, out _));
-    }
-
-    [Fact]
-    public void ABatchGivesItsFlagsToEachCommand()
-    {
-        var core = new WindowManager();
-
-        var parts = core.Execute("j/[[BATCH]]clients;binds").Text.Split("\n\n\n");
-
-        Assert.Equal([core.Execute("j/clients").Text, core.Execute("j/binds").Text], parts);
-        Assert.NotEqual(core.Execute("clients").Text, parts[0]);
     }
 
     [Theory]
@@ -313,39 +182,6 @@ public class ExtraCommandTests
     public void ControlToolRefusesAFlagThatIsNotANumber(string arg)
     {
         Assert.False(ControlInvocation.TryCreate(["dispatch", "resizeactive", arg], out _, out _));
-    }
-
-    [Fact]
-    public void ABatchKeepsTheLaunchOfEveryExec()
-    {
-        var effect = new WindowManager().Execute("[[BATCH]]dispatch exec a ; dispatch exec b").Effect;
-
-        Assert.Equal(["a", "b"], effect.Launches.Select(launch => launch.CommandLine));
-    }
-
-    [Fact]
-    public void KeywordAddsAWindowRuleAndKeepsTheOnesAlreadyRead()
-    {
-        var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("windowrule = float, class:^(first)$\n")));
-
-        Assert.Equal("ok", core.Execute("keyword windowrule float, class:^(second)$").Text);
-        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "first" } });
-        var opened = core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Class = "second" } });
-
-        Assert.All(opened.State.Clients, client => Assert.True(client.Floating));
-    }
-
-    [Theory]
-    [InlineData("exec", "notepad")]
-    [InlineData("exec-once", "notepad")]
-    [InlineData("source", "other.conf")]
-    public void KeywordDoesNotLaunchOrLoad(string keyword, string value)
-    {
-        var reply = new WindowManager().Execute($"keyword {keyword} {value}");
-
-        Assert.Equal($"error: keyword '{keyword}' is not applied live", reply.Text);
-        Assert.Empty(reply.Effect.Launches);
     }
 
     private static Rectangle PlacedAt(Outcome outcome, long window)

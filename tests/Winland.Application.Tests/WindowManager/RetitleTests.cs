@@ -52,7 +52,6 @@ public class RetitleTests
         var retitled = core.Handle(new WindowTitleChanged(new WindowId(1), "A Video - Browser"));
 
         Assert.Equal(127, Assert.Single(retitled.Decorations).Alpha, tolerance: 1);
-        Assert.Equal("0.5", core.Execute("getprop active opacity").Text);
 
         var restored = core.Handle(new WindowTitleChanged(new WindowId(1), "Browser"));
 

@@ -53,14 +53,6 @@ public class BlurShadowRoundingTests
         Assert.Empty(reloaded.ResetDecorations);
     }
 
-    [Fact]
-    public void GetOptionReportsTheBlur()
-    {
-        var core = new WindowManager(ConfigParser.Parse("decoration:blur:enabled = no\n"));
-
-        Assert.Equal("{\"option\":\"decoration:blur:enabled\",\"bool\":false,\"set\":true}", core.Execute("getoption decoration:blur:enabled").Text);
-    }
-
     [Theory]
     [InlineData(0, 1.0, CornerPreference.DoNotRound, 0)]
     [InlineData(8, 1.0, CornerPreference.Round, 0)]
@@ -132,22 +124,6 @@ public class BlurShadowRoundingTests
         Assert.Equal(
             [new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1)],
             CornerShape.Outline(1, 1, new CornerRegion(5)));
-    }
-
-    [Fact]
-    public void GetOptionReportsTheRoundingInEffectAfterANegativeValue()
-    {
-        var core = new WindowManager(ConfigParser.Parse("decoration:rounding = 12\ndecoration:rounding = -3\n"));
-
-        Assert.Contains("\"int\":12", core.Execute("getoption decoration:rounding").Text, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void GetOptionReportsTheDragThresholdInEffectAfterAnUnparsableValue()
-    {
-        var core = new WindowManager(ConfigParser.Parse("binds:drag_threshold = 10\nbinds:drag_threshold = no\n"));
-
-        Assert.Contains("\"int\":10", core.Execute("getoption binds:drag_threshold").Text, StringComparison.Ordinal);
     }
 
     private static Decoration For(Outcome outcome, long window)

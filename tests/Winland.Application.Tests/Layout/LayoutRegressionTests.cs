@@ -90,9 +90,8 @@ public class LayoutRegressionTests
     [Fact]
     public void DwindleMinimumIncludesTheClientsOwnBorder()
     {
-        var core = new WindowManager();
-        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { MinSize = new Size(480, 100) } });
-        core.Execute("setprop active border_size 20");
+        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = border_size 20, class:wide\n"));
+        core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "wide", MinSize = new Size(480, 100) } });
 
         var split = core.Handle(new WindowAppeared(new WindowId(2), Area));
 

@@ -27,28 +27,12 @@ public static partial class CommandProtocol
         new("version", "", (rest, _) => Bare(rest, new VersionRequest())),
         new("configerrors", "", (rest, _) => Bare(rest, new ConfigErrorsRequest())),
         new("files", "", (rest, _) => Bare(rest, new FilesRequest())),
-        new("getoption", "<name>", (rest, _) => new GetOptionRequest(SplitOnce(rest).First)),
-        new("keyword", "<name> <value>", (rest, _) =>
-        {
-            var (name, value) = SplitOnce(rest);
-            return new KeywordRequest(name, value);
-        }),
-        new("getprop", "<window> <property>", (rest, _) =>
-        {
-            var (selector, property, _) = SplitProp(rest);
-            return new GetPropRequest(selector, property);
-        }),
-        new("setprop", "<window> <property> <value>", (rest, _) =>
-        {
-            var (selector, property, value) = SplitProp(rest);
-            return new SetPropRequest(selector, property, value);
-        }),
     ];
 
     private static readonly Dictionary<string, Verb> Verbs =
         VerbList.ToDictionary(verb => verb.Name, StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Each verb with what follows it, such as <c>getoption &lt;name&gt;</c>, in the order the usage lists them.</summary>
+    /// <summary>Each verb with what follows it, such as <c>dispatch &lt;name&gt; [args]</c>, in the order the usage lists them.</summary>
     public static IEnumerable<string> VerbForms =>
         VerbList.Select(verb => verb.Arguments.Length == 0 ? verb.Name : verb.Name + " " + verb.Arguments);
 
@@ -61,9 +45,6 @@ public static partial class CommandProtocol
         var flags = CommandFlagReader.Strip(ref text);
         if (text.Length == 0)
             return new CommandRejected(Unknown);
-
-        if (text.StartsWith("[[BATCH]]", StringComparison.Ordinal))
-            return new CommandParsed(new BatchRequest(text["[[BATCH]]".Length..]) { Flags = flags });
 
         var (name, rest) = SplitOnce(text);
         if (!Verbs.TryGetValue(name, out var verb))
@@ -95,14 +76,6 @@ public static partial class CommandProtocol
     {
         var end = IndexOfWhitespace(text);
         return end < 0 ? (text, "") : (text[..end], text[(end + 1)..].TrimStart());
-    }
-
-    // getprop and setprop: a selector, a property, and for setprop the value after them.
-    private static (string Selector, string Property, string Value) SplitProp(string rest)
-    {
-        var (selector, tail) = SplitOnce(rest);
-        var (property, value) = SplitOnce(tail);
-        return (selector, property, value);
     }
 
     private static readonly string[] NoStrings = [];
@@ -148,18 +121,6 @@ public sealed record VersionRequest : CommandRequest;
 public sealed record ConfigErrorsRequest : CommandRequest;
 
 public sealed record FilesRequest : CommandRequest;
-
-public sealed record GetOptionRequest(string Name) : CommandRequest;
-
-
-
-public sealed record KeywordRequest(string Name, string Value) : CommandRequest;
-
-public sealed record GetPropRequest(string Selector, string Property) : CommandRequest;
-
-public sealed record SetPropRequest(string Selector, string Property, string Value) : CommandRequest;
-
-public sealed record BatchRequest(string Payload) : CommandRequest;
 
 public readonly record struct CommandReply(string Text, Outcome Effect)
 {

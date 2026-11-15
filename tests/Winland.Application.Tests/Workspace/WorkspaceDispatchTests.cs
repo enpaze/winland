@@ -78,10 +78,10 @@ public class WorkspaceDispatchTests
         desk.Dispatch("workspace", "1");
         Assert.Equal("1 (1)", ActiveLabel(desk));
 
-        desk.Keyword("binds:workspace_back_and_forth", "true");
+        desk.Set("binds:workspace_back_and_forth", "true");
         desk.Ok("workspace", "1");
         Assert.Equal("3 (3)", ActiveLabel(desk));
-        desk.Keyword("binds:workspace_back_and_forth", "false");
+        desk.Set("binds:workspace_back_and_forth", "false");
 
         desk.Ok("workspace", "special:HELLO");
         Assert.Contains("special:HELLO", Monitors(desk).Select(SpecialOn));
@@ -138,7 +138,7 @@ public class WorkspaceDispatchTests
         desk.Spawn("a");
         for (var followMouse = 0; followMouse <= 3; followMouse++)
         {
-            desk.Keyword("input:follow_mouse", followMouse.ToString(CultureInfo.InvariantCulture));
+            desk.Set("input:follow_mouse", followMouse.ToString(CultureInfo.InvariantCulture));
 
             var before = desk.Send("activewindow");
             Assert.NotEqual("Invalid", before);
@@ -153,7 +153,7 @@ public class WorkspaceDispatchTests
 
     private static void MultimonBaf(TestDesktop desk)
     {
-        desk.Keyword("binds:workspace_back_and_forth", "0");
+        desk.Set("binds:workspace_back_and_forth", "0");
 
         desk.Ok("focusmonitor", "HEADLESS-2");
         desk.Ok("workspace", "1");
@@ -166,7 +166,7 @@ public class WorkspaceDispatchTests
         desk.Spawn("a");
 
         desk.Ok("focusmonitor", "HEADLESS-2");
-        desk.Keyword("binds:workspace_back_and_forth", "1");
+        desk.Set("binds:workspace_back_and_forth", "1");
 
         // previous is global. Workspace 2 again returns to Workspace 3, which HEADLESS-3 is showing.
         desk.Ok("workspace", "2");
@@ -177,7 +177,7 @@ public class WorkspaceDispatchTests
         desk.Ok("workspace", "5");
         ExpectActive(desk, "4 (4)", "HEADLESS-3");
 
-        desk.Keyword("binds:workspace_back_and_forth", "2");
+        desk.Set("binds:workspace_back_and_forth", "2");
 
         // per_monitor stays on this Monitor. Asking again for 4 returns to 5.
         desk.Ok("workspace", "4");
@@ -193,7 +193,7 @@ public class WorkspaceDispatchTests
 
     private static void MultimonFocus(TestDesktop desk)
     {
-        desk.Keyword("input:follow_mouse", "0");
+        desk.Set("input:follow_mouse", "0");
         desk.Ok("focusmonitor", "HEADLESS-3");
         desk.Ok("workspace", "8");
         desk.Ok("focusmonitor", "HEADLESS-2");
@@ -297,9 +297,9 @@ public class WorkspaceDispatchTests
         desk.Send("reload");
 
         desk.Ok("workspace", "8");
-        Assert.Equal("ok", desk.Send("keyword general:gaps_in 0"));
-        Assert.Equal("ok", desk.Send("keyword general:border_size 0"));
-        Assert.Equal("ok", desk.Send("keyword workspace 8, gapsout:0 1000 0 0"));
+        desk.Set("general:gaps_in", "0");
+        desk.Set("general:border_size", "0");
+        desk.Set("workspace", "8, gapsout:0 1000 0 0");
 
         // The default split puts B below A.
         desk.Spawn("gaps_kitty_A");

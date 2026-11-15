@@ -11,9 +11,6 @@ internal static class CommandFlagReader
 {
     internal static CommandFlags Strip(ref string text)
     {
-        if (text.StartsWith("[[BATCH]]", StringComparison.Ordinal))
-            return CommandFlags.None;
-
         var slash = text.IndexOf('/');
         if (slash < 0)
             return CommandFlags.None;

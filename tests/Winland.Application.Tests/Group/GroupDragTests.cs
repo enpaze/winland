@@ -189,10 +189,9 @@ public class GroupDragTests
         Hold(core, 2);
         Assert.Equal(0, Assert.Single(core.Handle(new PointerMoved(new Point(bar.Bounds.X + 2, bar.Bounds.Y + 2))).GroupBars).Insertion);
 
-        var off = core.Execute("keyword group:drag_into_group 0");
+        var off = core.Handle(new Configure(ConfigParser.Parse("group:drag_into_group = 0\n")));
 
-        Assert.Equal("ok", off.Text);
-        Assert.Null(Assert.Single(off.Effect.GroupBars).Insertion);
+        Assert.Null(Assert.Single(off.GroupBars).Insertion);
     }
 
     [Fact]

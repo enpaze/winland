@@ -3,8 +3,6 @@ namespace Winland.Application.Tests;
 /// <summary>The FALLBACK Monitor that holds the Workspaces while no Monitor is enabled.</summary>
 public class FallbackMonitorTests
 {
-    private const string MonitorNotHonored = "error: Monitor settings other than a reserved area are not honored.";
-
     [Fact]
     public void DisabledMonitorsHandTheirWorkspacesToFallback()
     {
@@ -13,10 +11,6 @@ public class FallbackMonitorTests
         desk.Ok("focusmonitor", "HEADLESS-2");
         desk.Ok("workspace", "9");
         desk.Spawn("fallback-workspace-a");
-
-        // A monitor keyword cannot disable a display. Windows reports that.
-        foreach (var monitor in new[] { "HEADLESS-1", "HEADLESS-2", "HEADLESS-3", "HEADLESS-4" })
-            Assert.Equal(MonitorNotHonored, desk.Send($"keyword monitor {monitor}, disable"));
 
         Assert.DoesNotContain("FALLBACK", desk.Send("j/monitors"), StringComparison.Ordinal);
         Assert.Equal("HEADLESS-2", MonitorOf(desk, 9));

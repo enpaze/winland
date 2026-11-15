@@ -1,9 +1,8 @@
 namespace Winland.Domain;
 
 /// <summary>
-/// A window property of <c>getprop</c> and <c>setprop</c>: its name, how its value is read and shown, and whether a
-/// window rule of the same name only sets it. This is the one list of properties; the parser, <c>setprop</c> and the
-/// readers all use it.
+/// A property a window rule can give a window: its name, the kind of its value, and whether a window rule of the
+/// same name only sets it. This is the one list of properties; the parser and the readers both use it.
 /// </summary>
 internal abstract record WindowProp(string Name, PropKind Kind, bool IsRuleEffect)
 {

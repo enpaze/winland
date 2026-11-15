@@ -285,18 +285,6 @@ public class CommandServerTests
         }
     }
 
-    [Fact]
-    public void BatchTravelsThePipe()
-    {
-        var core = new WindowManager();
-        var name = PipeName();
-        using var server = new CommandServer(core, _ => { }, name);
-        server.Start();
-
-        var batch = CommandClient.Transact("j/[[BATCH]]binds;configerrors", name);
-        Assert.Equal("[]\n\n\n[]", batch);
-    }
-
     private static string PipeName() => "winland-" + Guid.NewGuid().ToString("N");
 
     private static NamedPipeClientStream Connect(string name)

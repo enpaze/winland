@@ -7,30 +7,21 @@ public static class ControlInvocation
 {
     // The verbs come from CommandProtocol, so a verb the pipe answers is one winland takes.
     public static string Usage { get; } =
-        string.Concat(CommandProtocol.VerbForms.Select(form => "       winland " + (form == "events" ? "" : "[-j] ") + form + "\n"))
-        + "       winland [-j] --batch <commands>\n";
+        string.Concat(CommandProtocol.VerbForms.Select(form => "       winland " + (form == "events" ? "" : "[-j] ") + form + "\n"));
 
     /// <summary>
-    /// True for a bare <c>dispatch</c> or <c>getoption</c>, with or without <c>-j</c>. <paramref name="list"/> is then
-    /// every Dispatcher or Option name this binary knows, in order: one a line, or a JSON array with <c>-j</c>.
+    /// True for a bare <c>dispatch</c>, with or without <c>-j</c>. <paramref name="list"/> is then every Dispatcher
+    /// name this binary knows, in order: one a line, or a JSON array with <c>-j</c>.
     /// </summary>
     public static bool TryListNames(string[] args, out string list)
     {
         ArgumentNullException.ThrowIfNull(args);
         list = "";
         var words = args.Where(arg => arg != "-j").ToArray();
-        if (words.Length != 1)
+        if (words.Length != 1 || !words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        IEnumerable<string> names;
-        if (words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase))
-            names = WindowManager.DispatcherNames;
-        else if (words[0].Equals("getoption", StringComparison.OrdinalIgnoreCase))
-            names = OptionTable.Names;
-        else
-            return false;
-
-        var sorted = names.Order(StringComparer.Ordinal).ToArray();
+        var sorted = WindowManager.DispatcherNames.Order(StringComparer.Ordinal).ToArray();
         list = words.Length < args.Length ? JsonSerializer.Serialize(sorted) : string.Join('\n', sorted);
         return true;
     }
@@ -46,7 +37,6 @@ public static class ControlInvocation
         line = "";
         events = false;
         var flags = "";
-        string? batch = null;
         var rest = new List<string>();
 
         // The request is one line, so an argument with a line break in it would be cut there.
@@ -72,30 +62,14 @@ public static class ControlInvocation
                 break;
             }
 
-            if (arg is "-j")
-            {
-                if (!flags.Contains(arg[1], StringComparison.Ordinal))
-                    flags += arg[1];
-
-                continue;
-            }
-
-            if (arg != "--batch" || batch is not null || i + 1 >= args.Length)
+            if (arg is not "-j")
                 return false;
 
-            batch = args[++i];
+            if (!flags.Contains(arg[1], StringComparison.Ordinal))
+                flags += arg[1];
         }
 
         var prefix = flags.Length == 0 ? "" : flags + "/";
-        if (batch is not null)
-        {
-            if (rest.Count > 0)
-                return false;
-
-            line = prefix + "[[BATCH]]" + batch;
-            return true;
-        }
-
         if (rest.Count == 0)
             return false;
 
