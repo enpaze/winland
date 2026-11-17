@@ -6,8 +6,6 @@
     <AssemblyName>winland</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <StartupHookSupport>false</StartupHookSupport>
-    <!-- A release is published for a runtime, and compiled ahead then, so neither a `winland dispatch` nor the first
-         key a session sees waits on the JIT. -->
     <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
   </PropertyGroup>
 

@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>A tiled Client resized by its own border changes its split, as a <c>resizewindow</c> drag does.</summary>
 public class NativeResizeTests
 {
     private static readonly Rectangle Wide = new(0, 0, 1920, 1080);
@@ -15,14 +14,11 @@ public class NativeResizeTests
         var started = core.Handle(new WindowSizeStarted(new WindowId(1), new Point(960, 540)));
         var ended = core.Handle(new WindowSizeEnded(new WindowId(1), new Point(1060, 540)));
 
-        // The system resizes the window while the border is held, so the core leaves it alone until the end.
         Assert.Empty(started.Placements);
         Assert.Equal(new Rectangle(0, 0, 1060, 1080), BoundsOf(ended, 1));
         Assert.Equal(new Rectangle(1060, 0, 860, 1080), BoundsOf(ended, 2));
     }
 
-    // A client's resize request is a live resizewindow drag in Winland, so the neighbour follows
-    // the border while it is held. The system sizes the window itself, so the core does not place it.
     [Fact]
     public void TheNeighbourFollowsTheBorderWhileItIsHeld()
     {
@@ -45,8 +41,6 @@ public class NativeResizeTests
         Assert.Equal(new Rectangle(1100, 0, 820, 1080), BoundsOf(ended, 2));
     }
 
-    // The system sizes the window to the pointer, which would cover a neighbour that cannot shrink any further. The
-    // window is held at the tile the Layout gives it instead, and only while the pointer is past it.
     [Fact]
     public void ABorderHeldPastANeighboursMinimumKeepsTheWindowAtItsTile()
     {
@@ -130,8 +124,6 @@ public class NativeResizeTests
         Assert.Empty(core.Handle(new WindowSizeEnded(new WindowId(99), new Point(20, 20))).Placements);
     }
 
-    // Letting go recenters a scrolling tape narrower than the screen, so the end places the Client where the
-    // Layout now holds it, not where the last step of the drag left it.
     [Fact]
     public void TheEndPlacesTheClientWhereTheLayoutHoldsItAfterTheRelease()
     {
@@ -145,8 +137,6 @@ public class NativeResizeTests
         Assert.Equal(Client(ended, 2).Bounds, BoundsOf(ended, 2));
     }
 
-    // A bottom border changes only the height, as on a window Winland does not manage. The pointer drifting sideways
-    // while it is held leaves the split beside the Client where it was.
     [Fact]
     public void ABottomBorderChangesOnlyTheHeight()
     {

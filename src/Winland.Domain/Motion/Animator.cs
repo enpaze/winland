@@ -1,13 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// Steps the motions the core plans, on a clock the caller passes in milliseconds. It holds no window
-/// handles and does no Win32, so the adapter applies the frames it returns.
-/// </summary>
-/// <remarks>
-/// A channel always ends exactly on its goal. A motion that replaces a running one starts from the value
-/// shown at that moment.
-/// </remarks>
 public sealed class Animator
 {
     private readonly Dictionary<WindowId, Entry> _entries = [];
@@ -80,11 +72,6 @@ public sealed class Animator
         entry.Rest = motion.Rest;
     }
 
-    /// <summary>
-    /// Takes a Layout rectangle that arrived without a motion. Returns true when the running motion
-    /// already lands there, or hides or closes the window, so the window is left to it. Otherwise the
-    /// window's movement stops and the caller places it.
-    /// </summary>
     public bool Settle(WindowId window, Rectangle bounds)
     {
         if (!_entries.TryGetValue(window, out var entry))
@@ -112,10 +99,6 @@ public sealed class Animator
         return false;
     }
 
-    /// <summary>
-    /// Takes a window's decoration. A running fade or alpha change moves toward the new alpha instead of
-    /// jumping to it, and a running border change toward the new color.
-    /// </summary>
     public PaintHold Paint(WindowId window, byte alpha, BorderColor border, double now)
     {
         if (!_entries.TryGetValue(window, out var entry))
@@ -135,14 +118,11 @@ public sealed class Animator
         return new PaintHold(entry.Fade is not null || entry.Alpha is not null, holdsBorder);
     }
 
-    /// <summary>Stops the window's motion where it is. The caller puts the window on its Layout rectangle.</summary>
     public void Forget(WindowId window) => _entries.Remove(window);
 
-    /// <summary>The frame the window shows at <paramref name="now"/>, without advancing anything.</summary>
     public Frame? Peek(WindowId window, double now) =>
         _entries.TryGetValue(window, out var entry) ? Show(window, entry, now, final: false) : null;
 
-    /// <summary>The frame of every running motion at <paramref name="now"/>. Landed motions are removed.</summary>
     public IReadOnlyList<Frame> Step(double now)
     {
         if (_entries.Count == 0)
@@ -155,8 +135,6 @@ public sealed class Animator
             entry.Fade = Done(entry.Fade, now);
             entry.Alpha = Done(entry.Alpha, now);
             entry.Border = Done(entry.Border, now);
-            // Keep the geometry's goal until the other channels finish too: the stand-in still owns the window's
-            // final placement while a longer fade or border transition runs.
             if (!Running(entry.Geometry, now) && entry.Fade is null && entry.Alpha is null && entry.Border is null)
             {
                 frame = Rested(frame, entry);
@@ -169,7 +147,6 @@ public sealed class Animator
         return frames;
     }
 
-    /// <summary>Lands every motion on its goal at once, and removes them.</summary>
     public IReadOnlyList<Frame> Land()
     {
         var frames = new List<Frame>(_entries.Count);
@@ -232,7 +209,6 @@ public sealed class Animator
 
         public Track? Alpha { get; set; }
 
-        /// <summary>The alpha the window lands on.</summary>
         public byte AlphaGoal { get; set; } = 255;
 
         public Track? Border { get; set; }
@@ -275,5 +251,4 @@ public sealed class Animator
     }
 }
 
-/// <summary>Whether a running motion owns a window's alpha or border, so a decoration must not set them.</summary>
 public readonly record struct PaintHold(bool Alpha, bool Border);

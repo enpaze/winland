@@ -117,8 +117,6 @@ public class DwmEffectsTests
         Assert.Equal(DwmEffects.AutoBackdrop, surface.Backdrops[other]);
     }
 
-    // After the exit cleanup the process ends with the state file gone, so an outcome that arrives
-    // late must not change a backdrop or a region again.
     [Fact]
     public void AfterResettingAllNothingIsChanged()
     {
@@ -151,7 +149,6 @@ public class DwmEffectsTests
         Assert.True(stamped.Clients[0].Region);
         Assert.False(stamped.Clients[1].Region);
 
-        // The region stays on the window when the process dies, and the next run would see it as the window's own.
         var restarted = new DwmEffects(surface);
         restarted.DropLeftoverRegion(Window);
         Assert.Empty(surface.Regions[Window]);
@@ -160,8 +157,6 @@ public class DwmEffectsTests
         Assert.True(restarted.CutsCorners(Window));
     }
 
-    // Taking a region off waits for the window. One whose program stopped answering keeps its cut, and the snapshot
-    // records it, so the next start takes it off.
     [Fact]
     public void AWindowThatStoppedAnsweringKeepsItsCutRecorded()
     {
@@ -209,7 +204,6 @@ public class DwmEffectsTests
         Assert.False(effects.CutsCorners(Window));
     }
 
-    // A rule can change the radius of a window whose corners are already cut.
     [Fact]
     public void ANewRadiusCutsTheWindowAgain()
     {
@@ -226,7 +220,6 @@ public class DwmEffectsTests
         Assert.True(effects.CutsCorners(Window));
     }
 
-    // Whether a window has a region of its own is asked once. A reset forgets the answer.
     [Fact]
     public void AWindowsOwnRegionIsAskedAboutOnceUntilReset()
     {
@@ -262,7 +255,6 @@ public class DwmEffectsTests
         Assert.True(effects.CutsCorners(Window));
     }
 
-    // A window whose backdrop could not be set still gets its region back.
     [Fact]
     public void ResettingAllReachesAWindowWhoseBackdropWasNeverSet()
     {
@@ -299,7 +291,6 @@ public class DwmEffectsTests
         Assert.True(effects.CutsCorners(owned));
     }
 
-    // The snapshot is replaced only when a mark changes, and every changed mark is taken.
     [Fact]
     public void StampChangesOnlyTheMarksThatAreWrong()
     {

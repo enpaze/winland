@@ -624,7 +624,6 @@ public class WindowManagerTests
         Assert.Equal([new WindowId(1)], echo[^1].Hide);
     }
 
-    // What the adapter sends when the system shows a window Winland hid, which it asks the core for as three steps.
     private static Outcome[] Echo(WindowManager core, long window, Rectangle area)
     {
         var id = new WindowId(window);

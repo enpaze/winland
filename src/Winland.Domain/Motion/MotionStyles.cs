@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>The starting rectangle and workspace travel for Winland's animations.</summary>
 internal static class MotionStyles
 {
     internal static Rectangle Window(Rectangle goal)

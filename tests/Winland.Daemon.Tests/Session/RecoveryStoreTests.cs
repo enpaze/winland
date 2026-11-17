@@ -24,7 +24,6 @@ public sealed class RecoveryStoreTests : IDisposable
         Assert.False(File.Exists(path + ".tmp"));
     }
 
-    // A clean exit keeps its last snapshot, so a restart puts the Clients back, and a save still on its way is dropped.
     [Fact]
     public void ACleanExitKeepsItsLastSnapshotAndNothingAfter()
     {
@@ -39,7 +38,6 @@ public sealed class RecoveryStoreTests : IDisposable
         Assert.Equal(2, Assert.Single(new RecoveryStore(path).Read()!.Clients).Window.Value);
     }
 
-    // A run that quits before it laid anything out leaves the file of the run before it for the next start.
     [Fact]
     public void AnExitBeforeArmingKeepsThePreviousFile()
     {
@@ -83,7 +81,6 @@ public sealed class RecoveryStoreTests : IDisposable
         Assert.Equal(3, Assert.Single(new RecoveryStore(path).Read()!.Clients).Window.Value);
     }
 
-    // A junction on the way is followed, and the folder it leads to is what is checked.
     [Fact]
     public void AJunctionedFolderIsCheckedWhereItLeads()
     {
@@ -105,8 +102,6 @@ public sealed class RecoveryStoreTests : IDisposable
         Assert.Empty(Directory.GetFiles(target));
     }
 
-    // A link at the file's own name is someone else's way into another folder. It is never read
-    // through, and deleting the file deletes only the link.
     [Fact]
     public void ALinkAtTheFilesNameIsNotFollowed()
     {
@@ -133,7 +128,6 @@ public sealed class RecoveryStoreTests : IDisposable
         Assert.Equal("kept", File.ReadAllText(Path.Combine(elsewhere, "kept.txt")));
     }
 
-    // Nothing is recorded until the Clients have been adopted, and nothing after the cleanup has run.
     [Fact]
     public void OnlyAnArmedOpenStoreWrites()
     {
@@ -151,7 +145,6 @@ public sealed class RecoveryStoreTests : IDisposable
         Assert.False(File.Exists(path));
     }
 
-    // The same snapshot is not written again, so a file someone else changed meanwhile is left alone.
     [Fact]
     public void AnUnchangedSnapshotIsNotWrittenAgain()
     {
@@ -189,7 +182,6 @@ public sealed class RecoveryStoreTests : IDisposable
         }
     }
 
-    // A file where the folder should be is never used, and saving there does not throw.
     [Fact]
     public void AFileInPlaceOfTheFolderIsNotUsed()
     {

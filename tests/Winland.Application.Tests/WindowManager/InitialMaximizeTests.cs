@@ -1,8 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>
-/// A window that opens maximized asked for it before it mapped. Winland ignores that request, so the window is tiled.
-/// </summary>
 public class InitialMaximizeTests
 {
     [Fact]

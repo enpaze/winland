@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// The floating Clients of one Layout: the rectangle each one floats at, and the size each Client
-/// last had while floating, which it gets back the next time it floats. Every Layout floats the same way.
-/// </summary>
 internal sealed class FloatingClients
 {
     private const int DefaultWidth = 640;
@@ -18,24 +14,20 @@ internal sealed class FloatingClients
 
     public void Set(ClientId id, Rectangle box) => _boxes[id] = box;
 
-    /// <summary>Stops floating a Client without remembering its size, as a dragged tile does when it drops.</summary>
     public bool Remove(ClientId id) => _boxes.Remove(id);
 
-    /// <summary>Remembers the size a Window asked for, which it floats at until it has floated.</summary>
     public void Remember(ClientId id, Rectangle bounds)
     {
         if (bounds.Width > 0 && bounds.Height > 0)
             _lastSize[id] = (bounds.Width, bounds.Height);
     }
 
-    /// <summary>Forgets a Client that leaves the Layout. True when it was floating.</summary>
     public bool Forget(ClientId id)
     {
         _lastSize.Remove(id);
         return _boxes.Remove(id);
     }
 
-    /// <summary>Stops floating a Client that goes back to its tile, and remembers its size. False when it was not floating.</summary>
     public bool Sink(ClientId id)
     {
         if (!_boxes.Remove(id, out var box))
@@ -45,11 +37,6 @@ internal sealed class FloatingClients
         return true;
     }
 
-    /// <summary>
-    /// Where a tiled Client floats: around the middle of its tile, at the size it last floated at
-    /// or 640 by 400, kept on screen. A size that would barely differ
-    /// from the tile grows by 10.
-    /// </summary>
     public Rectangle Around(ClientId id, Rectangle tile, OnScreen onScreen)
     {
         var width = DefaultWidth;
@@ -74,14 +61,12 @@ internal sealed class FloatingClients
         return onScreen.Keep(floated);
     }
 
-    /// <summary>Hands a floating slot and its remembered size to the Window that takes over the slot.</summary>
     public void Hand(ClientId from, ClientId to)
     {
         SlotHandover.Move(_boxes, from, to);
         SlotHandover.Move(_lastSize, from, to);
     }
 
-    /// <summary>Shifts every floating Client by a Monitor move.</summary>
     public void Nudge(int dx, int dy)
     {
         if ((dx == 0 && dy == 0) || _boxes.Count == 0)
@@ -94,7 +79,6 @@ internal sealed class FloatingClients
         }
     }
 
-    /// <summary>Keeps a floating Client inside its size limits. Empty when it already was.</summary>
     public IReadOnlyList<Placement> Clamp(ClientId id, SizeLimits limits)
     {
         if (!_boxes.TryGetValue(id, out var box))
@@ -108,10 +92,6 @@ internal sealed class FloatingClients
         return [new Placement(id, clamped)];
     }
 
-    /// <summary>
-    /// Moves a floating Client against one edge of the floating work area, with its border inside the area, as in the
-    /// Winland. Empty when it already is there.
-    /// </summary>
     public IReadOnlyList<Placement> MoveToEdge(ClientId id, Side side, Rectangle area, int border)
     {
         if (!_boxes.TryGetValue(id, out var box))
@@ -134,7 +114,6 @@ internal sealed class FloatingClients
         return [new Placement(id, moved)];
     }
 
-    /// <summary>Resizes a floating Client about its center, by a delta or to an exact size, and keeps it on screen.</summary>
     public IReadOnlyList<Placement> Resize(ClientId id, int x, int y, bool exact, OnScreen onScreen, SizeLimits limits)
     {
         if (!_boxes.TryGetValue(id, out var box))
@@ -151,7 +130,6 @@ internal sealed class FloatingClients
         return [new Placement(id, resized)];
     }
 
-    /// <summary>Moves a floating Client to a rectangle of at least one pixel, kept on screen. False when it is not floating.</summary>
     public bool Place(ClientId id, Rectangle bounds, OnScreen onScreen, SizeLimits limits)
     {
         if (!_boxes.ContainsKey(id) || bounds.Width < 1 || bounds.Height < 1)
@@ -161,7 +139,6 @@ internal sealed class FloatingClients
         return true;
     }
 
-    /// <summary>Adds the floating Clients that are shown, in the Layout's Client order.</summary>
     public void AddShown(List<Placement> placements, IReadOnlyList<Client> clients)
     {
         ArgumentNullException.ThrowIfNull(placements);

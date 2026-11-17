@@ -3,7 +3,6 @@ using System.Text.Json;
 
 namespace Winland.Domain;
 
-/// <summary>The value types Options are declared with. A number outside its range is clamped.</summary>
 internal static class OptionValue
 {
     internal static OptionValue<bool> Bool { get; } = new(
@@ -11,7 +10,6 @@ internal static class OptionValue
         (string text, out bool value) => ConfigValueSyntax.TryParseBool(text.Trim(), out value),
         value => value ? "true" : "false");
 
-    /// <summary>The reference config writes an unset string as <c>[[EMPTY]]</c>, which reads as an empty one.</summary>
     internal static OptionValue<string> Text { get; } = new(
         "str",
         (string text, out string value) =>
@@ -26,13 +24,11 @@ internal static class OptionValue
         (string text, out BorderColor value) => BorderColor.TryParse(text.Trim(), out value),
         value => Quote(Hex(value)));
 
-    /// <summary>Every color a gradient lists. Its angle is read and not kept.</summary>
     internal static OptionValue<BorderColor[]> Colors { get; } = new(
         "gradient",
         (string text, out BorderColor[] value) => ConfigValueSyntax.TryParseColors(text, out value) && value.Length > 0,
         value => Quote(string.Join(' ', value.Select(Hex))));
 
-    /// <summary>One to four edges, as CSS writes them: top, right, bottom, left.</summary>
     internal static OptionValue<EdgeInsets> Gaps { get; } = new("css", TryGaps, value => Quote(string.Create(
         CultureInfo.InvariantCulture,
         $"{value.Top} {value.Right} {value.Bottom} {value.Left}")));
@@ -78,7 +74,6 @@ internal static class OptionValue
         },
         value => JsonSerializer.Serialize(value));
 
-    /// <summary>Two numbers split by one space, each clamped to the range.</summary>
     internal static OptionValue<Vec2> Pair(double min, double max) => new(
         "vec2",
         (string text, out Vec2 value) =>
@@ -91,14 +86,12 @@ internal static class OptionValue
         },
         value => JsonSerializer.Serialize(new[] { value.X, value.Y }));
 
-    /// <summary>One of <paramref name="names"/>, in any case. The reply names it as the first name that maps to it.</summary>
     internal static OptionValue<T> Named<T>(IReadOnlyDictionary<string, T> names)
         where T : struct => new(
         "str",
         (string text, out T value) => names.TryGetValue(text.Trim(), out value),
         value => Quote(names.First(pair => EqualityComparer<T>.Default.Equals(pair.Value, value)).Key));
 
-    /// <summary>One of <paramref name="choices"/>, in any case. It is kept as the choice spells it.</summary>
     internal static OptionValue<string> OneOf(params string[] choices) => new(
         "str",
         (string text, out string value) =>
@@ -128,7 +121,6 @@ internal static class OptionValue
         if (parts.Length is 0 or > 4)
             return false;
 
-        // A gap below zero would overlap the tiles, so it is clamped to zero as other numbers are clamped to their range.
         var count = parts.Length;
         var values = new int[count];
         for (var i = 0; i < count; i++)
@@ -150,7 +142,6 @@ internal static class OptionValue
     }
 }
 
-/// <summary>How one type of Option value is read from a config line, and what it is called and looks like written out.</summary>
 internal sealed record OptionValue<T>(string Kind, OptionReader<T> Read, Func<T, string> Json);
 
 internal delegate bool OptionReader<T>(string text, out T value);

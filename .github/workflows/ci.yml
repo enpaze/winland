@@ -1,13 +1,3 @@
-# One pull-request and merge-queue entry point.
-# Do not add secrets to this workflow. pull_request runs the file from the pull request.
-#
-# Every check is a step in one Windows job. A net11.0-windows project does not build on
-# Ubuntu, and each job pays its own setup, so small separate jobs cost more time than the
-# work they do. CI runs on pull requests, on merge groups in the merge queue, and on the push a
-# merge makes to main. The push run also fills the NuGet cache, because a pull request can only
-# read caches its own branch or the default branch saved. A release run tests the exact commit
-# it ships.
-
 name: CI
 
 on:
@@ -30,8 +20,6 @@ on:
 permissions:
   contents: read
 
-# A newer run of a pull request or of main cancels the older one, so only the newest commit is built and
-# released as dev. A run started by hand or by a release has a group of its own, and no push cancels it.
 concurrency:
   group: ci-${{ inputs.release || false }}-${{ inputs.ref || github.ref }}-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ !inputs.release && (github.event_name == 'pull_request' || github.event_name == 'push') }}
@@ -41,25 +29,18 @@ jobs:
     name: All required checks pass (v1)
     runs-on: windows-latest
     timeout-minutes: 60
-    # The packages go to a fixed folder so they can be cached between runs.
     env:
       NUGET_PACKAGES: C:/nuget
       DOTNET_NOLOGO: "true"
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
     steps:
-      # fetch-depth 0 also fetches every branch, so origin/main and the pull request's base
-      # are present without a second fetch, and no credential has to stay on disk. The blobless
-      # filter keeps every commit and tree, which the diff step reads, and fetches
-      # file contents only for the commit that is checked out.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
           filter: blob:none
           persist-credentials: false
-      # The runner image ships several .NET SDKs. When one of them is what global.json asks for,
-      # dotnet resolves it and nothing is installed. Otherwise setup-dotnet installs it.
       - name: Find the .NET SDK
         id: sdk
         shell: pwsh
@@ -74,21 +55,15 @@ jobs:
           }
           exit 0
       - if: steps.sdk.outputs.found != 'true'
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68
         with:
           global-json-file: global.json
       - name: Restore the NuGet packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: C:/nuget
           key: nuget-${{ runner.os }}-${{ hashFiles('global.json', 'nuget.config', 'Directory.Packages.props', 'Directory.Build.props', '**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-
-      # Tests run unless the pull request only changes docs and repo metadata.
-      # Any other changed file turns them on, so a new kind of file is tested by default.
-      # An empty diff turns them off. --no-renames lists the old path of a rename too,
-      # so moving a code file into docs/ still counts as a code change.
-      # Merge-queue, push, manual and release runs fail open, so a bad classification cannot weaken
-      # what lands on main or a release.
       - name: Classify the diff
         id: classify
         shell: pwsh
@@ -116,8 +91,6 @@ jobs:
         run: |
           ./scripts/check.ps1 -SkipBuild:($env:TEST -eq 'false')
           exit $LASTEXITCODE
-      # actionlint is pinned by version and SHA-256. To upgrade, take both from the
-      # release's actionlint_<version>_checksums.txt (windows_amd64 zip).
       - name: Lint the workflows
         shell: pwsh
         run: |
@@ -137,7 +110,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "actionlint reported problems (exit code $LASTEXITCODE)."
           }
-      # The lint step built the solution in Release, so the tests run on that build, side by side.
       - name: Run tests
         if: steps.classify.outputs.test == 'true'
         shell: pwsh

@@ -23,8 +23,6 @@ public static partial class ConfigParser
                     return;
                 }
 
-                // A glob in the config's own folder also matches the file it is written in,
-                // and every file that is already being read is passed over without a warning.
                 foreach (var match in matches)
                 {
                     if (!_openSources.Contains(SourceKey(match)))
@@ -72,8 +70,6 @@ public static partial class ConfigParser
             WarnUnclosed(_categories.Count - depth);
         }
 
-        // Windows paths are compared without case, after a relative path is joined to the
-        // current file's folder and the result is normalized, so one file has one key however it is named.
         private string SourceKey(string path)
         {
             var folder = _source is null ? _rootFolder : Path.GetDirectoryName(_source);

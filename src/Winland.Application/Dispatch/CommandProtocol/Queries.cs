@@ -11,7 +11,6 @@ public static partial class CommandProtocol
         var indexed = Index(state);
         var views = new List<ClientJson>(state.Clients.Count);
 
-        // the Clients are listed from the bottom of the stacking order to the top.
         var stacked = new Dictionary<WindowId, int>(state.Stacking.Count);
         for (var i = 0; i < state.Stacking.Count; i++)
             stacked[state.Stacking[i]] = i;
@@ -37,7 +36,6 @@ public static partial class CommandProtocol
         var active = indexed.ByWorkspace[state.ActiveWorkspace];
         foreach (var entry in indexed.Workspaces)
         {
-            // Two Monitors can both show Workspace 1. The address alone does not tell them apart.
             if (entry.Address == active.Address && entry.Monitor == active.Monitor && entry.Id == active.Id)
                 return JsonSerializer.Serialize(entry);
         }
@@ -139,7 +137,6 @@ public static partial class CommandProtocol
     private static WorkspaceJson SpecialJson(WorkspaceId? workspace, Indexed indexed) =>
         workspace is WorkspaceId id && indexed.ByWorkspace.TryGetValue(id, out var described) ? described : NoSpecial;
 
-    // A mirror names the id of the Monitor it shows, and "none" otherwise.
     private static string MirrorOf(State state, Monitor monitor)
     {
         if (monitor.MirrorOf.Length == 0)
@@ -222,7 +219,6 @@ public static partial class CommandProtocol
     {
         ArgumentNullException.ThrowIfNull(state);
         var indexed = Index(state);
-        // Events and text replies still number a named or special Workspace as before, below zero.
         if (indexed.ByWorkspace.TryGetValue(id, out var described))
             return described.Order;
 
@@ -287,8 +283,6 @@ public static partial class CommandProtocol
         if (state.SpecialWorkspace is WorkspaceId focusedSpecial)
             Add(focusedSpecial);
 
-        // Named workspaces have no numeric id, so they are reported as -1, -2, ... in name order.
-        // The unnamed special workspace is -99. Further special workspaces continue -98, -97, ...
         var named = new List<string>();
         var specials = new List<string>();
         foreach (var id in ids)
@@ -372,7 +366,6 @@ public static partial class CommandProtocol
                 tiledLayouts.GetValueOrDefault(id, "dwindle")));
         }
 
-        // Numbered Workspaces in order, then the same number by Monitor, then specials by the order they had as ids.
         var keys = new (long Order, int Monitor)[counts.Count];
         for (var i = 0; i < counts.Count; i++)
             keys[i] = (byWorkspace[ids[i]].Order, counts[i].MonitorId);
@@ -387,8 +380,6 @@ public static partial class CommandProtocol
         }
     }
 
-    // The handler of a Client's fullscreen, as Winland names it: scrolling when the scrolling Layout holds
-    // it, or would take it as a tile that is not fullscreen, and default otherwise.
     private static string FullscreenHandlerOf(State state, Client client)
     {
         if (client.LayoutFullscreen)
@@ -497,8 +488,6 @@ public static partial class CommandProtocol
         [property: JsonPropertyName("grouped")] string[] Grouped,
         [property: JsonPropertyName("stableId")] string StableId);
 
-    // A Workspace as Winland writes one: its address, an id only when it is numbered, its type, its
-    // display name and the Monitor it is on. Order sorts the list and is not written.
     private sealed record WorkspaceJson(
         [property: JsonPropertyName("address")] string Address,
         [property: JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] long? Id,

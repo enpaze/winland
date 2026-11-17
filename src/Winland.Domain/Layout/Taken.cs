@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// A Client handed from one Workspace's Layout to another. A Layout leaves the fullscreen mode at none;
-/// <see cref="LiveWorkspace.Take"/> fills it in so the Client is fullscreen again where it lands.
-/// </summary>
 internal readonly record struct Taken(
     bool Floating,
     bool Minimized,

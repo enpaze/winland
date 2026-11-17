@@ -2,28 +2,20 @@ using static Winland.Domain.OrdinalText;
 
 namespace Winland.Application;
 
-/// <summary>The Event stream: compares the state before and after a step and reports what changed.</summary>
 public sealed partial class WindowManager
 {
     private readonly record struct Captured(State State, WindowId? Active);
 
     private Captured Capture() => new(Snapshot(), ActiveWindow());
 
-    // Workspaces that moved to another Monitor and so got a new id during this input, oldest first.
     private List<(WorkspaceId From, WorkspaceId To)>? _readdressed;
 
-    // Workspaces reported as active for this input, oldest first. A report is a Monitor's shown Workspace
-    // changing while the focus may follow, and the Workspace a swap leaves on the focused Monitor. Moving the
-    // focus onto a Monitor that already shows its Workspace is not a report, and neither is a change on a
-    // Monitor that is not focused, nor a Monitor coming or going.
     private List<WorkspaceId>? _activated;
 
     private void NoteWorkspaceActive(WorkspaceId workspace) => (_activated ??= []).Add(workspace);
 
     private Outcome WithEvents(Outcome outcome, Captured before, Input? input)
     {
-        // A Workspace that only changed its id is the same Workspace, so it is compared under its new id and emits
-        // neither a destroy nor a create, nor moves its Clients or the cursor.
         if (_readdressed is { } readdressed)
         {
             _readdressed = null;
@@ -161,7 +153,6 @@ public sealed partial class WindowManager
             if (next.Contains(workspace.Id))
                 continue;
 
-            // The name is read before the Workspace is gone, so its defaultName is still reported.
             events.Add(new WorkspaceDestroyed(
                 workspace.Id,
                 CommandProtocol.WorkspaceNumber(before, workspace.Id),
@@ -212,8 +203,6 @@ public sealed partial class WindowManager
             events.Add(new MonitorLayoutChanged());
     }
 
-    // Whether a monitor kept from before has another mode, position, scale, orientation or mirror, which the pinned
-    // release lays the monitors out again for. Its work area is not its layout.
     private static bool Arranged(State before, State after)
     {
         foreach (var screen in after.Screens)

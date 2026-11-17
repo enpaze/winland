@@ -14,23 +14,13 @@ internal interface IDwmSurface
 
     bool HasRegion(WindowId window);
 
-    /// <summary>The window rectangle and the visible frame DWM draws inside it, in screen pixels. False while the window is minimized.</summary>
     bool TryFrame(WindowId window, out Rectangle outer, out Rectangle visible);
 
-    /// <summary>Sets the window region to this outline, in window coordinates. An empty outline removes the region.</summary>
     bool TrySetRegion(WindowId window, IReadOnlyList<Point> outline);
 }
 
-/// <summary>
-/// The backdrop and corner region of each Client. Each attribute is changed only when the
-/// decoration asks for something other than what the window has, and is put back on reset.
-/// A window that already has a region of its own keeps it, and its corners are not cut.
-/// A window whose program stopped answering keeps its cut on reset, and stays recorded for the next start.
-/// DWM's own shadow is left as Windows draws it.
-/// </summary>
 internal sealed class DwmEffects
 {
-    // DWMSBT_AUTO, DWMSBT_NONE, DWMSBT_TRANSIENTWINDOW (acrylic).
     internal const uint AutoBackdrop = 0;
     internal const uint NoBackdrop = 1;
     internal const uint BlurBackdrop = 3;
@@ -71,7 +61,6 @@ internal sealed class DwmEffects
         }
     }
 
-    /// <summary>Cuts the corners again after the window changed size by itself.</summary>
     internal void Refit(WindowId window)
     {
         lock (_gate)
@@ -95,10 +84,6 @@ internal sealed class DwmEffects
         }
     }
 
-    /// <summary>
-    /// Puts back the backdrop and region of every window this changed, for the exit cleanup. Nothing
-    /// is changed after that: an outcome that arrives late would stay for good.
-    /// </summary>
     internal void ResetAll()
     {
         HashSet<WindowId> windows;
@@ -114,7 +99,6 @@ internal sealed class DwmEffects
             Reset(window);
     }
 
-    /// <summary>Marks each Client whose region is the corner outline this cut, so a crash does not leave it for good.</summary>
     internal RecoverySnapshot Stamp(RecoverySnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -134,7 +118,6 @@ internal sealed class DwmEffects
         }
     }
 
-    /// <summary>Removes the corner region a previous run cut and left behind, so it is not taken as the window's own.</summary>
     internal void DropLeftoverRegion(WindowId window)
     {
         lock (_gate)
@@ -210,7 +193,6 @@ internal sealed class DwmEffects
 
 internal sealed class Win32DwmSurface : IDwmSurface
 {
-    // DWMWA_SYSTEMBACKDROP_TYPE.
     private const DWMWINDOWATTRIBUTE BackdropAttribute = (DWMWINDOWATTRIBUTE)38;
 
     public unsafe bool TryReadBackdrop(WindowId window, out uint backdrop)
@@ -265,8 +247,6 @@ internal sealed class Win32DwmSurface : IDwmSurface
 
     public bool TrySetRegion(WindowId window, IReadOnlyList<Point> outline)
     {
-        // Setting a region waits on the window's thread. A program that stopped answering keeps its old corners, and
-        // the next size change cuts them again.
         if (!TryWindow(window, out var hwnd) || PInvoke.IsHungAppWindow(hwnd))
             return false;
 
@@ -281,7 +261,6 @@ internal sealed class Win32DwmSurface : IDwmSurface
         if (region.IsInvalid || PInvoke.SetWindowRgn(hwnd, (HRGN)region.DangerousGetHandle(), true) == 0)
             return false;
 
-        // The system owns the region once SetWindowRgn succeeds.
         region.SetHandleAsInvalid();
         return true;
     }

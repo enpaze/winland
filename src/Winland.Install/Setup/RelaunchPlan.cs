@@ -27,11 +27,6 @@ public static class RelaunchPlan
         AddIfPresent(assignments, "WINLAND_PIPE", pipe);
         AddIfPresent(assignments, "WINLAND_STATE", state);
 
-        // runas starts in System32 and does not inherit the environment. cmd can
-        // enter the original directory and set DOTNET_ROOT; the verb cannot.
-        // cmd reads the whole line first: it expands %NAME% even inside quotes, a quote ends
-        // its quoting, and a line break ends the command. Text with any of them is refused.
-        // /v:off keeps !NAME! literal when delayed expansion is on in the registry.
         var launch = QuoteAlways(Checked(executable, "the executable path"));
         if (arguments.Count > 0)
             launch += " " + string.Join(' ', arguments.Select(argument => Quote(Checked(argument, "an argument"))));
@@ -40,8 +35,6 @@ public static class RelaunchPlan
         steps.AddRange(assignments);
         steps.Add(launch);
 
-        // The elevated cmd is the one in System32. ComSpec and a bare name resolved through the
-        // current directory and PATH both come from the user's environment, which any program can set.
         var interpreter = Path.Combine(Environment.SystemDirectory, "cmd.exe");
         return new RelaunchSpec(interpreter,"/d /v:off /s /c \"" + string.Join(" && ", steps) + "\"", workingDirectory);
     }
@@ -63,10 +56,6 @@ public static class RelaunchPlan
         return directory;
     }
 
-    /// <summary>
-    /// True when the runtime directory is a shared framework, <c>&lt;root&gt;/shared/Microsoft.NETCore.App/&lt;version&gt;/</c>.
-    /// A self-contained build reports its own folder.
-    /// </summary>
     public static bool IsFrameworkDependent(string? runtimeDirectory)
     {
         if (string.IsNullOrWhiteSpace(runtimeDirectory))
@@ -81,8 +70,6 @@ public static class RelaunchPlan
             && shared.Name.Equals("shared", StringComparison.OrdinalIgnoreCase);
     }
 
-    // Only a framework-dependent build needs DOTNET_ROOT to find its runtime. A self-contained
-    // one carries it, and the variable would only bring in one from the user's environment.
     private static string? RuntimeRoot(string? dotnetRoot, string? runtimeDirectory)
     {
         if (!IsFrameworkDependent(runtimeDirectory))
@@ -110,8 +97,6 @@ public static class RelaunchPlan
 
     private static readonly SearchValues<char> MetaCharacters = SearchValues.Create(" \t&|<>^!()");
 
-    // The value holds no quote. Backslashes are literal except a run before the closing
-    // quote, which would escape it, so that run is doubled.
     private static string QuoteAlways(string value)
     {
         var trailing = value.Length - value.TrimEnd('\\').Length;

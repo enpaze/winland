@@ -28,7 +28,6 @@ public class InputQueueTests
         Assert.Equal([3, -5, 3], queue.Take());
     }
 
-    // A move never jumps ahead of a bind that was queued before it, and a bind is never dropped.
     [Fact]
     public void MovesAreKeptInOrderAroundOtherInput()
     {

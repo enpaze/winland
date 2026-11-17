@@ -2,10 +2,6 @@ using System.Globalization;
 
 namespace Winland.Domain;
 
-/// <summary>
-/// Resolves a Monitor argument: a name, a <c>desc:</c> prefix of its identity, a direction,
-/// <c>current</c>, a relative <c>+N</c> or <c>-N</c>, or an id.
-/// </summary>
 internal static class MonitorSelector
 {
     public static MonitorTarget? Resolve(string? text, IReadOnlyList<MonitorTarget> monitors, MonitorTarget? current)
@@ -178,7 +174,6 @@ internal static class MonitorSelector
         Math.Max(0, Math.Min(start + size, otherStart + otherSize) - Math.Max(start, otherStart));
 }
 
-/// <summary>An enabled Monitor a dispatcher can address.</summary>
 internal readonly record struct MonitorTarget(
     MonitorId Id,
     string Name,

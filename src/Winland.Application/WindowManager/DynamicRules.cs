@@ -1,15 +1,9 @@
 namespace Winland.Application;
 
-// Window rules match what a window is: its class, title, exe and aumid. When a window's class or title changes, the
-// property effects of its rules are matched again, so they follow the new name. Effects that apply only as the window
-// opens, such as float and workspace, stay as they were.
 public sealed partial class WindowManager
 {
-    // Windows whose class or title changed since their rules were last matched.
     private readonly HashSet<WindowId> _renamed = [];
 
-    // Matches the property, opacity and focus effects of each renamed window's rules again. The placements of each
-    // shown Workspace where a window's border changed, laid out again.
     private List<Placement> MatchRulesAgain()
     {
         var placements = new List<Placement>();
@@ -19,7 +13,6 @@ public sealed partial class WindowManager
         foreach (var desk in _workspaces)
         {
             var changed = false;
-            // A Group member that waits behind the shown one is matched too, so it shows with its new rules.
             foreach (var client in desk.Layout.Clients.Concat(desk.WaitingClients))
             {
                 if (!_renamed.Contains(client.Window) || _props.Subject(client.Window) is not { } kept)

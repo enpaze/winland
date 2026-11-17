@@ -1,9 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>
-/// A window moved and sized by the system while a button is held, as a title bar or a border drag does. Winland hears
-/// the drag start, the pointer move and the drag end. A button press with no drag moves nothing.
-/// </summary>
 public class NativeDragTests
 {
     [Fact]
@@ -16,7 +12,6 @@ public class NativeDragTests
 
         SetClientGeometry(desk, pid, new Rectangle(300, 300, 500, 400));
 
-        // xdg_toplevel.move
         var startMove = ActiveGeometry(desk);
         desk.MovePointer(startMove.X + 100, startMove.Y + 100);
         Press(desk);
@@ -31,7 +26,6 @@ public class NativeDragTests
         Near(startMove.Width, endMove.Width, 2);
         Near(startMove.Height, endMove.Height, 2);
 
-        // xdg_toplevel.resize right
         SetClientGeometry(desk, pid, new Rectangle(400, 300, 500, 400));
         Assert.True(TestDesktop.Floating(desk.ActiveWindow()));
         var startResize = ActiveGeometry(desk);
@@ -51,7 +45,6 @@ public class NativeDragTests
         Near(startResize.Width + 160, endResize.Width, 5);
         Near(startResize.Height, endResize.Height, 2);
 
-        // A stale resize serial is ignored: the button is up, so no drag starts.
         SetClientGeometry(desk, pid, new Rectangle(500, 300, 500, 400));
         var stale = ActiveGeometry(desk);
         desk.MovePointer(stale.X + 250, stale.Y + 200);
@@ -64,7 +57,6 @@ public class NativeDragTests
         Near(stale.Width, afterStale.Width, 2);
         Near(stale.Height, afterStale.Height, 2);
 
-        // An invalid resize edge disconnects the client in the reference. The compositor keeps answering.
         desk.MovePointer(afterStale.X + 250, afterStale.Y + 200);
         desk.Click();
         Assert.NotEqual("", desk.Send("clients"));
@@ -81,7 +73,6 @@ public class NativeDragTests
         Assert.Equal(geometry, ActiveGeometry(desk));
     }
 
-    // The active window's at and size, as the reference reads them from activewindow.
     private static Rectangle ActiveGeometry(TestDesktop desk)
     {
         var active = desk.ActiveWindow();

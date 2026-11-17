@@ -51,8 +51,6 @@ public class AnimatorTests
         Assert.Null(frames.Single(frame => frame.Window == other).Goal);
     }
 
-    // A hide or close that only fades keeps the move already running to the same goal, as the
-    // position and the alpha are animated on their own.
     [Fact]
     public void AFadeWithoutAMoveLetsARunningMoveToTheSameGoalContinue()
     {
@@ -64,7 +62,6 @@ public class AnimatorTests
         Assert.Equal(new Rectangle(75, 0, 100, 100), Assert.Single(animator.Step(75)).Bounds);
     }
 
-    // A motion without a move to a different goal still drops the running move.
     [Fact]
     public void AMotionWithoutAMoveToAnotherGoalDropsTheRunningMove()
     {

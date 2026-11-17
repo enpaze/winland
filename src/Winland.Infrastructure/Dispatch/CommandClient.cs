@@ -5,7 +5,6 @@ namespace Winland.Infrastructure;
 
 public static class CommandClient
 {
-    /// <param name="connected">Runs once the pipe is connected, before the command is sent.</param>
     public static string Transact(string command, string? pipeName = null, int timeoutMs = 2000, Action<NamedPipeClientStream>? connected = null, int replyTimeoutMs = 10_000)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
@@ -33,7 +32,6 @@ public static class CommandClient
             pipe.WriteAsync(outbound, timeout.Token).AsTask().GetAwaiter().GetResult();
             pipe.FlushAsync(timeout.Token).GetAwaiter().GetResult();
 
-            // Read in blocks, not a call per byte. Nothing else reads this pipe.
             using var buffered = new BufferedStream(pipe);
             return ReadReply(buffered, timeout.Token);
         }

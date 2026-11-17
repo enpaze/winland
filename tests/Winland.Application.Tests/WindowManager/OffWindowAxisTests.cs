@@ -25,7 +25,6 @@ public class OffWindowAxisTests
         var core = CoreWith("general:border_size = 4\n");
         Float(core, 1);
 
-        // The window fills 640..1280 by 340..740. The ring is the 4 pixels of its border.
         var target = core.OffWindowTarget(new Point(1282, 500));
 
         Assert.Equal(new OffWindowScroll(new WindowId(1), new Point(1279, 500)), target);

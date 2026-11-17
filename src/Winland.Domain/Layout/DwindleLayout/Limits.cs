@@ -28,7 +28,6 @@ internal sealed partial class DwindleLayout
     private static bool Short(Size? max, Node node) =>
         max is { } limit && (limit.Width < node.Box.Width || limit.Height < node.Box.Height);
 
-    // A Client tiled again, by a toggle or a drop, floats instead when its maximum cannot fill the tile it got.
     private IReadOnlyList<Placement> FloatIfShort(ClientId id, Node node)
     {
         if (_limits.TryGetValue(id, out var limits) && Short(limits.Max, node))
@@ -62,9 +61,6 @@ internal sealed partial class DwindleLayout
         return limit.Width < tile.Width || limit.Height < tile.Height;
     }
 
-    // A window whose maximum cannot fill the tile it would open in floats instead. It would
-    // have been sized for that tile, half the tile it splits or the whole Monitor, so it floats at that size kept
-    // inside its limits, in the middle of the work area.
     private Rectangle FloatedFromTile(SizeLimits limits)
     {
         var tile = PredictedTile();
@@ -99,11 +95,6 @@ internal sealed partial class DwindleLayout
         HonorMinimums(_root);
     }
 
-    // Where the minimums along a split fit in the parent, the split gives each window
-    // its minimum and the neighbour takes whatever space remains. Where they do not,
-    // the side that needs more takes all but the other side's floor: no tile grows
-    // past its parent or the Monitor, and a window below its minimum grows over its
-    // neighbours when it is placed (SizeLimits.Raise).
     private void HonorMinimums(Node node)
     {
         if (node.First is null || node.Second is null)
@@ -111,7 +102,6 @@ internal sealed partial class DwindleLayout
 
         var horizontal = !node.SplitTop;
         var available = horizontal ? node.Box.Width : node.Box.Height;
-        // Neither side gives up more than the smallest split ratio, 0.1, would leave it.
         var floor = FirstShare(available, 0.1);
         var firstNeed = Math.Max(Need(node.First, horizontal), floor);
         var secondNeed = Math.Max(Need(node.Second, horizontal), floor);
@@ -122,7 +112,6 @@ internal sealed partial class DwindleLayout
         var ideal = FirstShare(available, node.SplitRatio);
         if (firstNeed + secondNeed > available)
         {
-            // The side that needs more takes all it can and leaves the other its floor. Equal needs keep the ratio.
             if (firstNeed > secondNeed)
                 firstSpan = Math.Min(firstNeed, available - floor);
             else if (secondNeed > firstNeed)
@@ -141,7 +130,6 @@ internal sealed partial class DwindleLayout
 
         var crossHave = horizontal ? node.First.Box.Height : node.First.Box.Width;
         var crossNow = horizontal ? node.Box.Height : node.Box.Width;
-        // A split that already fits keeps its boxes, but a minimum deeper down can still need room.
         var settled = firstSpan == firstHave && secondSpan == secondHave && crossHave == crossNow;
         if (!settled)
             Resplit(node, horizontal, firstSpan, secondSpan);

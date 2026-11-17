@@ -1,16 +1,11 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// A Group: several Clients that share one tile. Only the shown member is in the Workspace's Layout.
-/// The others wait hidden on the same Workspace until they are shown.
-/// </summary>
 internal sealed class WindowGroup(WindowId first)
 {
     private readonly List<WindowId> _members = [first];
 
     public IReadOnlyList<WindowId> Members => _members;
 
-    /// <summary>The index of the shown member. It always points at a member.</summary>
     public int Current { get; private set; }
 
     public WindowId Shown => _members[Current];
@@ -21,14 +16,9 @@ internal sealed class WindowGroup(WindowId first)
 
     public int IndexOf(WindowId window) => _members.IndexOf(window);
 
-    /// <summary>
-    /// The index after removing the member at <paramref name="index"/>. A hidden member leaves the shown one
-    /// shown. When the shown member leaves, the one before it takes the tile, or the next one when it was first.
-    /// </summary>
     public int CurrentAfterRemoving(int index) =>
         index == Current ? Math.Max(0, Current - 1) : index < Current ? Current - 1 : Current;
 
-    /// <summary>Adds <paramref name="window"/> at <paramref name="position"/>, clamped to the Group. The shown member stays shown.</summary>
     public void Insert(int position, WindowId window)
     {
         position = Math.Clamp(position, 0, _members.Count);
@@ -37,7 +27,6 @@ internal sealed class WindowGroup(WindowId first)
             Current++;
     }
 
-    /// <summary>Makes the member at <paramref name="index"/> the shown one.</summary>
     public void ShowAt(int index)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(index);
@@ -45,7 +34,6 @@ internal sealed class WindowGroup(WindowId first)
         Current = index;
     }
 
-    /// <summary>Removes the member at <paramref name="index"/>. The shown index moves as <see cref="CurrentAfterRemoving"/> says.</summary>
     public void RemoveAt(int index)
     {
         var current = CurrentAfterRemoving(index);
@@ -54,15 +42,11 @@ internal sealed class WindowGroup(WindowId first)
     }
 }
 
-/// <summary>How a window left its Group.</summary>
 internal enum GroupExit
 {
-    /// <summary>The window was not a member.</summary>
     NotMember,
 
-    /// <summary>It was the last member. The Group ended and the window keeps its tile.</summary>
     Dissolved,
 
-    /// <summary>It left a Group that keeps other members. It is out of the Layout now.</summary>
     Detached,
 }

@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>The core of Winland. Every input and command runs as one step under one lock and returns an Outcome for the adapter to apply.</summary>
 public sealed partial class WindowManager
 {
     private readonly WorkspaceSet _workspaces = new();
@@ -9,13 +8,10 @@ public sealed partial class WindowManager
     private readonly ProcessFamilies<WorkspaceId> _initialWorkspaces = new();
     private readonly BindSession _keyState = new();
 
-    // Pipe requests arrive on another thread than binds and window events.
     private readonly Lock _gate = new();
 
-    // The config in force. The hook thread reads it outside the lock, so a reload replaces it whole.
     private volatile AppliedConfig _config = AppliedConfig.Unconfigured;
 
-    // One lookup for every Workspace's options, so they still compare equal.
     private readonly Func<ClientId, int?> _clientBorder;
     private BorderColor? _accent;
     private HighContrast? _contrast;
@@ -27,23 +23,16 @@ public sealed partial class WindowManager
     private List<StreamEvent>? _noted;
     private readonly HashSet<WindowId> _concealedMinimized = [];
 
-    // The last outcome a step returned with something to apply. The next step is empty when it asks for nothing more.
     private Outcome? _applied;
 
     public event Action<Outcome>? Noticed;
 
-    /// <summary>
-    /// Called under the lock with each outcome a step decided that asks for something, so they are handed on in the
-    /// order they were decided. The adapter queues them here and applies them in that order.
-    /// </summary>
     public Action<Outcome>? Decided { get; set; }
 
     public Func<ConfigRead>? ReadConfig { get; set; }
 
-    /// <summary>The full path of the log file Winland writes now, or null while it writes none. <c>files</c> reports it.</summary>
     public Func<string?>? LogFile { get; set; }
 
-    /// <summary><c>general:hide_taskbar</c>: the taskbars are hidden and set to auto-hide while Winland runs.</summary>
     public bool HideTaskbar => _config.Session.HideTaskbar;
 
     public ICursorPosition? Cursor { get; set; }
@@ -69,10 +58,8 @@ public sealed partial class WindowManager
 
     public BindTable Binds => _config.Binds;
 
-    /// <summary>Bind state the hook matches against.</summary>
     public BindSession KeyState => _keyState;
 
-    /// <summary>Matches input against the published bind table. Does not take the core lock.</summary>
     public BindDecision Decide(Input input, BindSession session)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -94,15 +81,12 @@ public sealed partial class WindowManager
         ArgumentNullException.ThrowIfNull(input);
         lock (_gate)
         {
-            // Closing a program destroys many windows that were never Clients, such as its child windows. Each only
-            // needs what Winland noted about it forgotten, not a whole step.
             if (input is WindowClosed closed && _applied is { } last && WorkspaceContaining(closed.Window) is null)
             {
                 _windowState.Forget(closed.Window);
                 return Outcome.Empty(last.State);
             }
 
-            // The pointer moves hundreds of times a second, and most moves change nothing a step would apply.
             if (input is PointerMoved moved && _interaction is null && _applied is { } applied)
             {
                 if (Glides(moved, applied, out var aim))
@@ -115,10 +99,6 @@ public sealed partial class WindowManager
         }
     }
 
-    /// <summary>
-    /// Takes in the windows that were open before Winland started, as one step, so each tile is placed once where it
-    /// ends up rather than again for every window after it.
-    /// </summary>
     public Outcome Adopt(IReadOnlyList<WindowAppeared> windows)
     {
         ArgumentNullException.ThrowIfNull(windows);
@@ -153,11 +133,9 @@ public sealed partial class WindowManager
 
         lock (_gate)
         {
-            // A rule block follows the started program for a minute.
             if (launch.Rules.Count > 0)
                 _follow.Track(processId, launch.Rules, Clock() + 60_000);
 
-            // A started program has ten seconds to open its window.
             if (launch.InitialWorkspace is WorkspaceId workspace)
                 _initialWorkspaces.Track(processId, workspace, Clock() + 10_000);
         }
@@ -179,7 +157,6 @@ public sealed partial class WindowManager
         ConfigDocument? reloaded;
         lock (_gate)
         {
-            // A query reads the State and changes nothing, so it runs no step and has nothing to apply.
             if (parsed is CommandParsed { Request: var request } && Read(request) is { } text)
                 return new CommandReply(text, Outcome.Empty(Snapshot()));
 
@@ -205,12 +182,8 @@ public sealed partial class WindowManager
         return result;
     }
 
-    // The config a reload in this Execute put in force, for AfterReload once the lock is released.
     private ConfigDocument? _reloaded;
 
-    // Every input and every command runs as one step: the change, then the rules matched again, the fullscreen
-    // hiding, the decorations and the Motions, and only then the events and the cursor, so they describe the
-    // finished State. The scratch state a step gathers is dropped when it ends.
     private Outcome Step(Input? input, Func<Outcome> run)
     {
         var before = Capture();
@@ -225,8 +198,6 @@ public sealed partial class WindowManager
 
             outcome = WithEvents(Decorate(outcome, before.State), before, input);
 
-            // A step that loads a config is not remembered: its caller may not apply it, so the next step applies
-            // everything again.
             var loaded = !ReferenceEquals(config, _config);
             if (!loaded && outcome.IsEmptyAfter(_applied))
                 return Outcome.Empty(outcome.State);
@@ -290,18 +261,12 @@ public sealed partial class WindowManager
             MonitorsChanged changed => SetMonitors(changed.Monitors),
         };
 
-    // The Workspace a program started now is started on: the special workspace the focused Monitor shows, or its
-    // Workspace.
     private WorkspaceId LaunchWorkspace()
     {
         var monitor = FocusedId();
         return _workspaces.Shown.SpecialOn(monitor) ?? _workspaces.Shown.ActiveOn(monitor);
     }
 
-    /// <summary>
-    /// The time in milliseconds, for rule timers, launch follows and pointer events that carry no time of their own.
-    /// Tests set it; the default is the system tick count.
-    /// </summary>
     internal Func<long> Clock { get; set; } = static () => Environment.TickCount64;
 
     private void Emit(Outcome outcome)

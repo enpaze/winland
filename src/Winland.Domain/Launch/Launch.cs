@@ -6,9 +6,5 @@ public sealed record Launch(string CommandLine, string? WorkingDirectory)
 
     public IReadOnlyList<WindowRule> Rules { get; init; } = NoRules;
 
-    /// <summary>
-    /// The Workspace this program was started on, which its window opens on.
-    /// Null for <c>exec-once</c>, which Winland starts without a token.
-    /// </summary>
     public WorkspaceId? InitialWorkspace { get; init; }
 }

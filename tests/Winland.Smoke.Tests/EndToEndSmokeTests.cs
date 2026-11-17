@@ -53,7 +53,6 @@ public class EndToEndSmokeTests
     [SmokeFact]
     public void RealDaemonTilesTwoWindowsThroughTheCli()
     {
-        // -4 is per-monitor v2, matching the daemon, so window rects share one coordinate space.
         _ = PInvoke.SetProcessDpiAwarenessContext((DPI_AWARENESS_CONTEXT)(nint)(-4));
         AssertNoForeignDaemon();
         var userState = UserState.Stamp();
@@ -74,8 +73,6 @@ public class EndToEndSmokeTests
             daemon.WaitUntilReady();
             RemainUnmanaged(daemon);
             events = EventLog.Follow(paths, daemon.Pipe, dotnetRoot);
-            // Workspace 1 has to be the focused monitor's workspace before the test
-            // windows open, so a later switch to workspace 2 hides them.
             Assert.Equal("ok", daemon.Dispatch("workspace 1"));
             windows = new SmokeWindows();
             windows.Open();
@@ -239,7 +236,6 @@ public class EndToEndSmokeTests
     private static void AssertWorkspaces(string json)
     {
         using var document = JsonDocument.Parse(json);
-        // Each Monitor has its own Workspace 1. The one the smoke windows open on holds both.
         var ones = document.RootElement.EnumerateArray().Where(item => item.GetProperty("id").GetInt32() == 1).ToList();
         Assert.All(ones, workspace => Assert.Equal("1", workspace.GetProperty("name").GetString()));
         Assert.Single(ones, workspace => workspace.GetProperty("windows").GetInt32() == 2);
@@ -278,8 +274,6 @@ public class EndToEndSmokeTests
         return true;
     }
 
-    // The visible frame, which Winland fits to the Layout rectangle. The outer rectangle of a window
-    // with a sizing border also takes in the invisible border around it.
     private static unsafe bool TryFrame(HWND hwnd, out RECT rect)
     {
         rect = default;

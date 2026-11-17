@@ -35,18 +35,14 @@ public static partial class CommandProtocol
             case ClientRetitled retitled:
                 lines.Add("windowtitle>>" + EventAddress(retitled.Window));
                 lines.Add($"windowtitlev2>>{EventAddress(retitled.Window)},{Clean(retitled.Title)}");
-                // A new title of the focused window is told again as the active window.
                 if (retitled.Active)
                     AppendFocus(lines, new FocusChanged(retitled.Window), state);
                 break;
             case ClientReclassed reclassed:
-                // Winland has no windowclass event. A new class of the focused window is told again as
-                // the active window.
                 if (reclassed.Active)
                     AppendFocus(lines, new FocusChanged(reclassed.Window), state);
                 break;
             case MonitorLayoutChanged:
-                // Winland tells monitor.layout_changed to the config only.
                 break;
             case ClientUrgent urgent:
                 lines.Add("urgent>>" + EventAddress(urgent.Window));

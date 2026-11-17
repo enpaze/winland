@@ -4,7 +4,6 @@ public class TrayBadgeTests
 {
     private const int Size = 16;
 
-    // A font's cell puts a digit above and beside the middle. The label moves so its ink sits on the center.
     [Fact]
     public void TheLabelIsCenteredByItsInk()
     {

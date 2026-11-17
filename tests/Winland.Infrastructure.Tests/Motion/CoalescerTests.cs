@@ -41,7 +41,6 @@ public class CoalescerTests
             Assert.Equal(["1", "4", "done"], handled);
     }
 
-    // After each run the worker rests for the gap, and values posted meanwhile fold into the newest.
     [Fact]
     public void ValuesPostedDuringTheGapFoldIntoTheNewest()
     {
@@ -85,7 +84,6 @@ public class CoalescerTests
             handled.Set();
         }, TimeSpan.Zero, "test coalescer");
 
-        // "good" is posted only once "bad" threw, so it cannot replace "bad" before the handler sees it.
         coalescer.Post("bad");
         Assert.True(threw.Wait(TimeSpan.FromSeconds(5)));
         coalescer.Post("good");

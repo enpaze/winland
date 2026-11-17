@@ -1,9 +1,7 @@
 namespace Winland.Domain;
 
-/// <summary>Which binds a press matches: the key and the modifiers held with it.</summary>
 public sealed partial class BindSession
 {
-    // No bind matches while binds are paused, as on the lock screen.
     private List<Bind> Collect(BindTable table, string key, int scanCode, bool mouse)
     {
         var matches = new List<Bind>();
@@ -20,7 +18,6 @@ public sealed partial class BindSession
         return matches;
     }
 
-    // A mouse button's bind. A drag bound to a key, through the mouse dispatcher, is the key's.
     private static bool IsMouseBind(Bind bind) =>
         bind.Key.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase);
 
@@ -48,8 +45,6 @@ public sealed partial class BindSession
         Held &= ~modifier;
     }
 
-    // A modifier keysym is matched against the mask without that key folded in,
-    // unless the other side of the same modifier is already held.
     private Modifier MaskFor(string key, bool mouse)
     {
         if (mouse || !ModifierKeys.TryGetValue(key, out var modifier))
@@ -66,7 +61,6 @@ public sealed partial class BindSession
         return Held & ~modifier;
     }
 
-    // A bound key matches either layout's name, or its scan code when written as code:N.
     private static bool KeyEquals(string bound, string key, int scanCode, KeyLayout layout)
     {
         if (bound.Length == 0)

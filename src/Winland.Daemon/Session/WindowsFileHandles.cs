@@ -4,11 +4,6 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Winland.Daemon;
 
-/// <summary>
-/// Opens files and folders by handle, optionally without following a reparse point, and reads or
-/// writes what the handle refers to. An elevated program that checks a path and then uses it again
-/// can be sent somewhere else in between by a junction or a rename. Working on one handle cannot.
-/// </summary>
 [SupportedOSPlatform("windows")]
 public static class WindowsFileHandles
 {
@@ -31,19 +26,12 @@ public static class WindowsFileHandles
     private const int FileRenameInformation = 10;
     private const int FileDispositionInfo = 4;
 
-    /// <summary>
-    /// Opens an existing file or folder. With <paramref name="followReparse"/> false a junction or a
-    /// symbolic link is opened itself, so <see cref="Attributes"/> shows it rather than its target.
-    /// </summary>
     public static SafeFileHandle Open(string path, uint access, FileShare share, bool followReparse)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         return Create(path, access, share, OpenExisting, BackupSemantics | (followReparse ? 0 : OpenReparsePoint));
     }
 
-    /// <summary>
-    /// Creates a new file and fails when the name is taken, by a file or by a link. The handle may write.
-    /// </summary>
     public static SafeFileHandle CreateNewFile(string path, FileShare share)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -59,7 +47,6 @@ public static class WindowsFileHandles
         return (FileAttributes)information.FileAttributes;
     }
 
-    /// <summary>The path the handle refers to now, with junctions resolved, as <c>C:\...</c> or <c>\\?\UNC\...</c>.</summary>
     public static string FinalPath(SafeFileHandle handle)
     {
         ArgumentNullException.ThrowIfNull(handle);
@@ -82,7 +69,6 @@ public static class WindowsFileHandles
         }
     }
 
-    /// <summary>Reads the owner and the access list of what the handle refers to, as a self-relative descriptor.</summary>
     public static byte[] ReadSecurity(SafeFileHandle handle)
     {
         ArgumentNullException.ThrowIfNull(handle);
@@ -99,11 +85,6 @@ public static class WindowsFileHandles
         return descriptor;
     }
 
-    /// <summary>
-    /// Gives the open file the name <paramref name="name"/> in the open folder <paramref name="directory"/>,
-    /// replacing an entry of that name. The name is looked up in that folder only, so no junction
-    /// on the way to it is followed.
-    /// </summary>
     public static void Rename(SafeFileHandle file, SafeFileHandle directory, string name)
     {
         ArgumentNullException.ThrowIfNull(file);
@@ -112,9 +93,6 @@ public static class WindowsFileHandles
         if (name.AsSpan().ContainsAny(@"\/:"))
             throw new ArgumentException("The new name must be a single name.", nameof(name));
 
-        // FILE_RENAME_INFORMATION: a BOOLEAN padded to the pointer, the root folder handle, the name
-        // length in bytes, then the name. The kernel call takes a name relative to the root handle as
-        // it is; the Win32 wrapper turns it into a path first.
         var nameOffset = (IntPtr.Size * 2) + sizeof(uint);
         var size = nameOffset + ((name.Length + 1) * sizeof(char));
         var buffer = Marshal.AllocHGlobal(size);
@@ -143,7 +121,6 @@ public static class WindowsFileHandles
         }
     }
 
-    /// <summary>Deletes what the handle refers to once every handle to it is closed. The handle needs <see cref="Delete"/>.</summary>
     public static void MarkForDeletion(SafeFileHandle handle)
     {
         ArgumentNullException.ThrowIfNull(handle);
@@ -181,7 +158,6 @@ public static class WindowsFileHandles
         _ => new IOException($"'{what}': {Marshal.GetPInvokeErrorMessage(error)}", unchecked((int)0x80070000 | error)),
     };
 
-    // FILETIME is two DWORDs, so the native struct packs on 4 bytes: 52 bytes, not the 56 a long would align to.
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     private struct ByHandleFileInformation
     {

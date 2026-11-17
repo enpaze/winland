@@ -1,14 +1,9 @@
 namespace Winland.Application;
 
-// Per-window state the core keeps outside the Layouts. Closing a window forgets it in all of it at once.
 public sealed partial class WindowManager
 {
     private readonly WindowRegistry _windowState = new();
 
-    // Every map, set and list keyed by a window, and every field that names one, is registered here.
-    // The Focused client is left out on purpose: Close moves it to the next Client itself. _painted and
-    // _concealedMinimized are rebuilt from each State and need no forgetting. A test fails when anything
-    // else keeps a closed window.
     private void TrackWindowState()
     {
         _windowState.Track(_props.Forget);

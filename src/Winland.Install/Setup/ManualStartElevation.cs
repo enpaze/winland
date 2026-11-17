@@ -2,8 +2,6 @@ namespace Winland.Install;
 
 public static class ManualStartElevation
 {
-    // WINLAND_NO_ELEVATE=1 starts without elevation. It exists for tests.
-    // Elevated features then do not work. --no-elevate is the same opt-out.
     public const string OptOutVariable = "WINLAND_NO_ELEVATE";
 
     public const string LoopArgument = "--winland-elevated";
@@ -20,12 +18,9 @@ public static class ManualStartElevation
         ArgumentNullException.ThrowIfNull(arguments);
 
         var kept = arguments.Where(argument => !IsLoopArgument(argument) && !IsOptOutArgument(argument)).ToArray();
-        // A per-user install never relaunches through UAC, including a start that did not pass --no-elevate.
         if (isElevated || IsOptOut(optOutVariable) || arguments.Any(IsOptOutArgument) || userInstall)
             return new ElevationChoice.Continue(kept);
 
-        // The elevated process is started with the loop argument. If that process
-        // is still not elevated, relaunching again would ask for approval forever.
         if (arguments.Any(IsLoopArgument))
             return new ElevationChoice.Refuse("Winland could not restart with administrator rights.");
 

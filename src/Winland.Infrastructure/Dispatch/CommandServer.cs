@@ -11,7 +11,6 @@ public sealed class CommandServer : IDisposable
 {
     private const int SubscriberQueueCapacity = 256;
 
-    // Room for a burst of event lines, so a subscriber's writes do not each wait for its client to read.
     private const uint OutBuffer = 64 * 1024;
 
     private readonly WindowManager _core;
@@ -28,16 +27,12 @@ public sealed class CommandServer : IDisposable
     private Exception? _startError;
     private bool _disposed;
 
-    /// <summary>Runs after a command the core handled, so the host can apply what the command changed.</summary>
     internal Action? AfterCommand { get; set; }
 
-    /// <summary>How long a client has to send its request line after it connects.</summary>
     internal TimeSpan RequestTimeout { get; init; } = TimeSpan.FromSeconds(5);
 
-    /// <summary>How long a client has to read its reply and close.</summary>
     internal TimeSpan ReplyTimeout { get; init; } = TimeSpan.FromSeconds(30);
 
-    /// <summary>How many instances of the pipe may exist at once. Tests lower it to reach the limit.</summary>
     internal int MaxInstances { get; init; } = 255;
 
     private static readonly TimeSpan FirstRetry = TimeSpan.FromMilliseconds(50);
@@ -65,10 +60,6 @@ public sealed class CommandServer : IDisposable
         return security;
     }
 
-    /// <summary>
-    /// The pipe of an elevated Winland. The user's medium-integrity programs may talk to it, but only an elevated
-    /// process may add an instance, so one of them cannot serve the elevated Winland's clients in its place.
-    /// </summary>
     public static RawSecurityDescriptor DescriptorFor(SecurityIdentifier user)
     {
         ArgumentNullException.ThrowIfNull(user);
@@ -151,8 +142,6 @@ public sealed class CommandServer : IDisposable
         NamedPipeServerStream? server;
         try
         {
-            // The first instance claims the name. A process that already holds it makes
-            // startup fail here, instead of sharing the name and some of the clients.
             server = Open(first: true);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or NotSupportedException)
@@ -215,10 +204,6 @@ public sealed class CommandServer : IDisposable
                 return;
             }
 
-            // The next instance is made before this one is served, so the name is never left
-            // free for another process to take. The request is read off this loop, so a client
-            // that connects and sends nothing does not keep the next one from connecting.
-            // Tracked first, so Dispose closes it.
             var connected = server;
             server = Next();
             Track(connected);
@@ -240,9 +225,6 @@ public sealed class CommandServer : IDisposable
         }
     }
 
-    // Every instance the name allows can be held for a while, by clients that connected and are slow. The
-    // next instance is tried again, less and less often, until one is made or the server stops, so the pipe
-    // does not go quiet for the rest of the session. Null means the server is stopping.
     private async Task<NamedPipeServerStream?> NextAsync()
     {
         var delay = FirstRetry;
@@ -293,12 +275,10 @@ public sealed class CommandServer : IDisposable
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
-            // Timed out, gone, or the server is stopping.
             Release(server);
             return;
         }
 
-        // A subscriber listens before its request runs, so no step that ends in between is lost to it.
         Subscriber? subscriber = null;
         if (CommandProtocol.Parse(command) is CommandParsed { Request: EventsRequest })
         {
@@ -342,8 +322,6 @@ public sealed class CommandServer : IDisposable
         await Finish(server, reply.Text, stopping).ConfigureAwait(false);
     }
 
-    // Every wait here is asynchronous, so an idle subscriber holds no thread. The pool also
-    // runs the bind timers, and a status bar must not be able to starve them.
     private async Task Follow(NamedPipeServerStream server, Subscriber subscriber, CancellationToken stopping)
     {
         var pump = Pump(subscriber);
@@ -384,8 +362,6 @@ public sealed class CommandServer : IDisposable
         }
     }
 
-    // The client reads the reply and then closes. Waiting for that keeps the reply from being
-    // cut off, and a client that never closes is let go after a while.
     private async Task Finish(NamedPipeServerStream server, string text, CancellationToken stopping)
     {
         try
@@ -452,7 +428,6 @@ public sealed class CommandServer : IDisposable
         }
     }
 
-    // The pipe's security is the same for every instance, so it is built once, not before each connection is served.
     private RawSecurityDescriptor? _descriptor;
 
     private NamedPipeServerStream Open(bool first) => Create(_descriptor ??= Descriptor(), first);
@@ -462,16 +437,11 @@ public sealed class CommandServer : IDisposable
         using var identity = WindowsIdentity.GetCurrent();
         var user = identity.User ?? throw new InvalidOperationException("The current user has no SID.");
         var elevated = new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
-        // Setting the label afterwards is access denied (error 5) even with the
-        // security privilege enabled. Creating the pipe with the label already
-        // in its descriptor gives a medium client access to the elevated server.
         return elevated
             ? DescriptorFor(user)
             : new RawSecurityDescriptor(SecurityFor(user).GetSecurityDescriptorSddlForm(AccessControlSections.Access));
     }
 
-    // Both elevations create the pipe here, so both get the same flags: remote clients are
-    // refused, and the first instance fails when the name already exists.
     private unsafe NamedPipeServerStream Create(RawSecurityDescriptor descriptor, bool first)
     {
         const uint Duplex = 0x00000003;
@@ -513,7 +483,6 @@ public sealed class CommandServer : IDisposable
         }
     }
 
-    // The adapter asks the window to close, after its close animation when it has one.
     private void Apply(Outcome outcome) => _apply(outcome);
 
     [StructLayout(LayoutKind.Sequential)]
@@ -547,8 +516,6 @@ public sealed class CommandServer : IDisposable
 
         public ChannelReader<string> Reader => _channel.Reader;
 
-        // A subscriber that falls this far behind has lost its place. It is let go, so its client reconnects and asks
-        // for the state again, rather than going on with events missing.
         public void Enqueue(IReadOnlyList<string> lines)
         {
             if (Volatile.Read(ref _closed) != 0)

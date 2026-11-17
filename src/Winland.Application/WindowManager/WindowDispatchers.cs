@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>Dispatchers that act on one window and the daemon: focus, float, swap, move to a Workspace and <c>exit</c>.</summary>
 public sealed partial class WindowManager
 {
     private Outcome FocusWindow(string arguments)
@@ -17,7 +16,6 @@ public sealed partial class WindowManager
         if (WorkspaceContaining(id) is not LiveWorkspace desk)
             return Rejected("error: no such window");
 
-        // A window shadowed by a modal refuses the focus, though its Workspace is still shown.
         if (HasNoFocus(id))
         {
             return _workspaces.Shown.IsShown(desk.Id)
@@ -55,10 +53,8 @@ public sealed partial class WindowManager
 
         var covered = desk.Covered();
         var placements = desk.Layout.ToggleFloating(id, _pointer);
-        // Only a floating Client is pinned, including one whose pin a fullscreen mode holds.
         _pins.Unpin(id);
 
-        // A window that floats is raised, and so allowed over a fullscreen one.
         if (!client.Floating)
             _cover.SetFlag(id, true);
 
@@ -73,7 +69,6 @@ public sealed partial class WindowManager
         if (ActiveWindow() is not WindowId current || WorkspaceContaining(current) is not LiveWorkspace home)
             return Rejected("error: No window to swap with");
 
-        // Winland's answers, in its order.
         if (Find(current) is { Fullscreen: not FullscreenMode.None })
             return Rejected("error: Can't swap fullscreen window");
 
@@ -95,7 +90,6 @@ public sealed partial class WindowManager
     private Outcome ExitDaemon() =>
         View([]) with { Exit = true };
 
-    // Every Client a window selector can find, including one waiting in a Group.
     private List<Client> EveryClient()
     {
         var clients = new List<Client>();

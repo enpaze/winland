@@ -19,7 +19,6 @@ public class DiscreteScrollTests
         for (var i = 1; i <= 10; i++)
             sent.Add(scroll.Emulate(30, false, 1000 + (i * 10)));
 
-        // The first notch is at once. The sum reaches 120 after the fourth turn, so the fifth sends the next, and the ninth the one after.
         Assert.Equal([120, 0, 0, 0, 120, 0, 0, 0, 120, 0, 0], sent);
     }
 

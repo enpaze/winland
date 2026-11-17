@@ -8,7 +8,6 @@ using Windows.Win32.System.Threading;
 
 namespace Winland.Infrastructure;
 
-/// <summary>Access to user files with the desktop shell's rights, even when Winland is elevated.</summary>
 public static class UserAccess
 {
     private static readonly Lazy<bool> Elevated = new(() =>

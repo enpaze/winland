@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>The Application layer references the Domain and nothing outside it, and no package.</summary>
 public class ApplicationDependencyTests
 {
     [Fact]

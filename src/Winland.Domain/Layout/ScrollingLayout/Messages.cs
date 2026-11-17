@@ -130,7 +130,6 @@ internal sealed partial class ScrollingLayout
         return Placements();
     }
 
-    // Without commit this only finds the Client: the strip does not scroll and nothing is remembered.
     private bool FocusToward(WindowId active, string direction, out WindowId? next, bool commit = true, bool wrap = true)
     {
         next = null;
@@ -443,8 +442,6 @@ internal sealed partial class ScrollingLayout
         (column.Cells[first].Size, column.Cells[second].Size) = (column.Cells[second].Size, column.Cells[first].Size);
     }
 
-    // The grabbed bottom edge trades with the next row and the grabbed top edge with the previous one.
-    // With no corner the row trades with the previous row when there is one, so a positive delta still grows it.
     private void ResizeRow(Cell cell, int delta, (bool Left, bool Top)? corner)
     {
         var usable = SecondaryLength();
@@ -477,13 +474,11 @@ internal sealed partial class ScrollingLayout
         }
     }
 
-    // Moves the edge between two rows by a fraction of the column. Neither row goes below the smallest row.
     private static void Trade(Cell upper, Cell lower, double fraction)
     {
         var lo = -(upper.Size - MinRow);
         var hi = lower.Size - MinRow;
 
-        // Eleven or more equal rows are each below the smallest row, so neither can give.
         if (lo > hi)
             return;
 

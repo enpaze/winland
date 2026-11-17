@@ -33,7 +33,6 @@ internal static partial class WorkspaceRules
             return null;
         }
 
-        // A workspace rule names a Workspace by its number.
         if (!IsPositive(ident, out _))
         {
             warnings.Add($"A workspace rule names a Workspace by its number, not '{ident}'.");
@@ -139,13 +138,11 @@ internal static partial class WorkspaceRules
             return true;
         }
 
-        // A field Winland does not read warns, and the rest of the rule still applies.
         var colon = field.IndexOf(':', StringComparison.Ordinal);
         warnings.Add($"Unsupported workspace rule field '{(colon < 0 ? field : field[..colon])}'.");
         return true;
     }
 
-    // Gaps read as general:gaps_in and general:gaps_out do, one to four edges, none below zero.
     private static bool TryGaps(
         WorkspaceRule rule,
         string text,

@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>Matches a key or pointer button against a bind table, under the session's lock.</summary>
 public sealed partial class BindSession
 {
     private static readonly Dictionary<string, Modifier> ModifierKeys = new(StringComparer.OrdinalIgnoreCase)
@@ -14,7 +13,6 @@ public sealed partial class BindSession
         ["Shift_L"] = Modifier.Shift,
         ["Shift_R"] = Modifier.Shift,
 
-        // The lock and level keys, while they are held, as Winland reads the depressed modifiers.
         ["Caps_Lock"] = Modifier.Caps,
         ["Num_Lock"] = Modifier.Mod2,
         ["ISO_Level3_Shift"] = Modifier.Mod5,
@@ -40,7 +38,6 @@ public sealed partial class BindSession
             _ => throw new ArgumentOutOfRangeException(nameof(input), input, "No handler for this input."),
         };
 
-    /// <summary>Drops held keys whose release the session missed, such as one on the lock screen.</summary>
     public void Forget(Func<string, bool> stillDown)
     {
         ArgumentNullException.ThrowIfNull(stillDown);
@@ -90,7 +87,6 @@ public sealed partial class BindSession
         return Passed();
     }
 
-    // A bind runs once, on the press. The repeats of a held key run nothing, and stay swallowed when the press was.
     private BindDecision OnPress(BindTable table, string key, int scanCode, bool mouse)
     {
         if (key.Length == 0)
@@ -118,8 +114,6 @@ public sealed partial class BindSession
         return MaskHeld(Ran(binds));
     }
 
-    // The release of a swallowed press is swallowed too. The OS saw any other press, so it must see the release, or
-    // it keeps the key down.
     private BindDecision OnRelease(string key, bool mouse)
     {
         var down = mouse ? _downButtons : _downKeys;
@@ -139,7 +133,6 @@ public sealed partial class BindSession
         return caught && !passed ? Caught() : Passed();
     }
 
-    // A swallowed chord under a Super or Alt the OS saw gets one mask per hold.
     private BindDecision MaskHeld(BindDecision decision)
     {
         var mask = false;
@@ -161,8 +154,6 @@ public sealed partial class BindSession
         if (binds.Count == 0)
             return Passed();
 
-        // Binds wait a moment between notches, so one spin does not run them many times. A notch in that wait is
-        // still the bind's, and does not scroll the window under the pointer. Plain scrolling starts no wait.
         if (_scrollSeen && wheel.TimeMs - _scrollAtMs < BindTable.ScrollDelay)
             return Caught();
 
@@ -175,7 +166,6 @@ public sealed partial class BindSession
 
     private static BindDecision Caught() => new(true, null);
 
-    // The matched binds swallow the input. One with no dispatcher runs nothing.
     private static BindDecision Ran(List<Bind> binds)
     {
         var dispatches = new List<BindDispatch>(binds.Count);

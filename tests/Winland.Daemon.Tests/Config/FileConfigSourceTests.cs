@@ -61,7 +61,6 @@ public sealed class FileConfigSourceTests : IDisposable
         Assert.Equal("$accent = red", text);
     }
 
-    // An editor that keeps the file open for writing must not stop a reload.
     [Fact]
     public void AFileAnotherProgramHasOpenIsStillRead()
     {
@@ -106,7 +105,6 @@ public sealed class FileConfigSourceTests : IDisposable
         File.WriteAllText(path, "");
     }
 
-    // A folder the user cannot list, like one another account owns.
     private void Lock(string relative)
     {
         var folder = Path.Combine(_root, relative);

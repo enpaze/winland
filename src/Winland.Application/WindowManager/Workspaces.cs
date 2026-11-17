@@ -1,9 +1,7 @@
 namespace Winland.Application;
 
-/// <summary>Switching Workspaces, moving windows between them, and the history <c>workspace previous</c> reads.</summary>
 public sealed partial class WindowManager
 {
-    // A floating Client keeps its place relative to the Monitor when it moves onto a Workspace on another Monitor.
     private Taken OntoMonitor(Taken taken, MonitorId from, MonitorId to)
     {
         if (!taken.Floating || from == to || MonitorById(from) is not { Arranged.Enabled: true } source || MonitorById(to) is not { Arranged.Enabled: true } destination)
@@ -19,7 +17,6 @@ public sealed partial class WindowManager
         bool consumed,
         Point? focal = null)
     {
-        // A named Workspace that does not exist is an error, as it is for the workspace dispatcher.
         if (!WorkspaceAddress.TryResolve(argument, Context(), out var resolved))
             return View([], consumed: consumed) with { Error = WorkspaceAddress.IsNamed(argument) ? "error: no such workspace" : null };
 
@@ -35,8 +32,6 @@ public sealed partial class WindowManager
         if (ActiveWindow() is not WindowId id)
             return View([], consumed: consumed);
 
-        // A pinned Client is never moved onto a special workspace, which still opens that special
-        // workspace on a move that is not silent and keeps the Client focused.
         var source = WorkspaceContaining(id);
         if (source is not null && target.IsSpecial && _pins.IsPinned(id))
         {
@@ -53,12 +48,10 @@ public sealed partial class WindowManager
 
         var sourceCovered = source.Covered();
         var wasHidden = !_workspaces.Shown.IsShown(source.Id) || sourceCovered.Contains(id);
-        // A Group's hidden member leaves its Group and goes alone. A shown member takes its Group along.
         var taken = default(Taken);
         if (!(source.IsWaiting(id) ? TakeForGroup(source, id, out taken) : source.Take(id, out taken)))
             return View([], consumed: consumed);
 
-        // A dispatcher that moves a dragged window to another Workspace ends the drag, and its release drops nothing.
         ForgetDrag(id);
 
         var destination = WorkspaceFor(target, target.IsSpecial ? FocusedId() : null);
@@ -104,8 +97,6 @@ public sealed partial class WindowManager
 
         if (!silent)
         {
-            // Switching to the Workspace already shown here changes nothing on screen, so the reflow
-            // and the arriving window are added to what the switch returns.
             var here = _workspaces.Shown.ActiveOn(FocusedId()) == target;
             var followedSwitch = SwitchTo(target, id, consumed);
             if (here)
@@ -123,7 +114,6 @@ public sealed partial class WindowManager
             }
             else if (_workspaces.Shown.IsShown(source.Id))
             {
-                // The Workspace the window left is still shown on its own Monitor, so it is laid out again too.
                 followedSwitch = followedSwitch with { Placements = [.. source.Layout.Placed(), .. followedSwitch.Placements] };
             }
 
@@ -152,7 +142,6 @@ public sealed partial class WindowManager
             }
         }
 
-        // Windows keeps the keyboard on the window the move hid, so the window left focused is given it.
         var refocus = _focus.Focused == id;
         if (refocus)
             Give(FocusState.AfterLeaving(source, revealed), source);
@@ -165,8 +154,6 @@ public sealed partial class WindowManager
 
         return View(placements, revealed, hidden, consumed, focus: refocus ? Kept() : null);
 
-        // The moved window was not in the destination's covered set, so Collect alone never shows it. When
-        // it was hidden where it was, it is shown here unless the destination's Layout covers it.
         void Arrive(List<WindowId> show, List<WindowId> conceal)
         {
             destination.Collect(destinationCovered, show, conceal);
@@ -206,7 +193,6 @@ public sealed partial class WindowManager
             return away.Length == 0 ? followed : followed with { Hide = Combine(followed.Hide, away) };
         }
 
-        // A Workspace that lives on another Monitor, but is not the one that Monitor shows, is shown there.
         if (_workspaces.Find(target) is { } located && MonitorById(located.Monitor) is { Arranged.Enabled: true } home && home.Id != FocusedId())
             Focus(home.Id);
 
@@ -219,7 +205,6 @@ public sealed partial class WindowManager
             if (focus is WindowId requested && ClientOn(target, requested) is not null)
                 Give(requested, FocusedWorkspace());
 
-            // Closing the special workspace hides the window that has the keyboard, so the window focused here takes it.
             return View([], hide: concealed, consumed: consumed, focus: concealed.Length > 0 || focus is not null ? Kept() : null);
         }
 
@@ -245,7 +230,6 @@ public sealed partial class WindowManager
 
         DropIfEmpty(sourceId);
 
-        // Windows keeps the keyboard on the window the switch hid, so the window focused here is given it.
         return View(
             destination.Layout.Visible(),
             VisibleIds(target),
@@ -282,13 +266,9 @@ public sealed partial class WindowManager
         return View([], focus: next, consumed: consumed);
     }
 
-    // A visit to the history workspace previous reads.
     private void Remember(WorkspaceId workspace, MonitorId monitor) =>
         _workspaces.Shown.Visit(workspace, monitor);
 
-    // A switch to a Workspace another Monitor shows moves the cursor onto that Monitor, to the
-    // middle of the Client it focuses or of the Monitor. cursor:no_warps stops it, as it stops Winland's warp.
-    // A cursor option that warps after a switch goes first.
     private void NoteCrossMonitorWarp(MonitorId from, Outcome switched)
     {
         _crossMonitorWarp = null;
@@ -340,7 +320,6 @@ public sealed partial class WindowManager
 
     private void Rebind(LiveWorkspace desk, WorkspaceId to) => Readdressed(_workspaces.Rebind(desk, to));
 
-    // A renamed Workspace keeps its place in the initial-workspace rules and is reported once the step ends.
     private void Readdressed(WorkspaceRename? rename)
     {
         if (rename is not WorkspaceRename (var from, var to))

@@ -67,7 +67,6 @@ public class QuickMoveTests
         for (var step = 1; step <= QuickMove.MaxSkips + 2; step++)
             moves.Request(Window, current with { X = step * 10 }, current, (target, _) => sent.Add(target));
 
-        // The first frame goes out. The window never takes it, so the next ones wait until one is sent anyway.
         Assert.Equal([current with { X = 10 }, current with { X = (QuickMove.MaxSkips + 2) * 10 }], sent);
     }
 
@@ -83,8 +82,6 @@ public class QuickMoveTests
         Assert.False(moves.Trails(Window, target));
     }
 
-    // The window reports each move back. One that lands where Winland put it is Winland's own, so the window's
-    // limits are not read again for it. A window that kept a smaller size still stands where it was put.
     [Fact]
     public void AMoveToWhereWinlandPutTheWindowIsWinlands()
     {
@@ -97,7 +94,6 @@ public class QuickMoveTests
         Assert.False(moves.Ours(new WindowId(0x7103), target));
     }
 
-    // A motion sends a frame at a time, and the window reports them as it takes them, behind the newest.
     [Fact]
     public void AnEarlierFrameOfAMotionIsStillWinlands()
     {
@@ -108,8 +104,6 @@ public class QuickMoveTests
         Assert.True(moves.Ours(Window, new Rectangle(10, 0, 400, 300)));
     }
 
-    // An application that moves or sizes its own window just after Winland placed it, as one that restores
-    // its last size when it opens does, lands somewhere Winland never put it.
     [Fact]
     public void AMoveTheApplicationMadeItselfIsNotWinlands()
     {
@@ -119,8 +113,6 @@ public class QuickMoveTests
         Assert.False(moves.Ours(Window, new Rectangle(449, 1249, 1655, 197)));
     }
 
-    // A tile that grows in place keeps its origin every frame. The window has taken a frame only once it
-    // also has that frame's size, so the next frame waits and the direct placement is sent again behind it.
     [Fact]
     public void AResizeInPlaceIsTakenOnlyOnceTheSizeLands()
     {

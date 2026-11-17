@@ -24,10 +24,6 @@ public readonly record struct WindowTraits(
     bool Topmost = false,
     bool Frameless = false)
 {
-    /// <summary>
-    /// A window its program placed on purpose, so it opens where it is: one that stays on top, or one with neither a
-    /// title bar nor a sizing border, such as a flyout a tray icon opens.
-    /// </summary>
     public bool PlacesItself => Topmost || Frameless;
 
     public static WindowTraits Normal { get; } = new(
@@ -41,10 +37,6 @@ public readonly record struct WindowTraits(
         Dialog: false,
         Elevated: false);
 
-    /// <summary>
-    /// These traits with the initial class and title set to the current ones when they are not set yet. initialClass and
-    /// initialTitle match what a window had when it appeared, including an empty one, so a later one does not stand in.
-    /// </summary>
     public WindowTraits WithInitialNames() => this with
     {
         InitialClass = InitialClass ?? Class,

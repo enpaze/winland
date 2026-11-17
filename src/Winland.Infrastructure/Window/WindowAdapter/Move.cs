@@ -9,11 +9,9 @@ public sealed partial class WindowAdapter
 {
     private const int HitTestTimeoutMs = 100;
 
-    // The system moves and sizes a window in a loop of its own, and reports only its start and its end.
     private WindowId? _moving;
     private WindowId? _sizing;
 
-    // A drag whose window did not say whether it sizes or moves. The window's first change decides it.
     private UndecidedDrag? _undecided;
 
     private void BeginMove(HWND hwnd, WindowId window)
@@ -29,15 +27,12 @@ public sealed partial class WindowAdapter
             return;
         }
 
-        // A window that snaps its size to a grid, as a terminal does, draws its edge out from under the pointer
-        // as the sizing begins, so the hit test misses the border it was grabbed by.
         if (TryOuter(window, out var outer))
             _undecided = new UndecidedDrag(window, outer, pointer);
         else
             _ = StartDrag(window, sizing: false, pointer);
     }
 
-    // The window changed while the system's loop ran. The first change that tells a size from a move settles the drag.
     private bool Decide(HWND hwnd, WindowId window)
     {
         if (_undecided is not { } drag || drag.Window != window)
@@ -60,7 +55,6 @@ public sealed partial class WindowAdapter
 
     private readonly record struct UndecidedDrag(WindowId Window, Rectangle Outer, Point Pointer);
 
-    /// <summary>Latches the one window being moved or sized. False while another drag holds the latch.</summary>
     internal bool StartDrag(WindowId window, bool sizing, Point pointer)
     {
         if (_moving is not null || _sizing is not null)
@@ -80,7 +74,6 @@ public sealed partial class WindowAdapter
         return true;
     }
 
-    // The neighbours of a window the system is resizing follow its border while it is held.
     private void FollowSizing(WindowId window)
     {
         if (PInvoke.GetCursorPos(out var cursor))
@@ -92,7 +85,6 @@ public sealed partial class WindowAdapter
 
     private void EndMove(WindowId window)
     {
-        // A loop that ended with the window as it was: the border was clicked and let go.
         if (_undecided is { } drag && drag.Window == window)
             _undecided = null;
 
@@ -105,7 +97,6 @@ public sealed partial class WindowAdapter
         if (_moving == window)
         {
             _moving = null;
-            // Its limits were not read while it moved, and a Monitor with another scale may have changed them.
             var hwnd = new HWND((nint)window.Value);
             RereadLimits(hwnd, window);
             Apply(_core.Handle(new WindowMoveEnded(window, pointer, dropped)));
@@ -117,7 +108,6 @@ public sealed partial class WindowAdapter
         }
     }
 
-    // A window destroyed mid-drag never reports the end of its drag, so the latch is let go here.
     private void AbandonDrag(WindowId window)
     {
         if (_undecided is { } drag && drag.Window == window)
@@ -130,7 +120,6 @@ public sealed partial class WindowAdapter
         EndDrag(window, pointer, null);
     }
 
-    // A drag that starts on a sizing border is a resize. Anything else, the title above all, is a move.
     private static unsafe DragKind GrabbedKind(HWND hwnd, System.Drawing.Point cursor)
     {
         nuint hit = 0;

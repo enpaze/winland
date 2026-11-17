@@ -1,18 +1,9 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// A Workspace the core owns, with the Layout that places its Clients. <see cref="Workspace"/> is the
-/// snapshot of it that <see cref="State"/> reports.
-/// </summary>
-/// <remarks>
-/// A numbered Workspace is that number on one Monitor. A Guest keeps the identity of its own Monitor
-/// and the number it had there, and shows a different number until that Monitor comes back.
-/// </remarks>
 internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, Layout layout)
 {
     public WorkspaceId Id { get; private set; } = id;
 
-    /// <summary>Gives the Client, shown or waiting in a Group, its window's new title.</summary>
     public void Retitle(WindowId window, string title)
     {
         Layout.Retitle(window, title);
@@ -20,7 +11,6 @@ internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, L
             _waiting[window] = Wait(window, waiting.Taken with { Title = title });
     }
 
-    /// <summary>Gives the Client, shown or waiting in a Group, its window's new class.</summary>
     public void Reclass(WindowId window, string windowClass)
     {
         Layout.Reclass(window, windowClass);
@@ -28,7 +18,6 @@ internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, L
             _waiting[window] = Wait(window, waiting.Taken with { Class = windowClass });
     }
 
-    /// <summary>Takes a new id, with every Client and waiting Group member, as a move to another Monitor does.</summary>
     public void Readdress(WorkspaceId id)
     {
         Id = id;
@@ -43,22 +32,18 @@ internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, L
 
     public void Replace(Layout layout) => Layout = layout;
 
-    /// <summary>The Client this Workspace gives focus back to when it is shown again. Set through FocusState.</summary>
     public WindowId? Focus { get; private set; }
 
     internal void RememberFocus(WindowId? window) => Focus = window;
 
     public bool Persistent { get; set; }
 
-    /// <summary>The identity of the Monitor a Guest belongs to. Null when the Workspace is on its own Monitor.</summary>
     public string? HomeIdentity { get; private set; }
 
-    /// <summary>The number a Guest had on its own Monitor.</summary>
     public long HomeNumber { get; private set; }
 
     public bool IsGuest => HomeIdentity is not null;
 
-    // A Workspace becomes a Guest, and stops being one, only through WorkspaceSet.
     internal void MarkGuest(string homeIdentity, long homeNumber)
     {
         HomeIdentity = homeIdentity;
@@ -84,14 +69,9 @@ internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, L
         return WaitingOf(window);
     }
 
-    /// <summary>
-    /// Whether a Client's fullscreen or maximized mode covers this Workspace. One its Layout holds fullscreen
-    /// covers only while it fills the view, as Winland's scrolling Layout reports it.
-    /// </summary>
     public bool IsCovering(Client client) =>
         client.Fullscreen != FullscreenMode.None && (!client.LayoutFullscreen || Layout.FullscreenCovers(client.Window));
 
-    // A Layout may omit tiled Clients from Visible when it is only showing one of them.
     public HashSet<WindowId> Showing()
     {
         var ids = new Dictionary<ClientId, WindowId>(Layout.Clients.Count);
@@ -139,7 +119,6 @@ internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, L
         return covered;
     }
 
-    /// <summary>Adds the windows that <see cref="Covered"/> uncovered or covered since <paramref name="covered"/>.</summary>
     public void Collect(HashSet<WindowId> covered, List<WindowId> show, List<WindowId> hide)
     {
         var after = Covered();
@@ -175,10 +154,6 @@ internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, L
         return LastVisible();
     }
 
-    /// <summary>
-    /// Takes a Client out of the Layout to move it to another Workspace, with its fullscreen mode,
-    /// which <see cref="Receive"/> puts back.
-    /// </summary>
     public bool Take(WindowId window, out Taken taken)
     {
         var client = ClientOf(window);
@@ -191,8 +166,6 @@ internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, L
         return true;
     }
 
-    /// <summary>Adds a window another Layout gave up, keeping what it knew about the window.</summary>
-    /// <remarks><paramref name="pointer"/> is where the window goes in, as a Layout places a window opening at the pointer.</remarks>
     public void Receive(WindowId window, Taken taken, Rectangle area, Rectangle monitor = default, Point? pointer = null)
     {
         if (taken.ScrollingWidth is double width)

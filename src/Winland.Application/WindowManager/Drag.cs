@@ -3,11 +3,6 @@ using static Winland.Domain.OrdinalText;
 
 namespace Winland.Application;
 
-/// <summary>
-/// Mouse binds that move or resize a Client: <c>movewindow</c> and <c>resizewindow</c> bound with <c>bindm</c>.
-/// The drag takes the Client under the pointer and focuses it. With <c>binds:drag_threshold</c> above 0
-/// the Client is not picked up until the pointer has moved farther than that many pixels.
-/// </summary>
 public sealed partial class WindowManager
 {
     private Outcome ApplyGesture(PointerGesture gesture)
@@ -15,7 +10,6 @@ public sealed partial class WindowManager
         switch (gesture.Phase)
         {
             case PointerDragPhase.Begin:
-                // A drag already running keeps the pointer. A second drag button does not start another one.
                 var dispatch = new BindDispatch(gesture.Dispatcher, gesture.Arguments);
                 if (_interaction is not null || (TabUnder(dispatch, gesture.Position) ?? DragTarget(gesture.Position)) is not WindowId target)
                     return View([], consumed: true);
@@ -51,9 +45,6 @@ public sealed partial class WindowManager
         return PickUp(window, gesture, pointer);
     }
 
-    // A Client picked up while fullscreen or maximized leaves that mode first. A floating one
-    // is then put under the pointer by its middle. The drag starts from there, and a resize's cursor shows the corner
-    // the Layout grabs from there.
     private IReadOnlyList<Placement> PickUp(WindowId window, Gesture gesture, Point pointer)
     {
         var desk = LayoutWorkspace(window);
@@ -85,16 +76,12 @@ public sealed partial class WindowManager
     private Outcome EndGesture(Gesture gesture, Point pointer)
     {
         _interaction = null;
-        // The drag's cursor gives way to whatever the pointer is over once it drops.
         NoteDragCursor();
-        // The Group under the pointer is found while the dragged window is still lifted.
         var drop = !gesture.Resize ? GroupDrop(gesture.Window, gesture.WasTiled, pointer) : null;
         if (drop is null && !gesture.Resize && DropOnMonitor(gesture, pointer) is { } carried)
             return carried;
 
         var ended = LayoutWorkspace(gesture.Window).Layout.Drag(gesture.Window, gesture.Step(PointerDragPhase.End, pointer));
-        // A window that already joined another Workspace during the drag is focused there when it is dropped, as a drop
-        // onto that Monitor did. A resize leaves the focused Monitor where it was.
         var followed = gesture.MovedWorkspace && !gesture.Resize && FocusDragged(gesture.Window);
         if (drop is { } into)
             return JoinDragged(gesture.Window, into, consumed: true);
@@ -104,9 +91,6 @@ public sealed partial class WindowManager
 
     private readonly record struct DropTarget(LiveWorkspace Desk, WindowGroup Group, int? Index);
 
-    // A move that starts on a tab of a Group's bar takes that member out of the Group and drags it alone, as the pinned
-    // release begins a window drag on its group bar. A Group of one, a press between tabs and a resize drag the window
-    // under the pointer as before. Returns how the member left the Group, or null.
     private Outcome? TakeTabOut(BindDispatch drag, Point pointer, out WindowId? member)
     {
         member = TabUnder(drag, pointer);
@@ -119,7 +103,6 @@ public sealed partial class WindowManager
         return OutOfGroup(desk, group, window);
     }
 
-    // The member whose tab a move drag starts on, in a Group of more than one, or null.
     private WindowId? TabUnder(BindDispatch drag, Point pointer)
     {
         if (IsResize(drag.Dispatcher))
@@ -137,13 +120,8 @@ public sealed partial class WindowManager
         return null;
     }
 
-    // While a floating window is dragged, Winland gives it the Workspace the Monitor under its middle shows,
-    // the special one when that is open, on each move. A lifted tile stays floating so the drag can continue, and drops
-    // into that Layout when the button is released. Null when the middle is already on the window's own Workspace.
     private Outcome? FollowDraggedMonitor(Gesture gesture) => MoveWithMonitor(gesture, settle: false, pointer: default);
 
-    // A release whose window was not moved during the drag still joins the Workspace under its middle, and a lifted tile
-    // is dropped there. A move that already crossed does not come through here.
     private Outcome? DropOnMonitor(Gesture gesture, Point pointer) => MoveWithMonitor(gesture, settle: true, pointer);
 
     private Outcome? MoveWithMonitor(Gesture gesture, bool settle, Point pointer)
@@ -170,7 +148,6 @@ public sealed partial class WindowManager
             return null;
         }
 
-        // Take forgets the drag. Hand it to the Workspace the window is joining first, so the grab offset survives.
         if (!settle)
             HandDrag(source.Layout, target.Layout);
 
@@ -199,8 +176,6 @@ public sealed partial class WindowManager
         return View(placements, consumed: true, focus: settle ? window : null);
     }
 
-    // The monitor focus follows at the drop, not while the pointer is still dragging. True when this window is on a
-    // Workspace other than the one the focused Monitor was showing.
     private bool FocusDragged(WindowId window)
     {
         if (WorkspaceContaining(window) is not LiveWorkspace target)
@@ -220,8 +195,6 @@ public sealed partial class WindowManager
             source.Drag.HandTo(target.Drag);
     }
 
-    // The pointer shape while a drag holds a window, as Winland overrides it: grabbing for a move, and for a
-    // resize the corner that is grabbed.
     private static string DragCursor(LiveWorkspace desk, WindowId window, bool resize, Point pointer)
     {
         if (!resize)
@@ -232,10 +205,6 @@ public sealed partial class WindowManager
         return BorderPointer.Cursor(BorderPointer.GrabbedSide(left, top))!;
     }
 
-    // group:drag_into_group, as Winland ends a window drag. A window dropped on a Group's tab bar joins that
-    // Group at the tab under the pointer, and one dropped on a member joins after the current member. A dragged Group
-    // brings every member. A floating window does not join a tiled Group, except on its tab bar with
-    // group:merge_floated_into_tiled_on_groupbar.
     private DropTarget? GroupDrop(WindowId dragged, bool wasTiled, Point pointer)
     {
         if (BarDrop(dragged, wasTiled, pointer, GroupBars(Snapshot())) is { } onBar)
@@ -252,8 +221,6 @@ public sealed partial class WindowManager
         return new DropTarget(home, group, null);
     }
 
-    // The Group whose tab bar is under the pointer, when the dragged window may join it there, and the place it joins.
-    // The drop and the mark a bar shows while a drag holds the window both come from here, so they agree.
     private DropTarget? BarDrop(WindowId dragged, bool wasTiled, Point pointer, IReadOnlyList<GroupBar> bars)
     {
         if (WorkspaceContaining(dragged) is not LiveWorkspace from)
@@ -277,8 +244,6 @@ public sealed partial class WindowManager
         return null;
     }
 
-    // The window a move drag holds now, whether it was tiled when picked up, and where the pointer is. Null with no such
-    // drag, so a mark goes as soon as the drag ends or loses its window.
     private (WindowId Window, bool WasTiled, Point Pointer)? HeldForDrop() =>
         _interaction switch
         {
@@ -287,8 +252,6 @@ public sealed partial class WindowManager
             _ => null,
         };
 
-    // A dragged window, or the whole Group it is in, joins any other Group. The callers hold back a floating window
-    // over a tiled Group.
     private static bool CanDragInto(LiveWorkspace from, WindowId dragged, WindowGroup target) =>
         from.GroupOf(dragged) != target;
 
@@ -325,7 +288,6 @@ public sealed partial class WindowManager
             : outcome;
     }
 
-    // The Client under the pointer, leaving out the one being dragged, which the pointer holds.
     private WindowId? WindowUnderExcept(Point point, WindowId except)
     {
         foreach (var special in new[] { true, false })
@@ -339,11 +301,6 @@ public sealed partial class WindowManager
         return null;
     }
 
-    /// <summary>
-    /// Whether a mouse bind's drag pressed at <paramref name="pointer"/> would take a window. The mouse hook asks before
-    /// it keeps the press, since Winland lets the press through when no window is there. It never waits:
-    /// with the core busy it answers true, and the press is kept.
-    /// </summary>
     public bool HasDragTarget(Point pointer)
     {
         if (!_gate.TryEnter())
@@ -359,10 +316,8 @@ public sealed partial class WindowManager
         }
     }
 
-    // A press whose only action is a drag, which with no window under the pointer Winland lets through.
     private static bool OnlyDrag(BindDecision match) => DispatchesOf(match).All(dispatch => dispatch.Dispatcher.Length == 0 || IsDragDispatcher(dispatch));
 
-    // A window that closes ends any drag that holds it, as Winland ends its drag target on unmap.
     private void ForgetDrag(WindowId window)
     {
         if (_interaction?.Window == window)
@@ -374,12 +329,9 @@ public sealed partial class WindowManager
             _released = null;
     }
 
-    // resizewindow 1 keeps the aspect ratio.
     private static bool KeepsRatio(string arguments) =>
         int.TryParse(arguments.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var mode) && mode == 1;
 
-    // The Client a mouse bind takes: the one under the pointer, or else one whose border is under it, as the pinned
-    // release finds the window with its reserved extents.
     private WindowId? DragTarget(Point? point)
     {
         if (point is not Point at)
@@ -439,13 +391,10 @@ public sealed partial class WindowManager
 
         public bool WasTiled { get; init; }
 
-        /// <summary>Where the pointer holds the window now.</summary>
         public Point Pointer { get; set; }
 
-        /// <summary>The window joined another Workspace while this drag held it.</summary>
         public bool MovedWorkspace { get; set; }
 
-        /// <summary>The pointer shape while the drag holds the window.</summary>
         public string Cursor { get; set; } = "grabbing";
 
         public PointerDrag Step(PointerDragPhase phase, Point pointer) => new(Resize, phase, pointer, KeepRatio);

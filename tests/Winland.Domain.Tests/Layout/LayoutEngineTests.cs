@@ -1,6 +1,5 @@
 namespace Winland.Domain.Tests;
 
-/// <summary>Drives each Layout directly, without WindowManager, for the paths WindowManager cannot easily reach.</summary>
 public class LayoutEngineTests
 {
     private static readonly Rectangle Area = new(0, 0, 1000, 800);
@@ -106,7 +105,6 @@ public class LayoutEngineTests
         Assert.True(layout.Substitute(Window(2), Window(9), new Taken(false, false, default, "nine", "nine"), out _));
         layout.Remove(Window(1));
 
-        // A lone column narrower than the work area is centered, which a frozen camera would not do.
         var lone = Bounds(layout.Placed(), 9);
         Assert.Equal((Area.Width - lone.Width) / 2, lone.X);
     }
@@ -386,8 +384,6 @@ public class LayoutEngineTests
             .ToList();
     }
 
-    // A restart adds the tiles back one by one, which splits them its own way. The rectangles they had make the tree
-    // again, splits and ratios.
     [Fact]
     public void DwindleArrangesItsTilesOnTheRectanglesTheyHad()
     {

@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>The config file is the only way to configure Winland: nothing sent to the Daemon changes a setting.</summary>
 public class ConfigFileOnlyTests
 {
     [Theory]
@@ -25,7 +24,6 @@ public class ConfigFileOnlyTests
 
         Assert.StartsWith("error:", desk.Send(line), StringComparison.Ordinal);
 
-        // A window that opens next still gets the rules and gaps of the file.
         desk.Spawn("b");
         Assert.False(TestDesktop.Floating(desk.Client("b")));
         desk.Close("b");

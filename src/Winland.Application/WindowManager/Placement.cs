@@ -1,25 +1,19 @@
 namespace Winland.Application;
 
-/// <summary>Where a Client goes when it opens, and the timers of the rules that place it.</summary>
 public sealed partial class WindowManager
 {
-    // A window that resizes itself this soon after it opens is put back where it was placed, once.
-    // Electron windows restore their saved bounds just after they are shown.
     internal const long ReapplyMilliseconds = 2000;
 
     private const int DefaultFloatWidth = 640;
     private const int DefaultFloatHeight = 400;
 
     private readonly Dictionary<WindowId, MapPlaced> _mapPlaced = [];
-    /// <summary>True while a Client's first resize of itself would be undone. Lets the adapter skip other moves.</summary>
     public bool AwaitsFirstResize(WindowId window)
     {
         lock (_gate)
             return _mapPlaced.TryGetValue(window, out var placed) && placed.Until >= Clock();
     }
 
-    // The monitor rule picks the Monitor before the workspace rule picks the Workspace.
-    // "unset" keeps the Monitor the window opened on. Without "silent" the chosen Monitor is focused.
     private LiveMonitor? RuleMonitor(string? text, LiveMonitor? opened)
     {
         if (text is null || _monitors.Count == 0)
@@ -43,11 +37,6 @@ public sealed partial class WindowManager
         return chosen;
     }
 
-    /// <summary>
-    /// The rectangle a new Client opens at. A floating Client is centered in the floating work area
-    /// unless a <c>move</c> rule places it. <c>size</c> sets its size.
-    /// A bare number is pixels, monitor-local for a position. A percentage is that share of the work area.
-    /// </summary>
     private Rectangle PlaceOnMap(WindowAppeared appeared, WindowDecision decision, LiveWorkspace desk, Rectangle area)
     {
         var placement = decision.Placement;
@@ -81,7 +70,6 @@ public sealed partial class WindowManager
         }
         else if (decision.Floating && OwnerBounds(appeared) is Rectangle owner)
         {
-            // A window with an owner opens over the middle of its owner, as Winland opens one with a parent.
             placed = new Rectangle(
                 owner.X + ((owner.Width - width) / 2),
                 owner.Y + ((owner.Height - height) / 2),
@@ -98,11 +86,9 @@ public sealed partial class WindowManager
                 height);
         }
 
-        // A Client that opens floating is kept on screen, a moved one too.
         return decision.Floating ? LayoutOptions.NewFloatingOnScreen(area).Keep(placed) : placed;
     }
 
-    // Where the Client that owns a new window is now, or null when it has no owner that is a Client.
     private Rectangle? OwnerBounds(WindowAppeared appeared) =>
         appeared.Owner is WindowId owner && owner != appeared.Window && WorkspaceContaining(owner) is LiveWorkspace home
             && home.Layout.TryBounds(owner, out var bounds)
@@ -116,7 +102,6 @@ public sealed partial class WindowManager
             _mapPlaced[window] = new MapPlaced(bounds, now + ReapplyMilliseconds);
     }
 
-    // Puts a floating Client back at its rule placement the first time it changes its own size.
     private Outcome Reapply(WindowResized resized)
     {
         if (!_mapPlaced.TryGetValue(resized.Window, out var placed))

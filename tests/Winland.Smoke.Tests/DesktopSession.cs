@@ -6,9 +6,6 @@ namespace Winland.Smoke.Tests;
 
 internal static partial class DesktopSession
 {
-    // A service or CI host has no desktop: session 0, a window station that is not
-    // visible, or a missing session name with nothing in the foreground. A desktop
-    // session can leave the session name unset while its window station is visible.
     public static string? SkipReason()
     {
         if (Process.GetCurrentProcess().SessionId == 0)

@@ -3,7 +3,6 @@ using Winland.Install;
 
 namespace Winland.Daemon;
 
-/// <summary>Asks the running Daemon to exit, then starts the installed one.</summary>
 sealed class DaemonSession : IDaemonSession
 {
     public bool Stop()
@@ -62,10 +61,6 @@ sealed class DaemonSession : IDaemonSession
             }
         }
 
-        // The shell starts the Daemon in a console of its own, hidden, so it shows no window and keeps running
-        // after install exits. It inherits no handle, so a caller that reads install's output is not held open.
-        // The parent is already elevated for a machine install, and the Daemon inherits that token,
-        // so this does not ask for a second approval. A per-user install passes --no-elevate.
         var start = new ProcessStartInfo
         {
             FileName = Elevation.IsElevated()

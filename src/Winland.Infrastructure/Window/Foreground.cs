@@ -6,10 +6,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Tells a focus change that followed our own request apart from a click or key and from an application taking the foreground.
-/// Putting the foreground back can fail while another process holds it; the failure is reported and the window is flashed.
-/// </summary>
 internal static class Foreground
 {
     private const byte MenuKey = 0x12;
@@ -41,9 +37,6 @@ internal static class Foreground
         if (PInvoke.GetForegroundWindow() == hwnd)
             return true;
 
-        // Giving the foreground waits on the window's thread, and on the old foreground window's, so a program that
-        // stopped answering would hold every bind behind it. A window another virtual desktop cloaks would take the
-        // user to that desktop.
         if (PInvoke.IsHungAppWindow(hwnd) || WindowAdapter.IsCloaked(hwnd))
             return false;
 
@@ -66,10 +59,6 @@ internal static class Foreground
         return false;
     }
 
-    /// <summary>
-    /// Gives the foreground to the desktop, when Winland hid the window that had it and focuses none, so Windows
-    /// does not pick a window of its own to activate.
-    /// </summary>
     internal static void ToDesktop()
     {
         var shell = PInvoke.GetShellWindow();
@@ -86,7 +75,6 @@ internal static class Foreground
         }
     }
 
-    // SetForegroundWindow brings the window to the top when it succeeds.
     private static bool TrySet(HWND hwnd)
     {
         _ = PInvoke.SetForegroundWindow(hwnd);
@@ -101,7 +89,6 @@ internal static class Foreground
         if (foregroundThread == 0 || foregroundThread == currentThread)
             return TrySet(hwnd);
 
-        // Deactivating a hung foreground window would wait on it.
         if (PInvoke.IsHungAppWindow(foreground))
             return false;
 
@@ -120,10 +107,6 @@ internal static class Foreground
 
     private static void TapMenuKey() => KeyboardHook.Send(MenuTap(altHeld: PInvoke.GetAsyncKeyState(MenuKey) < 0));
 
-    // Tagged, so Winland's own hook does not take it for the user's Alt. Not extended: an extended
-    // Alt is Right Alt, which is AltGr, with a fake Left Ctrl, on many layouts. The mask key between its edges
-    // keeps the Alt from opening the focused window's menu bar or Office's key tips. An Alt the user already
-    // holds unlocks the foreground itself, and is left down.
     internal static INPUT[] MenuTap(bool altHeld) =>
         altHeld
             ? [KeyboardHook.Key(KeyboardHook.MaskKey, up: false), KeyboardHook.Key(KeyboardHook.MaskKey, up: true)]

@@ -12,14 +12,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
-      actions: write # saves the run state between runs
-      issues: write # comments on and closes issues
+      actions: write
+      issues: write
     steps:
-      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
+      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93
         with:
           only-issue-labels: "needs-info"
-          # A maintainer applies the label, so never auto-mark; close 7 days after it was added.
-          # Any comment after the label removes it, so ask the question first, then add the label.
           days-before-issue-stale: -1
           days-before-issue-close: 7
           days-before-pr-stale: -1

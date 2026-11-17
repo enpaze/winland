@@ -4,7 +4,6 @@ namespace Winland.Domain;
 
 public static class SourcePath
 {
-    /// <summary>Expands <c>$NAME</c>, <c>${NAME}</c> and a leading <c>~</c>, reading variables through <paramref name="variable"/>.</summary>
     public static string Expand(string path, Func<string, string?> variable)
     {
         ArgumentNullException.ThrowIfNull(variable);

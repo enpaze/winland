@@ -144,7 +144,6 @@ public class RollingLogWriterTests
             using var writer = new RollingLogWriter(TextWriter.Null);
             Assert.Null(writer.FilePath);
 
-            // An elevated Winland opens no file, so it reports none.
             writer.Copy(new DebugOptions { DisableLogs = false }, () => null);
             Assert.Null(writer.FilePath);
 

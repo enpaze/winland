@@ -2,17 +2,11 @@ using System.Text.Json;
 
 namespace Winland.Application;
 
-/// <summary>Turns <c>winland</c>'s arguments into the line it sends down the pipe.</summary>
 public static class ControlInvocation
 {
-    // The verbs come from CommandProtocol, so a verb the pipe answers is one winland takes.
     public static string Usage { get; } =
         string.Concat(CommandProtocol.VerbForms.Select(form => "       winland " + (form == "events" ? "" : "[-j] ") + form + "\n"));
 
-    /// <summary>
-    /// True for a bare <c>dispatch</c>, with or without <c>-j</c>. <paramref name="list"/> is then every Dispatcher
-    /// name this binary knows, in order: one a line, or a JSON array with <c>-j</c>.
-    /// </summary>
     public static bool TryListNames(string[] args, out string list)
     {
         ArgumentNullException.ThrowIfNull(args);
@@ -26,11 +20,6 @@ public static class ControlInvocation
         return true;
     }
 
-    /// <summary>
-    /// The line for <paramref name="args"/>: flags such as <c>-j</c> become <c>j/</c>, and the rest is joined with
-    /// spaces. False when the line is not a request the pipe answers. <paramref name="events"/> is true for
-    /// <c>events</c>, which follows the Event stream.
-    /// </summary>
     public static bool TryCreate(string[] args, out string line, out bool events)
     {
         ArgumentNullException.ThrowIfNull(args);
@@ -39,7 +28,6 @@ public static class ControlInvocation
         var flags = "";
         var rest = new List<string>();
 
-        // The request is one line, so an argument with a line break in it would be cut there.
         if (args.Any(arg => arg.Contains('\n', StringComparison.Ordinal) || arg.Contains('\r', StringComparison.Ordinal)))
             return false;
 
@@ -47,9 +35,6 @@ public static class ControlInvocation
         {
             var arg = args[i];
 
-            // The words after "dispatch exec" are a command line, so "dispatch exec wt -p pwsh" keeps "-p" and
-            // "dispatch exec wsl -- ls" keeps "--". Elsewhere a dash that is not a number is a flag, as the reference
-            // control tool reads it.
             if (IsCommandLine(rest) || !arg.StartsWith('-') || IsNumber(arg))
             {
                 rest.Add(arg);
@@ -77,7 +62,6 @@ public static class ControlInvocation
         if (CommandProtocol.Parse(prefix + request) is not CommandParsed parsed)
             return false;
 
-        // The Event stream is plain text, so events takes no flag.
         events = parsed.Request is EventsRequest;
         if (events && prefix.Length > 0)
             return false;
@@ -91,9 +75,6 @@ public static class ControlInvocation
         && words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase)
         && words[1].Equals("exec", StringComparison.OrdinalIgnoreCase);
 
-    // The shell took the quotes off an argument with a space, such as a program under C:\Program Files. When the
-    // command line exec runs is several words, such a word gets them back, so the program's path stays one argument.
-    // A command line given as one word, such as "notepad C:\a b.txt" or "[float] notepad", is already whole.
     private static IEnumerable<string> Quoted(List<string> words)
     {
         var command = IsCommandLine(words) && words.Count > 3;
@@ -107,7 +88,6 @@ public static class ControlInvocation
         }
     }
 
-    // A negative number is an argument, not a flag: "-20" and "-0.1".
     private static bool IsNumber(string text)
     {
         var i = 0;

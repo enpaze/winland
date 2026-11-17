@@ -7,7 +7,6 @@ public enum InstallKind
     User,
 }
 
-/// <summary>Which install folder the running executable is in, if either.</summary>
 public static class InstalledCopy
 {
     public static InstallKind Of(string executable, string machineDirectory, string userDirectory)

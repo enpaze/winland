@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>Input options Winland reads for focus.</summary>
 public sealed record InputOptions
 {
     public bool FollowMouse { get; init; } = true;

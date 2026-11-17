@@ -10,8 +10,6 @@ public static class MonitorAdapter
 {
     public static IReadOnlyList<Winland.Domain.Monitor> Read()
     {
-        // -4 is per-monitor v2 awareness. The manifest asks for the same thing, and this call
-        // covers a host that has not declared it yet. A second call fails, which is fine.
         _ = PInvoke.SetProcessDpiAwarenessContext((DPI_AWARENESS_CONTEXT)(nint)(-4));
         return Enumerate(Panels(), Win32DisplayColorControl.Panels());
     }
@@ -85,7 +83,6 @@ public static class MonitorAdapter
         return true;
     }
 
-    // Adapter and Target name the panel to display config, which reads its color switches.
     private readonly record struct Panel(string Description, string Make, string Model, string Serial, double RefreshRate, LUID Adapter, uint Target);
 
     private static Dictionary<string, Panel> Panels()
@@ -118,7 +115,6 @@ public static class MonitorAdapter
 
     private static bool TryPaths(out DISPLAYCONFIG_PATH_INFO[] paths) => TryConfig(out paths, out _);
 
-    /// <summary>The active display-config paths and the modes they name.</summary>
     internal static bool TryConfig(out DISPLAYCONFIG_PATH_INFO[] paths, out DISPLAYCONFIG_MODE_INFO[] modes)
     {
         paths = [];

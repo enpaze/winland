@@ -4,7 +4,6 @@ using Windows.Win32.UI.Input.KeyboardAndMouse;
 
 namespace Winland.Infrastructure;
 
-/// <summary>The worker that runs dispatchers off the hook thread.</summary>
 public sealed partial class KeyboardHook : IDisposable
 {
     private void Post(uint message)
@@ -24,7 +23,6 @@ public sealed partial class KeyboardHook : IDisposable
         }
     }
 
-    // A pointer move, or a move of the same drag, makes the one still waiting pointless.
     private static bool Replaces(Queued waiting, Queued next) => (waiting.Kind, next.Kind) switch
     {
         (QueuedKind.Move, QueuedKind.Move) => true,
@@ -37,8 +35,6 @@ public sealed partial class KeyboardHook : IDisposable
         _ => false,
     };
 
-    // Steps of one touchpad swipe add up, so a burst of them while the worker is busy is one step and not a backlog
-    // that leaves the slide behind the fingers.
     private static (bool, Queued) Join(Queued waiting, Queued next)
     {
         if (waiting.Kind != QueuedKind.Input || next.Kind != QueuedKind.Input
@@ -89,8 +85,6 @@ public sealed partial class KeyboardHook : IDisposable
         }
     }
 
-    // Read here, off the hook thread, and for inspect. Winland's own windows, such as a Group's tab bar, are not another
-    // program's, and the desktop shows through a tile's cut corners.
     internal static WindowId? TopLevelUnder(Point position)
     {
         var under = PInvoke.WindowFromPoint(new System.Drawing.Point(position.X, position.Y));
@@ -129,7 +123,6 @@ public sealed partial class KeyboardHook : IDisposable
             PostDispatch(decision.Dispatcher, decision.Arguments);
     }
 
-    /// <summary>The drag a mouse bind started, from a mouse button or a key, which pointer moves carry on.</summary>
     internal BindDrag Drag { get; } = new();
 
     internal void PostDispatch(string dispatcher, string arguments)

@@ -30,7 +30,6 @@ internal static class WorkspaceAddress
         return TryResolve(text, context, out var id) ? new(id, silent) : new(null, false);
     }
 
-    /// <summary>True when <paramref name="text"/> addresses a Workspace by a name instead of a number or a special workspace.</summary>
     public static bool IsNamed(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -50,7 +49,6 @@ internal static class WorkspaceAddress
         if (text is "special" or "prev" or "previous" or "previous_per_monitor" or "next" || text.StartsWith("special:", StringComparison.Ordinal) || text.StartsWith("empty", StringComparison.Ordinal))
             return false;
 
-        // A relative selector is one only when the offset is a number. r+notes is a name.
         if (text.Length > 2 && text[0] is 'r' or 'm' && text[1] is '+' or '-' or '~' && IsSignedNumber(text[2..]))
             return false;
 
@@ -79,7 +77,6 @@ internal static class WorkspaceAddress
         if (text is "prev" or "previous" or "previous_per_monitor")
         {
             var perMonitor = text == "previous_per_monitor";
-            // The history is read only for these words, so it is collected only when one is asked for.
             if ((perMonitor ? context.PreviousOnMonitor() : context.Previous()) is not WorkspaceId previous)
                 return false;
 
@@ -169,7 +166,6 @@ internal static class WorkspaceAddress
         return TryCycle(context, absolute, offset, out id);
     }
 
-    // r walks the focused Monitor's numbers. r~N is that number, and r-1 on Workspace 1 stays there.
     private static bool TryRelative(Context context, bool absolute, int offset, out WorkspaceId id)
     {
         if (absolute)
@@ -188,7 +184,6 @@ internal static class WorkspaceAddress
         return TryNumber(next, context, out id);
     }
 
-    // m walks the Workspaces the focused Monitor lists. m~N is the Nth of them.
     private static bool TryCycle(Context context, bool absolute, int offset, out WorkspaceId id)
     {
         id = default;
@@ -215,7 +210,6 @@ internal static class WorkspaceAddress
                 break;
             }
 
-            // With the active Workspace outside the cycle, +1 lands on the first and -1 on the last.
             if (current < 0 && remains < 0)
                 current = 0;
 

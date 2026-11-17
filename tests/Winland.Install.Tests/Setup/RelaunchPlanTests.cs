@@ -56,8 +56,6 @@ public class RelaunchPlanTests
             spec.Arguments);
     }
 
-    // A self-contained build carries its runtime. DOTNET_ROOT would only name a runtime from the
-    // user's environment, which any program the user runs can set, for an elevated process.
     [Theory]
     [InlineData(@"C:\Program Files\Winland\winland\")]
     [InlineData(null)]
@@ -86,8 +84,6 @@ public class RelaunchPlanTests
         Assert.Equal(frameworkDependent, RelaunchPlan.IsFrameworkDependent(runtimeDirectory));
     }
 
-    // A backslash before a closing quote escapes the quote, so the argument would swallow
-    // everything after it. Doubling the trailing backslashes keeps the argument whole.
     [Fact]
     public void TrailingBackslashesAreDoubledBeforeTheClosingQuote()
     {
@@ -103,8 +99,6 @@ public class RelaunchPlanTests
         Assert.EndsWith(" --config \"C:\\My Config\\\\\" next\"", spec.Arguments, StringComparison.Ordinal);
     }
 
-    // cmd expands %NAME% even inside quotes, and a quote ends cmd's quoting, which lets the
-    // rest of an argument run as another command in the elevated cmd.
     [Theory]
     [InlineData("a\"b")]
     [InlineData("%PATH%")]

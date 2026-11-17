@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>Unshifted characters a keyboard layout produces, keyed by virtual key.</summary>
 public sealed class KeyLayout
 {
     public static KeyLayout UnitedStates { get; } = CreateUnitedStates();

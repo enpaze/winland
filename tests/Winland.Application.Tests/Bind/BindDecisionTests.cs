@@ -118,7 +118,6 @@ public class BindDecisionTests
             }
         });
         reader.Start();
-        // The reader may start late on a busy machine. Do not stop it before it has sampled.
         SpinWait.SpinUntil(() => Volatile.Read(ref samples) > 0, TimeSpan.FromSeconds(10));
         for (var i = 0; i < 200; i++)
             core.Handle(new Configure(i % 2 == 0 ? killW : killQ));

@@ -9,7 +9,6 @@ public class GroupTests
     private static readonly WindowId Second = new(2);
     private static readonly WindowId Third = new(3);
 
-    // gaps_out 2 above and below, indicator 3, title row 14.
     private const int BarHeight = 21;
 
     [Fact]
@@ -80,7 +79,6 @@ public class GroupTests
         Assert.Contains(First, joined.Hide);
         Assert.Contains(joined.State.Hidden, client => client.Window == First);
         Assert.DoesNotContain(joined.State.Hidden, client => client.Window == Second);
-        // The hidden member takes the shown member's frame.
         var placement = Assert.Single(joined.Placements, candidate => candidate.Client == new ClientId(Second.Value));
         Assert.Equal(placement.Bounds, Assert.Single(joined.Placements, candidate => candidate.Client == new ClientId(First.Value)).Bounds);
         Assert.Equal(alone, ClientOf(joined, Second).Bounds);
@@ -132,7 +130,6 @@ public class GroupTests
         core.Execute("dispatch togglegroup");
         core.Execute("dispatch focuswindow address:0x2");
 
-        // A word that is not a direction is refused, and so is its first letter.
         Assert.Equal("error: unsupported direction: leftover", core.Execute("dispatch moveintogroup leftover").Text);
         Assert.Equal("error: unsupported direction: ", core.Execute("dispatch moveintogroup").Text);
         Assert.Equal([First], Assert.Single(core.Execute("dispatch moveintogroup x").Effect.State.Groups));
@@ -341,7 +338,6 @@ public class GroupTests
 
         var bar = Assert.Single(core.Execute("dispatch togglegroup").Effect.GroupBars);
 
-        // The gap above, the title row, the indicator and the gap below.
         Assert.Equal(2 + 20 + 3 + 2, bar.Bounds.Height);
     }
 

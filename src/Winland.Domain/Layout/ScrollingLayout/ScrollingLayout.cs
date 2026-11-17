@@ -2,11 +2,6 @@ using System.Globalization;
 
 namespace Winland.Domain;
 
-/// <summary>
-/// Columns on a tape. The viewport shows a slice of the tape.
-/// A column whose box misses the viewport is left out of the placements, so the caller conceals it.
-/// A partly visible column keeps its tape rectangle unless that would cover another Monitor.
-/// </summary>
 internal sealed partial class ScrollingLayout : TiledLayout, Layout
 {
     private const double MinRow = 0.1;
@@ -190,8 +185,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
         return Placements();
     }
 
-    // Column widths come from the tape, so a window's size limits do not change a tiled placement here.
-    // They are kept so a later layout can still honor them. A floating Client is clamped to them.
     public IReadOnlyList<Placement> UpdateLimits(WindowId window, Size? minSize, Size? maxSize, TiledLimits? tiledLimits = null)
     {
         var id = new ClientId(window.Value);
@@ -202,7 +195,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
         return _floating.Clamp(id, new SizeLimits(minSize, maxSize));
     }
 
-    // A tile takes its column's width to the Workspace that adopts it.
     private protected override double? TakenWidth(ClientId id) =>
         _cells.TryGetValue(id, out var cell) && cell.Column is Column column
             ? column.Width
@@ -230,8 +222,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
 
     public void NotePointerFocus(WindowId window) => Follow(window, pointer: true);
 
-    // The strip follows the focus. A column with under 0.4 of its width in view holds it back
-    // only for focus the pointer gives, so a dispatcher, a click or a Group change always follows.
     private void Follow(WindowId window, bool pointer)
     {
         if (CellFor(window) is not Cell cell || cell.Column is not Column column)
@@ -250,7 +240,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
         _moved = true;
     }
 
-    // The strip scrolled because focus moved, and its placements have not been sent yet.
     private bool _moved;
 
     public bool TakeMoved()
@@ -309,7 +298,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
         return new Rectangle(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
     }
 
-    // Half a pixel rounds up on both sides of zero, so an edge keeps its rounding as it scrolls past the screen's edge.
     private static int Round(double value) =>
         (int)Math.Floor(value + 0.5);
 

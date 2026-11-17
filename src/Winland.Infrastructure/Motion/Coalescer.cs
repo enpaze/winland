@@ -1,9 +1,5 @@
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Hands the newest posted value to an action on a thread of its own, so the poster does not wait for it.
-/// After each run it rests for a gap, and every value posted meanwhile folds into the newest one.
-/// </summary>
 internal sealed class Coalescer<T> : IDisposable
     where T : class
 {
@@ -38,7 +34,6 @@ internal sealed class Coalescer<T> : IDisposable
         _posted.Set();
     }
 
-    /// <summary>Stops the thread. A value still waiting is dropped.</summary>
     public void Dispose()
     {
         lock (_gate)

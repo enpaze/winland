@@ -2,7 +2,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>The control requests: the Dispatcher name list, JSON errors and the binds reply.</summary>
 public class ControlRequestTests
 {
     [Fact]

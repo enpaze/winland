@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>Special Workspaces: <c>togglespecialworkspace</c> and how they show over a Monitor.</summary>
 public sealed partial class WindowManager
 {
     private LiveWorkspace CurrentWorkspace()
@@ -33,8 +32,6 @@ public sealed partial class WindowManager
         return new WorkspaceId("special:" + suffix);
     }
 
-    // A floating Client whose middle is off the Monitor a special workspace opens on is brought onto it, as in the
-    // Winland: by the offset between the Monitors when its middle is on another one, else to the middle.
     private void BringFloatingOnto(LiveWorkspace desk, MonitorId monitor)
     {
         if (MonitorById(monitor) is not { Arranged.Enabled: true } screen)
@@ -64,7 +61,6 @@ public sealed partial class WindowManager
         }
     }
 
-    // Edges count as inside, as Winland tests a point against a Monitor.
     private static bool Holds(Rectangle bounds, Point point) =>
         point.X >= bounds.X && point.X <= bounds.X + bounds.Width && point.Y >= bounds.Y && point.Y <= bounds.Y + bounds.Height;
 
@@ -116,8 +112,6 @@ public sealed partial class WindowManager
         return View(desk.Layout.Visible(), show, hide, focus: next) with { ZOrder = RaiseSpecial(desk) };
     }
 
-    // Windows leaves the normal Workspace's windows where they were, over the ones shown again. The special workspace's
-    // Clients are raised above them, its tiles first and its floating Clients after, in their stacking order.
     private List<ZOrderRequest> RaiseSpecial(LiveWorkspace desk)
     {
         var shown = VisibleIds(desk.Id);
@@ -209,7 +203,6 @@ public sealed partial class WindowManager
         else if (source.Layout.Clients.Count == 0)
             DropIfEmpty(source.Id);
 
-        // Windows keeps the keyboard on the window the move hid, so the window left focused is given it.
         var refocus = _focus.Focused == window;
         if (refocus)
             Give(FocusState.AfterLeaving(source, revealed), source);
@@ -238,8 +231,6 @@ public sealed partial class WindowManager
             desk.Monitor = home.Id;
             Refit(desk);
 
-            // A special workspace that was shown is shown on the Monitor that takes it, in place of the one
-            // shown there.
             if (shown)
                 _workspaces.Shown.ShowSpecial(home.Id, desk.Id);
         }

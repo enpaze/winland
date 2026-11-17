@@ -1,9 +1,7 @@
 namespace Winland.Application;
 
-/// <summary>Directional focus and moves, <c>movefocus</c> and <c>movewindow</c>, and the dispatchers that focus and move Monitors and their Workspaces.</summary>
 public sealed partial class WindowManager
 {
-    // Where a switch to a Workspace on another Monitor puts the cursor.
     private WarpTo? _crossMonitorWarp;
 
     private void RankFocus(Layout layout) => layout.RankFocus(_focus.Recency);
@@ -16,8 +14,6 @@ public sealed partial class WindowManager
         if (!Sides.TryParse(FirstToken(arguments), out var direction))
             return View([]);
 
-        // A Workspace with a fullscreen or maximized Client offers no window in a direction, as in the pinned
-        // release, so focus moves on to the next Monitor.
         if (active is WindowId current && !HasFullscreen(desk))
         {
             var focus = desk.Layout.MoveFocus(current, arguments);
@@ -81,9 +77,6 @@ public sealed partial class WindowManager
         if (MonitorHolding(desk) is LiveMonitor origin
             && desk.Layout.TryBounds(window, out var box))
         {
-            // the focal point is taken from the window's ideal box, which reaches the
-            // Monitor's edge when the tile touches the work area's.
-            // The window goes in at that point there, as Winland assigns it to the other Workspace with it.
             var focal = MonitorSelector.Focal(Ideal(desk, window, box), direction);
             var hit = MonitorSelector.At(Targets(), focal);
             if (hit is MonitorTarget other && other.Id != origin.Id && MonitorOf(other) is LiveMonitor across)
@@ -142,7 +135,6 @@ public sealed partial class WindowManager
         WindowId? focus = null;
         if (follow)
         {
-            // The Workspace the destination showed until now goes, when nothing keeps it.
             var displaced = _workspaces.Shown.Shown(destination.Id);
             _workspaces.Shown.Show(destination.Id, desk.Id);
             if (displaced is WorkspaceId gone && gone != desk.Id)
@@ -171,7 +163,6 @@ public sealed partial class WindowManager
         if (screen.Focused && preferred is null)
             return View([]);
 
-        // A monitor with a special workspace open gives the focus to that workspace's window.
         var desk = _workspaces.Shown.SpecialOn(screen.Id) is WorkspaceId special && _workspaces.Find(special) is LiveWorkspace open
             ? open
             : _workspaces.Shown.Shown(screen.Id) is WorkspaceId workspace ? _workspaces.Find(workspace) : null;
@@ -202,14 +193,10 @@ public sealed partial class WindowManager
         replacement ??= WorkspaceFor(_workspaces.NextFree(origin.Id), origin.Id);
         _workspaces.Shown.Show(origin.Id, replacement.Id);
 
-        // Pinned Clients stay on the Monitor, on the Workspace it shows next.
         foreach (var window in PinnedOn(leaving))
             Transfer(leaving, replacement, window);
     }
 
-    // The Client on a Monitor's shown Workspace that a window on another Monitor looks at in a direction. It is
-    // picked the way a Layout picks one, over the Ideal boxes, among the Clients that float as the window does
-    // and then among the others. A fullscreen Client covers its Monitor, so it counts as a tile.
     private WindowId? AdjacentOn(LiveMonitor screen, LiveWorkspace from, WindowId window, Rectangle box, Side direction)
     {
         if (_workspaces.Shown.Shown(screen.Id) is not WorkspaceId workspace || _workspaces.Find(workspace) is not LiveWorkspace desk)
@@ -232,14 +219,10 @@ public sealed partial class WindowManager
             ?? DirectionalNeighbor.Find(clients, origin, direction, window, !floating, BoxOf, _focus.Recency);
     }
 
-    // A tile's box with its border, and with every side that touches the tiling area pushed out to the
-    // Monitor's edge, as Winland compares windows across Monitors. Outer gaps and reserved
-    // space then no longer keep two tiles on neighbouring Monitors apart. A floating box is left as it is.
     private Rectangle Ideal(LiveWorkspace desk, WindowId window, Rectangle box)
     {
         if (desk.ClientOf(window) is not Client client || MonitorById(desk.Monitor) is not { Arranged.Enabled: true } screen)
             return box;
-        // A fullscreen Client covers its Monitor, floating or not.
         if (desk.IsCovering(client))
             return screen.Bounds;
         if (client.Floating)

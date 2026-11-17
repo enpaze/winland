@@ -1,30 +1,20 @@
 namespace Winland.Application;
 
-/// <summary>Loading and reloading the config, and the options the input hooks read without the lock.</summary>
 public sealed partial class WindowManager
 {
-    /// <summary>The <c>debug</c> options of the config read last, which say where Winland's log goes.</summary>
     public DebugOptions Debug => _config.Debug;
 
-    /// <summary>Whether a window rule matches on <c>title</c>, so a window's new title can change what the rules say of it.</summary>
     public bool RulesMatchTitles => _config.TitleRules;
 
-    /// <summary>Counts the configs put in force, so a reader can tell that the rules were replaced.</summary>
     public int RuleRevision => Volatile.Read(ref _revision);
 
     private int _revision;
 
-    // The notification the last load with config errors showed. A clean load clears it.
     private ConfigNotice? _notice;
     private int _noticeGeneration;
 
-    /// <summary>
-    /// Whether this start wrote the default config. The first load, when it has no errors, then shows the welcome
-    /// notification.
-    /// </summary>
     public bool FirstStart { get; set; }
 
-    // A loaded config goes through the same path as a reload, so it applies every part of the config.
     private Outcome Load(ConfigLoaded loaded) => Apply(loaded.Config);
 
     private CommandReply ReloadCommand()
@@ -52,7 +42,6 @@ public sealed partial class WindowManager
             return new CommandReply(message, View([]));
         }
 
-        // AfterReload updates file watching and logging once Execute has let go of the lock.
         _reloaded = document;
         return new CommandReply("ok", Apply(document));
     }
@@ -66,7 +55,6 @@ public sealed partial class WindowManager
         return View([]);
     }
 
-    // Puts a config in force. Every option is in the one record, so a reader never sees part of two configs.
     private void Use(AppliedConfig config)
     {
         _config = config;
@@ -116,14 +104,11 @@ public sealed partial class WindowManager
 
         events.Add(new ConfigReloaded());
 
-        // A reload applies the monitor rules again, and Winland lays the monitors out after it.
         events.Add(new MonitorLayoutChanged());
         _configEvents = events;
         return outcome;
     }
 
-    // A config read or reloaded with warnings replaces the notification with the count and the first warning,
-    // including a reload of the same warnings. A load with none takes the notification away.
     private void ShowConfigErrors(ConfigDocument document)
     {
         var generation = _noticeGeneration + 1;
@@ -154,7 +139,6 @@ public sealed partial class WindowManager
         AdoptLayout(desk, created);
     }
 
-    // Moves the Workspace onto <paramref name="created"/>, keeping each Client's floating state.
     private void AdoptLayout(LiveWorkspace desk, Layout created)
     {
         RankFocus(created);

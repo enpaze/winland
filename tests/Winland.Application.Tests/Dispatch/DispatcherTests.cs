@@ -265,7 +265,6 @@ public class DispatcherTests
 
         var grown = same.Handle(new Dispatch("togglefloating"));
 
-        // It is kept on screen, so it lines up with the right and bottom edges.
         Assert.Equal(new Rectangle(-10, -10, 1930, 1090), BoundsOf(grown, 1));
     }
 
@@ -364,7 +363,6 @@ public class DispatcherTests
         return core;
     }
 
-    // A loaded config applies its gaps and borders like a reload, and these rectangles have none.
     private const string Gapless = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n";
 
     private static WindowManager Load(string text)

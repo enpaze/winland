@@ -4,14 +4,6 @@ using Winland.Install;
 
 namespace Winland.Daemon;
 
-/// <summary>
-/// Snap windows and the precision touchpad swipes. The running Daemon does not use this.
-/// <c>winland tweaks</c> and <c>winland uninstall</c> do.
-/// Snap is <c>SPI_GETWINARRANGING</c> and <c>SPI_SETWINARRANGING</c> (0x0082 and 0x0083).
-/// Setting it passes the BOOL as <c>pvParam</c> with <c>SPIF_UPDATEINIFILE | SPIF_SENDCHANGE</c>.
-/// The swipe values are <c>ThreeFingerSlideEnabled</c> and <c>FourFingerSlideEnabled</c> under
-/// <c>HKCU\Software\Microsoft\Windows\CurrentVersion\PrecisionTouchPad</c>. 0 means Nothing.
-/// </summary>
 sealed class WindowsDesktop : IWindowsDesktop
 {
     private const uint GetWindowArranging = 0x0082;
@@ -92,7 +84,6 @@ sealed class WindowsDesktop : IWindowsDesktop
     [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
     private static extern bool GetParameter(uint action, uint param, ref int value, uint winIni);
 
-    // SPI_SETWINARRANGING takes the BOOL in pvParam, not a pointer to one.
     [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
     private static extern bool SetParameter(uint action, uint param, nint value, uint winIni);
 }

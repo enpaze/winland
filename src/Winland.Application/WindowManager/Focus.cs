@@ -1,12 +1,9 @@
 namespace Winland.Application;
 
-/// <summary>When a window may take focus, how focus is given, and the stacking order. <see cref="FocusState"/> holds which Client has it.</summary>
 public sealed partial class WindowManager
 {
     private readonly HashSet<WindowId> _awaitingMapFocus = [];
 
-    // The Clients from the bottom of the stacking order to the top. A new Client opens on top, and a floating
-    // Client that takes the focus moves to the top.
     private readonly List<WindowId> _stacking = [];
 
     private void Stack(WindowId window)
@@ -39,9 +36,6 @@ public sealed partial class WindowManager
         if (HasNoFocus(window))
             return Restore(Kept());
 
-        // Winland rejects an activation without a fresh input serial, and honors one with it only under
-        // focus_on_activate, which a window rule wins over. A window that takes the foreground with no click or
-        // key before it has no such serial. One that takes it right after a click in a Client of another program has one.
         var activated = focused.Cause == FocusCause.Activated;
         var afterInput = ActivatedAfterClick(focused);
         if ((activated || afterInput) && (activated || _props.Own(window, WindowProp.FocusOnActivate) != true))
@@ -53,8 +47,6 @@ public sealed partial class WindowManager
             return Restore(Kept());
         }
 
-        // The user's own change to a Client they cannot see, on a hidden Workspace, a closed special workspace or
-        // waiting in a Group, brings it into view as focuswindow would.
         if (WorkspaceContaining(window) is { } home && (!_workspaces.Shown.IsShown(home.Id) || home.IsWaiting(window)))
             return FocusClient(window);
 
@@ -86,9 +78,6 @@ public sealed partial class WindowManager
         return View([]);
     }
 
-    // A click in a Client of one program, then another program's window taking the foreground, is an activation with
-    // input. A click on the window itself, on a window Winland does not manage such as the taskbar, or in the same
-    // program, is the user's own change.
     private bool ActivatedAfterClick(WindowFocused focused)
     {
         if (focused.Cause != FocusCause.User
@@ -98,7 +87,6 @@ public sealed partial class WindowManager
             || Find(focused.Window) is not { } target)
             return false;
 
-        // A program Winland does not know the process of counts as another program.
         return source.ProcessId == 0 || target.ProcessId == 0 || source.ProcessId != target.ProcessId;
     }
 
@@ -125,9 +113,6 @@ public sealed partial class WindowManager
         }
     }
 
-    // Gives focus to a window, or to none, and does all of it: the Workspace remembers the window, and a window on the
-    // Workspace its Monitor gives the keyboard to focuses that Monitor, tells its Layout, and goes first in the focus
-    // history with its urgency cleared.
     private void Give(WindowId? window, LiveWorkspace? desk, bool pointer = false)
     {
         _focus.Take(window, desk);
@@ -145,14 +130,9 @@ public sealed partial class WindowManager
         _focus.Confirm(given);
     }
 
-    // The Workspace a Monitor gives the keyboard to: its special workspace when one is open, else the one it shows.
     private bool IsCurrent(LiveWorkspace desk) =>
         (_workspaces.Shown.SpecialOn(desk.Monitor) ?? _workspaces.Shown.ActiveOn(desk.Monitor)) == desk.Id;
 
-    // Windows says this window has the foreground. The Client that already has focus is given nothing more, as it is when
-    // Windows reports a focus Winland gave. A Client the Monitor gives the keyboard to takes the focus. One on a
-    // Workspace that is shown behind a special workspace only focuses its Monitor. A window Winland does not manage
-    // leaves nothing focused.
     private void Foreground(WindowId window, bool pointer = false)
     {
         if (_focus.Focused == window)
@@ -174,7 +154,6 @@ public sealed partial class WindowManager
         if (floating)
             return _focus.Recent(desk) ?? LastAccepted(desk);
 
-        // The nearest tile wins. A float is taken only when no tile is left.
         var centre = new Point(bounds.X + (bounds.Width / 2), bounds.Y + (bounds.Height / 2));
         if (hadBounds && (Closest(desk, centre, tiledOnly: true) ?? Closest(desk, centre, tiledOnly: false)) is WindowId near)
             return near;
@@ -206,7 +185,6 @@ public sealed partial class WindowManager
         return best;
     }
 
-    // The last Client in the Layout that may take the focus, so a no_focus window or one a modal shadows is passed over.
     private WindowId? LastAccepted(LiveWorkspace desk)
     {
         for (var i = desk.Layout.Clients.Count - 1; i >= 0; i--)

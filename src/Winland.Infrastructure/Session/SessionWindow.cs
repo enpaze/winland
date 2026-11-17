@@ -14,17 +14,12 @@ internal sealed class SessionWindow : IDisposable
     private const uint TimerMessage = 0x0113;
     private const nuint ShellTimer = 1;
 
-    // Docking, waking, a resolution change or a remote session sends a burst of display changes. One reflow follows
-    // the burst, a quarter of a second after the last of them.
     private const nuint DisplayTimer = 2;
     private const uint DisplaySettle = 250;
 
-    // SPI_SETWORKAREA, which a WM_SETTINGCHANGE names when the work area changed alone, as the taskbar starting or
-    // stopping to hide itself does.
     private const nuint WorkAreaSetting = 0x2F;
     private const uint ShellTimerMilliseconds = 250;
 
-    // HSHELL_FLASH: HSHELL_REDRAW with the high bit set, sent when a window flashes for attention.
     private const nuint ShellFlash = 0x8006;
 
     private static readonly WNDPROC Proc = OnWindow;
@@ -129,9 +124,6 @@ internal sealed class SessionWindow : IDisposable
                 return default;
             }
 
-            // The process can be ended as soon as this returns, so the cleanup runs here, on the loop thread.
-            // The Restart Manager can end the session for this program alone, and the session goes on. With the
-            // windows put back, Winland stops instead of running on with nothing hidden.
             if (SessionNotices.EndsSession(message, (nuint)wParam))
             {
                 _onEnd?.Invoke();
@@ -227,7 +219,6 @@ internal sealed class SessionWindow : IDisposable
             ListenForFlashes();
     }
 
-    // The shell tells a registered top-level window when another window flashes for attention.
     private void ListenForFlashes()
     {
         _shellMessage = PInvoke.RegisterWindowMessage("SHELLHOOK");

@@ -17,7 +17,6 @@ public class ProcessFactsTests
         Assert.Equal([1, 2], facts.For(42).Ancestors);
         Assert.Equal(1, reads);
 
-        // The same id with another start time is another process.
         started = 200;
         facts.For(42);
         Assert.Equal(2, reads);

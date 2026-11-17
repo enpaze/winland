@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>A workspace swipe moves the Workspaces with the fingers, and animates on from there when they lift.</summary>
 public class LiveSwipeTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
@@ -13,7 +12,6 @@ public class LiveSwipeTests
         var core = Twin(Horizontal);
         core.Handle(new SwipeBegan(3));
 
-        // The first update shows workspace 2, and halfway through a 300 pixel swipe each has moved half a monitor left.
         var first = Move(core, 1, -10);
         var halfway = Move(core, 14, -10);
 
@@ -73,7 +71,6 @@ public class LiveSwipeTests
         return last;
     }
 
-    // Workspaces 1 and 2 each hold a Client, and 1 is shown.
     private static WindowManager Twin(string config)
     {
         var core = new WindowManager();

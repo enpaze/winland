@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 
 namespace Winland.Application;
 
-// The JSON and text forms of inspect, written from the same record so the two agree.
 public static partial class CommandProtocol
 {
     internal static string FormatInspect(InspectJson inspected) => JsonSerializer.Serialize(inspected);
@@ -39,7 +38,6 @@ public static partial class CommandProtocol
 
     private static string Available(string? text) => text is null ? Unavailable : Clean(text);
 
-    // The sentence for each reason code inspect answers with.
     private static string Explain(string? code) => code switch
     {
         "default" => "Winland manages a window like this",
@@ -75,10 +73,6 @@ public static partial class CommandProtocol
     };
 }
 
-/// <summary>
-/// What inspect found. A field Winland could not read, or that does not apply, is null. Reason is a code: why the
-/// Window is or is not a Client, or why none was found.
-/// </summary>
 internal sealed record InspectJson(
     [property: JsonPropertyName("status")] string Status,
     [property: JsonPropertyName("target")] string Target,

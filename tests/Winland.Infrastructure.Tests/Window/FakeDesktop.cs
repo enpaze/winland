@@ -2,12 +2,6 @@ using System.Globalization;
 
 namespace Winland.Infrastructure.Tests;
 
-/// <summary>
-/// The desktop the Windows adapter acts on, in memory. Every write lands in <see cref="Calls"/> in the order it was
-/// made, whether it shows or hides a window, moves it, or changes its alpha, style or DWM attributes, so a test sees
-/// what an outcome did and in what order. A window it has is visible, has an invisible frame of <see cref="Inset"/>
-/// pixels on every side, takes a new size at once and has painted it <see cref="PaintTime"/> later.
-/// </summary>
 internal sealed class FakeDesktop(Func<double> clock) : IDesktop
 {
     internal const int Inset = 8;
@@ -18,13 +12,10 @@ internal sealed class FakeDesktop(Func<double> clock) : IDesktop
 
     internal List<string> Calls { get; } = [];
 
-    /// <summary>Every stand-in a window was given, the one it has now last.</summary>
     internal List<FakeStandIn> StandIns { get; } = [];
 
-    /// <summary>How long a window takes to paint a size it was given, in milliseconds.</summary>
     internal double PaintTime { get; set; } = 25;
 
-    /// <summary>Whether <see cref="OpenStandIn"/> makes one. A desktop that cannot is the same as a window with no picture.</summary>
     internal bool CanStandIn { get; set; } = true;
 
     internal FakeWindow Add(long id, Rectangle visible)
@@ -45,7 +36,6 @@ internal sealed class FakeDesktop(Func<double> clock) : IDesktop
 
     internal void Log(string call) => Calls.Add(call);
 
-    /// <summary>Where the first call that starts with <paramref name="prefix"/> is in <see cref="Calls"/>, or -1.</summary>
     internal int IndexOf(string prefix) => Calls.FindIndex(call => call.StartsWith(prefix, StringComparison.Ordinal));
 
     internal static string Id(WindowId window) => window.Value.ToString(CultureInfo.InvariantCulture);
@@ -70,7 +60,6 @@ internal sealed class FakeDesktop(Func<double> clock) : IDesktop
         return true;
     }
 
-    // Like SetLayeredWindowAttributes, it fails for a window that is not layered.
     public bool TrySetAlpha(WindowId window, byte alpha)
     {
         if (!_windows.TryGetValue(window, out var found) || (found.ExStyle & LayeredStyle) == 0)
@@ -200,7 +189,6 @@ internal sealed class FakeDesktop(Func<double> clock) : IDesktop
         OnSetBounds?.Invoke(window);
     }
 
-    /// <summary>Runs after a window is given bounds, as a window event about another window could arrive then.</summary>
     internal Action<WindowId>? OnSetBounds { get; set; }
 
     public void Show(WindowId window, ShowAs show) => Change(window, show, "show");
@@ -252,7 +240,6 @@ internal sealed class FakeDesktop(Func<double> clock) : IDesktop
 
     public void Close(WindowId window) => Log($"close {Id(window)}");
 
-    /// <summary>Runs each time the adapter waits for the next frame, as another thread could while it does.</summary>
     internal Action? OnPace { get; set; }
 
     public void Pace() => OnPace?.Invoke();
@@ -293,7 +280,6 @@ internal sealed class FakeWindow
 
     internal int Dpi { get; set; } = 96;
 
-    /// <summary>The frame the window shows. Its outer rectangle is <see cref="FakeDesktop.Inset"/> pixels wider on every side.</summary>
     internal Rectangle Visible { get; set; }
 
     internal Rectangle Outer => new(
@@ -302,7 +288,6 @@ internal sealed class FakeWindow
         Visible.Width + (2 * FakeDesktop.Inset),
         Visible.Height + (2 * FakeDesktop.Inset));
 
-    // WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS.
     internal uint Style { get; set; } = 0x14CF0000;
 
     internal uint ExStyle { get; set; }
@@ -313,13 +298,11 @@ internal sealed class FakeWindow
 
     internal bool Region { get; set; }
 
-    /// <summary>When the window has painted the size it was last given, in the desktop's clock.</summary>
     internal double PaintedAt { get; set; }
 
     internal Dictionary<int, uint> Attributes { get; } = [];
 }
 
-/// <summary>A stand-in the adapter opened. It keeps the last piece of each slot it was given.</summary>
 internal sealed class FakeStandIn(FakeDesktop desktop, WindowId window) : IStandInSurface
 {
     internal WindowId Window { get; } = window;
@@ -340,7 +323,6 @@ internal sealed class FakeStandIn(FakeDesktop desktop, WindowId window) : IStand
 
     public nint Handle => 0;
 
-    // A window takes its new size at once, so that is what a thumbnail of it measures.
     public Size? PictureSize() => desktop.OuterSize(Window);
 
     public void Place(Rectangle bounds)

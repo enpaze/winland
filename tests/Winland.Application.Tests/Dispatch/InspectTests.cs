@@ -2,7 +2,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary><c>inspect</c>: what Winland reads of a Window, whether it manages it and why, and a rule to change that.</summary>
 public class InspectTests
 {
     [Fact]
@@ -183,7 +182,6 @@ public class InspectTests
         Assert.Equal("restored", inspected.GetProperty("floatingReason").GetString());
     }
 
-    // With no Clients there is nothing for a bad selector to fail to match, so only its grammar can reject it.
     [Theory]
     [InlineData("class:[", "'[' is not a valid pattern")]
     [InlineData("[", "'[' is not a valid pattern")]

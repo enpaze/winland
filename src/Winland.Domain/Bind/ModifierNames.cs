@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>Reads and writes a modifier list such as <c>SUPER SHIFT</c>, as a bind writes it.</summary>
 internal static class ModifierNames
 {
     private static readonly (string Name, Modifier Modifier)[] Written =
@@ -15,8 +14,6 @@ internal static class ModifierNames
         ("MOD5", Modifier.Mod5),
     ];
 
-    // Winland upper-cases the list and looks for each name anywhere in it,
-    // so SUPER SHIFT, SUPER_SHIFT, SUPER+SHIFT and SUPERSHIFT are the same mask.
     private static readonly (string Name, Modifier Modifier)[] Names =
     [
         .. Written,
@@ -28,7 +25,6 @@ internal static class ModifierNames
         ("META", Modifier.Super),
     ];
 
-    /// <summary>The modifier list as a config writes it, such as <c>SUPER SHIFT</c>, which <see cref="TryParse"/> reads back.</summary>
     internal static string Format(Modifier modifiers)
     {
         var names = new List<string>();

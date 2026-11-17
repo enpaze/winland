@@ -6,7 +6,6 @@ namespace Winland.Daemon.Tests;
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public class AdministratorFolderTests
 {
-    // Elevated, the new folder is owned by Administrators and passes.
     [ElevatedFact(true)]
     public void AnElevatedRunGetsAProtectedFolder()
     {
@@ -19,7 +18,6 @@ public class AdministratorFolderTests
         });
     }
 
-    // Not elevated, the folder is owned by the user, which the check refuses rather than handing back an unprotected one.
     [ElevatedFact(false)]
     public void AnUnelevatedRunIsRefused()
     {
@@ -48,7 +46,6 @@ public class AdministratorFolderTests
         }
     }
 
-    // Runs only when the test process's elevation is the one the test needs, and says so when it skips.
     private sealed class ElevatedFactAttribute : FactAttribute
     {
         public ElevatedFactAttribute(bool elevated)
@@ -59,7 +56,6 @@ public class AdministratorFolderTests
         }
     }
 
-    // The owner may still rewrite the access list, which lets a non-elevated test clean up.
     private static void Open(string folder)
     {
         var open = new DirectorySecurity();

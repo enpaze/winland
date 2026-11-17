@@ -2,11 +2,6 @@ using Windows.Win32;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Hides the cursor with the system magnifier, on its own thread so a pointer move never waits for it. It hides the
-/// cursor over every program, not only over Winland's own windows. The cursor comes back when this process ends, even
-/// when it is killed.
-/// </summary>
 internal static class Magnifier
 {
     private static readonly Lock Gate = new();
@@ -17,7 +12,6 @@ internal static class Magnifier
     private static bool _stopping;
     private static bool _started;
 
-    /// <summary>Hides the cursor everywhere, or shows it again.</summary>
     internal static void HideCursor(bool hidden)
     {
         lock (Gate)
@@ -32,7 +26,6 @@ internal static class Magnifier
         _ = Wake.Set();
     }
 
-    /// <summary>Shows the cursor and ends the thread.</summary>
     internal static void Stop()
     {
         Thread? worker;
@@ -92,7 +85,6 @@ internal static class Magnifier
         }
     }
 
-    // The system cursor stays hidden only while this process runs, so a Daemon that is killed leaves it visible.
     private static void ShowCursor(bool hidden)
     {
         if (hidden == _cursorShownHidden || !Started())

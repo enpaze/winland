@@ -1,10 +1,5 @@
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Whether the notification-area icon and its config balloon should be up. The host applies one of these.
-/// A shown icon keeps the balloon on itself. A hidden icon exists only while the balloon does, and a
-/// dismissed balloon takes that icon away. The same <see cref="ConfigNotice.Generation"/> is not shown again.
-/// </summary>
 internal static class TrayBalloon
 {
     internal readonly record struct Plan(bool ShowIcon, bool Temporary, bool ShowBalloon, bool ClearBalloon);

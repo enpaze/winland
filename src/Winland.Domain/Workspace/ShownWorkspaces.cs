@@ -1,10 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// The Shown workspace of each Monitor, the Special workspace it shows over it, and the visits
-/// <c>workspace previous</c> reads. A live Monitor, one Windows reports now, starts with no Shown workspace until it is
-/// given one. What a Monitor showed last is kept after it leaves, so <see cref="ActiveOn"/> still answers for it.
-/// </summary>
 internal sealed class ShownWorkspaces
 {
     private readonly HashSet<MonitorId> _live = [];
@@ -14,31 +9,21 @@ internal sealed class ShownWorkspaces
     private readonly Dictionary<MonitorId, WorkspaceId> _special = [];
     private readonly Dictionary<MonitorId, WorkspaceId> _lastSpecial = [];
 
-    // Newest first, each with the Monitor it was on. A visit to a Workspace that was removed since stays, as a gone
-    // one, until the visits are collected.
     private readonly List<Visited> _visits = [];
 
-    /// <summary>The Shown workspace of a live Monitor, or null when it has none yet.</summary>
     public WorkspaceId? Shown(MonitorId monitor) => _shown.TryGetValue(monitor, out var shown) ? shown : null;
 
-    /// <summary>The Workspace a Monitor showed last, live or not, or null when it never showed one.</summary>
     public WorkspaceId? LastShown(MonitorId monitor) => _lastShown.TryGetValue(monitor, out var last) ? last : null;
 
-    /// <summary>
-    /// The Workspace a Monitor shows: its Shown workspace, else the one it showed last, else Workspace 1. Answers for a
-    /// Monitor that is not live too.
-    /// </summary>
     public WorkspaceId ActiveOn(MonitorId monitor) =>
         Shown(monitor) ?? (_lastShown.TryGetValue(monitor, out var last) ? last : WorkspaceId.Initial);
 
-    /// <summary>The Special workspace a Monitor shows, or null. For a Monitor that is not live, the one it showed last.</summary>
     public WorkspaceId? SpecialOn(MonitorId monitor)
     {
         var map = _live.Contains(monitor) ? _special : _lastSpecial;
         return map.TryGetValue(monitor, out var special) ? special : null;
     }
 
-    /// <summary>Makes <paramref name="workspace"/> the Shown workspace of <paramref name="monitor"/>.</summary>
     public void Show(MonitorId monitor, WorkspaceId workspace)
     {
         if (_live.Contains(monitor))
@@ -46,7 +31,6 @@ internal sealed class ShownWorkspaces
         _lastShown[monitor] = workspace;
     }
 
-    /// <summary>Shows <paramref name="workspace"/> over <paramref name="monitor"/>, or closes its Special workspace when null.</summary>
     public void ShowSpecial(MonitorId monitor, WorkspaceId? workspace)
     {
         if (workspace is WorkspaceId special)
@@ -61,11 +45,6 @@ internal sealed class ShownWorkspaces
         _lastSpecial.Remove(monitor);
     }
 
-    /// <summary>
-    /// The Monitors Windows reports now, and of those the <paramref name="enabled"/> ones, which show what they show.
-    /// All are enabled when it is not given. One that was not live before starts with no Shown workspace and no Special
-    /// workspace. One that left keeps only what it showed last.
-    /// </summary>
     public void SetLive(IEnumerable<MonitorId> monitors, IEnumerable<MonitorId>? enabled = null)
     {
         ArgumentNullException.ThrowIfNull(monitors);
@@ -88,10 +67,6 @@ internal sealed class ShownWorkspaces
         _live.UnionWith(next);
     }
 
-    /// <summary>
-    /// True when an enabled Monitor shows <paramref name="workspace"/>, as its Shown workspace or as the Special workspace
-    /// over it. With no Monitor reported, the primary one shows what it showed last.
-    /// </summary>
     public bool IsShown(WorkspaceId workspace)
     {
         if (workspace.IsSpecial)
@@ -103,7 +78,6 @@ internal sealed class ShownWorkspaces
         return _enabled.Any(monitor => Shown(monitor) == workspace);
     }
 
-    /// <summary>The enabled Monitor <paramref name="special"/> is shown over, or null.</summary>
     public MonitorId? ShowingSpecial(WorkspaceId special)
     {
         if (_live.Count == 0)
@@ -118,11 +92,9 @@ internal sealed class ShownWorkspaces
         return null;
     }
 
-    /// <summary>True when <paramref name="monitor"/> is enabled and shows a Workspace. With no Monitor reported, every one does.</summary>
     public bool ShowsAWorkspace(MonitorId monitor) =>
         _live.Count == 0 || (_enabled.Contains(monitor) && Shown(monitor) is not null);
 
-    /// <summary>A Workspace took a new id: every Monitor that shows it, showed it last, or visited it follows.</summary>
     public void Rename(WorkspaceId from, WorkspaceId to)
     {
         Replace(_shown, from, to);
@@ -136,7 +108,6 @@ internal sealed class ShownWorkspaces
         }
     }
 
-    /// <summary>A Workspace was removed: no Monitor shows it, and its visits are gone.</summary>
     public void Remove(WorkspaceId workspace)
     {
         Drop(_shown, workspace);
@@ -148,10 +119,6 @@ internal sealed class ShownWorkspaces
         }
     }
 
-    /// <summary>
-    /// Records a visit to <paramref name="workspace"/> on <paramref name="monitor"/>. A visit to the newest visited
-    /// Workspace again is not recorded.
-    /// </summary>
     public void Visit(WorkspaceId workspace, MonitorId monitor)
     {
         if (_visits.Count > 0 && _visits[0] is { Gone: false } newest && newest.Workspace == workspace)
@@ -161,10 +128,6 @@ internal sealed class ShownWorkspaces
         _visits.Insert(0, new Visited(workspace, monitor));
     }
 
-    /// <summary>
-    /// The Workspace visited before the one <paramref name="monitor"/> shows, or null. With <paramref name="perMonitor"/>
-    /// only a visit on that Monitor counts.
-    /// </summary>
     public WorkspaceId? Previous(MonitorId monitor, bool perMonitor)
     {
         Collect();
@@ -188,8 +151,6 @@ internal sealed class ShownWorkspaces
         _special.Remove(monitor);
     }
 
-    // Drops the visits to removed Workspaces: the newest visit on each Monitor is kept until that Monitor has been
-    // seen past the first one in the list, so it can still be gone to.
     private void Collect()
     {
         var seen = new List<MonitorId>();

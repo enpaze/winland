@@ -2,7 +2,6 @@ using Microsoft.Win32;
 
 namespace Winland.Infrastructure;
 
-/// <summary>Opens a file from the notification-area menu in the program Windows associates with its type.</summary>
 public static class TrayFiles
 {
     public static void Open(string? path)
@@ -18,7 +17,6 @@ public static class TrayFiles
     }
 }
 
-/// <summary>The open command Windows has stored for a file extension, when it has one.</summary>
 internal static class FileAssociation
 {
     internal static string? OpenCommand(string extension)
@@ -36,8 +34,6 @@ internal static class FileAssociation
         }
     }
 
-    // The user's choice wins over the type registration. Either one names a ProgId whose open command
-    // carries the path as %1, %L or %*.
     private static string? Lookup(string extension)
     {
         var progId = UserChoice(extension) ?? Registered(extension);

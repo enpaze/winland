@@ -24,7 +24,6 @@ public class MotionPlayerTests
         Assert.Equal(["move 0", "move 50", "place 100"], target.Calls);
     }
 
-    // Every outcome paints every Client, and the clock asks DWM for its frame timing.
     [Fact]
     public void PaintingAWindowWithNoMotionReadsNoClock()
     {
@@ -37,8 +36,6 @@ public class MotionPlayerTests
         Assert.Equal(0, reads);
     }
 
-    // Land gives up on a motion thread that does not come back in time, as one waiting on a window that stopped
-    // answering. The frames that thread still had are dropped, so none shows after the windows came to rest.
     [Fact]
     public void AFrameLeftWhenTheMotionsLandIsNotShown()
     {
@@ -80,7 +77,6 @@ public class MotionPlayerTests
             }
 
             Assert.Contains("System.InvalidOperationException: frame failed", log.ToString(), StringComparison.Ordinal);
-            // The whole exception is logged, stack included. A frame name is not checked: the JIT can inline it.
             Assert.Contains("   at ", log.ToString(), StringComparison.Ordinal);
             Assert.Equal(2, log.ToString().Split("frame failed", StringSplitOptions.None).Length);
             Assert.Contains("move 50", target.Calls);
@@ -317,7 +313,6 @@ public class MotionPlayerTests
         Assert.Equal([grown, grown], target.Goals);
     }
 
-    // The frames may have done more to the window than move it, and a motion stopped early undoes that.
     [Fact]
     public void AMotionStoppedEarlyReleasesItsWindowAndOneThatLandsThereDoesNot()
     {
@@ -337,8 +332,6 @@ public class MotionPlayerTests
         Assert.Equal([Window, other], target.Released);
     }
 
-    // A frame already past its check is still being applied when the window is dropped. Dropping waits for it,
-    // so the caller's reset of the window comes after the frame and is not undone by it.
     [Fact]
     public async Task DroppingAWindowWaitsForTheFrameBeingApplied()
     {
@@ -361,7 +354,6 @@ public class MotionPlayerTests
         await Task.WhenAll(tick, drop).WaitAsync(TimeSpan.FromSeconds(5));
     }
 
-    // A closing window counts as running until its grace is over, and is put back only then.
     [Fact]
     public void AWindowClosedWithoutAMotionGoesTransparentAtOnceAndReturnsIfItStaysOpen()
     {
@@ -420,7 +412,6 @@ public class MotionPlayerTests
         Assert.False(player.Running(Window));
     }
 
-    // A window that closed is not put back when a new motion starts on it before its grace is over.
     [Fact]
     public void ANewMotionCancelsAPendingClose()
     {
@@ -456,7 +447,6 @@ public class MotionPlayerTests
         Assert.False(player.Running(Window));
     }
 
-    // Landing puts back a window still in its close grace when it did not close, and forgets the grace.
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -504,14 +494,11 @@ public class MotionPlayerTests
         Assert.Equal(["border", "place 100", "alpha 255"], target.Calls.TakeLast(3));
     }
 
-    // The player's own thread steps a motion to its end, and starts again after a landing.
     [Fact]
     public void TheThreadStepsAMotionToItsEndAndStartsAgainAfterLanding()
     {
         var target = new RecordingTarget();
         var player = new MotionPlayer(target);
-        // Long enough that the thread still has frames to pace when it first steps, even on a busy machine where it
-        // starts late. A shorter motion can land in one step and never pace.
         var quick = new Timing(Bezier.Linear, 400);
 
         player.Begin(new Motion(Window, Goal) { From = Start, Move = quick });
@@ -535,7 +522,6 @@ public class MotionPlayerTests
         public double Now { get; set; }
     }
 
-    // A target whose move, once held, signals that it started and then waits for the gate.
     private sealed class GatedTarget(ManualResetEventSlim entered, ManualResetEventSlim gate) : IMotionTarget
     {
         public bool Hold { get; set; }
@@ -612,7 +598,6 @@ public class MotionPlayerTests
             OnMove?.Invoke(window);
         }
 
-        /// <summary>Runs after each in-between frame, as another thread could while the frames of one tick go out.</summary>
         public Action<WindowId>? OnMove { get; set; }
 
         public void Release(WindowId window) => Released.Add(window);

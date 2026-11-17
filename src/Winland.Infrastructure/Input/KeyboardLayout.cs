@@ -3,10 +3,6 @@ using Windows.Win32.UI.Input.KeyboardAndMouse;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Reads unshifted characters for one layout. The keyboard state array is private and starts cleared,
-/// so a latched modifier is never copied, and the query flag keeps the call from changing dead-key state.
-/// </summary>
 public static class KeyboardLayout
 {
     private const uint DoNotChangeState = 0x4;

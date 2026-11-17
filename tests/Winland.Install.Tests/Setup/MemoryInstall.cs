@@ -145,7 +145,6 @@ sealed class MemorySession : IDaemonSession
 
     public IReadOnlyList<string> StartedArguments { get; private set; } = [];
 
-    /// <summary>Whether a Daemon is running for the next <see cref="Stop"/> to find.</summary>
     public bool Running { get; set; } = true;
 
     public bool Stop()

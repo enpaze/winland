@@ -4,7 +4,6 @@ public sealed record DecorationOptions
 {
     public static DecorationOptions Documented { get; } = new()
     {
-        // White stands in until the Windows accent is known.
         ActiveBorder = new BorderColor(0xFF, 0xFF, 0xFF, 0xFF),
         InactiveBorder = new BorderColor(0xFF, 0x40, 0x40, 0x40),
         Rounding = 8,
@@ -14,24 +13,19 @@ public sealed record DecorationOptions
 
     public BorderColor InactiveBorder { get; init; }
 
-    /// <summary>True once <c>general:col.active_border</c> parsed as a color. Otherwise the active border follows the Windows accent.</summary>
     public bool ActiveBorderSet { get; init; }
 
-    /// <summary>Uses <paramref name="accent"/> for the active border when the config did not set one.</summary>
     public DecorationOptions WithAccent(BorderColor? accent) =>
         ActiveBorderSet || accent is not BorderColor color ? this : this with { ActiveBorder = color };
 
-    /// <summary>The corner radius in logical pixels. 0 draws square corners.</summary>
     public int Rounding { get; init; }
 
-    /// <summary><c>decoration:blur:enabled</c>: DWM's acrylic backdrop. False asks for none.</summary>
     public bool Blur { get; init; } = true;
 
     public float ActiveOpacity { get; init; } = 1;
 
     public float InactiveOpacity { get; init; } = 1;
 
-    // A negative radius does not read.
     private static readonly OptionValue<int> Radius = OptionValue.Of(
         "int",
         (string text, out int radius) => OptionValue.Int().Read(text, out radius) && radius >= 0,
@@ -47,7 +41,6 @@ public sealed record DecorationOptions
         Of("decoration:inactive_opacity", OptionValue.Single(0f, 1f), o => o.InactiveOpacity, (o, v) => o with { InactiveOpacity = v }),
     ]);
 
-    /// <summary>The options <paramref name="document"/> sets, over the High Contrast colors while <paramref name="contrast"/> is on.</summary>
     public static DecorationOptions From(ConfigDocument document, HighContrast? contrast = null) =>
         Options.From(
             contrast is HighContrast colors ? Documented with { ActiveBorder = colors.Highlight, InactiveBorder = colors.GrayText } : Documented,

@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>The group dispatchers, and moving Clients into and out of groups.</summary>
 public sealed partial class WindowManager
 {
     private Outcome ToggleGroup()
@@ -59,8 +58,6 @@ public sealed partial class WindowManager
         return ShowMember(desk, group, index);
     }
 
-    // The wheel over a Group's tab bar shows the next or previous member, and moves the focus only from a shown member
-    // that had it.
     private Outcome ScrollGroupBar(GroupBarScrolled scrolled)
     {
         if (WorkspaceContaining(scrolled.Shown) is not LiveWorkspace desk
@@ -101,8 +98,6 @@ public sealed partial class WindowManager
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
 
-        // With nothing beside it on its Workspace, the window looks onto the Monitor in that direction, as the pinned
-        // release finds the neighbour across Monitors.
         if (desk.Layout.Neighbor(id, direction) is not WindowId neighbor || neighbor == id)
         {
             if (NeighborAcross(desk, id, direction) is not (WindowId across, LiveWorkspace there))
@@ -117,7 +112,6 @@ public sealed partial class WindowManager
         return IntoGroup(desk, desk.Covered(), id, neighbor);
     }
 
-    // Joins the Group of destination, or makes one around it. The Group is made only after the window has left its place.
     private Outcome IntoGroup(LiveWorkspace desk, HashSet<WindowId> covered, WindowId window, WindowId destination)
     {
         var target = desk.GroupOf(destination);
@@ -149,8 +143,6 @@ public sealed partial class WindowManager
         return (found, there);
     }
 
-    // Moves a window into the Group of a window on another Monitor's Workspace, and focuses it
-    // there. The Workspace it left is laid out again.
     private Outcome IntoGroupAcross(LiveWorkspace desk, LiveWorkspace there, WindowId window, WindowId neighbor)
     {
         if (there.GroupOf(neighbor) is not WindowGroup target)
@@ -174,14 +166,12 @@ public sealed partial class WindowManager
         if (_workspaces.Find(desk.Id) is not LiveWorkspace left || !_workspaces.Shown.IsShown(left.Id))
             return outcome;
 
-        // The member that takes the window's place in its own Group is shown on the Workspace it left.
         var show = new List<WindowId>(outcome.Show);
         var hide = new List<WindowId>(outcome.Hide);
         left.Collect(sourceCovered, show, hide);
         return outcome with { Placements = [.. left.Layout.Placed(), .. outcome.Placements], Show = show, Hide = hide };
     }
 
-    // Takes a window out of its own Group, or its tile, so it can join another Group.
     private static bool TakeForGroup(LiveWorkspace desk, WindowId window, out Taken taken)
     {
         taken = default;

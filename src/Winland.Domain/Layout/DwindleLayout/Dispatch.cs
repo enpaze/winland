@@ -61,7 +61,6 @@ internal sealed partial class DwindleLayout
         if (!_nodes.TryGetValue(id, out var node) || node.Parent is null || !InTree(node))
             return [];
 
-        // A tile already at the edge it moves toward stays where it is, instead of the tree being rebuilt around it.
         var focal = Focal(node.Box, direction);
         if (LeafContaining(focal) is null)
             return [];
@@ -124,7 +123,6 @@ internal sealed partial class DwindleLayout
         return [];
     }
 
-    // A tile and a floating Client trade places and floating state: the floater takes the tile, and the tiled one floats where the floater was.
     private List<Placement> SwapAcross(Node node, ClientId floater, Rectangle box)
     {
         var tiled = node.Id!.Value;
@@ -261,7 +259,6 @@ internal sealed partial class DwindleLayout
         return true;
     }
 
-    // Winland refuses to edit the tree around a maximized or fullscreen Client.
     private bool Covers(ClientId id) =>
         _clients.Exists(client => client.Id == id && client.Fullscreen != FullscreenMode.None);
 

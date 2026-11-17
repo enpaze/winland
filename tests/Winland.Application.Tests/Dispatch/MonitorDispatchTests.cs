@@ -14,7 +14,6 @@ public class MonitorDispatchTests
         Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), outcome.State.ActiveWorkspace);
         Assert.Equal(new WorkspaceId("1"), Client(outcome, 1).Workspace);
         Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), Client(outcome, 2).Workspace);
-        // The Monitor already shows this Workspace, so the focus change is not a workspace event.
         Assert.Equal(
             [
                 @"focusedmon>>\\.\DISPLAY2,1",
@@ -37,7 +36,6 @@ public class MonitorDispatchTests
         Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), outcome.State.ActiveWorkspace);
         Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), Client(outcome, 1).Workspace);
         Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), Client(outcome, 2).Workspace);
-        // the window goes in at the point just past the edge it crossed.
         Assert.Equal(new Rectangle(1920, 0, 960, 1080), BoundsOf(outcome, 1));
         Assert.Equal(new Rectangle(2880, 0, 960, 1080), BoundsOf(outcome, 2));
         Assert.Equal(
@@ -64,8 +62,6 @@ public class MonitorDispatchTests
     [Fact]
     public void MoveFocusCrossesToTheTileThatSharesTheEdgeWithDefaultGaps()
     {
-        // Portrait monitors, so each Workspace stacks its second tile below the first. Outer gaps keep
-        // the tiles 44px apart across the shared edge.
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 5\ngeneral:gaps_out = 20\ngeneral:border_size = 2\n")));
         var left = Display(@"\\.\DISPLAY1", "Dell", new Rectangle(0, 0, 1080, 1920));
@@ -91,7 +87,6 @@ public class MonitorDispatchTests
         var core = TwoMonitors();
         var left = Display(@"\\.\DISPLAY1", "Dell", Left);
         var right = Display(@"\\.\DISPLAY2", "Samsung", Right);
-        // Window 2 floats clear of the origin's rows, so only window 4 can be next to it.
         Float(core, 2, new Rectangle(2500, 900, 100, 100));
         core.Handle(new WindowAppeared(new WindowId(3), left.WorkArea));
         Float(core, 3, new Rectangle(Right.X - gap - 100, 100, 100, 100));
@@ -108,7 +103,6 @@ public class MonitorDispatchTests
     [Fact]
     public void MoveFocusCrossesToTheMostRecentNeighbor()
     {
-        // Portrait monitors, the right one 300px higher, so window 1 shares 660px with window 2 and 960px with window 3.
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n")));
         var left = Display(@"\\.\DISPLAY1", "Dell", new Rectangle(0, 0, 1080, 1920));
@@ -137,7 +131,6 @@ public class MonitorDispatchTests
         Float(core, 3, new Rectangle(Right.X - 100, 100, 100, 100));
         core.Handle(new WindowAppeared(new WindowId(4), right.WorkArea));
         Float(core, 4, new Rectangle(Right.X, 100, 100, 100));
-        // The tile was focused after the floating window, and shares as much of the edge.
         Focus(core, 4);
         Focus(core, 2);
         Focus(core, 3);
@@ -147,7 +140,6 @@ public class MonitorDispatchTests
         Assert.Equal(new WindowId(4), outcome.Focus);
     }
 
-    // The focus history only moves when the window reports it has the focus.
     private static void Focus(WindowManager core, long window)
     {
         core.Handle(new Dispatch("focuswindow", $"address:0x{window:x}"));
@@ -165,8 +157,6 @@ public class MonitorDispatchTests
     [Fact]
     public void DwindleMoveWindowCrossesFromATileAtTheEdgeOfTheGaps()
     {
-        // a tile that meets the work area's edge reaches the Monitor's for the focal point,
-        // so gaps_out does not keep it on this Monitor.
         var core = Gapped();
 
         var outcome = core.Handle(new Dispatch("movewindow", "r"));

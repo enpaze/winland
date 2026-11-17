@@ -31,7 +31,6 @@ public class OpacityAdapterTests
         Assert.False(adapter.Owns(window));
     }
 
-    // Only the layered style is Winland's. A style the program set meanwhile, such as always on top, stays.
     [Fact]
     public void ResetTakesOffOnlyTheLayeredStyle()
     {
@@ -158,8 +157,6 @@ public class OpacityAdapterTests
         Assert.Empty(adapter.Stamp(new RecoverySnapshot([])).Held);
     }
 
-    // A style write waits for the window. One whose program stopped answering is given full alpha, which does not wait,
-    // and stays layered and recorded, so the next start takes the style off.
     [Fact]
     public void ResetAllLeavesAWindowThatStoppedAnsweringOpaqueAndRecorded()
     {
@@ -185,8 +182,6 @@ public class OpacityAdapterTests
         Assert.True(stamped.Clean);
     }
 
-    // A window created hidden is made transparent until it is shown, and is no Client meanwhile. The snapshot records it
-    // apart, so a start after the process was ended takes the style off.
     [Fact]
     public void StampRecordsAHeldWindowThatIsNoClient()
     {
@@ -228,8 +223,6 @@ public class OpacityAdapterTests
         Assert.False(adapter.Owns(second));
     }
 
-    // The exit cleanup resets every window, and then the process ends with the state file gone. An
-    // outcome or a motion that arrives after that must not make a window layered again.
     [Fact]
     public void AfterResetAllNoWindowIsMadeLayered()
     {
@@ -260,7 +253,6 @@ public class OpacityAdapterTests
         Assert.Equal(0, styles.AlphaWrites);
     }
 
-    // A reset, as when a window opens again, lets a window that failed or was left alone be tried again.
     [Fact]
     public void AResetForgetsAFailureAndAWindowLeftAlone()
     {
@@ -285,7 +277,6 @@ public class OpacityAdapterTests
         Assert.True(adapter.Owns(layered));
     }
 
-    // The window was not layered before, so putting its style back does not set an alpha.
     [Fact]
     public void RestoringTheStyleSetsNoAlpha()
     {

@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>A bind written as the config line that creates it, which the config parser reads back as the same bind.</summary>
 public static class BindText
 {
     public static string Line(Bind bind)
@@ -11,7 +10,6 @@ public static class BindText
         if (bind.Description is not null)
             fields.Add(bind.Description);
 
-        // A mouse bind has no argument field. Its action carries the argument, as in resizewindow 1.
         if (bind.Flags.HasFlag(BindFlag.Mouse) && bind.Arguments.Length > 0)
         {
             fields.Add(bind.Dispatcher + " " + bind.Arguments);
@@ -23,7 +21,6 @@ public static class BindText
                 fields.Add(bind.Arguments);
         }
 
-        // A # starts a comment in the config, and ## is a literal one.
         return keyword + " = " + string.Join(", ", fields).Replace("#", "##", StringComparison.Ordinal);
     }
 

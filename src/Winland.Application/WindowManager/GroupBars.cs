@@ -1,9 +1,7 @@
 namespace Winland.Application;
 
-// The tab bar over each shown Group, and the border colors of grouped windows.
 public sealed partial class WindowManager
 {
-    /// <summary>The bars of the Groups shown now. A tiled Group's bar takes the top of its tile; a floating Group's sits above it.</summary>
     private List<GroupBar> GroupBars(State snapshot)
     {
         var bars = new List<GroupBar>();
@@ -21,7 +19,6 @@ public sealed partial class WindowManager
 
             var scaled = style.ScaledBy(MonitorById(desk.Monitor)?.Arranged.Scale ?? 1, _textScale);
 
-            // An empty font_family is Windows' own interface font.
             scaled = scaled with { FontFamily = FontNames.Windows(scaled.FontFamily.Length == 0 ? "Sans" : scaled.FontFamily) };
             var showing = desk.Showing();
             foreach (var group in desk.Groups)
@@ -53,7 +50,6 @@ public sealed partial class WindowManager
         return MarkDrop(bars);
     }
 
-    // While a drag holds a window over a tab bar it may join, that bar marks the place the window would join.
     private List<GroupBar> MarkDrop(List<GroupBar> bars)
     {
         if (HeldForDrop() is not (WindowId window, bool wasTiled, Point pointer)
@@ -69,7 +65,6 @@ public sealed partial class WindowManager
         return bars;
     }
 
-    /// <summary>Moves a tiled Group's shown member below its bar.</summary>
     private static IReadOnlyList<Placement> BelowBars(IReadOnlyList<Placement> placements, State snapshot, List<GroupBar> bars)
     {
         if (bars.Count == 0 || placements.Count == 0)
@@ -82,7 +77,6 @@ public sealed partial class WindowManager
         var floating = new HashSet<ClientId>();
         foreach (var client in snapshot.Clients)
         {
-            // A maximized Group member keeps room for its bar even while it floats.
             if (client.Floating && client.Fullscreen != FullscreenMode.Maximized)
                 floating.Add(client.Id);
         }

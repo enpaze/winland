@@ -70,8 +70,6 @@ internal sealed partial class ScrollingLayout
         if (cell.Column is not Column column)
             return;
 
-        // A column that goes away at the end, or left of the view, takes its width off the camera, so the columns in
-        // view stay where they are.
         var alone = column.Cells.Count <= 1;
         var last = _columns.Count > 0 && ReferenceEquals(_columns[^1], column);
         if (alone && (last || EndOf(column) <= _offset))
@@ -160,7 +158,6 @@ internal sealed partial class ScrollingLayout
         }
     }
 
-    // A tile keeps its border inside the aspect padding.
     private Rectangle CellBox(ClientId id, double x, double y, double width, double height)
     {
         var border = _layoutOptions.BorderFor(id);

@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>Builds the Outcome a step returns: placements, decorations, and the windows to show and hide.</summary>
 public sealed partial class WindowManager
 {
     private Outcome Decorate(Outcome outcome, State before)
@@ -54,7 +53,6 @@ public sealed partial class WindowManager
 
         var change = StateChange.Between(before, outcome.State);
 
-        // Bars are added here, once per finished Outcome, so every placement passes below them exactly once.
         var bars = GroupBars(outcome.State);
         outcome = Animate(
             outcome with
@@ -73,7 +71,6 @@ public sealed partial class WindowManager
         };
     }
 
-    // A window that slides or fades out of sight keeps its border until its motion hides it, so the border goes with it.
     private static Outcome KeepLeavingRings(Outcome outcome, Dictionary<WindowId, BorderRing> leaving)
     {
         if (leaving.Count == 0 || !outcome.Motions.Any(motion => motion.End == MotionEnd.Hide))
@@ -93,8 +90,6 @@ public sealed partial class WindowManager
         };
     }
 
-    // A hidden Group member takes the frame of the shown member whenever that one is placed, as in the pinned
-    // release, so it is already in place when the Group shows it. A hidden window stays hidden when it is moved.
     private IReadOnlyList<Placement> WithHiddenMembers(IReadOnlyList<Placement> placements)
     {
         List<Placement>? added = null;
@@ -151,8 +146,6 @@ public sealed partial class WindowManager
         };
     }
 
-    // A Layout that moved its tiles by itself, as scrolling does when focus scrolls its strip, has its placements sent with
-    // the outcome, over any older ones for the same Clients.
     private IReadOnlyList<Placement> WithMoved(IReadOnlyList<Placement> placements)
     {
         List<Placement>? merged = null;
@@ -298,7 +291,6 @@ public sealed partial class WindowManager
         };
     }
 
-    // The allowedOverFullscreen flag and whether a covering Client keeps the window under it, as the last sync left them.
     private State WithHiding(State state)
     {
         var clients = new Client[state.Clients.Count];
@@ -328,8 +320,6 @@ public sealed partial class WindowManager
         WindowId? focus = null,
         bool focusRevealed = false)
     {
-        // A w[] workspace rule counts the Clients, so a Client that opens, closes, floats or moves can match another
-        // rule. Winland reads its rules again whenever a window changes its workspace's layout.
         placements = Restamp(desk, placements);
         var showList = new List<WindowId>(show ?? []);
         var hideList = new List<WindowId>(hide ?? []);
@@ -402,8 +392,6 @@ public sealed partial class WindowManager
         }
     }
 
-    // The one rule for a hidden Client: it waits behind its Group's shown member, or its Workspace is not shown and it is
-    // not Pinned there. A Client the Layout covers on a shown Workspace is hidden by Covered, not by this.
     private bool Concealed(LiveWorkspace desk, Client client) =>
         desk.IsWaiting(client.Window) || (!_workspaces.Shown.IsShown(desk.Id) && !StaysVisible(desk, client.Window, client.Minimized));
 
@@ -458,8 +446,6 @@ public sealed partial class WindowManager
         return windows.ToArray();
     }
 
-    // The border Winland draws outside a Client: its own border size, its colors, and corners that follow the
-    // window's. A minimized Client, and one with decorate 0, has none.
     private BorderRing? RingFor(Client client, bool active, CornerChoice shape, byte alpha)
     {
         if (client.Minimized || _props.Own(client.Window, WindowProp.Decorate) == false || _workspaces.Find(client.Workspace) is not LiveWorkspace desk)

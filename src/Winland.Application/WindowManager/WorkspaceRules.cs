@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>Creating Workspaces, with the options their <c>workspace</c> rules give them.</summary>
 public sealed partial class WindowManager
 {
     private LiveWorkspace WorkspaceFor(WorkspaceId id, MonitorId? monitor = null)
@@ -21,7 +20,6 @@ public sealed partial class WindowManager
         _workspaces.Add(desk);
         Stamp(desk);
 
-        // A rule that matches this number picks the Layout once the Workspace exists.
         MatchLayout(desk);
         layout = desk.Layout;
         var screen = MonitorById(desk.Monitor);
@@ -78,7 +76,6 @@ public sealed partial class WindowManager
             scrolling.OtherMonitors = [.. _monitors.Where(screen => screen.Arranged.Enabled && screen.Id != desk.Monitor).Select(screen => screen.Bounds)];
     }
 
-    // A persistent rule keeps a normal Workspace. A special workspace is never kept.
     private static bool PersistentBy(LiveWorkspace desk, WorkspaceRule? rule) =>
         rule?.Persistent == true && !desk.Id.IsSpecial;
 

@@ -41,6 +41,7 @@ A keyboard-driven tiling window manager for Windows 11. It manages windows on to
 
 - Option and Dispatcher names are Winland's, documented in `docs/behavior.md` (ADR 0002). An unknown keyword warns and is skipped.
 - Don't add a file catalog or a narration of control flow to the docs.
+- Write no code comments. `scripts/check.ps1` fails on any comment except a directive a tool reads.
 
 ### Running a build on this computer
 

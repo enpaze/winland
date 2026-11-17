@@ -1,6 +1,5 @@
 namespace Winland.Daemon;
 
-/// <summary>Reads the config file, and every file it sources, into a document.</summary>
 static class ConfigFile
 {
     public static ConfigDocument Read(string path)
@@ -14,13 +13,8 @@ static class ConfigFile
         return ConfigParser.Parse(text, source, KeyboardLayout.Active(), full, WindowManager.DispatcherNames);
     }
 
-    /// <summary>
-    /// <c>winland check</c>: reads <paramref name="path"/> as a start does and writes each warning. 0 when there are
-    /// none, and 1 for a warning or a config that does not read. It writes no file and runs nothing.
-    /// </summary>
     public static int Check(string path, TextWriter error)
     {
-        // A path Windows cannot name, such as one with a null character, fails the check as a file that does not read.
         try
         {
             _ = Path.GetFullPath(path);
@@ -46,14 +40,12 @@ static class ConfigFile
         return document.Warnings.Count == 0 ? 0 : 1;
     }
 
-    /// <summary>Each warning as <c>file:line: message</c>, where the file is <paramref name="path"/> for a line of the config itself.</summary>
     public static void WriteWarnings(IEnumerable<ConfigWarning> warnings, string path, TextWriter error)
     {
         foreach (var warning in warnings)
             error.WriteLine($"{warning.Source ?? path}:{warning.Line}: {warning.Message}");
     }
 
-    /// <summary>A reload's read. A file that is gone or does not read keeps the config in force, and the warning says why.</summary>
     public static ConfigRead TryRead(string path)
     {
         try

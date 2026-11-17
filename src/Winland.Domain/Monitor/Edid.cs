@@ -2,11 +2,6 @@ using System.Globalization;
 
 namespace Winland.Domain;
 
-/// <summary>
-/// Make, model and serial from an EDID block. The model is the monitor-name descriptor and the serial is
-/// the serial-number descriptor. With no descriptor, the model is the product code and the serial is the
-/// binary serial, each written as hex. A zero product code or binary serial is empty.
-/// </summary>
 public readonly record struct Edid(string Make, string Model, string Serial)
 {
     public static Edid Parse(ReadOnlySpan<byte> bytes)
@@ -65,7 +60,6 @@ public readonly record struct Edid(string Make, string Model, string Serial)
         return new string(letters);
     }
 
-    // A descriptor's text runs from byte 5 and stops at a newline or a zero. The rest is spaces.
     private static string Text(ReadOnlySpan<byte> descriptor)
     {
         Span<char> chars = stackalloc char[13];

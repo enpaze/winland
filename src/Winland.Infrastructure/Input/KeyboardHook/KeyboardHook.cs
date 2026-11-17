@@ -10,19 +10,14 @@ namespace Winland.Infrastructure;
 public sealed partial class KeyboardHook : IDisposable
 {
 
-    // Marks events Winland injects, so its own hook lets them through untouched.
     internal const nuint InjectedTag = 0x574C4E44;
 
-    // An unassigned virtual key. Pressed under Super or Alt, it makes the shell treat the
-    // modifier as part of a chord, so its release does not open Start or a menu bar.
     internal const ushort MaskKey = 0xE8;
 
-    // Long enough for a held key to start repeating, so a held key is never taken as stale.
     private const int SweepDelayMs = 1500;
     private const int WatchPeriodMs = 2000;
     private const int UnseenInputMs = 1000;
 
-    // Input this much newer than the last the hook saw means the hook may have missed a key.
     private const int CurrentSlackMs = 100;
 
     private static readonly (string Name, ushort Vk)[] Modifiers =
@@ -33,9 +28,6 @@ public sealed partial class KeyboardHook : IDisposable
         ("Shift_L", 0xA0), ("Shift_R", 0xA1),
     ];
 
-    // The modifier keys the user physically holds, one bit per entry of Modifiers, as the hook saw
-    // them. Kept by virtual key rather than by bind name, so AltGr and the Left Ctrl Windows sends
-    // with it count too. Only the hook thread writes it.
     private static int _held;
 
     private readonly WindowManager _core;
@@ -43,8 +35,6 @@ public sealed partial class KeyboardHook : IDisposable
     private readonly BindSession _session;
     private readonly HOOKPROC _callback;
     private readonly WINEVENTPROC _desktopCallback;
-    // The callback must return before any dispatcher work, so it only posts here. Moves that pile
-    // up while the worker is busy collapse into the newest, so they never delay a key bind.
     private readonly InputQueue<Queued> _queued = new(Replaces, Join);
 
     private readonly object _timerGate = new();
@@ -92,7 +82,6 @@ public sealed partial class KeyboardHook : IDisposable
             return;
 
         _hookThread = PInvoke.GetCurrentThreadId();
-        // A bind waits on this thread. Under a build or a game it keeps ahead of the background work.
         _worker = new Thread(Pump)
         {
             IsBackground = true,
@@ -162,12 +151,9 @@ public sealed partial class KeyboardHook : IDisposable
             _ = PInvoke.UnhookWindowsHookEx(_hook);
             _hook = default;
 
-            // Runs on the hook thread after the last event, so the session is current. A key
-            // held since before the hook started has had no time to repeat, so it is left alone.
             if (Environment.TickCount64 - _startedAt >= SweepDelayMs)
                 ReleaseStale();
 
-            // Nothing updates it once the hook is gone.
             Volatile.Write(ref _held, 0);
         }
 
@@ -175,7 +161,6 @@ public sealed partial class KeyboardHook : IDisposable
         StopWorker();
     }
 
-    /// <summary>Handles a thread message this hook posted. Call on the thread that started it.</summary>
     internal bool Service(uint message)
     {
         switch (message)
@@ -193,7 +178,6 @@ public sealed partial class KeyboardHook : IDisposable
         }
     }
 
-    /// <summary>The input language changed. The layout is read again on the next key.</summary>
     internal void ForgetLayout()
     {
         _layoutsStale = true;
@@ -202,13 +186,8 @@ public sealed partial class KeyboardHook : IDisposable
 
     private volatile bool _layoutsStale;
 
-    /// <summary>
-    /// True when input arrived that no hook saw. Windows removes a low-level hook without
-    /// notice when its callback is too slow, so this is the only sign that it is gone.
-    /// </summary>
     internal bool Lost()
     {
-        // A touchpad gesture with no cursor movement is input no hook sees, and reinstalling would drop a drag.
         if (_disposed || _hook.IsNull || _session.Inhibited || TouchpadFingers.Touched(Environment.TickCount64))
             return false;
 
@@ -243,8 +222,6 @@ public sealed partial class KeyboardHook : IDisposable
 
     internal void Saw() => Volatile.Write(ref _lastSeen, Environment.TickCount);
 
-    // The system drops this hook if the callback is slow. Decide from the published
-    // table and return; a worker runs the dispatchers under the core lock.
     private unsafe LRESULT OnKeyboard(int code, WPARAM wParam, LPARAM lParam)
     {
         if (code < 0 || _disposed)
@@ -270,8 +247,6 @@ public sealed partial class KeyboardHook : IDisposable
             if (KeyNames.PassesThrough(vk))
                 return Next(code, wParam, lParam);
 
-            // A release keeps the name its press had, though a bind may have focused a window with another layout
-            // in between, so the bind session finds the key it holds.
             var name = KeyName(vk, extended, up, () => KeyNames.Name(vk, scan, extended, ActiveLayout()));
             var xkb = KeyNames.XkbCode(vk, scan, extended);
             if (!up && !info.flags.HasFlag(KBDLLHOOKSTRUCT_FLAGS.LLKHF_INJECTED) && !IsModifier(vk))
@@ -289,12 +264,10 @@ public sealed partial class KeyboardHook : IDisposable
         return Next(code, wParam, lParam);
     }
 
-    /// <summary>One key edge from the low-level hook. <see cref="Xkb"/> is the code a bind matches.</summary>
     internal readonly record struct KeyEdge(int VirtualKey, int Scan, bool Extended, bool Up, string Name, int Xkb);
 
     private Point CursorPoint() => PInvoke.GetCursorPos(out var point) ? new Point(point.X, point.Y) : _session.Pointer;
 
-    // The drag of a mouse dispatcher a key's bind ran, if any.
     private static BindDispatch? KeyDrag(BindDecision decision)
     {
         foreach (var dispatch in decision.Dispatches)
@@ -312,7 +285,6 @@ public sealed partial class KeyboardHook : IDisposable
         {
             return key switch
             {
-                // GetAsyncKeyState reads the physical buttons, which may be swapped.
                 "mouse:272" or "mouse:273" => Down(0x01) || Down(0x02),
                 "mouse:274" => Down(0x04),
                 "mouse:275" => Down(0x05),
@@ -327,7 +299,6 @@ public sealed partial class KeyboardHook : IDisposable
         return _layout.TryVirtualKey(key, out vk) && Down(vk);
     }
 
-    // The names keys were pressed with, by virtual key, the extended ones apart. The hook thread alone reads them.
     private readonly string?[] _pressedNames = new string?[512];
 
     internal string KeyName(int vk, bool extended, bool up, Func<string> name)
@@ -346,10 +317,8 @@ public sealed partial class KeyboardHook : IDisposable
     private static bool IsModifier(int vk) =>
         vk is 0x10 or 0x11 or 0x12 or 0x14 or 0x5B or 0x5C or 0x90 or >= 0xA0 and <= 0xA5;
 
-    // Each layout read so far, by its handle. Switching between programs with different layouts reads none again.
     private readonly Dictionary<nint, KeyLayout> _layouts = [];
 
-    // The foreground thread's layout. Read once per handle.
     private KeyLayout ActiveLayout()
     {
         nint handle;

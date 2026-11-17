@@ -71,7 +71,6 @@ public class AppWindowTests
         Assert.True(PInvoke.IsWindowVisible(window.Handle));
     }
 
-    // Superwhisper's transparent indicator is topmost, but is not WS_EX_LAYERED until Winland animates it.
     [DesktopFact]
     public void ATransparentTopmostIndicatorIsLeftUnmanaged()
     {
@@ -92,7 +91,6 @@ public class AppWindowTests
         Assert.False(((WINDOW_EX_STYLE)PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
             .HasFlag(WINDOW_EX_STYLE.WS_EX_LAYERED));
 
-        // A newly created hidden indicator must not be held transparent for an opening animation either.
         PInvoke.ShowWindow(window.Handle, SHOW_WINDOW_CMD.SW_HIDE);
         adapter.Notice(PInvoke.EVENT_OBJECT_CREATE, (nint)window.Handle);
         Assert.False(((WINDOW_EX_STYLE)PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
@@ -137,7 +135,6 @@ public class AppWindowTests
         Assert.True(PumpUntil(() => PInvoke.IsWindowVisible(window.Handle)));
     }
 
-    // A tool window is adopted when it has a title and a rule asks for it. One without a title, such as a menu, never is.
     [DesktopFact]
     public void AShownToolWindowWithATitleIsAdoptedByARule() => ShowToolWindow("Winland tool window probe", adopted: true);
 
@@ -156,8 +153,6 @@ public class AppWindowTests
         Assert.Equal(adopted, core.Manages(window.Id));
     }
 
-    // The test thread owns the probe windows and pumps no messages. Once it has not for 5 seconds, Windows calls its windows
-    // hung, and Winland posts a show to a hung window instead of waiting for it. The wait pumps, as the window's program would.
     private static bool PumpUntil(Func<bool> condition) =>
         SpinWait.SpinUntil(() =>
         {

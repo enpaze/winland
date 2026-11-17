@@ -1,12 +1,7 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// Visible minimum and maximum from the window's outer track sizes.
-/// The layout sizes the visible frame. The outer track size includes the invisible frame.
-/// </summary>
 public static class TrackLimits
 {
-    // An outer maximum below this on one axis is no limit on that axis.
     private const int UnlimitedBelow = 5;
 
     public static (Size? Min, Size? Max) Visible(Size? outerMin, Size? outerMax, FrameInsets insets) =>

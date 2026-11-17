@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>One Option of a record of options: its name, its value type, and the field of the record it sets.</summary>
 internal sealed class Option<TOptions> : IOption
     where TOptions : class
 {
@@ -30,14 +29,11 @@ internal sealed class Option<TOptions> : IOption
 
     public bool Reads(string text) => _reads(text);
 
-    /// <summary><paramref name="options"/> with this Option set to <paramref name="text"/>, or null when the value does not read.</summary>
     public TOptions? Apply(TOptions options, string text) => _apply(options, text);
 
-    /// <summary>The value's type and the value in <paramref name="options"/>, as <c>"int":4</c>.</summary>
     public string Reply(TOptions options) => _reply(options);
 }
 
-/// <summary>An Option the config may set: its name, and whether a value reads as its type.</summary>
 internal interface IOption
 {
     string Name { get; }

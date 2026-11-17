@@ -1,9 +1,7 @@
 namespace Winland.Application;
 
-/// <summary>The <c>pin</c> dispatcher: a pinned Client shows on every Workspace of its Monitor.</summary>
 public sealed partial class WindowManager
 {
-    // Only a floating Client is pinned: making a Client tiled takes its pin, and the one a fullscreen mode holds for it.
     private readonly PinnedClients _pins = new();
 
     private enum PinAction
@@ -140,7 +138,6 @@ public sealed partial class WindowManager
     private bool StaysVisible(LiveWorkspace desk, WindowId window, bool minimized) =>
         _pins.StaysVisible(window, minimized, _workspaces.Shown.ShowsAWorkspace(desk.Monitor));
 
-    // No word toggles the pin. Any other word is not an action.
     private static PinAction? PinRequest(string arguments) => arguments.Trim() switch
     {
         "" or "toggle" => PinAction.Toggle,

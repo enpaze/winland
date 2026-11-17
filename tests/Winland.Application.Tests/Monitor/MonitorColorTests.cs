@@ -2,7 +2,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>The color fields of the Monitors reply, and the Monitor keyword that cannot change them.</summary>
 public class MonitorColorTests
 {
     [Fact]
@@ -14,7 +13,6 @@ public class MonitorColorTests
         ExpectFields(desk, "colorManagementPreset", "sdrBrightness", "sdrSaturation");
     }
 
-    // The reference checks that its monitors reply names these fields.
     private static void ExpectFields(TestDesktop desk, params string[] fields)
     {
         using var monitors = JsonDocument.Parse(desk.Send("j/monitors"));

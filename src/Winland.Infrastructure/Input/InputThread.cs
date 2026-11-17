@@ -4,14 +4,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// The thread the low-level keyboard and mouse hooks run on. Windows calls a low-level hook on the
-/// thread that installed it, and holds up all input until it returns; a callback that is too slow
-/// is removed without notice. This thread only pumps messages: the callbacks decide from the
-/// published bind table whether to swallow and queue the rest for the bind worker, and the hooks'
-/// timers post here. Window events stay on the main thread, so a hung window, a slow
-/// <c>SetWindowPos</c> or a reload holding the core lock never delays the keyboard or the mouse.
-/// </summary>
 internal sealed class InputThread : IDisposable
 {
     private const uint QuitMessage = 0x0012;
@@ -26,9 +18,6 @@ internal sealed class InputThread : IDisposable
     private uint _id;
     private bool _disposed;
 
-    /// <param name="start">Installs the hooks. Runs on the input thread.</param>
-    /// <param name="service">Handles a thread message posted to the input thread. True when handled.</param>
-    /// <param name="stop">Removes the hooks. Runs on the input thread after its last message.</param>
     internal InputThread(Action start, Func<uint, bool> service, Action stop)
     {
         ArgumentNullException.ThrowIfNull(start);
@@ -41,7 +30,6 @@ internal sealed class InputThread : IDisposable
 
     internal uint Id => _id;
 
-    /// <summary>Starts the thread and waits until <c>start</c> has run there. Throws what it threw.</summary>
     internal void Start()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -52,7 +40,6 @@ internal sealed class InputThread : IDisposable
         {
             IsBackground = true,
             Name = "Winland input",
-            // Nothing slow runs here, and input waits on it.
             Priority = ThreadPriority.Highest,
         };
         _thread.Start();
@@ -85,7 +72,6 @@ internal sealed class InputThread : IDisposable
     {
         _id = PInvoke.GetCurrentThreadId();
 
-        // Gives the thread its message queue before anything can post to it.
         _ = PInvoke.PeekMessage(out _, default, 0, 0, PEEK_MESSAGE_REMOVE_TYPE.PM_NOREMOVE);
         try
         {

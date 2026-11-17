@@ -1,18 +1,12 @@
 namespace Winland.Infrastructure.Tests;
 
-// The watch tests wait out real debounces, so each one is a class of its own and xUnit runs them side by side.
-// They share the helpers below.
 public abstract class ConfigWatcherFacts
 {
-    // Long enough that the several events of one rename always fall inside one debounce,
-    // even on a loaded machine, so "once" does not depend on how fast events arrive.
     protected static readonly TimeSpan Debounce = TimeSpan.FromMilliseconds(500);
 
     protected static bool WaitUntil(Func<bool> condition) =>
         SpinWait.SpinUntil(condition, TimeSpan.FromSeconds(30));
 
-    // The count once it has stayed the same for three debounce periods, so a late
-    // reload that a short fixed sleep would miss is counted.
     protected static int Settled(ref int count)
     {
         var quiet = Debounce * 3;
@@ -80,7 +74,6 @@ public class ConfigWatcherTests : ConfigWatcherFacts
             CommandProtocol.FormatStream(reply.Effect.Events, reply.Effect.State));
     }
 
-    // A save seen once the loop has stopped is not read, so the exit does not start the config's programs again.
     [Fact]
     public void ASaveWithNoLoopRunningIsNotRead()
     {
@@ -115,7 +108,6 @@ public class ConfigWatcherRenameTests : ConfigWatcherFacts
         using var watcher = new ConfigWatcher(() => Interlocked.Increment(ref count), Debounce);
         watcher.Watch([config]);
 
-        // A second watcher on the unrelated file tells when its change has been seen and debounced.
         var seen = 0;
         using (var probe = new ConfigWatcher(() => Interlocked.Increment(ref seen), Debounce))
         {
@@ -160,8 +152,6 @@ public class ConfigWatcherSourceTests : ConfigWatcherFacts
 
 public class ConfigWatcherEditTests : ConfigWatcherFacts
 {
-    // An editor that saves in place, one that deletes and writes again, and a config that appears
-    // where there was none each reload.
     [Fact]
     public void AWriteADeleteAndANewFileEachReload()
     {
@@ -188,7 +178,6 @@ public class ConfigWatcherEditTests : ConfigWatcherFacts
 
 public class ConfigWatcherRewatchTests : ConfigWatcherFacts
 {
-    // A reload can drop a source. A change to it then reloads nothing, and the new list is watched.
     [Fact]
     public void WatchingAgainReplacesTheWatchedFiles()
     {

@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// One <c>workspace</c> rule, for the Workspace whose number it names. Unset fields stay null and do not override the
-/// general config.
-/// </summary>
 public sealed record WorkspaceRule
 {
     public static IReadOnlyList<WorkspaceRule> None { get; } = [];
@@ -20,7 +16,6 @@ public sealed record WorkspaceRule
 
     public EdgeInsets? GapsOut { get; init; }
 
-    /// <summary>The Layout this Workspace uses in place of <c>general:layout</c>.</summary>
     public string? Layout { get; init; }
 
     internal WorkspaceRule Merge(WorkspaceRule other)

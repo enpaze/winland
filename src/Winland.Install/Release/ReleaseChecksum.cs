@@ -2,10 +2,6 @@ using System.Security.Cryptography;
 
 namespace Winland.Install;
 
-/// <summary>
-/// The <c>SHA256SUMS</c> file published beside the zip. A line is the hash, then spaces, then the file name,
-/// which is how the release writes it.
-/// </summary>
 public static class ReleaseChecksum
 {
     public static bool Matches(ReadOnlySpan<byte> archive, string sums)

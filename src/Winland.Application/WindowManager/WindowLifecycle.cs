@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>A window's life as a Client: it appears, changes title or class, minimizes, restores and closes.</summary>
 public sealed partial class WindowManager
 {
     private static IReadOnlyList<WindowRule> JoinRules(IReadOnlyList<WindowRule> rules, IReadOnlyList<WindowRule> followed)
@@ -33,8 +32,6 @@ public sealed partial class WindowManager
         return desk.ClientOf(active) is { Minimized: false } ? active : null;
     }
 
-    // A new Client may take focus. Appearing again, as it does when Winland shows it after hiding it,
-    // leaves the focus where it is.
     private void Note(Input input, bool wasClient)
     {
         switch (input)
@@ -67,8 +64,6 @@ public sealed partial class WindowManager
         if (processId > 0)
             NoteLineage(processId, appeared.AncestorProcessIds);
 
-        // A Client shown again changes nothing, and uses up no rules of a started program. One that showed itself
-        // while Winland keeps it hidden, on a hidden Workspace, waiting in a Group or scrolled out of view, is hidden again.
         if (Find(appeared.Window) is { } existing)
         {
             var home = WorkspaceContaining(appeared.Window)!;
@@ -96,11 +91,8 @@ public sealed partial class WindowManager
         var monitor = RestoredMonitor(restored, screen);
         var active = _workspaces.Shown.ActiveOn(monitor);
         var current = _workspaces.Shown.SpecialOn(monitor) ?? active;
-        // A window rule's Workspace number is the focused Monitor's Workspace of that number.
         var rule = WorkspaceAddress.ParseRule(decision.Workspace, Context());
 
-        // A program Winland started opens its window, silently, on the Workspace it was started on. A workspace rule
-        // still wins, and a window that comes back after a restart keeps its own.
         if (restored is null && processId > 0)
         {
             if (_initialWorkspaces.TryTake(processId, Clock(), out var origin) && rule.Id is null && origin != current)
@@ -114,7 +106,6 @@ public sealed partial class WindowManager
         ForgetRestored(appeared.Window);
         var ruledHere = restored is null && rule.Id is WorkspaceId ruled && !ruled.IsSpecial;
         var desk = WorkspaceFor(target, ruledHere ? null : target.IsSpecial ? FocusedId() : monitor);
-        // WorkspaceFor may place the number on another Monitor. The Client keeps that Workspace.
         target = desk.Id;
         if (restored is { Hidden: false } && !desk.Id.IsSpecial)
             _restoredShown.Add(desk.Id);
@@ -163,14 +154,11 @@ public sealed partial class WindowManager
         RememberFocus(appeared.Window, decision);
         NoteOwner(appeared);
         Stack(appeared.Window);
-        // A window owned by a pinned Client is pinned too, as Winland pins a child of a pinned parent. A
-        // tiled window is never pinned.
         _pins.PinAtOpen(appeared.Window, decision.Floating, decision.Pin, appeared.Owner);
         var restore = _awaitingMapFocus.Contains(appeared.Window) ? Kept() : null;
         if (restore == appeared.Window)
             restore = null;
 
-        // A workspace rule that opens the window on a hidden Workspace follows it. A silent one does not.
         if (restored is null && rule.Id is not null && !rule.Silent && !_workspaces.Shown.IsShown(target) && !_awaitingMapFocus.Contains(appeared.Window))
         {
             if (MonitorById(desk.Monitor) is { } owner)
@@ -202,7 +190,6 @@ public sealed partial class WindowManager
         if (desk is null)
             return View([]);
 
-        // The window's own limits changed. A min_size or max_size rule still wins over them.
         var rule = _props.Sizes(changed.Window)?.Rule ?? default;
         var tiled = RememberSizes(changed.Window, rule, changed.MinSize, changed.MaxSize);
         var floating = rule.Floating(changed.MinSize, changed.MaxSize);
@@ -210,7 +197,6 @@ public sealed partial class WindowManager
         return _workspaces.Shown.IsShown(desk.Id) ? View(placements) : View([]);
     }
 
-    // The size rules and the window's own limits are kept, so its limits can be worked out again when the window changes.
     private TiledLimits RememberSizes(WindowId window, SizeRule rule, Size? ownMin, Size? ownMax)
     {
         _props.SetSizes(window, rule, ownMin, ownMax);
@@ -273,8 +259,6 @@ public sealed partial class WindowManager
         {
             next = FocusAfter(desk, floating, hadBounds ? bounds : default, hadBounds);
 
-            // Under an open special workspace a candidate elsewhere is dropped, and the special workspace's Client
-            // takes the focus.
             if (_workspaces.Shown.SpecialOn(monitor) is WorkspaceId open && open != desk.Id && _workspaces.Find(open) is LiveWorkspace shownSpecial
                 && (next is not WindowId candidate || WorkspaceContaining(candidate)?.Id != open)
                 && _focus.Remembered(shownSpecial) is WindowId onSpecial)
@@ -328,8 +312,6 @@ public sealed partial class WindowManager
         return Present(desk, covered, placements);
     }
 
-    // A window changed its class. The class it had when it appeared stays, for initialClass. Its Client takes the new
-    // class, and the rules are matched against it again. The events follow from the new State.
     private Outcome Reclass(WindowClassChanged reclassed)
     {
         if (WorkspaceContaining(reclassed.Window) is not { } desk || desk.ClientOf(reclassed.Window) is not { } client || client.Class == reclassed.Class)
@@ -337,13 +319,10 @@ public sealed partial class WindowManager
 
         desk.Reclass(reclassed.Window, reclassed.Class);
 
-        // A rule that matches the class may now match or stop matching, so its rules are read again.
         _renamed.Add(reclassed.Window);
         return View([]);
     }
 
-    // A window changed its title. The title it had when it appeared stays, for initialTitle. Its Client takes the new
-    // title, the rules are matched against it again, and the groupbar and the events follow from the new State.
     private Outcome Retitle(WindowTitleChanged retitled)
     {
         if (WorkspaceContaining(retitled.Window) is not { } desk || desk.ClientOf(retitled.Window) is not { } client || client.Title == retitled.Title)
@@ -351,8 +330,6 @@ public sealed partial class WindowManager
 
         desk.Retitle(retitled.Window, retitled.Title);
 
-        // A rule that matches the title may now match or stop matching, so its rules are read again. With no rule
-        // that reads a title, nothing can change.
         if (_config.TitleRules || _props.Subject(retitled.Window)?.Followed.Any(rule => rule.TitlePattern is not null) == true)
             _renamed.Add(retitled.Window);
         return View([]);

@@ -11,7 +11,6 @@ public class OutcomeThenTests
     {
         var properties = typeof(Outcome).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-        // A new property changes this count. Give it a rule in Outcome.Then, then update the count.
         Assert.Equal(27, properties.Length);
     }
 

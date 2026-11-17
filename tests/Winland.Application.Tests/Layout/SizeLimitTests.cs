@@ -56,7 +56,6 @@ public class SizeLimitTests
 
         var floated = core.Handle(new WindowAppeared(new WindowId(2), Area)
         {
-            // The target is the full tile being split, so a width of 1000 still floats on a 1920 tile.
             Traits = WindowTraits.Normal with { MaxSize = new Size(1000, 4000) },
             Bounds = bounds,
         });
@@ -142,14 +141,10 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MinSize = new Size(1200, 100) },
         });
 
-        // The split stays where it would be. Each window grows to its minimum around the middle of its
-        // tile and is held inside the work area, so they overlap rather than leave the Monitor.
         Assert.Equal(new Rectangle(0, 0, 1200, 1080), BoundsOf(outcome, 1));
         Assert.Equal(new Rectangle(720, 0, 1200, 1080), BoundsOf(outcome, 2));
     }
 
-    // The neighbour gives up all but the smallest share a split leaves, so the split shrinks it gradually
-    // as the minimum grows, and the window covers only the rest.
     [Fact]
     public void AMinimumAlmostAsWideAsTheMonitorLeavesTheNeighbourTheSmallestShare()
     {

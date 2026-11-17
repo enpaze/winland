@@ -6,8 +6,6 @@ namespace Winland.Infrastructure;
 
 internal static class SessionRecovery
 {
-    // Show a visible Client before Recover reads it. A session switch can leave
-    // it hidden, and a hidden window is not adopted again.
     internal static void Restore(WindowAdapter windows, RecoverySnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(windows);

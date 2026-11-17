@@ -1,18 +1,9 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// The Client next to a rectangle in a direction: one that touches or slightly overlaps that side and
-/// shares more than a pixel of its length with it. Among those, the one focused most recently wins. Dwindle moves
-/// focus and windows this way, and so does a move onto the next Monitor. A floating Client looks by angle instead.
-/// </summary>
 internal static class DirectionalNeighbor
 {
     public delegate bool BoxOf(WindowId window, out Rectangle box);
 
-    /// <summary>
-    /// <paramref name="recency"/> ranks a window by how recently it was focused, higher being more recent. The
-    /// most recent candidate wins, and the first one wins a tie.
-    /// </summary>
     public static WindowId? Find(
         IReadOnlyList<Client> clients,
         Rectangle origin,
@@ -46,11 +37,6 @@ internal static class DirectionalNeighbor
         return best;
     }
 
-    /// <summary>
-    /// The floating or covering Client a floating Client looks at in a direction. Each candidate's center must lie within
-    /// 90 degrees of the direction. One within 54 degrees beats a wider one, and among those the nearest wins.
-    /// Before any is that close, the smallest angle wins. A tile is never the answer.
-    /// </summary>
     public static WindowId? FindByAngle(IReadOnlyList<Client> clients, Rectangle origin, Side side, WindowId except, BoxOf boxOf)
     {
         ArgumentNullException.ThrowIfNull(clients);
@@ -78,7 +64,6 @@ internal static class DirectionalNeighbor
             var y = Middle(box.Y, box.Height) - Middle(origin.Y, origin.Height);
             var distance = Math.Sqrt((x * x) + (y * y));
 
-            // A window centred on the origin lies in no direction.
             if (distance == 0)
                 continue;
 
@@ -88,7 +73,6 @@ internal static class DirectionalNeighbor
 
             if ((bestAngle < Threshold && distance < leader && angle < Threshold) || (angle < bestAngle && bestAngle > Threshold) || leader == -1)
             {
-                // Winland keeps the distance as a whole number.
                 leader = (int)distance;
                 bestAngle = angle;
                 best = client.Window;

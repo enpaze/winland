@@ -18,7 +18,6 @@ public class MouseDragTests
         var moved = core.Handle(new PointerMoved(new Point(750, 430)));
 
         Assert.True(moved.Live);
-        // The float toggle recenters the 640x400 default, then the pointer moves it by (+50, +30).
         Assert.Equal(new Rectangle(690, 370, 640, 400), BoundsOf(moved, 1));
         Assert.True(Client(moved, 1).Floating);
     }
@@ -87,7 +86,6 @@ public class MouseDragTests
 
         var resized = core.Handle(new PointerMoved(new Point(1310, 760)));
 
-        // The recentered 640x400 float grows by the pointer delta (+40, +30).
         Assert.Equal(new Rectangle(640, 340, 680, 430), BoundsOf(resized, 1));
     }
 
@@ -178,7 +176,6 @@ public class MouseDragTests
         core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(1000, 100) });
         core.Handle(new PointerMoved(new Point(960, 1000)));
 
-        // Client 1 fills the screen while 2 is lifted. The pointer is below its center.
         var dropped = core.Handle(new PointerButtonReleased("mouse:272") { Position = new Point(960, 1000) });
 
         Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(dropped, 1));
@@ -191,7 +188,6 @@ public class MouseDragTests
         var core = FourTiles("");
         core.Handle(new PointerButtonPressed("mouse:273") { Position = new Point(1000, 600) });
 
-        // The pointer grabs 3 by its top left. Its left edge moves and its right edge, shared with 4, stays.
         var resized = core.Handle(new PointerMoved(new Point(900, 600)));
 
         Assert.Equal(new Rectangle(0, 0, 860, 1080), BoundsOf(resized, 1));
@@ -234,7 +230,6 @@ public class MouseDragTests
 
         var resized = core.Handle(new PointerMoved(new Point(1370, 740)));
 
-        // 640x400 grows to a width of 740, so the height follows at 740 * 400 / 640.
         Assert.Equal(new Rectangle(640, 340, 740, 463), BoundsOf(resized, 1));
     }
 
@@ -249,7 +244,6 @@ public class MouseDragTests
         var frame = Client(core.Handle(new Dispatch("resizewindow")), 1).Bounds;
         Press(core, "Super_L");
 
-        // One pixel past the frame's bottom right corner, on the border.
         var corner = new Point(frame.X + frame.Width, frame.Y + frame.Height);
         core.Handle(new PointerButtonPressed("mouse:273") { Position = corner });
         var resized = core.Handle(new PointerMoved(new Point(corner.X + 100, corner.Y + 10)));
@@ -381,7 +375,6 @@ public class MouseDragTests
         Press(core, "Super_L");
         core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(700, 400) });
 
-        // The pointer is still on the left Monitor. The float's middle is 260 pixels to its right, and still on the left.
         var held = core.Handle(new PointerMoved(new Point(1600, 400)));
         Assert.Equal(WorkspaceId.Initial, Client(held, 1).Workspace);
         Assert.Equal(new Rectangle(1540, 340, 640, 400), BoundsOf(held, 1));
@@ -458,7 +451,6 @@ public class MouseDragTests
         Assert.Equal([@"movewindow>>1,1,\\.\DISPLAY2", @"movewindowv2>>1,1,1,\\.\DISPLAY2"], MoveLines(crossed));
         Assert.Contains(Lines(crossed), line => line == "changefloatingmode>>1,1");
 
-        // The grab is the middle of the 1920-wide tile, so the next move still tracks the pointer.
         var followed = core.Handle(new PointerMoved(new Point(3400, 540)));
         Assert.True(Client(followed, 1).Floating);
         Assert.Equal(new Rectangle(2440, 0, 1920, 1080), BoundsOf(followed, 1));
@@ -481,8 +473,6 @@ public class MouseDragTests
         var floated = core.Handle(new Dispatch("togglefloating"));
         Place(core, 1, Client(floated, 1).Bounds with { X = 1280, Y = 300 });
         Press(core, "Super_L");
-        // The bottom right corner lies on the other Monitor, which does not own the window, so the press is on the
-        // bottom right and still on this Monitor. Growing the right edge by 700 puts the middle on the other one.
         core.Handle(new PointerButtonPressed("mouse:273") { Position = new Point(1900, 690) });
 
         var crossed = core.Handle(new PointerMoved(new Point(2600, 690)));
@@ -666,7 +656,6 @@ public class MouseDragTests
         Assert.DoesNotContain(after.Placements, placement => placement.Client == new ClientId(1));
     }
 
-    // Dwindle with 1 on the left, 2 at the top right, and 3 and 4 side by side at the bottom right.
     private static WindowManager FourTiles(string options)
     {
         var core = Flat(options + "bindm = SUPER, mouse:273, resizewindow\n");

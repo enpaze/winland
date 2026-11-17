@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>The Options one record of options declares, and the record a config's lines make of them.</summary>
 internal sealed class OptionSet<TOptions>
     where TOptions : class
 {
@@ -11,7 +10,6 @@ internal sealed class OptionSet<TOptions>
 
     public IEnumerable<Option<TOptions>> All => _byName.Values;
 
-    /// <summary><paramref name="options"/> with every line of <paramref name="document"/> that sets one of these Options, in order.</summary>
     public TOptions From(TOptions options, ConfigDocument document)
     {
         ArgumentNullException.ThrowIfNull(document);

@@ -1,6 +1,5 @@
 namespace Winland.Daemon.Tests;
 
-/// <summary><c>winland check [file]</c>: reads a config as a start would, and changes nothing.</summary>
 public sealed class CheckCommandTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "winland-check-" + Guid.NewGuid().ToString("N"));

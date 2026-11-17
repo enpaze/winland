@@ -13,8 +13,6 @@ public class BindDragTests
         Assert.Null(drag.Current);
     }
 
-    // A second drag button pressed while a drag is held starts nothing, so the first drag still ends
-    // when its own button comes up.
     [Fact]
     public void ASecondDragWhileOneIsHeldIsIgnored()
     {

@@ -12,10 +12,6 @@ internal interface IWindowFrame
     bool TryWriteStyle(WindowId window, uint style);
 }
 
-/// <summary>
-/// Mode 2 drops the window frame and puts that style back when the Client leaves fullscreen.
-/// The placement is applied as the outer rectangle, so frame insets do not pull it off the monitor.
-/// </summary>
 internal static class BorderlessStyle
 {
     internal const uint Popup = 0x80000000;
@@ -27,8 +23,6 @@ internal static class BorderlessStyle
 
     internal static uint Strip(uint style) => (style & ~Frame) | Popup;
 
-    // Strip changes only the frame and popup bits. The rest, such as whether the window is visible, disabled,
-    // minimized or maximized, is the window's own and may have changed since.
     internal static uint Restore(uint current, uint original) => (current & ~(Frame | Popup)) | (original & (Frame | Popup));
 }
 
@@ -40,8 +34,6 @@ internal sealed class BorderlessFrame
     private readonly Lock _gate = new();
     private bool _closed;
 
-    /// <param name="hung">Whether a window's program has stopped answering. Its frame is not dropped then, since the
-    /// write would wait for it.</param>
     internal BorderlessFrame(IWindowFrame frames, Func<WindowId, bool>? hung = null)
     {
         ArgumentNullException.ThrowIfNull(frames);
@@ -84,7 +76,6 @@ internal sealed class BorderlessFrame
 
     internal void Release(WindowId window) => Apply(window, false);
 
-    /// <summary>Records the original style of each Client whose frame this dropped, so a crash does not leave it frameless.</summary>
     internal RecoverySnapshot Stamp(RecoverySnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -104,7 +95,6 @@ internal sealed class BorderlessFrame
         }
     }
 
-    /// <summary>Writes back the style a previous run recorded before it dropped the frame and then died.</summary>
     internal void PutBack(WindowId window, uint style)
     {
         lock (_gate)
@@ -120,12 +110,6 @@ internal sealed class BorderlessFrame
             _frames.TryWriteStyle(window, BorderlessStyle.Restore(current, original));
     }
 
-    /// <summary>
-    /// Puts back the frame of every window this dropped it from, for the exit cleanup. No frame is dropped
-    /// after that: an outcome that arrives late would leave it dropped for good. A window whose program stopped
-    /// answering would hold up the exit, so it keeps the dropped frame, and <see cref="Stamp"/> still records it for the
-    /// next start.
-    /// </summary>
     internal void ReleaseAll()
     {
         WindowId[] windows;

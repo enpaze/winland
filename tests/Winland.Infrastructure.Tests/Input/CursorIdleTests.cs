@@ -72,7 +72,6 @@ public partial class CursorIdleTests
         Assert.False(cursor.Hidden);
     }
 
-    // Revealing on exit shows a cursor hidden both by a key and by touch.
     [Fact]
     public void RevealShowsTheCursorHoweverItWasHidden()
     {
@@ -89,7 +88,6 @@ public partial class CursorIdleTests
         Assert.Equal(1, cursor.Shows);
     }
 
-    // The daemon starts with a stand-in and swaps in the real cursor when it installs the system.
     [Fact]
     public void AnotherSurfaceTakesOverTheCursor()
     {

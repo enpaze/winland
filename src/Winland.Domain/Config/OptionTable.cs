@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>Every Option Winland reads, and where the config in force keeps its value. A line that names anything else warns.</summary>
 internal static class OptionTable
 {
     private static readonly Dictionary<string, IOption> ByName = Build(

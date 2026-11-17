@@ -1,6 +1,5 @@
 namespace Winland.Install;
 
-/// <summary>The directories one install reads and writes. They come from the process's special folders.</summary>
 public sealed record InstallLayout(
     string MachineDirectory,
     string UserDirectory,
@@ -9,10 +8,6 @@ public sealed record InstallLayout(
     string ConfigDirectory,
     string StateDirectory);
 
-/// <summary>
-/// Copies Winland into place, registers how it starts at logon, and removes that again.
-/// The elevated task only ever starts the copy under Program Files.
-/// </summary>
 public sealed class AppInstall
 {
     private readonly InstallLayout layout;
@@ -52,8 +47,6 @@ public sealed class AppInstall
         || tasks.Contains(LogonTaskDefinition.TaskName)
         || registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayName") is not null;
 
-    /// <param name="logon">False leaves out the logon task, and removes one an earlier install made.</param>
-    /// <param name="start">False leaves Winland stopped when install finishes.</param>
     public void InstallMachine(string executable, string account, string version, bool logon = true, bool start = true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(executable);
@@ -64,7 +57,6 @@ public sealed class AppInstall
         Require(plan.Files, LogonTaskDefinition.LauncherName, plan.SourceDirectory);
         ApplyStopped(plan, perUser: false);
         var installed = plan.InstalledExecutable;
-        // The task starts this copy, never the folder install was run from. That folder is one the user can write.
         if (logon)
             new LogonInstall(tasks).Install(installed, account);
         else
@@ -76,22 +68,17 @@ public sealed class AppInstall
             session.Start(installed, []);
     }
 
-    /// <param name="logon">False leaves out the Run key, and removes one an earlier install made.</param>
-    /// <param name="start">False leaves Winland stopped when install finishes.</param>
     public void InstallForUser(string executable, string version, bool logon = true, bool start = true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(executable);
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
-        // Both would start at logon and manage the same windows. Install for this PC removes the per-user copy, so
-        // the per-user install refuses rather than leave two.
         if (MachinePresent())
             throw new InvalidOperationException("Winland is already installed for this PC. Run winland uninstall first to install it for you only.");
 
         var plan = Plan(executable, layout.UserDirectory);
         ApplyStopped(plan, perUser: true);
         var installed = plan.InstalledExecutable;
-        // No scheduled task. The Run key starts this copy unelevated, and a start from the folder never asks for UAC.
         var command = Quote(installed) + " " + ManualStartElevation.OptOutArgument;
         if (logon)
             registry.SetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue, command, expandable: false);
@@ -104,11 +91,6 @@ public sealed class AppInstall
             session.Start(installed, [ManualStartElevation.OptOutArgument]);
     }
 
-    /// <summary>
-    /// Stops the running Winland, copies <paramref name="sourceExecutable"/> into <paramref name="destination"/>
-    /// by the same copy install uses, and starts that copy when Winland was running. The recorded version is
-    /// updated. The config, the logon task and the other install are left as they are.
-    /// </summary>
     public void ReplaceInstalled(string sourceExecutable, string destination, bool perUser, string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceExecutable);
@@ -127,7 +109,6 @@ public sealed class AppInstall
             session.Start(installed, perUser ? [ManualStartElevation.OptOutArgument] : []);
     }
 
-    /// <param name="machine">True when this process may change the machine install. A per-user uninstall leaves it.</param>
     public void Uninstall(bool purge, bool machine)
     {
         session.Stop();
@@ -137,8 +118,6 @@ public sealed class AppInstall
             return;
         }
 
-        // The record lives in the folder --purge deletes, so put the settings back first. A record that cannot be
-        // read still lets the rest of Winland go, and is reported once it has.
         Exception? unrestored = null;
         try
         {
@@ -160,7 +139,6 @@ public sealed class AppInstall
             throw new InvalidOperationException("Winland is uninstalled, but the Windows settings it turned off were not put back: " + unrestored.Message, unrestored);
     }
 
-    /// <summary>Called by the original, unelevated installer after the machine install succeeds.</summary>
     public void RemoveUserInstall() => RemoveUser();
 
     private sealed class NoDesktopRestore : IDesktopRestore
@@ -178,7 +156,6 @@ public sealed class AppInstall
         string Destination,
         string InstalledExecutable);
 
-    /// <summary>Install copies the folder <paramref name="executable"/> is in, as it is.</summary>
     private CopyPlan Plan(string executable, string destination)
     {
         var source = Path.GetDirectoryName(Path.GetFullPath(executable))
@@ -195,13 +172,10 @@ public sealed class AppInstall
             return;
 
         files.PrepareDirectory(plan.Destination);
-        // Keep the entry point and then the build stamp until every other file has copied successfully.
         foreach (var file in plan.Files.OrderBy(file => file.RelativePath.Equals("Winland.Domain.dll", StringComparison.OrdinalIgnoreCase) ? 2
                      : file.RelativePath.Equals(InstallLocations.ExecutableName, StringComparison.OrdinalIgnoreCase) ? 1 : 0))
             files.Copy(Path.Combine(plan.SourceDirectory, file.RelativePath), Path.Combine(plan.Destination, file.RelativePath));
 
-        // A file an older release shipped and this one does not is removed, so libraries it dropped do not pile up.
-        // One set aside because it was in use goes on its own.
         var shipped = new HashSet<string>(plan.Files.Select(file => file.RelativePath), StringComparer.OrdinalIgnoreCase);
         foreach (var file in files.List(plan.Destination))
         {

@@ -4,24 +4,15 @@ using Windows.Win32.Graphics.Dwm;
 
 namespace Winland.Infrastructure;
 
-/// <summary>Carries out an Outcome: placements, focus, z-order, hiding and showing, closing and killing.</summary>
 public sealed partial class WindowAdapter : IDisposable
 {
-    // Outcomes are decided under the core's lock and applied after it is released, on the loop thread, the pipe threads,
-    // the binds worker and the group bar thread. The core queues each one as it decides it, and whichever thread applies
-    // next carries out every queued one in that order, so an older outcome never lands after a newer one. The caller's
-    // own is among them, so it has been applied when this returns.
     internal void Apply(Outcome outcome)
     {
         ArgumentNullException.ThrowIfNull(outcome);
 
-        // The step asked for nothing the last outcome did not already do, so the core queued nothing. Once the exit
-        // cleanup is done, a command or a bind still on its way changes no window.
         if (outcome.IsEmpty || _disposed)
             return;
 
-        // A window event can arrive while this thread waits on a window in the middle of an outcome. The one it decides
-        // is queued behind the outcome being applied, and the loop below applies it next.
         if (_applyGate.IsHeldByCurrentThread)
             return;
 
@@ -32,9 +23,6 @@ public sealed partial class WindowAdapter : IDisposable
         }
     }
 
-    // The foreground moves first: Windows brings the window it focuses to the top, and the z-order requests then put
-    // the floating Clients back above it. Those are held among the topmost windows while it does, so the focused
-    // window never shows over them for a frame, and are let go above it.
     private void Front(Outcome outcome)
     {
         List<WindowId> held = [];
@@ -53,25 +41,17 @@ public sealed partial class WindowAdapter : IDisposable
             }
         }
 
-        // A window let go is above every window that is not topmost already, in the order asked, so it is not raised again.
         Restack(held.Count == 0 ? outcome.ZOrder : [.. outcome.ZOrder.Where(request => !(request.Top && held.Contains(request.Window)))]);
     }
 
-    // Carries out one outcome. Apply calls it for each queued one in turn, and a test calls it with an outcome it built.
     internal void ApplyCore(Outcome outcome)
     {
         var windows = new Dictionary<ClientId, WindowId>(outcome.State.Clients.Count);
         foreach (var client in outcome.State.Clients)
             windows[client.Id] = client.Window;
 
-        // Once the exit cleanup began, nothing starts a motion that would change alpha or the border again.
-        // The frame, effects and alpha refuse changes themselves once they were put back.
         var motions = _releasing ? [] : MotionsOf(outcome);
 
-        // A window hidden where another is shown, as a Group's member is when the next one takes its tab, is hidden only
-        // once the other is shown and has had a frame to paint, so the wallpaper never shows between them. The one shown
-        // goes just under it first, so it paints out of sight. One placed anywhere but where a shown window goes is
-        // hidden first, so its move is not seen.
         var placed = new Dictionary<WindowId, Rectangle>();
         foreach (var placement in outcome.Placements)
         {
@@ -86,8 +66,6 @@ public sealed partial class WindowAdapter : IDisposable
                 shownAt[bounds] = window;
         }
 
-        // With nothing focused, hiding the window that has the keyboard would leave Windows to pick a window to
-        // activate, which Winland would take for the user's choice. The desktop takes the keyboard first.
         if (outcome.Focus is null && outcome.Hide.Any(_desktop.IsForeground))
             _desktop.ForegroundDesktop();
 
@@ -126,13 +104,11 @@ public sealed partial class WindowAdapter : IDisposable
             if (!windows.TryGetValue(placement.Client, out var window))
                 continue;
 
-            // The window's lock keeps a motion's frame from landing in the middle of the placement.
             lock (_motions.For(window))
             {
                 var fills = borderless.Contains(window);
                 if (!(fills && _ownFullscreen.ContainsKey(window)))
                     _borderless.Apply(window, fills);
-                // A step of a drag moves the dragged window at once, and a window the drag moves out of its way animates.
                 if (outcome.Live && !motions.ContainsKey(window))
                     PlaceLive(window, placement.Bounds, fills, motions);
                 else
@@ -151,9 +127,6 @@ public sealed partial class WindowAdapter : IDisposable
         foreach (var window in outcome.ShowMinimized)
             Reveal(window);
 
-        // The window focused here takes the foreground before the windows it replaces are hidden, so Windows never
-        // hands the keyboard to a window of its own choosing in between. One that paints under a window it replaces
-        // waits until that window is hidden, so it is not raised over it unpainted.
         var focusFirst = outcome.Focus is WindowId early && !under.Exists(pair => pair.Window == early);
         if (focusFirst)
             Front(outcome);
@@ -167,15 +140,9 @@ public sealed partial class WindowAdapter : IDisposable
 
         if (concealLater.Count > 0)
         {
-            // The windows shown get their borders while they paint, and the windows they replace keep theirs until they
-            // are hidden.
             if (!_releasing)
                 BorderHost.Update(rings, concealLater);
 
-            // A program paints a window shown again when it gets to it. A few frames are waited for at most. The paint
-            // is marked done as it begins, so the frames it draws in are waited for too.
-            // The windows shown in place of the hidden ones are waited for too, so a Workspace switch does not show a
-            // stale or blank frame of a program slow to paint.
             var painting = under.Select(pair => pair.Window)
                 .Concat(outcome.Show.Where(window => !_desktop.Hung(window)))
                 .Distinct()
@@ -210,13 +177,10 @@ public sealed partial class WindowAdapter : IDisposable
                     if (!windows.TryGetValue(decoration.Client, out var window))
                         continue;
 
-                    // Every outcome decorates every Client. One with no motion, painted with this decoration and nothing
-                    // held since it last became a Client, already shows it.
                     if (!_painted.TryGetValue(window, out var last) || !decoration.Equals(last) || !_dwmPainted.ContainsKey(window) || _motions.Running(window))
                         _painted[window] = Paint(window, decoration) ? decoration : null;
                 }
 
-                // A window that is no longer a Client is painted afresh if it becomes one again.
                 ForgetDwmPainted(windows.Values);
             }
         }
@@ -235,7 +199,6 @@ public sealed partial class WindowAdapter : IDisposable
         if (!_disposed)
             Publish();
 
-        // Starting a program can take a while, so it waits until the borders and bars of this step are drawn.
         foreach (var launch in outcome.Launches)
         {
             var pid = ProcessLauncher.TryLaunch(launch);
@@ -247,10 +210,6 @@ public sealed partial class WindowAdapter : IDisposable
             SessionHalt.Request();
     }
 
-    // SW_HIDE removes the window from the switcher: a hidden window is not visible,
-    // and the switcher lists visible, uncloaked, ownerless top-level windows.
-    // A minimized window stays visible, so it is hidden too. Showing it again uses
-    // SW_SHOWMINNOACTIVE while it is iconic, which puts it back without restoring it.
     private void Conceal(WindowId window)
     {
         lock (_showGate)
@@ -258,7 +217,6 @@ public sealed partial class WindowAdapter : IDisposable
             if (_releasing)
                 return;
 
-            // The hide this causes is reported like an application's own, so it is noted first.
             _concealed[window] = 0;
             ShowOrPost(window, ShowAs.Hide);
         }
@@ -277,16 +235,11 @@ public sealed partial class WindowAdapter : IDisposable
 
     private void ShowConcealed(WindowId window)
     {
-        // The show this causes comes back as a window event, which needs nothing read again: Winland knows the window.
-        // A window that already showed itself raises no event, so it is not marked, and its next show is read.
         if (_concealed.TryRemove(window, out _) && !_desktop.Shown(window))
             _revealed[window] = 0;
         ShowOrPost(window, _desktop.Minimized(window) ? ShowAs.ShowMinimized : ShowAs.Show);
     }
 
-    // ShowWindow waits for the window's thread, which a program that has stopped answering does not give. That window is
-    // posted the command instead and takes it when the program wakes. A window that answers is waited for, because what
-    // follows, such as putting a hidden window back on its Layout rectangle, needs it already hidden.
     private void ShowOrPost(WindowId window, ShowAs show)
     {
         if (_desktop.Hung(window))
@@ -306,7 +259,6 @@ public sealed partial class WindowAdapter : IDisposable
         return written <= 0 ? "" : new string(buffer[..written]);
     }
 
-    // Every window event asks, so the class is compared where it was read rather than copied out.
     internal static bool IsShellTaskbar(HWND hwnd)
     {
         Span<char> buffer = stackalloc char[32];
@@ -321,10 +273,6 @@ public sealed partial class WindowAdapter : IDisposable
         return length <= 0 ? "" : new string(buffer[..length]);
     }
 
-    // A layered window input passes through, such as a screen overlay, cannot be clicked or focused, so
-    // it is never a Client. Neither is a window that is never activated, such as a tooltip or a popup a WinUI or
-    // Electron app shows over its own window, including one that asks for a taskbar button.
-    // A transparent always-on-top indicator, such as Superwhisper's, is also an overlay before it is layered.
     internal static bool IsOverlay(int extended) =>
         ((extended & (LayeredStyle | TopmostStyle)) != 0 && (extended & ClickThroughStyle) != 0)
         || (extended & NoActivateStyle) != 0;

@@ -10,21 +10,15 @@ public sealed partial class WindowAdapter
     {
         foreach (var request in requests)
         {
-            // A program that has stopped answering is sent the request without waiting, and takes it when it wakes.
             if (_desktop.Hung(request.Window))
                 _desktop.RaiseAsync(request.Window, request.Top);
             else
                 _desktop.Raise(request.Window, request.Top);
 
-            // A change of z-order moves nothing, so the window's border is told to follow it there.
             BorderHost.Follow(request.Window);
         }
     }
 
-    // A click raises the window under it even when it is already active, and Windows reports no focus change for that.
-    // When the active tile is above a floating Client that belongs over it, the tile goes back below the lowest such
-    // Client. Windows does not let a process in the background raise a window over the active one, but it does let
-    // it lower the active one. That reorders the windows too, and finds them in place.
     private void KeepFloatingAbove()
     {
         var active = PInvoke.GetForegroundWindow();
@@ -53,10 +47,8 @@ public sealed partial class WindowAdapter
         BorderHost.Follow(new WindowId(active));
     }
 
-    // A Client that resizes itself just after it opens is reported once, so the core can put it back.
     private void ReportResize(HWND hwnd, WindowId window)
     {
-        // The frames of an opening motion are Winland's own, not the window resizing itself.
         if (_motions.Running(window) || !_core.AwaitsFirstResize(window) || !TryVisible(window, out var visible))
             return;
 

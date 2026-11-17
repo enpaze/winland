@@ -17,15 +17,10 @@ internal sealed partial class DwindleLayout
         if (!_nodes.TryGetValue(id, out var node) || !InTree(node) || node.Parent is null)
             return [];
 
-        // exact names the window's size, which is the tile less its gaps and border.
         var shown = Present(id, node.Box);
         return ResizeTile(node, exact ? x - shown.Width : x, exact ? y - shown.Height : y, corner: null);
     }
 
-    /// <summary>
-    /// Moves the split edges of a tile by a pixel delta. A mouse resize names the grabbed corner;
-    /// a dispatcher resize names none. The corner picks which edges move.
-    /// </summary>
     private IReadOnlyList<Placement> ResizeTile(Node node, int deltaX, int deltaY, (bool Left, bool Top)? corner)
     {
         if (node.Parent is null)
@@ -49,8 +44,6 @@ internal sealed partial class DwindleLayout
         return Placements();
     }
 
-    // The outer split on each axis is the one whose divider is the grabbed edge. The inner split
-    // below it is the tile's other edge on that axis, which is kept where it was.
     private static void SmartResize(Node node, int deltaX, int deltaY, (bool Left, bool Top)? corner, TileEdges edges)
     {
         var none = corner is null;
@@ -79,8 +72,6 @@ internal sealed partial class DwindleLayout
                 break;
         }
 
-        // A grabbed corner moves its edge by the delta. resizeactive grows or shrinks the tile by it, so a tile after its
-        // split moves that split the other way.
         if (horizontalOuter is not null)
             MoveEdge(horizontalOuter, horizontalInner, none && IsSecond(horizontalOuter) ? -deltaX : deltaX, horizontal: true);
         if (verticalOuter is not null)
@@ -125,6 +116,5 @@ internal sealed partial class DwindleLayout
 
     private static bool Sticks(int edge, int other) => Math.Abs(edge - other) <= 1;
 
-    /// <summary>Which sides of a tile lie on the tiling area's edge.</summary>
     private readonly record struct TileEdges(bool Left, bool Top, bool Right, bool Bottom);
 }

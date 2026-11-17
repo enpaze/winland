@@ -10,7 +10,6 @@ sealed class FileConfigSource(string directory) : IConfigSource
         {
             var full = Path.IsPathRooted(path) ? path : Path.Combine(directory, path);
 
-            // An editor may hold the file, so the read shares it.
             using var stream = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true);
             return reader.ReadToEnd();
@@ -21,8 +20,6 @@ sealed class FileConfigSource(string directory) : IConfigSource
         }
     }
 
-    // A file that cannot be read, or a path Windows cannot name, such as one with a null character in it. The parser
-    // warns on the line that names it, the same as for a missing file.
     private static bool Unreadable(Exception exception) =>
         exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException;
 
@@ -39,8 +36,6 @@ sealed class FileConfigSource(string directory) : IConfigSource
             if (!Directory.Exists(root))
                 return [];
 
-            // A wildcard never matches a separator, so a match lies exactly as deep as the pattern
-            // has folders after the root. A folder that cannot be listed is skipped, not fatal.
             var options = new EnumerationOptions
             {
                 AttributesToSkip = 0,
@@ -59,11 +54,6 @@ sealed class FileConfigSource(string directory) : IConfigSource
         }
     }
 
-    /// <summary>
-    /// The folder to search, the last one before the first wildcard, and how many folders
-    /// below it a match lies. A drive root keeps its separator: "C:" alone is the current
-    /// folder on drive C.
-    /// </summary>
     internal static (string Root, int Depth) Plan(string full)
     {
         var separator = Path.DirectorySeparatorChar;

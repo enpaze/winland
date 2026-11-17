@@ -2,10 +2,6 @@ namespace Winland.Domain;
 
 public static partial class ConfigParser
 {
-    /// <param name="path">The full path of the config file <paramref name="text"/> was read from, when there is one.
-    /// A <c>source</c> line that leads back to it is then skipped, and a relative source is compared against its folder.</param>
-    /// <param name="dispatchers">The names of the Dispatchers a bind may run, which the Application knows. A bind for any
-    /// other name warns, with the name it is close to. With none given, a bind's Dispatcher is not checked.</param>
     public static ConfigDocument Parse(
         string text,
         IConfigSource? source = null,
@@ -25,7 +21,6 @@ public static partial class ConfigParser
             "windowrule",
         };
 
-        // The keywords a line can start with besides an Option, for the hint an unsupported keyword gets.
         private static readonly string[] Keywords =
             ["source", "unbind", "bind", "gesture", .. KeptHandlers];
 
@@ -38,7 +33,6 @@ public static partial class ConfigParser
         private readonly Dictionary<string, string> _variables = new(StringComparer.Ordinal);
         private readonly List<OpenCategory> _categories = [];
 
-        // How many categories were open when the file being read began. A } there cannot close one of them.
         private int _floor;
         private readonly HashSet<string> _openSources = new(StringComparer.OrdinalIgnoreCase);
         private string? _source;
@@ -83,8 +77,6 @@ public static partial class ConfigParser
                 var dangling = false;
                 while (current.Length > 0 && current[^1] == '\\')
                 {
-                    // A backslash that ends a comment is part of the comment, such as a
-                    // folder in "# path C:\dir\", and does not join the next line.
                     if (HasComment(current))
                     {
                         if (current.TrimStart()[0] != '#')
@@ -306,7 +298,6 @@ public static partial class ConfigParser
             _warnings.Add(new ConfigWarning(line, message, _source));
         }
 
-        // device[name]:field, or a field inside a device[name] block. Winland does not apply device settings.
         private bool TryDevice(string lhs, int lineNumber)
         {
             if (!TryDeviceField(lhs, out var name, out var field) || name.Length == 0)
@@ -347,7 +338,6 @@ public static partial class ConfigParser
         private static bool IsLaunchKeyword(string keyword) =>
             keyword == "exec-once";
 
-        // True when the line has a '#' that starts a comment. "##" is an escaped '#'.
         private static bool HasComment(string line)
         {
             if (line.TrimStart().StartsWith('#'))

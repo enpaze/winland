@@ -3,10 +3,6 @@ using System.Text.Json;
 
 namespace Winland.Install;
 
-/// <summary>
-/// Snap windows and the precision touchpad swipe values the install script may turn off.
-/// A swipe value that is absent is null. Setting null removes that value.
-/// </summary>
 public interface IWindowsDesktop
 {
     bool WindowArranging { get; set; }
@@ -16,10 +12,8 @@ public interface IWindowsDesktop
     int? FourFingerSlide { get; set; }
 }
 
-/// <summary>The file that records the values <see cref="DesktopSettings"/> changes.</summary>
 public interface ISettingsText
 {
-    /// <summary>Null when the file is not there.</summary>
     string? Read();
 
     void Write(string text);
@@ -27,19 +21,13 @@ public interface ISettingsText
     void Delete();
 }
 
-/// <summary>Puts back settings recorded by the install script. <c>winland uninstall</c> calls this before it deletes anything.</summary>
 public interface IDesktopRestore
 {
     void Restore();
 }
 
-/// <summary>
-/// Records the Windows settings the install script turns off, then changes them in one pass.
-/// A later call keeps the first recorded values, so uninstall restores what the user had.
-/// </summary>
 public sealed class DesktopSettings : IDesktopRestore
 {
-    /// <summary>The registry value that means a precision touchpad swipe does nothing.</summary>
     public const int SwipeOff = 0;
 
     public const string WindowArrangingName = "windowArranging";
@@ -62,10 +50,6 @@ public sealed class DesktopSettings : IDesktopRestore
         this.file = file;
     }
 
-    /// <summary>
-    /// Reads every setting this call will change, records a value that is not already recorded, then writes them.
-    /// <paramref name="touchpad"/> also turns off the three- and four-finger swipes.
-    /// </summary>
     public void TurnOff(bool touchpad)
     {
         var arranging = windows.WindowArranging;
@@ -102,10 +86,6 @@ public sealed class DesktopSettings : IDesktopRestore
         windows.FourFingerSlide = SwipeOff;
     }
 
-    /// <summary>
-    /// Writes every recorded value back, then deletes the record. False when there is no record, and nothing changes.
-    /// A write that fails keeps the whole record, so running this again finishes the job.
-    /// </summary>
     public bool Restore()
     {
         var text = file.Read();

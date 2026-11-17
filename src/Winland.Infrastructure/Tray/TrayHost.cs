@@ -7,13 +7,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// The notification-area icon on its own thread, and the balloon a config error shows on it. Which number it
-/// shows, what the balloon says, and what a click opens, is decided before this: here is only the icon, the
-/// balloon, the window that receives Explorer, and the filter that lets an elevated process hear an unelevated
-/// one. Nothing is added until <see cref="Start"/>, so a test that applies an outcome does not put an icon on
-/// the desktop.
-/// </summary>
 internal static class TrayHost
 {
     private const string ClassName = "WinlandTray";
@@ -31,7 +24,6 @@ internal static class TrayHost
     private const uint BalloonUserClick = 0x0405;
     private const int Version4 = 4;
 
-    // TrackPopupMenuEx takes the flags as a plain uint. Right-button, return the command id, and do not notify.
     private const uint MenuRightButton = 0x0002;
     private const uint MenuReturnCommand = 0x0100;
     private const uint MenuNoNotify = 0x0080;
@@ -59,10 +51,6 @@ internal static class TrayHost
     private static long _menuAt;
     private static Thread? _worker;
 
-    /// <summary>
-    /// Lets later updates add the icon, and remembers where a chosen command or a balloon click is posted.
-    /// <paramref name="logExists"/> says, each time the menu opens, whether the log file is there to open.
-    /// </summary>
     internal static void Start(Action<TrayCommand> onCommand, Action<string>? onOpen = null, Func<bool>? logExists = null)
     {
         ArgumentNullException.ThrowIfNull(onCommand);
@@ -75,10 +63,6 @@ internal static class TrayHost
         }
     }
 
-    /// <summary>
-    /// Shows <paramref name="icon"/>, or removes it when the icon says it is hidden, and shows <paramref name="notice"/>
-    /// on it. A hidden icon is added only while the notice is up. Null leaves the icon alone.
-    /// </summary>
     internal static void Update(TrayIcon? icon, ConfigNotice? notice)
     {
         if (icon is null || Volatile.Read(ref _armed) == 0)
@@ -108,7 +92,6 @@ internal static class TrayHost
         _ = PInvoke.PostThreadMessage(thread, SyncMessage, default, default);
     }
 
-    /// <summary>Removes the icon and ends its thread.</summary>
     internal static void Stop()
     {
         Thread? worker;
@@ -142,10 +125,6 @@ internal static class TrayHost
         _ = worker.Join(TimeSpan.FromSeconds(2));
     }
 
-    /// <summary>
-    /// Takes the icon down for a crash, from any thread. The icon's thread may be gone, so it is not asked to. The
-    /// shell would otherwise keep the icon until the pointer passes over it.
-    /// </summary>
     internal static void Salvage()
     {
         var window = _window;
@@ -168,7 +147,6 @@ internal static class TrayHost
         {
             Console.Error.WriteLine(exception.Message);
 
-            // The next update starts the tray again.
             lock (Gate)
             {
                 if (ReferenceEquals(_worker, Thread.CurrentThread))
@@ -259,8 +237,6 @@ internal static class TrayHost
         }
         else
         {
-            // Changing the icon while a balloon is up takes the balloon away, so an outcome that
-            // leaves the number alone does not send the icon again.
             var same = _added && !_temporary && _shown == wanted;
             _temporary = false;
             if (!same)
@@ -297,8 +273,6 @@ internal static class TrayHost
             return HWND.Null;
         }
 
-        // A message-only window never sees TaskbarCreated. This one is top-level so Explorer's broadcast arrives,
-        // and the filter lets that broadcast, and the click, through from the unelevated shell.
         foreach (var message in TrayMessages.Allowed(_taskbarCreated))
             Allow(message);
 
@@ -350,8 +324,6 @@ internal static class TrayHost
             _ = PInvoke.DestroyIcon(previous);
     }
 
-    // NOTIFYICON_VERSION_4 reports the icon id in the high word, so a click can be told from a classic one.
-    // Explorer starting again drops the icon, and the next add has to ask for that version once more.
     private static unsafe void SetVersion(HWND window)
     {
         var data = Blank(window);
@@ -404,7 +376,6 @@ internal static class TrayHost
         data.szTip[text.Length] = '\0';
     }
 
-    // A new balloon replaces the one already showing. szInfo is 256 characters with the null, and the title 64.
     private static void ShowBalloon(HWND window, ConfigNotice notice)
     {
         var data = Blank(window);
@@ -417,7 +388,6 @@ internal static class TrayHost
             Log("The config notification was not shown");
     }
 
-    // An empty body takes the balloon away and leaves the icon.
     private static void HideBalloon(HWND window)
     {
         var data = Blank(window);
@@ -460,7 +430,6 @@ internal static class TrayHost
     {
         if (_taskbarCreated != 0 && message == _taskbarCreated)
         {
-            // The shell that held the icon is gone. Add it again; modifying the old one never comes back.
             _added = false;
             if (_shown is { } icon)
                 Present(hwnd, icon);
@@ -476,17 +445,12 @@ internal static class TrayHost
         if (message == TrayMessages.Callback)
             OnClick(hwnd, wParam, lParam);
 
-        // taskkill without /F closes each of Winland's windows. The session window ends the run, and this one stays
-        // until then, so the exit can still take its icon down.
         if (message == PInvoke.WM_CLOSE)
             return default;
 
         return PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
     }
 
-    // Version 4 packs the event in the low word and the icon id in the high word, with the point in wParam.
-    // A classic callback puts the icon id in wParam and the mouse message in lParam. One click can deliver
-    // both a select and a button-up, so a second open within a moment is the same click.
     private static void OnClick(HWND hwnd, WPARAM wParam, LPARAM lParam)
     {
         var low = (uint)(lParam.Value & 0xFFFF);
@@ -517,8 +481,6 @@ internal static class TrayHost
 
     private static bool IsBalloon(uint code) => code is BalloonHide or BalloonTimeout or BalloonUserClick;
 
-    // A hide that follows our own add, replace or delete is not the user dismissing the balloon.
-    // A timeout or a click is. A click opens the file the notice names, and a temporary icon goes away.
     private static void OnBalloon(uint code)
     {
         if (code == BalloonHide && _swallowHides > 0)
@@ -598,7 +560,6 @@ internal static class TrayHost
                 }
             }
 
-            // Without the foreground, the menu never dismisses. The null message is what lets it go.
             _ = PInvoke.SetForegroundWindow(hwnd);
             var chosen = PInvoke.TrackPopupMenuEx(
                 menu,
@@ -609,7 +570,6 @@ internal static class TrayHost
                 null);
             _ = PInvoke.PostMessage(hwnd, 0, default, default);
 
-            // The menu's modal loop drops thread messages, so an update posted while it was open is carried out now.
             bool posted;
             lock (Gate)
                 posted = _posted;
@@ -694,7 +654,6 @@ internal static class TrayHost
         var pixels = new Span<uint>(bits, size * size);
         pixels.Clear();
         DrawLabel(memory, size, text);
-        // GDI may still hold the label's drawing back. The pixels are read once it has written them.
         _ = PInvoke.GdiFlush();
         TrayBadge.Compose(pixels, size);
         _ = PInvoke.SelectObject(memory, old);
@@ -757,7 +716,6 @@ internal static class TrayHost
         return Math.Max(6, size * percent / 100);
     }
 
-    // The mask is bottom-up. A set bit is transparent, which keeps the corners clear where the alpha is not read.
     private static unsafe HBITMAP Mask(ReadOnlySpan<uint> pixels, int size)
     {
         var stride = ((size + 31) / 32) * 4;

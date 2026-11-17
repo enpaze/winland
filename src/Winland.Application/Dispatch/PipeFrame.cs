@@ -3,10 +3,6 @@ using System.Text;
 
 namespace Winland.Application;
 
-/// <summary>
-/// How text crosses the pipe. A request is one line. A reply is one line, or a <c>#&lt;length&gt;</c> line and then that
-/// many bytes when the reply has a newline in it.
-/// </summary>
 public static class PipeFrame
 {
     public const int RequestLimit = 64 * 1024;
@@ -16,7 +12,6 @@ public static class PipeFrame
     public static byte[] Frame(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        // A line that starts with # would read as a frame's header, so it is framed too.
         if (!text.Contains('\n') && !text.StartsWith('#'))
             return Encoding.UTF8.GetBytes(text + "\n");
 
@@ -28,10 +23,6 @@ public static class PipeFrame
         return bytes;
     }
 
-    /// <summary>
-    /// The text up to the next newline, without a carriage return. Null when the stream ends before any byte. A line
-    /// longer than <paramref name="limit"/> throws <see cref="InvalidDataException"/>.
-    /// </summary>
     public static async Task<string?> ReadLineAsync(Stream stream, int limit, CancellationToken cancel = default)
     {
         ArgumentNullException.ThrowIfNull(stream);
@@ -63,10 +54,6 @@ public static class PipeFrame
         return Encoding.UTF8.GetString(body.GetBuffer().AsSpan(0, (int)body.Length));
     }
 
-    /// <summary>
-    /// One framed reply. Empty when the stream ends first. A frame longer than <see cref="ReplyLimit"/> throws
-    /// <see cref="InvalidDataException"/>, and one the stream ends inside throws <see cref="EndOfStreamException"/>.
-    /// </summary>
     public static string ReadReply(Stream stream, CancellationToken cancel = default)
     {
         ArgumentNullException.ThrowIfNull(stream);

@@ -1,6 +1,5 @@
 namespace Winland.Infrastructure.Tests;
 
-/// <summary>What the Windows adapter does to the desktop for an Outcome, and in what order.</summary>
 public class WindowAdapterTests
 {
     private const string Config = "";
@@ -8,8 +7,6 @@ public class WindowAdapterTests
     private static bool Posted(string call, long window) =>
         call.StartsWith($"bounds {window} ", StringComparison.Ordinal) && call.EndsWith(" Post", StringComparison.Ordinal);
 
-    // inspect reads the window afresh. A Client whose window is gone from the desktop is not found, and the read
-    // asks the desktop to do nothing.
     [Fact]
     public void InspectingAClientWhoseWindowIsGoneFindsNothingAndChangesNothing()
     {
@@ -43,7 +40,6 @@ public class WindowAdapterTests
         Assert.True(windows.Desktop[2].Shown);
     }
 
-    // The pipe and the binds worker are not waited for at exit. What they apply after the cleanup hides nothing.
     [Fact]
     public void AnOutcomeAppliedAfterTheExitCleanupHidesNothing()
     {
@@ -133,12 +129,9 @@ public class WindowAdapterTests
         Assert.DoesNotContain(-1, order);
         Assert.Equal(order.Order(), order);
 
-        // Let go above the focused window, it is not raised a second time.
         Assert.Equal(-1, desktop.IndexOf("raise 2 top"));
     }
 
-    // A Workspace switch waits for the windows it shows to paint before it hides the others. A switch another thread
-    // decides meanwhile lands after it, so the older one cannot hide what the newer one showed.
     [Fact]
     public void AnOutcomeDecidedWhileAnotherWaitsToPaintLandsAfterIt()
     {
@@ -162,7 +155,6 @@ public class WindowAdapterTests
             other.Start();
             Assert.True(decided.Wait(TimeSpan.FromSeconds(5)));
 
-            // The other thread either applies its outcome now or waits for this one to finish.
             var deadline = Environment.TickCount64 + 5000;
             while ((other.ThreadState & (ThreadState.Stopped | ThreadState.WaitSleepJoin)) == 0 && Environment.TickCount64 < deadline)
                 Thread.Yield();
@@ -278,7 +270,6 @@ public class WindowAdapterTests
 
         windows.Dispatch("focuswindow", "address:0x1");
 
-        // An opaque window is no longer layered.
         Assert.Equal(0u, windows.Desktop[1].ExStyle & 0x80000);
         Assert.Equal(128, windows.Desktop[3].Alpha);
         Assert.DoesNotContain(windows.Desktop.Calls, call => call.EndsWith(" 2", StringComparison.Ordinal) || call.Contains(" 2 ", StringComparison.Ordinal));
@@ -309,7 +300,6 @@ public class WindowAdapterTests
         var snapshot = windows.Adapter.Capture();
         Assert.Equal([second], snapshot!.Clients.Where(client => client.Hidden).Select(client => client.Window));
 
-        // The snapshot is now stale: the second window is shown and the first is hidden, and only the adapter knows.
         windows.Dispatch("workspace", "2");
         Assert.False(windows.Desktop[1].Shown);
         windows.Desktop.Calls.Clear();
@@ -458,7 +448,6 @@ public class WindowAdapterTests
         Assert.True(desktop.IndexOf("alpha 2 0") >= 0, "The window was not made transparent.");
         Assert.True(desktop.IndexOf("alpha 2 0") < desktop.IndexOf("close 2"));
 
-        // The program refuses, so the window is put back once the wait for it has passed.
         Assert.Equal(0, desktop[2].Alpha);
         windows.Settle();
         Assert.Equal(0u, desktop[2].ExStyle & 0x00080000);

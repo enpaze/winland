@@ -5,11 +5,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Draws the tab bar of each shown Group as a per-pixel-alpha layered window on its own thread.
-/// A click on a tab focuses that member, a middle click closes it and the wheel steps through the Group.
-/// The bars are owned by this process, so they go away with it; hidden members are restored by recovery.
-/// </summary>
 internal static class GroupBarHost
 {
     private const string ClassName = DecorationStack.GroupBarClass;
@@ -32,13 +27,10 @@ internal static class GroupBarHost
     private static readonly Dictionary<WindowId, Bar> Bars = [];
     private static readonly Dictionary<HWND, Bar> ByHandle = [];
 
-    // The shown windows that have a bar, read by any thread so a z-order change of another window costs one lookup.
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, byte> WithBars = new();
 
-    // The windows a motion is moving now. A bar is drawn where its window rests, so it hides until the window lands there.
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, byte> Moving = new();
 
-    // The timer that reads the titles again, on the bar thread.
     [ThreadStatic]
     private static nuint _timer;
     private static IReadOnlyList<GroupBar> _pending = [];
@@ -46,16 +38,12 @@ internal static class GroupBarHost
     private static uint _thread;
     private static Thread? _worker;
 
-    /// <summary>Runs a dispatcher for a click. The window adapter sets it.</summary>
     internal static Action<string, string>? Dispatch { get; set; }
 
-    /// <summary>Tells the core the wheel turned over a bar: the Group's shown window, and whether towards the next member.</summary>
     internal static Action<WindowId, bool>? Scroll { get; set; }
 
-    /// <summary>Tells the core a tab was middle clicked to close its window.</summary>
     internal static Action<WindowId>? Close { get; set; }
 
-    /// <summary>Replaces every bar with <paramref name="bars"/>. Starts the bar thread the first time a bar is needed.</summary>
     internal static void Update(IReadOnlyList<GroupBar> bars)
     {
         ArgumentNullException.ThrowIfNull(bars);
@@ -88,10 +76,6 @@ internal static class GroupBarHost
         _ = PInvoke.PostThreadMessage(thread, SyncMessage, default, default);
     }
 
-    /// <summary>
-    /// The window was raised or shown, so the bar of the Group it shows goes just above it again, as Winland
-    /// draws the bar with its window.
-    /// </summary>
     internal static void Follow(WindowId window)
     {
         if (!WithBars.ContainsKey(window))
@@ -105,17 +89,12 @@ internal static class GroupBarHost
             _ = PInvoke.PostThreadMessage(thread, StackMessage, new WPARAM((nuint)window.Value), default);
     }
 
-    /// <summary>A motion started or stopped moving the window. The bar of the Group it shows hides while it moves.</summary>
     internal static void Moves(WindowId window, bool moving)
     {
         if (moving ? Moving.TryAdd(window, 0) : Moving.TryRemove(window, out _))
             Follow(window);
     }
 
-    /// <summary>
-    /// Some window changed its place in the z-order. Windows says which parent's children moved, not which window, so every
-    /// bar goes just above its shown window again.
-    /// </summary>
     internal static void Restack()
     {
         if (WithBars.IsEmpty)
@@ -129,7 +108,6 @@ internal static class GroupBarHost
             _ = PInvoke.PostThreadMessage(thread, StackMessage, default, default);
     }
 
-    /// <summary>Removes every bar and ends the bar thread.</summary>
     internal static void Stop()
     {
         Thread? worker;
@@ -154,7 +132,6 @@ internal static class GroupBarHost
         _ = worker.Join(TimeSpan.FromSeconds(2));
     }
 
-    // The new thread syncs the pending bars itself once its queue exists, so nothing waits here.
     private static void Start()
     {
         _worker = new Thread(Run)
@@ -282,7 +259,6 @@ internal static class GroupBarHost
         Poll(Bars.Count > 0);
     }
 
-    // The titles are read again every second while there is a bar to show them.
     private static void Poll(bool on)
     {
         if (on == (_timer != 0))
@@ -299,7 +275,6 @@ internal static class GroupBarHost
         }
     }
 
-    // Titles are read live, so a title that changes after the window opened shows up within a second.
     private static void Refresh()
     {
         foreach (var bar in Bars.Values)
@@ -428,7 +403,6 @@ internal static class GroupBarHost
             _ = PInvoke.SetWindowText(Handle, GroupBarPainter.Name(Spec, _titles));
         }
 
-        // Just above the shown window, so a floating window over the tile still covers the bar.
         public void Stack()
         {
             if (Moving.ContainsKey(Spec.Shown))
@@ -443,8 +417,6 @@ internal static class GroupBarHost
             var topmost = !above.IsNull && (PInvoke.GetWindowLong(above, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE) & TopmostStyle) != 0;
             var flags = SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_SHOWWINDOW;
 
-            // A bar already among the decorations just above the window stays where it is. Raising it to the top would
-            // put it over a floating window.
             if (chain.Contains(Handle))
                 flags |= SET_WINDOW_POS_FLAGS.SWP_NOZORDER;
 

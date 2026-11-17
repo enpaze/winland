@@ -1,18 +1,11 @@
 namespace Winland.Application;
 
-/// <summary>
-/// The live part of a workspace swipe: while the fingers move, the Workspace swiped from follows them and the one
-/// it goes to slides in beside it, as Winland offsets both. When the fingers lift, the switch or the
-/// return animates on from where the windows are.
-/// </summary>
 public sealed partial class WindowManager
 {
     private SwipePreview? _swipePreview;
 
-    // The rectangles a finished swipe left its windows on, which the motions that follow start from.
     private Dictionary<WindowId, Rectangle>? _swipeLanding;
 
-    // Offsets the Workspace swiped from by the swipe, and the neighbour it goes to by one Monitor width more.
     private Outcome PreviewSwipe(WorkspaceSwipe swipe, WorkspaceId? neighbour)
     {
         var screen = MonitorById(swipe.Monitor);
@@ -49,7 +42,6 @@ public sealed partial class WindowManager
         return View([], show, hide) with { Motions = motions };
     }
 
-    // Each window of the Workspace, but pinned and hidden ones, moved by the offset at once. Returns the windows moved.
     private List<WindowId> Offset(WorkspaceId workspace, double offset, SwipePreview preview, List<Motion> motions)
     {
         var moved = new List<WindowId>();
@@ -72,7 +64,6 @@ public sealed partial class WindowManager
         return moved;
     }
 
-    // The swipe ended without a switch: the Workspace swiped from slides back and the neighbour slides away and hides.
     private Outcome ReturnSwipe(WorkspaceSwipe swipe)
     {
         if (TakePreview() is not { } preview)
@@ -104,7 +95,6 @@ public sealed partial class WindowManager
         return View([], hide: hide) with { Motions = motions };
     }
 
-    // The swipe switched Workspace: the motions the switch plans start from where the swipe left each window.
     private void LandSwipe() => _swipeLanding = TakePreview()?.Shown;
 
     private SwipePreview? TakePreview()
@@ -114,8 +104,6 @@ public sealed partial class WindowManager
         return preview;
     }
 
-    // Starts the switch's motions from the swipe's last rectangles. A window the switch does not animate is placed
-    // where it belongs at once.
     private IReadOnlyList<Motion> FromSwipe(IReadOnlyList<Motion> motions)
     {
         var landing = _swipeLanding;
@@ -141,10 +129,8 @@ public sealed partial class WindowManager
 
         public WorkspaceId? Neighbour { get; set; }
 
-        /// <summary>Where each window the swipe moved is now.</summary>
         public Dictionary<WindowId, Rectangle> Shown { get; } = [];
 
-        /// <summary>The neighbour's windows the swipe showed, which a return hides again.</summary>
         public HashSet<WindowId> Revealed { get; } = [];
     }
 }

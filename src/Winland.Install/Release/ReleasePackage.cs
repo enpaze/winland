@@ -2,10 +2,8 @@ using System.IO.Compression;
 
 namespace Winland.Install;
 
-/// <summary>Turns the downloaded zip into the folder layout install already copies.</summary>
 public interface IReleasePackage
 {
-    /// <summary>Unpacks <paramref name="archive"/> into <paramref name="directory"/> and returns <c>winland.exe</c>.</summary>
     string Extract(byte[] archive, string directory);
 }
 
@@ -25,7 +23,6 @@ public sealed class ZipReleasePackage : IReleasePackage
             if (entry.FullName.Length == 0 || entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\'))
                 continue;
 
-            // Combine keeps a rooted entry, so the prefix check is what stops it leaving the folder.
             var destination = Path.GetFullPath(Path.Combine(directory, entry.FullName));
             if (!destination.StartsWith(root, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException($"Refusing to unpack '{entry.FullName}'.");

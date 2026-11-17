@@ -1,15 +1,10 @@
 namespace Winland.Infrastructure.Tests;
 
-/// <summary>
-/// A window whose size changes during a motion is drawn by a stand-in until the motion ends. The adapter decides
-/// what the stand-in shows and when, and the fake desktop records it.
-/// </summary>
 public class StandInTests
 {
     private const string Config = "";
     private const uint Layered = 0x00080000;
 
-    // Two tiles, then the second closes and the first grows to fill the screen.
     private static TestWindows Grow(out Rectangle before, Action<FakeDesktop>? arrange = null)
     {
         var windows = new TestWindows(Config);

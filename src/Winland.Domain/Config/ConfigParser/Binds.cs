@@ -29,8 +29,6 @@ public static partial class ConfigParser
                 return;
             }
 
-            // A $variable left after expansion was never defined, or defined below. Dropping it would bind the key
-            // to the modifiers that are left, such as Shift alone.
             if (parts[0].Contains('$', StringComparison.Ordinal))
             {
                 Warn(lineNumber, $"Undefined variable in modifiers '{parts[0].Trim()}'.");
@@ -68,7 +66,6 @@ public static partial class ConfigParser
             var arguments = !mouse && parts.Count > index + 1 ? parts[index + 1] : "";
             if (mouse)
             {
-                // A mouse bind has no argument field. Its action carries one, as in resizewindow 1. Its action is a drag.
                 (dispatcher, arguments) = SplitAction(dispatcher);
                 if (dispatcher.Length > 0 && !Is(dispatcher, "movewindow") && !Is(dispatcher, "resizewindow"))
                 {
@@ -78,7 +75,6 @@ public static partial class ConfigParser
             }
             else if (Is(dispatcher, "mouse"))
             {
-                // The mouse dispatcher is the bindm action in an ordinary bind. On a key it drags while the key is held.
                 (dispatcher, arguments) = SplitAction(arguments.Trim());
                 if (!Is(dispatcher, "movewindow") && !Is(dispatcher, "resizewindow"))
                 {

@@ -2,12 +2,8 @@ using System.Text;
 
 namespace Winland.Daemon;
 
-/// <summary>
-/// Writes to another writer. <c>debug:disable_logs</c> false adds a copy of the log in a file.
-/// </summary>
 sealed class RollingLogWriter(TextWriter inner) : TextWriter
 {
-    // Keep one backup past this many characters, so a session of days does not fill the disk.
     private const long Limit = 10 * 1024 * 1024;
 
     private readonly Lock _gate = new();
@@ -17,7 +13,6 @@ sealed class RollingLogWriter(TextWriter inner) : TextWriter
 
     public override Encoding Encoding => inner.Encoding;
 
-    /// <summary>The full path of the file the log is copied to, or null while it is copied to none.</summary>
     public string? FilePath
     {
         get
@@ -35,10 +30,6 @@ sealed class RollingLogWriter(TextWriter inner) : TextWriter
         return new StreamWriter(new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete)) { AutoFlush = true };
     }
 
-    /// <summary>
-    /// Sets the copy <paramref name="options"/> asks for. <paramref name="openFile"/> opens the log file the first time
-    /// it is wanted. The file is closed when it is no longer wanted.
-    /// </summary>
     public void Copy(DebugOptions options, Func<TextWriter?> openFile)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -54,7 +45,6 @@ sealed class RollingLogWriter(TextWriter inner) : TextWriter
                 return;
         }
 
-        // Opening can report through Console.Error, whose lock must not be taken under _gate.
         var opened = openFile();
         lock (_gate)
         {
@@ -173,7 +163,6 @@ sealed class RollingLogWriter(TextWriter inner) : TextWriter
         }
         catch (IOException)
         {
-            // A full disk can fail again while closing. Console.Error must still be usable.
         }
     }
 }

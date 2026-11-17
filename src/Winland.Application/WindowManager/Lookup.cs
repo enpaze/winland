@@ -1,12 +1,9 @@
 namespace Winland.Application;
 
-/// <summary>Finds the active Workspace, Monitor and Client, and the Workspace that holds a window.</summary>
 public sealed partial class WindowManager
 {
     private WorkspaceId ActiveId() => _workspaces.Shown.ActiveOn(FocusedId());
 
-    // Each enabled Monitor shows a Workspace no other enabled Monitor shows. A step may break this on its way, so it is
-    // checked after each one, in debug builds, where the tests run.
     [System.Diagnostics.Conditional("DEBUG")]
     private void CheckShownWorkspaces()
     {

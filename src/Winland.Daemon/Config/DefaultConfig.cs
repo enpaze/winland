@@ -2,19 +2,12 @@ using System.Text;
 
 namespace Winland.Daemon;
 
-/// <summary>
-/// The config Winland writes on first start. It is the embedded <c>winland.default.conf</c>.
-/// </summary>
 static class DefaultConfig
 {
     public const string ResourceName = "winland.default.conf";
 
-    /// <summary>The embedded default, comments included.</summary>
     public static string Text { get; } = Read();
 
-    /// <summary>
-    /// Writes <see cref="Text"/> when the file is absent or empty. Returns whether this call wrote it.
-    /// </summary>
     public static bool WriteIfMissing(string path) => UserAccess.Run(() => Write(path));
 
     private static bool Write(string path)

@@ -3,10 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Runs the exit cleanup when the console window is closed. Log off and shut down reach the session window as
-/// WM_ENDSESSION instead: a process that loads user32 does not get those console events.
-/// </summary>
 public sealed partial class ExitWatch : IDisposable
 {
     private const uint CloseEvent = 2;

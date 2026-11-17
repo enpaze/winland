@@ -1,14 +1,7 @@
 namespace Winland.Application;
 
-/// <summary>
-/// Decides when the first layout may run, and when a later session change must
-/// lay the Workspaces out again. The shell wait is bounded so a missing tray
-/// cannot block startup.
-/// </summary>
 public sealed class SessionPhase
 {
-    // Long enough for the shell to create its tray after logon, and short enough
-    // that a missing tray cannot hold the first layout.
     public static readonly TimeSpan ShellWait = TimeSpan.FromSeconds(15);
 
     private bool _shellReady;
@@ -26,10 +19,6 @@ public sealed class SessionPhase
 
     public bool Locked => _locked;
 
-    /// <summary>
-    /// False while the session is locked, suspended, disconnected or has its display off. Windows can look
-    /// closed then, so what the windows show is not taken as the newest state.
-    /// </summary>
     public bool Live => Interactive && _displayAwake;
 
     public SessionEffect Notice(SessionSignal signal)

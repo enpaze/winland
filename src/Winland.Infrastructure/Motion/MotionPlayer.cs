@@ -3,24 +3,16 @@ using System.Diagnostics;
 
 namespace Winland.Infrastructure;
 
-/// <summary>The window calls a <see cref="MotionPlayer"/> makes. Tests pass a recording stand-in.</summary>
 internal interface IMotionTarget
 {
-    /// <summary>Whether the window has stopped answering, so an in-between frame would block.</summary>
     bool Hung(WindowId window);
 
-    /// <summary>
-    /// An in-between frame of a window that rests on <paramref name="content"/>. It is fast and does not correct the frame.
-    /// </summary>
     void Move(WindowId window, Rectangle bounds, Rectangle content);
 
-    /// <summary>Undoes whatever the in-between frames did beyond moving the window, for a motion that stops early.</summary>
     void Release(WindowId window);
 
-    /// <summary>The Layout rectangle, applied the way every other placement is.</summary>
     void Place(WindowId window, Rectangle bounds);
 
-    /// <summary>The Layout rectangle of a window that has stopped answering, sent without waiting for it.</summary>
     void PlaceAsync(WindowId window, Rectangle bounds);
 
     void Alpha(WindowId window, byte alpha);
@@ -31,18 +23,11 @@ internal interface IMotionTarget
 
     void Close(WindowId window);
 
-    /// <summary>Whether the window is still open and shown.</summary>
     bool Shown(WindowId window);
 
-    /// <summary>Waits for the next composed frame.</summary>
     void Pace();
 }
 
-/// <summary>
-/// Steps the core's motions on a thread of its own, so the message loop never waits for a frame. Every
-/// call that changes a window holds that window's lock, and a frame is dropped when the window was
-/// changed after the frame was computed. That keeps the Layout rectangle the last thing a window is given.
-/// </summary>
 internal sealed class MotionPlayer : IDisposable
 {
     internal static readonly TimeSpan CloseGrace = TimeSpan.FromSeconds(1.5);
@@ -70,13 +55,8 @@ internal sealed class MotionPlayer : IDisposable
         _threaded = threaded;
     }
 
-    /// <summary>The lock to hold while changing <paramref name="window"/> outside the player.</summary>
     internal Lock For(WindowId window) => _windows.GetOrAdd(window, _ => new Lock());
 
-    /// <summary>
-    /// The window is gone. What the player kept for it is dropped, so a long session that opens thousands of windows
-    /// does not keep them all. A window still moving keeps it until its motion ends.
-    /// </summary>
     internal void Forget(WindowId window)
     {
         lock (_gate)
@@ -97,10 +77,6 @@ internal sealed class MotionPlayer : IDisposable
             return _animator.Running(window) || _closing.ContainsKey(window);
     }
 
-    /// <summary>
-    /// Starts a motion and shows its first frame. The caller holds <see cref="For"/>. Returns false while the
-    /// player lands its motions, and the caller then applies the outcome without one.
-    /// </summary>
     internal bool Begin(Motion motion)
     {
         ArgumentNullException.ThrowIfNull(motion);
@@ -121,8 +97,6 @@ internal sealed class MotionPlayer : IDisposable
             first = _animator.Peek(motion.Window, now);
         }
 
-        // A motion that no longer moves the window, such as a fade that replaced a move to another rectangle, leaves
-        // the window where the caller puts it, so whatever the moving frames did to it is undone now.
         if (first?.Bounds is null)
             _target.Release(motion.Window);
 
@@ -133,11 +107,6 @@ internal sealed class MotionPlayer : IDisposable
         return true;
     }
 
-    /// <summary>
-    /// Asks a window to close without a motion. It goes transparent at once, as a closing motion leaves it, so nothing
-    /// it draws while it closes shows, and it is put back on <paramref name="rest"/> at <paramref name="alpha"/> if it
-    /// stays open. The caller holds <see cref="For"/>.
-    /// </summary>
     internal void Close(WindowId window, Rectangle rest, byte alpha)
     {
         if (_stopped)
@@ -159,10 +128,6 @@ internal sealed class MotionPlayer : IDisposable
         Wake();
     }
 
-    /// <summary>
-    /// Takes a placement that came without a motion. Returns true when a running motion keeps the window.
-    /// Otherwise the caller places it while it still holds <see cref="For"/>.
-    /// </summary>
     internal bool Settle(WindowId window, Rectangle bounds)
     {
         lock (_gate)
@@ -179,7 +144,6 @@ internal sealed class MotionPlayer : IDisposable
 
     internal PaintHold Paint(WindowId window, byte alpha, BorderColor border)
     {
-        // A window asked to close stays transparent while it goes.
         lock (_gate)
         {
             var hold = _animator.Running(window) ? _animator.Paint(window, alpha, border, _clock()) : default;
@@ -187,7 +151,6 @@ internal sealed class MotionPlayer : IDisposable
         }
     }
 
-    /// <summary>Stops any motion on the window. The caller holds <see cref="For"/> and puts the window in place.</summary>
     internal void Halt(WindowId window)
     {
         lock (_gate)
@@ -200,18 +163,12 @@ internal sealed class MotionPlayer : IDisposable
         _target.Release(window);
     }
 
-    /// <summary>
-    /// Forgets a window that is no longer a Client. It waits out a frame already being applied to the
-    /// window, so whatever the caller does to the window next comes after that frame.
-    /// </summary>
     internal void Drop(WindowId window)
     {
-        // The window's lock stays, so a caller that still holds it keeps the same one.
         lock (For(window))
             Halt(window);
     }
 
-    /// <summary>Applies one frame of every motion. Returns whether any motion is still running.</summary>
     internal bool Tick()
     {
         List<(Frame Frame, long Stamp)> frames;
@@ -234,12 +191,8 @@ internal sealed class MotionPlayer : IDisposable
                 _closing.Remove(window);
         }
 
-        // The frames in between go first, so a window coming to rest, which waits for its program, does not hold up
-        // the others' frames for this vblank.
         foreach (var (frame, stamp) in frames.OrderBy(pair => pair.Item1.Done))
         {
-            // A window that another thread is changing, as a new motion starts, skips this frame so it does not hold up
-            // the others. Its last frame waits, so it always comes to rest.
             var window = For(frame.Window);
             if (frame.Done)
                 window.Enter();
@@ -261,7 +214,6 @@ internal sealed class MotionPlayer : IDisposable
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
-                // One window that fails does not cost the others their frames.
                 Report(exception);
             }
             finally
@@ -274,8 +226,6 @@ internal sealed class MotionPlayer : IDisposable
         {
             lock (For(window))
             {
-                // A window placed again while it was closing is where its newer outcome put it, but nothing else gives
-                // it back the alpha the close took, unless a newer motion is running for it.
                 bool placedSince;
                 lock (_gate)
                 {
@@ -284,7 +234,6 @@ internal sealed class MotionPlayer : IDisposable
                         continue;
                 }
 
-                // The window refused to close, so it goes back where its Layout put it.
                 if (_target.Shown(window))
                 {
                     if (!placedSince)
@@ -298,7 +247,6 @@ internal sealed class MotionPlayer : IDisposable
             return _animator.Count > 0 || _closing.Count > 0;
     }
 
-    /// <summary>Lands every motion at once. The thread stops, and the next motion starts it again.</summary>
     internal void Land()
     {
         _stopped = true;
@@ -315,15 +263,12 @@ internal sealed class MotionPlayer : IDisposable
             closing = [.. _closing.Select(pair => (pair.Key, pair.Value))];
             _closing.Clear();
 
-            // The thread may not have come back in time, as one waiting on a window that stopped answering. The frames
-            // it still has fail their check, so none of them shows after the windows came to rest.
             foreach (var frame in frames)
                 Touch(frame.Window);
             foreach (var (window, _) in closing)
                 Touch(window);
         }
 
-        // A window that was leaving stays shown here; revealing hidden Clients on exit shows it anyway.
         foreach (var frame in frames)
         {
             lock (For(frame.Window))
@@ -377,7 +322,6 @@ internal sealed class MotionPlayer : IDisposable
             _target.Border(frame.Window, border);
     }
 
-    // A window that has stopped answering is sent its rectangle without waiting, so it does not hold up the others.
     private void Place(WindowId window, Rectangle bounds)
     {
         if (_target.Hung(window))
@@ -399,7 +343,6 @@ internal sealed class MotionPlayer : IDisposable
                 _target.Alpha(frame.Window, frame.RestAlpha);
                 return;
             case MotionEnd.Close:
-                // The window counts as closing before its last alpha is set, so its border follows that alpha.
                 if (!_stopped)
                 {
                     lock (_gate)
@@ -438,7 +381,6 @@ internal sealed class MotionPlayer : IDisposable
             if (_thread is null && !_stopped)
             {
                 var epoch = _epoch;
-                // A frame missed under load is a visible hitch, so the motions keep ahead of background work.
                 _thread = new Thread(() => Run(epoch)) { IsBackground = true, Name = "Winland motions", Priority = ThreadPriority.AboveNormal };
                 _thread.Start();
             }
@@ -475,7 +417,6 @@ internal sealed class MotionPlayer : IDisposable
             if (_stopped || Volatile.Read(ref _epoch) != epoch)
                 return;
 
-            // A motion that wakes the thread showed its first frame already, so the next waits for the next vblank.
             if (!more)
                 _wake.WaitOne();
             _target.Pace();

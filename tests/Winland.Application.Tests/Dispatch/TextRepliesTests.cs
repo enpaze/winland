@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>The text Winland answers clients, activewindow, workspaces, activeworkspace, monitors, binds, version, configerrors and files with without j/.</summary>
 public class TextRepliesTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
@@ -182,7 +181,6 @@ public class TextRepliesTests
         Assert.Equal("config: " + path + "\nlog: " + log, core.Execute("files").Text);
         Assert.Equal("""{"config":"C:\\winland\\work.conf","log":"C:\\winland\\state\\winland.log"}""", core.Execute("j/files").Text);
 
-        // debug:disable_logs true, or an elevated Winland: no log is written, and none is reported.
         writing = null;
         Assert.Equal("""{"config":"C:\\winland\\work.conf","log":null}""", core.Execute("j/files").Text);
     }

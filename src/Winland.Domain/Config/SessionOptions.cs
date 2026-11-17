@@ -2,9 +2,6 @@ namespace Winland.Domain;
 
 public sealed record SessionOptions
 {
-    /// <summary>
-    /// <c>general:hide_taskbar</c>: hide the taskbars and set them to auto-hide, so Clients tile into the strip they reserved.
-    /// </summary>
     public bool HideTaskbar { get; init; }
 
     public static SessionOptions Documented { get; } = new();

@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// What every tiling Layout keeps around its own tiling: the Clients it holds, its floating Clients, the size each
-/// Client opened with and its size limits. A Layout places its tiled Clients itself.
-/// </summary>
 internal abstract class TiledLayout
 {
     private protected readonly List<Client> _clients = [];
@@ -41,12 +37,10 @@ internal abstract class TiledLayout
 
     public SizeLimits FloatingLimits(ClientId id) => _limits.TryGetValue(id, out var limits) ? new SizeLimits(limits.Min, limits.Max) : default;
 
-    /// <summary>The tiled placements, which each Layout works out.</summary>
     public abstract IReadOnlyList<Placement> Placed();
 
     public abstract IReadOnlyList<Placement> Remove(WindowId window);
 
-    /// <summary>The tiled placements and the shown floating Clients.</summary>
     public IReadOnlyList<Placement> Visible()
     {
         var placements = new List<Placement>(Placed());
@@ -54,7 +48,6 @@ internal abstract class TiledLayout
         return placements;
     }
 
-    /// <summary>Removes a Client so another Workspace can adopt it, with what it needs to take its place there.</summary>
     public bool TryTake(WindowId window, out Taken taken)
     {
         taken = default;
@@ -68,10 +61,6 @@ internal abstract class TiledLayout
         return true;
     }
 
-    /// <summary>
-    /// Hands the slot of <paramref name="current"/> to <paramref name="next"/>, a Window this Layout does not hold. The
-    /// slot keeps its place, size and floating state, and each Layout renames the Client in its own structure.
-    /// </summary>
     public bool Substitute(WindowId current, WindowId next, Taken incoming, out Taken outgoing)
     {
         outgoing = default;
@@ -92,7 +81,6 @@ internal abstract class TiledLayout
         return true;
     }
 
-    /// <summary>Gives the tile of <paramref name="from"/> to <paramref name="to"/> in what the Layout keeps for its own tiling.</summary>
     private protected abstract void Rename(ClientId from, ClientId to);
 
     private Taken Describe(int index)
@@ -105,7 +93,6 @@ internal abstract class TiledLayout
         return SlotHandover.Describe(client, bounds, limits, TakenWidth(client.Id));
     }
 
-    /// <summary>The width a Client takes with it to another Workspace, for a Layout that has one.</summary>
     private protected virtual double? TakenWidth(ClientId id) => null;
 
     private protected int IndexOf(ClientId id) => _clients.FindIndex(client => client.Id == id);

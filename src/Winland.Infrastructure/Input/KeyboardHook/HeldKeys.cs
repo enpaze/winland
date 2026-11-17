@@ -4,7 +4,6 @@ using Windows.Win32.UI.Input.KeyboardAndMouse;
 
 namespace Winland.Infrastructure;
 
-/// <summary>Which keys the user holds, as the hook saw them: reconciling them after a lock or a lost release, and injecting keys.</summary>
 public sealed partial class KeyboardHook : IDisposable
 {
     private void OnSession(object? sender, Microsoft.Win32.SessionSwitchEventArgs e)
@@ -15,7 +14,6 @@ public sealed partial class KeyboardHook : IDisposable
         var inhibited = e.Reason == Microsoft.Win32.SessionSwitchReason.SessionLock;
         _session.Inhibit(inhibited);
 
-        // Keys released on the lock screen were never seen. The session lives on the hook thread.
         if (!inhibited)
             Post(ReconcileMessage);
     }
@@ -29,11 +27,9 @@ public sealed partial class KeyboardHook : IDisposable
                 _pressedNames[slot] = null;
         }
 
-        // A drag whose button or key was let go on the lock screen is over, or the window would follow the cursor.
         if (Drag.Current is BindDrag.Active dragging && !IsDown(dragging.Button) && Drag.Abandon() is BindDrag.Active drag)
             PostGesture(drag.Dispatcher, drag.Arguments, CursorPoint(), PointerDragPhase.End, drag.Button);
 
-        // A release the hook missed leaves its bit set. A key still held sets it again when it repeats.
         var held = Volatile.Read(ref _held);
         for (var i = 0; i < Modifiers.Length; i++)
         {
@@ -45,10 +41,6 @@ public sealed partial class KeyboardHook : IDisposable
         ArmSweep();
     }
 
-    /// <summary>
-    /// The watch tick, on the hook thread. A modifier can be left down at any time, so the sweep runs on every tick.
-    /// It waits while the hook may have missed a key, or a held key would be taken as stale.
-    /// </summary>
     internal void Watch()
     {
         if (_disposed || _session.Inhibited || Environment.TickCount64 - _startedAt < SweepDelayMs || !Current())
@@ -57,7 +49,6 @@ public sealed partial class KeyboardHook : IDisposable
         ReleaseStale();
     }
 
-    // True when the hook has seen the newest input, so what it holds is up to date.
     private bool Current()
     {
         var info = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
@@ -67,8 +58,6 @@ public sealed partial class KeyboardHook : IDisposable
         return unchecked((int)info.dwTime - Volatile.Read(ref _lastSeen)) <= CurrentSlackMs;
     }
 
-    // A modifier the OS holds down that the user is not holding: left by a release lost
-    // before this daemon ran, or on a desktop the hook cannot see. Release it.
     private static void ReleaseStale()
     {
         var kept = Volatile.Read(ref _held);
@@ -80,7 +69,6 @@ public sealed partial class KeyboardHook : IDisposable
 
             Console.Error.WriteLine($"Releasing {name}, which was left down.");
 
-            // Letting go of Super or Alt alone opens Start or a menu bar. The mask key makes it a chord.
             if (vk is 0x5B or 0x5C or 0xA4 or 0xA5)
                 InputInjector.Post(Key(MaskKey, up: false), Key(MaskKey, up: true), Key(vk, up: true));
             else
@@ -109,7 +97,6 @@ public sealed partial class KeyboardHook : IDisposable
         return 0;
     }
 
-    // Called from the mouse hook, so it is sent from the injector's thread.
     internal static void Mask() => InputInjector.Post(Key(MaskKey, up: false), Key(MaskKey, up: true));
 
     internal static void Send(params ReadOnlySpan<INPUT> inputs)

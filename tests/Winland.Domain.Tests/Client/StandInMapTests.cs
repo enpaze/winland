@@ -13,8 +13,6 @@ public class StandInMapTests
         Assert.Equal(new Rectangle(0, 0, 200, 100), map.Destination);
     }
 
-    // A window that has not painted its new size yet shows what it painted at the scale of its size, and the area
-    // it gained repeats a column and a row just inside its border, so no gap shows and nothing is stretched.
     [Fact]
     public void AWindowNotPaintedAtItsSizeYetFillsWhatItGainedFromItsEdges()
     {
@@ -44,7 +42,6 @@ public class StandInMapTests
         Assert.Equal(new Rectangle(0, 0, 100, 50), map.Destination);
     }
 
-    // A frame of another shape than the window cuts its picture off at the right size instead of distorting it.
     [Fact]
     public void AFrameOfAnotherShapeCutsThePictureOff()
     {

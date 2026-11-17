@@ -2,15 +2,8 @@ using System.Globalization;
 
 namespace Winland.Domain;
 
-/// <summary>
-/// The identity of a Monitor is its make, model and serial. Identical monitors, the same three, are
-/// numbered <c> #2</c>, <c> #3</c> and so on in the order they were first seen. The first keeps the
-/// identity with no number. A monitor with no model and no serial is left to its Windows name.
-/// </summary>
 internal sealed class MonitorIdentity
 {
-    // For each make, model and serial, the Windows names in the order those monitors were first seen.
-    // A null slot is a monitor that has gone, and the slot stays so it keeps its number when it returns.
     private readonly Dictionary<string, List<string?>> _seen = new(StringComparer.Ordinal);
 
     public Monitor[] Number(IReadOnlyList<Monitor> reported)

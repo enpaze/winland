@@ -2,7 +2,6 @@ namespace Winland.Application.Tests;
 
 public class OptionSetTests
 {
-    // The Options a config can set. Anything else is an unsupported keyword.
     private static readonly string[] Kept =
     [
         "animations:enabled",

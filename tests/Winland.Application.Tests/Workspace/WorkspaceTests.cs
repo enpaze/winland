@@ -378,7 +378,6 @@ public class WorkspaceTests
 
     private static readonly Rectangle Right = new(1920, 0, 1920, 1080);
 
-    // RIGHT shows empty Workspace 2. previous from LEFT lands there.
     private static Outcome ShowTheRightsWorkspace(WindowManager core)
     {
         core.Execute("dispatch focusmonitor RIGHT");
@@ -399,7 +398,6 @@ public class WorkspaceTests
         return core;
     }
 
-    // A loaded config applies its gaps and borders like a reload, and these rectangles have none.
     private const string Gapless = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n";
 
     private static WindowManager Load(string text)

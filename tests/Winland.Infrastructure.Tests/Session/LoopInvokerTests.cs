@@ -16,7 +16,6 @@ public class LoopInvokerTests
         {
             loopThread = Environment.CurrentManagedThreadId;
             nativeThread = ProbeNative.GetCurrentThreadId();
-            // A thread gets a message queue the first time it asks for a message.
             _ = Peek();
             invoker.Attach(nativeThread);
             attached.Set();
@@ -65,8 +64,6 @@ public class LoopInvokerTests
         Assert.True(stuck.Join(TimeSpan.FromSeconds(5)));
     }
 
-    // The console close handler returns when Invoke does, and Windows then ends the process. A cleanup
-    // the loop already started must get the rest of the budget, not be cut off when the loop is slow to answer.
     [Fact]
     public void AnActionTheLoopStartedIsWaitedForPastTheAnswerTime()
     {
@@ -149,8 +146,6 @@ public class LoopInvokerTests
         Assert.Equal(1, runs);
     }
 
-    // Windows sends the loop's own windows messages while it waits on another program in the middle of a step. What
-    // such a message posts runs once the loop takes its next message, not inside that step.
     [Fact]
     public void AnActionPostedOnTheLoopThreadWaitsForTheLoop()
     {

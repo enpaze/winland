@@ -1,10 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// Values held for programs Winland starts, such as the rules of an <c>exec</c> rule block or the Workspace it was
-/// started on. A value is held by the started process and every process it starts, until it expires or the first
-/// window of that family takes it.
-/// </summary>
 internal sealed class ProcessFamilies<T>
 {
     private readonly List<Family> _families = [];
@@ -15,7 +10,6 @@ internal sealed class ProcessFamilies<T>
             _families.Add(new Family(pid, value, expiresAt));
     }
 
-    /// <summary>Changes every value held, as a Workspace whose id changed does.</summary>
     internal void Update(Func<T, T> change)
     {
         foreach (var family in _families)
@@ -48,7 +42,6 @@ internal sealed class ProcessFamilies<T>
             Note(chain[i - 1], chain[i]);
     }
 
-    /// <summary>Takes the value held for this process's family, the oldest first.</summary>
     internal bool TryTake(int pid, long now, out T value)
     {
         _families.RemoveAll(family => now > family.ExpiresAt);

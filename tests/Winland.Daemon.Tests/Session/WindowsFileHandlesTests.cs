@@ -38,7 +38,6 @@ public class WindowsFileHandlesTests
         }
     }
 
-    // The final path is the plain path, without the \\?\ prefix the system reports it with.
     [Fact]
     public void TheFinalPathOfAFileIsItsPlainPath()
     {
@@ -60,7 +59,6 @@ public class WindowsFileHandlesTests
         }
     }
 
-    // A new file is opened for reading, writing and deletion, and an existing one is not replaced.
     [Fact]
     public void ANewFileCanBeWrittenReadAndDeletedButNotMadeTwice()
     {

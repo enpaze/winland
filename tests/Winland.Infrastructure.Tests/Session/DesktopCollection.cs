@@ -2,21 +2,12 @@ using System.Diagnostics;
 
 namespace Winland.Infrastructure.Tests;
 
-/// <summary>
-/// The tests that open real top-level windows or set process-wide state such as the DPI awareness.
-/// xunit runs this collection by itself, after the others, one test at a time.
-/// </summary>
 [CollectionDefinition(Name, DisableParallelization = true)]
 public sealed class DesktopCollection
 {
     public const string Name = "Desktop";
 }
 
-/// <summary>
-/// A test that a running daemon would disturb: it adopts the windows the test opens, tiles them,
-/// and restores them when they are minimized. The test skips while any Winland process exists,
-/// and runs where no daemon is running, as in CI.
-/// </summary>
 public class DesktopFactAttribute : FactAttribute
 {
     public DesktopFactAttribute()

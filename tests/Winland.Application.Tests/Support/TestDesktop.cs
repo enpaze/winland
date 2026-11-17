@@ -2,14 +2,8 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>
-/// A desktop around a core that answers as the Windows adapter does: one 1920x1080 Monitor, a shared config,
-/// Workspace 1 focused and the pointer in the middle of the Monitor. A test drives it with pipe lines, input events
-/// and edits of its config, and reads the replies.
-/// </summary>
 internal sealed class TestDesktop
 {
-    /// <summary>The config every desktop starts with.</summary>
     internal const string Config = """
         general {
             gaps_in = 5
@@ -39,10 +33,8 @@ internal sealed class TestDesktop
         windowrule = size 200 200, class:wr_kitty
         """;
 
-    /// <summary>Where the desktop's one Monitor, HEADLESS-2, is.</summary>
     internal static readonly Rectangle First = new(0, 0, 1920, 1080);
 
-    /// <summary>Where a second Monitor a test plugs in goes: to the right of HEADLESS-2.</summary>
     internal static readonly Rectangle Second = new(1920, 0, 1920, 1080);
 
     private readonly Dictionary<string, WindowId> _windows = new(StringComparer.Ordinal);
@@ -54,10 +46,6 @@ internal sealed class TestDesktop
     private State _state = new([]);
     private string _text;
 
-    /// <summary>
-    /// Builds the desktop. <paramref name="extra"/> is config after <see cref="Config"/>: the options a test sets
-    /// before its first window opens. <c>reload</c> reads the same text again.
-    /// </summary>
     internal TestDesktop(string extra = "")
     {
         _text = Config + "\n" + extra;
@@ -73,13 +61,8 @@ internal sealed class TestDesktop
 
     internal WindowManager WindowManager { get; }
 
-    /// <summary>Makes <c>reload</c> read <see cref="Config"/> alone, and drop every line the test added to it.</summary>
     internal void ReloadWithoutExtra() => _text = Config;
 
-    /// <summary>
-    /// The user adds a line to the end of the config, such as <c>general:gaps_in = 0</c>, and saves it: the config is
-    /// read again. The new line must not warn.
-    /// </summary>
     internal void Set(string keyword, string value)
     {
         var warnings = ConfigParser.Parse(_text).Warnings.Count;
@@ -89,22 +72,14 @@ internal sealed class TestDesktop
         Handle(new Configure(document));
     }
 
-    /// <summary>Where the pointer is. It follows the warps the core asks for, as the system cursor does.</summary>
     internal Point Pointer { get; private set; }
 
-    // What reading each open window afresh finds, as the Windows adapter reads one for inspect.
     private readonly Dictionary<WindowId, WindowAppeared> _described = [];
 
-    /// <summary>The top-level Window under the pointer, as the Windows adapter reads it for <c>inspect</c>. Null over the desktop.</summary>
     internal WindowId? UnderPointer { get; set; }
 
-    /// <summary>The window closes before the core hears of it, so reading it afresh finds nothing.</summary>
     internal void Vanish(WindowId window) => _described.Remove(window);
 
-    /// <summary>
-    /// Opens a window with this class in the middle of the focused Monitor, and returns
-    /// its id. Each window has a process of its own. A second window with the same class takes over the name.
-    /// </summary>
     internal WindowId Spawn(string windowClass, string title = "", WindowTraits? traits = null, bool shownMaximized = false, WindowId? owner = null)
     {
         var id = new WindowId(_next++);
@@ -124,17 +99,14 @@ internal sealed class TestDesktop
 
     internal WindowId Window(string windowClass) => _windows[windowClass];
 
-    /// <summary>Closes the window as its application would.</summary>
     internal void Close(string windowClass) => Handle(new WindowClosed(_windows[windowClass]));
 
-    /// <summary>Closes every window as its application would.</summary>
     internal void CloseAll()
     {
         foreach (var client in Clients())
             Handle(new WindowClosed(IdOf(client)));
     }
 
-    /// <summary>Closes the active window as its application would.</summary>
     internal void CloseActive() => Handle(new WindowClosed(ActiveId()));
 
     internal void MovePointer(int x, int y)
@@ -143,7 +115,6 @@ internal sealed class TestDesktop
         Handle(new PointerMoved(Pointer));
     }
 
-    /// <summary>Puts a floating window at a frame, as the system does when the user drags it there.</summary>
     internal void Place(string windowClass, int x, int y, int width, int height) =>
         Place(_windows[windowClass], x, y, width, height);
 
@@ -153,35 +124,30 @@ internal sealed class TestDesktop
         Handle(new WindowMoveStarted(window, Pointer));
         Handle(new WindowMoveEnded(window, Pointer, bounds));
 
-        // The core may have kept the window on screen, so the frame is read back.
         var client = Clients().Single(candidate => IdOf(candidate) == window);
         var at = client.GetProperty("at");
         var size = client.GetProperty("size");
         _placed[window] = new Rectangle(at[0].GetInt32(), at[1].GetInt32(), size[0].GetInt32(), size[1].GetInt32());
     }
 
-    /// <summary>Moves a floating window to this position and keeps its size.</summary>
     internal void MoveTo(WindowId window, int x, int y)
     {
         var size = Placed(window);
         Place(window, x, y, size.Width, size.Height);
     }
 
-    /// <summary>Presses and releases a mouse button where the pointer is.</summary>
     internal void Click(string button = "mouse:272")
     {
         Handle(new PointerButtonPressed(button) { Position = Pointer });
         Handle(new PointerButtonReleased(button) { Position = Pointer });
     }
 
-    /// <summary>Plugs in a Monitor at these bounds, with no reserved area.</summary>
     internal void AddMonitor(string name, Rectangle bounds)
     {
         _monitors.Add(Display(name, name, bounds));
         Handle(new MonitorsChanged([.. _monitors]));
     }
 
-    /// <summary>Reports every plugged-in monitor enabled or disabled, as Windows does. Config cannot do this.</summary>
     internal void ReportEnabled(bool enabled)
     {
         for (var i = 0; i < _monitors.Count; i++)
@@ -190,17 +156,12 @@ internal sealed class TestDesktop
         Handle(new MonitorsChanged([.. _monitors]));
     }
 
-    /// <summary>Unplugs a Monitor.</summary>
     internal void RemoveMonitor(string name)
     {
         _monitors.RemoveAll(monitor => monitor.Name == name);
         Handle(new MonitorsChanged([.. _monitors]));
     }
 
-    /// <summary>
-    /// Feeds the core an event, keeps the frames it places, and answers as the Windows adapter does: the window the
-    /// outcome focuses reports focus back, and the pointer goes where the outcome warps it.
-    /// </summary>
     internal Outcome Handle(Input input)
     {
         if (input is WindowAppeared appeared)
@@ -213,7 +174,6 @@ internal sealed class TestDesktop
         return outcome;
     }
 
-    /// <summary>Sends one pipe line, such as <c>dispatch focuswindow class:a</c> or <c>j/clients</c>.</summary>
     internal string Send(string line)
     {
         var reply = WindowManager.Execute(line);
@@ -231,10 +191,6 @@ internal sealed class TestDesktop
             Follow(WindowManager.Handle(new WindowFocused(focus, FocusCause.Requested)), focus);
     }
 
-    /// <summary>
-    /// Where the window was last placed: the frame Winland moves it to, inside its border. The replies report this
-    /// as <c>at</c> and <c>size</c>.
-    /// </summary>
     internal Rectangle Placed(string windowClass) => Placed(_windows[windowClass]);
 
     internal Rectangle Placed(WindowId window) =>
@@ -257,10 +213,8 @@ internal sealed class TestDesktop
 
     internal JsonElement[] Workspaces() => [.. Json(Send("j/workspaces")).EnumerateArray()];
 
-    /// <summary>The <c>at</c> of a client, written as <c>x,y</c>.</summary>
     internal static string At(JsonElement client) => Pair(client.GetProperty("at"));
 
-    /// <summary>The <c>size</c> of a client, written as <c>w,h</c>.</summary>
     internal static string SizeOf(JsonElement client) => Pair(client.GetProperty("size"));
 
     internal static string ClassOf(JsonElement client) => client.GetProperty("class").GetString() ?? "";
@@ -273,28 +227,23 @@ internal sealed class TestDesktop
 
     internal static bool Pinned(JsonElement client) => client.GetProperty("pinned").GetBoolean();
 
-    // A named or special Workspace has no id in the reply, and reads as 0 here.
     internal static int WorkspaceId(JsonElement client) =>
         client.GetProperty("workspace").TryGetProperty("id", out var id) ? id.GetInt32() : 0;
 
-    /// <summary>The active window's class.</summary>
     internal string ActiveClass() => ClassOf(ActiveWindow());
 
-    /// <summary>The active window's frame, written as <c>x,y</c> and <c>w,h</c>.</summary>
     internal (string At, string Size) ActivePlace()
     {
         var bounds = Placed(ActiveId());
         return ($"{bounds.X},{bounds.Y}", $"{bounds.Width},{bounds.Height}");
     }
 
-    /// <summary>A window's frame, written as <c>x,y</c> and <c>w,h</c>.</summary>
     internal (string At, string Size) PlaceOf(string windowClass)
     {
         var bounds = Placed(windowClass);
         return ($"{bounds.X},{bounds.Y}", $"{bounds.Width},{bounds.Height}");
     }
 
-    /// <summary>Checks the active window's place.</summary>
     internal void ExpectActive(string at, string size) => Assert.Equal((at, size), ActivePlace());
 
     internal WindowId ActiveId() => IdOf(ActiveWindow());
@@ -320,7 +269,6 @@ internal sealed class TestDesktop
         _state = outcome.State;
     }
 
-    /// <summary>The work area of the focused monitor, where a new window opens.</summary>
     internal Rectangle FocusedArea()
     {
         foreach (var screen in _state.Screens)

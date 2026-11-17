@@ -1,6 +1,5 @@
 namespace Winland.Install;
 
-/// <summary>The settings record on disk. The directory is created when the file is written.</summary>
 public sealed class FileSettingsText : ISettingsText
 {
     private readonly string path;

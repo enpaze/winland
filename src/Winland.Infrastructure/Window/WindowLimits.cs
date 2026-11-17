@@ -5,10 +5,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Reads a window's minimum and maximum track sizes.
-/// A timeout or a failed send is no limit. The sizes are the visible frame, after the invisible border.
-/// </summary>
 internal static class WindowLimits
 {
     private const uint TrackTimeoutMs = 200;
@@ -33,8 +29,6 @@ internal static class WindowLimits
         max = null;
         var info = new MinMaxInfo();
         nuint result = 0;
-        // SendMessageTimeout returns nonzero whenever the window answered, whatever it answered. A hung window it gave
-        // up on can leave the last error clear, so 0 alone is the failure.
         var sent = PInvoke.SendMessageTimeout(
             hwnd,
             PInvoke.WM_GETMINMAXINFO,

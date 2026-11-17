@@ -14,7 +14,6 @@ public class DeviceCacheTests
         Assert.Equal(1, opened);
     }
 
-    // A failed read, such as one made while the device was still starting, is tried again later.
     [Fact]
     public void AFailedOpenIsTriedAgainAfterTheRetryDelay()
     {

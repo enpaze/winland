@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// The command that opens a file from the tray menu. The file's type supplies the command when Windows has one,
-/// and Notepad opens it otherwise. The program is never elevated.
-/// </summary>
 public static class TrayOpener
 {
     public static Launch Open(string path, string? association)
@@ -12,10 +8,6 @@ public static class TrayOpener
         return new Launch(Command(path, association), null);
     }
 
-    /// <summary>
-    /// <paramref name="association"/> is the open command for the file's type, with <c>%1</c>, <c>%L</c> or <c>%*</c>
-    /// for the path, or null when the type has none.
-    /// </summary>
     public static string Command(string path, string? association)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);

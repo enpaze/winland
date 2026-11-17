@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>A Client moved by its own title bar is dragged like a <c>movewindow</c> drag: lifted, then dropped where the pointer ends.</summary>
 public class NativeMoveTests
 {
     private static readonly Rectangle Wide = new(0, 0, 1920, 1080);
@@ -15,7 +14,6 @@ public class NativeMoveTests
         var started = core.Handle(new WindowMoveStarted(new WindowId(2), new Point(1000, 100)));
         var dropped = core.Handle(new WindowMoveEnded(new WindowId(2), new Point(100, 500)));
 
-        // The system is moving the lifted window, so the core leaves it alone and lets the other tile grow.
         Assert.Equal(Wide, BoundsOf(started, 1));
         Assert.DoesNotContain(started.Placements, placement => placement.Client == Client(started, 2).Id);
         Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(dropped, 2));
