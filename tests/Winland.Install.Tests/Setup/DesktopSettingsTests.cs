@@ -194,7 +194,6 @@ public class DesktopSettingsTests
 
         public List<string> Log { get; } = [];
 
-        /// <summary>A log line whose write throws, as a Windows write that fails would.</summary>
         public string? FailingSet { get; set; }
 
         public bool WindowArranging

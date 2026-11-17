@@ -4,7 +4,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>Putting windows back after a crash, and saving what this run changed on each window so the next run can.</summary>
 public sealed partial class WindowAdapter : IDisposable
 {
     public void Recover(RecoverySnapshot? snapshot)
@@ -13,8 +12,6 @@ public sealed partial class WindowAdapter : IDisposable
         if (snapshot is null)
             return;
 
-        // A window held transparent when the previous run died would stay so when its program shows it. One this run
-        // holds, as after a session change, is still waiting to be shown.
         foreach (var held in snapshot.Held)
         {
             if (!_opacity.Owns(held.Window) && WindowIdentity.Recognize(held))
@@ -35,7 +32,6 @@ public sealed partial class WindowAdapter : IDisposable
             if (recognized != WindowIdentity.Recognition.SameClient)
                 continue;
 
-            // The program may have turned a former Client into an overlay before the previous run stopped.
             if (IsOverlay(PInvoke.GetWindowLong(new HWND((nint)client.Window.Value), WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE)))
             {
                 if (!snapshot.Clean && client.Hidden)
@@ -44,12 +40,9 @@ public sealed partial class WindowAdapter : IDisposable
                 continue;
             }
 
-            // A clean exit showed every hidden Client. One hidden again was hidden by its program, and stays so.
             if (snapshot.Clean && client.Hidden && !_desktop.Shown(client.Window))
                 continue;
 
-            // Nothing minimizes under Winland, so a window that is minimized now was minimized while it was away.
-            // It does not rejoin, but one that was hidden is still shown again, minimized.
             if (_desktop.Minimized(client.Window))
             {
                 if (client.Hidden)
@@ -88,8 +81,6 @@ public sealed partial class WindowAdapter : IDisposable
         Apply(_core.Handle(new RestoredAdopted()));
     }
 
-    // A previous run that died left its changes on the window. They are put back before anything reads the
-    // window, so a stripped frame or a cut region is not taken as the window's own.
     private void Repair(RecoveredClient client)
     {
         if (client.FrameStyle is uint style)
@@ -102,10 +93,6 @@ public sealed partial class WindowAdapter : IDisposable
             _opacity.ReleaseAdded(client.Window);
     }
 
-    /// <summary>
-    /// Closes every Client whose window is gone. A destroy event can be lost while the session is away, as when the
-    /// event queue overflows around a resume, and the Client would stay as an empty tile until the next start.
-    /// </summary>
     public void DropGone()
     {
         foreach (var client in _core.Recovery().Clients)
@@ -117,7 +104,6 @@ public sealed partial class WindowAdapter : IDisposable
 
     public void RevealHidden()
     {
-        // Releasing comes first, so an outcome applied on another thread meanwhile starts no motion after they landed.
         lock (_showGate)
             _releasing = true;
 
@@ -139,7 +125,6 @@ public sealed partial class WindowAdapter : IDisposable
         }
     }
 
-    // Says the snapshot is out of date. Building it takes the core lock, so its owner does that later, off this thread.
     internal void Publish()
     {
         if (_releasing)
@@ -148,7 +133,6 @@ public sealed partial class WindowAdapter : IDisposable
         _changed?.Invoke();
     }
 
-    /// <summary>The newest recovery snapshot, or null once the exit cleanup began.</summary>
     internal RecoverySnapshot? Capture()
     {
         if (_releasing)
@@ -159,11 +143,6 @@ public sealed partial class WindowAdapter : IDisposable
         return snapshot;
     }
 
-    /// <summary>
-    /// Shows every hidden Client and puts back every frame, effect and alpha, for a crash. It reads what this
-    /// adapter hid and the last published snapshot instead of the core, so a thread that died holding the core
-    /// lock cannot block it. The snapshot can be a quarter second old, and a window hidden since is in Concealed.
-    /// </summary>
     internal void Salvage()
     {
         _releasing = true;
@@ -186,8 +165,6 @@ public sealed partial class WindowAdapter : IDisposable
         PutBackFrames();
     }
 
-    // What this run changed on each Client's window, so a restart after a crash can put it back. After the exit cleanup,
-    // what it could not put back, on a window that stopped answering.
     internal RecoverySnapshot Stamp(RecoverySnapshot snapshot) =>
         _effects.Stamp(_borderless.Stamp(_opacity.Stamp(snapshot)));
 }

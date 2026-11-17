@@ -12,7 +12,6 @@ public sealed class WindowsAccessReaderTests : IDisposable
 
     public WindowsAccessReaderTests() => Directory.CreateDirectory(_root);
 
-    // Every entry under the folder is read, hidden ones and those in subfolders too, the folder first.
     [Fact]
     public void TheTreeIsTheFolderAndEverythingInIt()
     {
@@ -34,7 +33,6 @@ public sealed class WindowsAccessReaderTests : IDisposable
         Assert.All(tree, entry => Assert.NotNull(entry.Access));
     }
 
-    // A folder that cannot be listed cannot be shown to be protected.
     [Fact]
     public void AFolderThatCannotBeListedReadsAsUnknown()
     {
@@ -86,7 +84,6 @@ public sealed class WindowsAccessReaderTests : IDisposable
         Assert.Equal($"Could not verify that '{missing}' is protected from non-administrators.", error);
     }
 
-    // The folders above a path, nearest first, up to the root.
     [Fact]
     public void TheAncestorsAreNearestFirst()
     {

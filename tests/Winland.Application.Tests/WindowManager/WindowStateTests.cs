@@ -3,7 +3,6 @@ using System.Reflection;
 
 namespace Winland.Application.Tests;
 
-/// <summary>Closing a window forgets it in every piece of per-window state the core keeps.</summary>
 public class WindowStateTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
@@ -65,7 +64,6 @@ public class WindowStateTests
         core.Handle(new WindowMoveStarted(new WindowId(1), new Point(100, 100)));
         core.Handle(new WindowFocused(new WindowId(77), FocusCause.User));
 
-        // Window 7, the dialog of the closed owner 6, stays open.
         WindowId[] closed = [new(1), new(2), new(3), new(5), new(4), new(6), new(14), new(8), new(10), new(11), new(12), new(13), new(9), new(77)];
         var held = Leftovers(core, closed);
         var empty = Stores.Where(store => !held.Any(path => path.StartsWith(store, StringComparison.Ordinal))).ToList();
@@ -84,8 +82,6 @@ public class WindowStateTests
         Assert.True(kept.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", kept));
     }
 
-    // What the scenario must fill with a closed window before it closes, so the walk proves something. _renamed is
-    // left out: the next rule pass empties it.
     private static readonly string[] Stores =
     [
         "_props._entries", "_awaitingMapFocus", "_focus._history", "_focus.Unmanaged", "_restored", "_pins", "_stacking",
@@ -93,7 +89,6 @@ public class WindowStateTests
         "_workspaces._all[].Focus", "_workspaces._all[]._groups", "_workspaces._all[]._waiting",
     ];
 
-    // Every place in the core, however deep in a Winland-owned object, that holds one of the windows.
     private static List<string> Leftovers(WindowManager core, WindowId[] closed)
     {
         var kept = new List<string>();

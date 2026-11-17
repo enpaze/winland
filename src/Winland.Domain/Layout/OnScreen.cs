@@ -1,10 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// How far a floating Client is kept on screen, as Winland keeps it: in <see cref="Work"/>, the floating work
-/// area, with <see cref="Border"/> drawn around the frame. A Client is moved, not resized, to lie wholly inside with its
-/// border, so one larger than the area lines up with the right and bottom edges.
-/// </summary>
 internal readonly record struct OnScreen(Rectangle Work, int Border)
 {
     public Rectangle Keep(Rectangle frame)

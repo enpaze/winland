@@ -1,17 +1,13 @@
 namespace Winland.Infrastructure;
 
-// Placing a Client by its visible frame, and painting its decoration.
 public sealed partial class WindowAdapter
 {
-    // DWMWA_BORDER_COLOR, DWMWA_WINDOW_CORNER_PREFERENCE.
     private const int BorderColorAttribute = 34;
     private const int CornerAttribute = 33;
     private const int TransitionsOffAttribute = 3;
 
-    // The corners each painted window was last given, with its border taken off and DWM's transitions turned off.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, uint> _dwmPainted = new();
 
-    // DWMWA_COLOR_DEFAULT, DWMWA_COLOR_NONE, DWMWCP_DEFAULT, DWMWCP_DONOTROUND, DWMWCP_ROUND, DWMWCP_ROUNDSMALL.
     private const uint DefaultBorderColor = 0xFFFFFFFFu;
     private const uint NoneBorderColor = 0xFFFFFFFEu;
     private const uint DefaultCorners = 0;
@@ -19,23 +15,17 @@ public sealed partial class WindowAdapter
     private const uint RoundCorners = 2;
     private const uint SmallCorners = 3;
 
-    // The Layout rectangle is the visible frame. The outer rectangle SetWindowPos moves
-    // includes DWM's invisible border, which differs per window and per DPI. A window that
-    // refuses the size is shifted once and then left at the size it kept.
     private void Place(WindowId window, Rectangle target)
     {
         var trails = TryOuter(window, out var before) && _quick.Trails(window, before);
 
-        // A window already on its rectangle is left alone: moving it would still make it lay itself out.
         if (!trails && TryVisible(window, out var shown) && shown == target)
             return;
 
-        // A frame sent without waiting may still be on its way, and the window would take it after this.
         if (PlaceDirectly(window, target) && trails && TryOuter(window, out var landed))
             SendQuick(window, landed, keepSize: false);
     }
 
-    // Returns false when the window was only sent its frame, because its program has stopped answering.
     private bool PlaceDirectly(WindowId window, Rectangle target)
     {
         var dpi = _desktop.Dpi(window);
@@ -44,9 +34,6 @@ public sealed partial class WindowAdapter
         if (!Move(window, requested))
             return false;
 
-        // A window that moved onto a Monitor with another scale resized itself for that scale as it arrived, and its
-        // frame changed with it. It is measured again and placed once more, so its own resize is not taken for a
-        // size it refuses.
         var arrived = _desktop.Dpi(window);
         if (arrived != dpi)
         {
@@ -151,8 +138,6 @@ public sealed partial class WindowAdapter
 
     private bool TryVisible(WindowId window, out Rectangle visible) => _desktop.TryVisible(window, out visible);
 
-    // A call that waits for the window waits as long as its program does not answer. The frame of a program that has
-    // stopped answering is sent without waiting, so it lands when the program wakes. Returns whether the window took it.
     private bool Move(WindowId window, Rectangle bounds)
     {
         if (_desktop.Hung(window))
@@ -166,8 +151,6 @@ public sealed partial class WindowAdapter
         return true;
     }
 
-    // A frame of a motion or a step of a drag. The window takes it when its thread gets to it, and a later
-    // placement corrects whatever it does with it.
     internal void QuickPlace(WindowId window, Rectangle target, bool borderless)
     {
         if (!TryOuter(window, out var current))
@@ -176,8 +159,6 @@ public sealed partial class WindowAdapter
         _ = _quick.Request(window, OuterOf(window, target, borderless), current, (bounds, keepSize) => SendQuick(window, bounds, keepSize));
     }
 
-    // The Layout rectangle of a window whose program has stopped answering, sent without waiting. Unlike a frame of a
-    // motion it is never skipped, because nothing after it puts the window there.
     internal void PlaceAsync(WindowId window, Rectangle target, bool borderless) =>
         SendQuick(window, OuterOf(window, target, borderless), keepSize: false);
 
@@ -204,7 +185,6 @@ public sealed partial class WindowAdapter
         PutBackFrames();
     }
 
-    // Every window whose frame, border, corners, backdrop, region or alpha this changed, painted or not.
     private void PutBackFrames()
     {
         WindowId[] painted;
@@ -222,10 +202,6 @@ public sealed partial class WindowAdapter
         _opacity.ResetAll();
     }
 
-    // DWMWA_BORDER_COLOR is a COLORREF, 0x00BBGGRR. The alpha byte is not used.
-    // DWMWA_COLOR_DEFAULT and DWMWCP_DEFAULT put the frame back to the system choice.
-    // A running motion owns the alpha and border it animates, and moves them toward this decoration. Returns whether
-    // the window shows the decoration as given, with neither held by a motion.
     private bool Paint(WindowId window, Decoration decoration)
     {
         lock (_motions.For(window))
@@ -240,15 +216,10 @@ public sealed partial class WindowAdapter
                 _ => SquareCorners,
             };
 
-            // Every outcome paints every Client, many times a second as windows show and move. Each attribute is a
-            // call into DWM, so a window that has them already is left alone.
             if (!_dwmPainted.TryGetValue(window, out var given) || given != corners)
             {
-                // Winland draws the border itself, outside the window, so DWM draws none.
                 _desktop.SetAttribute(window, BorderColorAttribute, NoneBorderColor);
                 _desktop.SetAttribute(window, CornerAttribute, corners);
-                // Winland animates a Client's showing and hiding itself. DWM's own fade would play on top, and a Client
-                // hidden as its Workspace slides away would fade out on its tile, over the Workspace shown in its place.
                 _desktop.SetAttribute(window, TransitionsOffAttribute, 1);
                 _dwmPainted[window] = corners;
             }

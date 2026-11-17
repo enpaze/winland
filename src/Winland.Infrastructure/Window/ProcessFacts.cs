@@ -4,11 +4,6 @@ using Windows.Win32.System.Threading;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// A process's executable and its ancestors, read once per process. A process id can be reused, so an entry
-/// holds only while the process has the same start time. A process whose start time cannot be read is read
-/// every time.
-/// </summary>
 internal sealed class ProcessFacts
 {
     private const int Limit = 512;
@@ -31,10 +26,8 @@ internal sealed class ProcessFacts
         _ancestors = ancestors;
     }
 
-    /// <summary>What Winland reads once per process: its start, the program's full path, and its ancestors.</summary>
     internal readonly record struct Facts(long Started, string ImagePath, IReadOnlyList<int> Ancestors)
     {
-        /// <summary>The program's file name.</summary>
         public string Exe => ImagePath.Length == 0 ? "" : Path.GetFileName(ImagePath);
     }
 

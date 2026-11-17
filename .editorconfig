@@ -1,7 +1,3 @@
-# The style the code already follows. Line endings are left to git: the repo stores LF,
-# a Windows checkout gets CRLF, and .gitattributes keeps scripts/hooks at LF.
-# Most C# style rules are suggestions, so they show in the editor and do not fail the build.
-# The few the code keeps everywhere are warnings in the last section, and the build enforces them.
 root = true
 
 [*]
@@ -21,28 +17,23 @@ indent_size = 2
 indent_size = 2
 
 [*.cs]
-# Usings outside the namespace, System first, no blank lines between groups.
 csharp_using_directive_placement = outside_namespace:suggestion
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false
 
-# File-scoped namespaces.
 csharp_style_namespace_declarations = file_scoped:suggestion
 
-# var where the type is clear, and the language keywords for the built-in types.
 csharp_style_var_for_built_in_types = true:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion
 csharp_style_var_elsewhere = true:suggestion
 dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
 dotnet_style_predefined_type_for_member_access = true:suggestion
 
-# No this. qualification.
 dotnet_style_qualification_for_field = false:suggestion
 dotnet_style_qualification_for_property = false:suggestion
 dotnet_style_qualification_for_method = false:suggestion
 dotnet_style_qualification_for_event = false:suggestion
 
-# Allman braces. A one-statement if or loop often leaves its braces out, so braces are not checked.
 csharp_new_line_before_open_brace = all
 csharp_new_line_before_else = true
 csharp_new_line_before_catch = true
@@ -50,7 +41,6 @@ csharp_new_line_before_finally = true
 csharp_indent_case_contents = true
 csharp_indent_switch_labels = true
 
-# Newer syntax the code already uses.
 csharp_style_prefer_primary_constructors = true:suggestion
 dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
 csharp_style_prefer_pattern_matching = true:suggestion
@@ -60,8 +50,6 @@ csharp_style_expression_bodied_accessors = true:suggestion
 csharp_style_expression_bodied_methods = when_on_single_line:suggestion
 csharp_style_expression_bodied_constructors = false:suggestion
 
-# Names: private fields are _camelCase, and constant and static readonly fields are PascalCase.
-# A local constant is camelCase.
 dotnet_naming_rule.constants_are_pascal.symbols = constants
 dotnet_naming_rule.constants_are_pascal.style = pascal
 dotnet_naming_rule.constants_are_pascal.severity = suggestion
@@ -74,7 +62,6 @@ dotnet_naming_rule.static_readonly_are_pascal.severity = suggestion
 dotnet_naming_symbols.static_readonly_fields.applicable_kinds = field
 dotnet_naming_symbols.static_readonly_fields.required_modifiers = static, readonly
 
-# A private static field that is not readonly is written either way, so it is not checked.
 dotnet_naming_rule.private_static_fields_unchecked.symbols = private_static_fields
 dotnet_naming_rule.private_static_fields_unchecked.style = pascal
 dotnet_naming_rule.private_static_fields_unchecked.severity = none
@@ -92,20 +79,12 @@ dotnet_naming_style.pascal.capitalization = pascal_case
 dotnet_naming_style.underscored.capitalization = camel_case
 dotnet_naming_style.underscored.required_prefix = _
 
-# The rules every file in src and tests already keeps fail the build: EnforceCodeStyleInBuild is on
-# in Directory.Build.props, and warnings are errors. A rule's severity is the suffix of its option.
-# The build does not run the simplification rules (this. and the built-in type keywords), and var
-# and braces are not kept everywhere, so those stay suggestions.
 [{src,tests}/**.cs]
 csharp_style_namespace_declarations = file_scoped:warning
 csharp_using_directive_placement = outside_namespace:warning
-# Modifiers in the usual order.
 dotnet_diagnostic.IDE0036.severity = warning
 
-# Recommended analyzer rules that do not fit, from AnalysisMode in Directory.Build.props.
-# CA1859: a Layout returns IReadOnlyList<Placement> whatever builds it, so every Layout reads the same.
 dotnet_diagnostic.CA1859.severity = none
-# CA1711, CA1716, CA1720: names such as Next, Flags, Single and Command are domain words here.
 dotnet_diagnostic.CA1711.severity = none
 dotnet_diagnostic.CA1716.severity = none
 dotnet_diagnostic.CA1720.severity = none

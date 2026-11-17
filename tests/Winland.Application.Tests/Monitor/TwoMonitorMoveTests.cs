@@ -2,10 +2,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>
-/// Moving windows and focus between two Monitors.
-/// Each test keeps HEADLESS-2 at 0,0 as its left Monitor and plugs in a right one at 1920,0.
-/// </summary>
 public class TwoMonitorMoveTests
 {
     private const string Left = "HEADLESS-2";
@@ -87,7 +83,6 @@ public class TwoMonitorMoveTests
         desk.Ok("workspace", "290");
         desk.Spawn("global_move_fullscreen");
         desk.Ok("fullscreen", "0 set");
-        // A direction refuses a fullscreen Client. mon: puts it on the Workspace that Monitor is showing.
         desk.Ok("movewindow", $"mon:{Right} silent");
 
         desk.Ok("focusmonitor", Right);
@@ -120,7 +115,6 @@ public class TwoMonitorMoveTests
     [Fact]
     public void PointerNoWarpsFocusesMonitorOnly()
     {
-        // The case sets cursor:no_warps before any window opens.
         var desk = Prepare(new TestDesktop("""
             cursor {
                 no_warps = true
@@ -143,7 +137,6 @@ public class TwoMonitorMoveTests
         Assert.NotEqual(original, CursorPos(desk));
     }
 
-    // The reference creates the right monitor, as output create headless does, at 1920,0.
     private static TestDesktop Prepare(TestDesktop desk)
     {
         desk.AddMonitor(Right, TestDesktop.Second);
@@ -157,6 +150,5 @@ public class TwoMonitorMoveTests
         Assert.Equal(monitor, active.GetProperty("monitor").GetString());
     }
 
-    // The cursor position, written as the reference's text reply writes it: "x, y".
     private static string CursorPos(TestDesktop desk) => $"{desk.Pointer.X}, {desk.Pointer.Y}";
 }

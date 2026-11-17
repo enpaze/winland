@@ -1,6 +1,5 @@
 namespace Winland.Infrastructure.Tests;
 
-/// <summary>Start and Search are flyouts of the shell. Winland leaves them unmanaged so Super does not tile them.</summary>
 public class ShellFlyoutsTests
 {
     [Theory]
@@ -18,8 +17,6 @@ public class ShellFlyoutsTests
     [InlineData("explorer.exe")]
     public void OtherProgramsAreNot(string exe) => Assert.False(ShellFlyouts.Is(exe, "Windows.UI.Core.CoreWindow"));
 
-    // A taskbar button's preview and a notification icon's tip are XAML popups of Explorer. A File Explorer window,
-    // and another program's XAML popup, are not.
     [Fact]
     public void ExplorersPopupsAreFlyouts()
     {

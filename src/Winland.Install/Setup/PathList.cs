@@ -1,9 +1,7 @@
 namespace Winland.Install;
 
-/// <summary>Adds and removes one directory on a <c>PATH</c> value without expanding or reordering the rest.</summary>
 public static class PathList
 {
-    /// <summary>The value to store, or null when <paramref name="current"/> already contains <paramref name="folder"/>.</summary>
     public static string? Add(string? current, string folder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(folder);
@@ -15,7 +13,6 @@ public static class PathList
         return string.Join(';', entries);
     }
 
-    /// <summary>The value to store, or null when <paramref name="folder"/> is not an entry.</summary>
     public static string? Remove(string? current, string folder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(folder);

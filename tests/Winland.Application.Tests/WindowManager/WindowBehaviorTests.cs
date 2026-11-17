@@ -3,9 +3,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>
-/// Windows, driven through pipe lines on a <see cref="TestDesktop"/>: swapping, fullscreen, pins, rules, exec rules and floating moves.
-/// </summary>
 public class WindowBehaviorTests
 {
     [Fact]
@@ -40,7 +37,6 @@ public class WindowBehaviorTests
         ExpectFocused(desk, "kitty_b", 0);
         desk.Ok("togglefloating");
 
-        // A floating window over a fullscreen tile.
         desk.Ok("focuswindow", "class:kitty_a");
         desk.Ok("fullscreen", "0 set");
         ExpectFocused(desk, "kitty_a", 2);
@@ -50,7 +46,6 @@ public class WindowBehaviorTests
         Assert.Equal(2, TestDesktop.Fullscreen(desk.Client("kitty_a")));
         Assert.Equal(2, TestDesktop.FullscreenClient(desk.Client("kitty_a")));
 
-        // A tile under a fullscreen floating window.
         desk.Ok("fullscreen", "0 set");
         desk.Ok("focuswindow", "tiled");
         Assert.Contains("kitty_a", desk.ActiveClass(), StringComparison.Ordinal);
@@ -172,10 +167,8 @@ public class WindowBehaviorTests
         desk.Ok("focuswindow", "class:kitty_14134");
         desk.Ok("pin");
 
-        // Disabling the monitor takes it away, as unplugging it does.
         desk.RemoveMonitor("HEADLESS-4");
 
-        // The reference answers an error here and only checks that it is still alive.
         desk.Ok("focuswindow", "class:kitty_14134");
         desk.Dispatch("pin");
 
@@ -306,7 +299,6 @@ public class WindowBehaviorTests
 
         desk.Ok("togglefloating");
 
-        // The reference turns layout_aware off here.
         desk.Ok("fullscreen", "0 default");
         Assert.Equal("default", Handler(desk));
         desk.Ok("fullscreen", "0 default");
@@ -322,7 +314,6 @@ public class WindowBehaviorTests
         var desk = new TestDesktop();
         desk.Spawn("a");
         desk.Ok("togglefloating");
-        // Fully on screen.
         desk.Place(desk.ActiveId(), -10, 0, 100, 100);
         Assert.Equal("2,2", desk.ActivePlace().At);
     }
@@ -373,7 +364,6 @@ public class WindowBehaviorTests
         return ($"{bounds.X},{bounds.Y}", $"{bounds.Width},{bounds.Height}");
     }
 
-    // The active window's class and fullscreen mode, as the reference's isActiveWindow checks them.
     private static void ExpectFocused(TestDesktop desk, string windowClass, int fullscreen)
     {
         var active = desk.ActiveWindow();
@@ -381,7 +371,6 @@ public class WindowBehaviorTests
         Assert.Equal(fullscreen, TestDesktop.Fullscreen(active));
     }
 
-    // The test plugin's click with a button held down, and with it let go, where the pointer is.
     private static void Press(TestDesktop desk, string button) =>
         desk.Handle(new PointerButtonPressed(button) { Position = desk.Pointer });
 
@@ -402,7 +391,6 @@ public class WindowBehaviorTests
             .GetProperty("id").GetInt32();
     }
 
-    // Reloads, unbinds the button and puts the window back, as the reference's RESET_WINDOW does.
     private static void ResetWindow(TestDesktop desk)
     {
         Assert.Equal("ok", desk.Send("reload"));

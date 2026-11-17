@@ -5,7 +5,6 @@ namespace Winland.Domain;
 
 internal static partial class WindowRuleParser
 {
-    // The effects TryParseEffect reads, for the hint a mistyped one gets. A test keeps every name parsing.
     internal static readonly string[] EffectNames =
     [
         "float", "tile", "ignore", "no_focus", "pin", "workspace", "opacity", "fullscreen", "maximize",
@@ -263,8 +262,6 @@ internal static partial class WindowRuleParser
         return true;
     }
 
-    // One fraction is used for every state. Two set the active and the inactive fractions, and leave fullscreen at 1.
-    // Each multiplies the configured fraction.
     private static bool TryParseOpacity(string? text, out OpacityRule rule, out string error)
     {
         var tokens = string.IsNullOrWhiteSpace(text)
@@ -376,8 +373,6 @@ internal static partial class WindowRuleParser
         return true;
     }
 
-    // The match fields, split at each comma that starts a new field. A comma that does not start a field stays in the
-    // pattern, so title:a, b is one field when " b" is not itself a field. An empty piece is dropped.
     private static List<string> SplitFields(string text)
     {
         var fields = new List<string>();
@@ -413,9 +408,6 @@ internal static partial class WindowRuleParser
         : traits.ExclusiveFullscreen ? Admission.ExclusiveFullscreen
         : null;
 
-    // What even a rule that forces adoption needs: a window someone can see and activate, not a tooltip, an
-    // untitled tool window such as a menu, or a no-activate popup a program shows over its own window. Null for a
-    // window that has all of it.
     private static Admission? Excluded(WindowTraits traits) =>
         !traits.Visible ? Admission.Hidden
         : !traits.TopLevel ? Admission.Child
@@ -425,11 +417,6 @@ internal static partial class WindowRuleParser
         : traits.Overlay ? Admission.Overlay
         : null;
 
-    /// <summary>
-    /// A <c>windowrule</c> line that floats or tiles a window with these traits. It matches the executable, else the
-    /// class, else the title, as literal text. Null when that field cannot be written so the line reads back as one
-    /// rule that matches the window.
-    /// </summary>
     internal static string? Draft(bool floating, WindowTraits traits)
     {
         string? field;
@@ -462,8 +449,6 @@ internal static partial class WindowRuleParser
         return read.Warnings.Count == 0 && read.WindowRules is [var rule] && Matches(rule, traits) ? line : null;
     }
 
-    // A field that contains the wildcard, or a character the config line would read as something else, cannot be a
-    // literal pattern.
     private static bool CanDraft(string text)
     {
         if (text.Length == 0 || text.Trim() != text)

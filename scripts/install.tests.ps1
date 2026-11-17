@@ -1,5 +1,3 @@
-# Tests for the decisions in install.ps1. Nothing is downloaded and no Windows setting is changed.
-#   pwsh -NoProfile -File scripts/install.tests.ps1
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'install.ps1')
 

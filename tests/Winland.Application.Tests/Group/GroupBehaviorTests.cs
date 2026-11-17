@@ -2,7 +2,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>Groups, driven through pipe lines on a <see cref="TestDesktop"/>.</summary>
 public class GroupBehaviorTests
 {
     [Fact]
@@ -137,7 +136,6 @@ public class GroupBehaviorTests
         ExpectFullscreen(desk, 0, 0);
     }
 
-    // How many clients are placed at x,y, as the reference counts "at: x,y" in its clients reply.
     private static int CountAt(TestDesktop desk, string at) =>
         desk.Clients().Count(client => desk.PlaceOf(TestDesktop.ClassOf(client)).At == at);
 

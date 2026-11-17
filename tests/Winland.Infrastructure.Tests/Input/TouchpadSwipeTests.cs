@@ -104,7 +104,6 @@ public class TouchpadSwipeTests
         Assert.False(TouchpadFingers.Scrolls(2100, 120));
     }
 
-    // The inputs with the time of an end left out, which the clock sets.
     private static Input[] Untimed(IEnumerable<Input> inputs) =>
         [.. inputs.Select(input => input switch
         {

@@ -2,19 +2,12 @@ using System.Collections;
 
 namespace Winland.Domain;
 
-/// <summary>
-/// Every Workspace, and what each Monitor shows. It numbers Workspaces on each Monitor, turns the Workspaces of a
-/// Monitor that leaves into Guests on another, and gives them back when it returns. Only this changes which
-/// Workspaces there are and what they are called, and each change that renames a Workspace is returned.
-/// </summary>
 internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
 {
     private readonly List<LiveWorkspace> _all = [];
 
-    // The number each Monitor was showing when it left, by its return key. A Guest keeps its own home on the Workspace.
     private readonly Dictionary<string, long> _rememberedShown = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>What each Monitor shows. It follows every rename and removal here.</summary>
     public ShownWorkspaces Shown { get; } = new();
 
     public int Count => _all.Count;
@@ -34,7 +27,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
         return null;
     }
 
-    /// <summary>The Workspace <paramref name="id"/> when it is on <paramref name="monitor"/>.</summary>
     public LiveWorkspace? On(MonitorId monitor, WorkspaceId id) =>
         Find(id) is LiveWorkspace desk && desk.Monitor == monitor ? desk : null;
 
@@ -51,7 +43,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
         Shown.Remove(desk.Id);
     }
 
-    /// <summary>Removes <paramref name="id"/> unless it is shown, persistent or holds a Client.</summary>
     public void DropIfEmpty(WorkspaceId id, bool shown)
     {
         if (shown || Find(id) is not LiveWorkspace desk || desk.Persistent || desk.Layout.Clients.Count > 0)
@@ -60,7 +51,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
         Remove(desk);
     }
 
-    /// <summary>The Workspaces that are not Special, on <paramref name="only"/> when given: named ones, then numbered ones in order.</summary>
     public IReadOnlyList<WorkspaceId> Listed(MonitorId? only)
     {
         var named = new List<WorkspaceId>();
@@ -90,7 +80,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
     public bool NumberIsEmpty(long number, MonitorId monitor) =>
         Find(WorkspaceId.FromNumber(number, monitor)) is not LiveWorkspace desk || desk.Layout.Clients.Count == 0;
 
-    /// <summary>The lowest number no Workspace on <paramref name="monitor"/> has.</summary>
     public long FirstFree(MonitorId monitor)
     {
         for (var number = 1L; number < WorkspaceId.MaxNumber; number++)
@@ -104,10 +93,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
 
     public WorkspaceId NextFree(MonitorId monitor) => WorkspaceId.FromNumber(FirstFree(monitor), monitor);
 
-    /// <summary>
-    /// The number <paramref name="desk"/> keeps on <paramref name="monitor"/>: its own when that number is free there,
-    /// otherwise the first free one.
-    /// </summary>
     public long NumberOn(LiveWorkspace desk, MonitorId monitor)
     {
         ArgumentNullException.ThrowIfNull(desk);
@@ -126,7 +111,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
         throw new InvalidOperationException("No workspace id remains.");
     }
 
-    /// <summary>One past the highest number already on <paramref name="monitor"/>, and at least 11 when 1 to 10 are all in use.</summary>
     public long NextGuestNumber(MonitorId monitor)
     {
         long highest = 0;
@@ -161,10 +145,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
         return candidate;
     }
 
-    /// <summary>
-    /// Gives <paramref name="desk"/> the id <paramref name="to"/>, and the Monitor that id names. What each Monitor
-    /// shows follows. The rename, or null when the id did not change.
-    /// </summary>
     public WorkspaceRename? Rebind(LiveWorkspace desk, WorkspaceId to)
     {
         ArgumentNullException.ThrowIfNull(desk);
@@ -182,7 +162,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
         return new WorkspaceRename(from, to);
     }
 
-    /// <summary>Moves <paramref name="desk"/> to <paramref name="destination"/>, keeping its number when it is free there. It is no longer a Guest.</summary>
     public WorkspaceRename? MoveTo(LiveWorkspace desk, MonitorId destination)
     {
         ArgumentNullException.ThrowIfNull(desk);
@@ -190,10 +169,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
         return Rebind(desk, WorkspaceId.FromNumber(NumberOn(desk, destination), destination));
     }
 
-    /// <summary>
-    /// <paramref name="leaving"/> left. The number it last showed is remembered under <paramref name="key"/>. Its empty
-    /// Workspaces go, and the others become Guests on <paramref name="host"/>, numbered after its own Workspaces.
-    /// </summary>
     public IReadOnlyList<WorkspaceRename> Depart(MonitorId leaving, string key, MonitorId? host)
     {
         if (Shown.LastShown(leaving) is WorkspaceId last
@@ -224,11 +199,6 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
         return renames;
     }
 
-    /// <summary>
-    /// The Monitor with <paramref name="key"/> came back as <paramref name="returning"/>. Its Guests go home under their
-    /// old numbers, or the first free one when that is taken. <paramref name="shownNumber"/> is the number it showed
-    /// when it left, if it was remembered.
-    /// </summary>
     public IReadOnlyList<WorkspaceRename> Return(MonitorId returning, string key, out long? shownNumber)
     {
         var guests = _all.Where(desk => string.Equals(desk.HomeIdentity, key, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -259,5 +229,4 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
     }
 }
 
-/// <summary>A Workspace that was given another id.</summary>
 internal readonly record struct WorkspaceRename(WorkspaceId From, WorkspaceId To);

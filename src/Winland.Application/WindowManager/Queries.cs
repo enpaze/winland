@@ -2,10 +2,8 @@ using System.Globalization;
 
 namespace Winland.Application;
 
-/// <summary>The pipe's requests: the queries, <c>dispatch</c> and <c>reload</c>.</summary>
 public sealed partial class WindowManager
 {
-    // The last config Winland read, whose errors configerrors lists.
     private ConfigDocument? _loaded;
 
     private CommandReply ExecuteLine(CommandParse parse) =>
@@ -15,7 +13,6 @@ public sealed partial class WindowManager
             CommandParsed parsed => Reply(parsed.Request),
         };
 
-    // A query's reply, or null for a request that is not one. A query answers from the current State and changes nothing.
     private string? Read(CommandRequest request) =>
         request switch
         {
@@ -46,7 +43,6 @@ public sealed partial class WindowManager
             _ => null,
         };
 
-    // Each request's reply.
     private CommandReply Reply(CommandRequest request)
     {
         if (Read(request) is { } text)
@@ -67,10 +63,8 @@ public sealed partial class WindowManager
         return new CommandReply(effect.Error ?? "ok", effect);
     }
 
-    // Winland answers in JSON with j/ and in text without it.
     private static bool Json(CommandRequest request) => request.Flags.HasFlag(CommandFlags.Json);
 
-    // Winland's text reply for a query that finds nothing, such as "no open windows". With j/ it stays the empty JSON.
     private static string Text(string reply, string empty) => reply.Length == 0 ? empty : reply;
 
     private CommandReply Answer(string text) => new(text, View([]));

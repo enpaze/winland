@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>Turns a font family the config names into one Windows has. The generic fontconfig names map to Windows fonts.</summary>
 public static class FontNames
 {
     public const string Default = "Segoe UI";
@@ -16,7 +15,6 @@ public static class FontNames
         ["mono"] = "Consolas",
     };
 
-    /// <summary>The Windows font for <paramref name="family"/>: a generic name's Windows font, the name itself, or Segoe UI for none.</summary>
     public static string Windows(string? family)
     {
         var name = family?.Trim() ?? "";

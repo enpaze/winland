@@ -4,7 +4,6 @@ using Winland.Install;
 
 namespace Winland.Daemon;
 
-/// <summary>Writes a Start menu shortcut that carries Winland's AppUserModelID.</summary>
 sealed class ShellStartMenu : IStartMenu
 {
     public void Place(Shortcut shortcut)
@@ -44,7 +43,6 @@ static class ShellShortcut
             link.SetShowCmd(1);
 
             var store = (IPropertyStore)link;
-            // VT_LPWSTR. PropVariantClear frees the CoTaskMem string.
             var variant = new PropVariant
             {
                 VariantType = 31,
@@ -79,7 +77,6 @@ static class ShellShortcut
         public uint PropertyId;
     }
 
-    // vt at 0, the string pointer at 8. 24 bytes matches the 64-bit PROPVARIANT.
     [StructLayout(LayoutKind.Explicit, Size = 24)]
     private struct PropVariant
     {

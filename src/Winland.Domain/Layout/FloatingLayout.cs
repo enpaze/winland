@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// Places every Client as floating. A Client that arrived tiled floats only while this Layout holds it,
-/// and is tiled again by the Layout that takes it. <c>general:layout</c> does not select this Layout.
-/// </summary>
 internal sealed class FloatingLayout : Layout, IDragOwner
 {
     private readonly DwindleLayout _inner = new();
@@ -119,7 +115,6 @@ internal sealed class FloatingLayout : Layout, IDragOwner
 
     public IReadOnlyList<Placement> ResizeActive(WindowId window, string arguments) => _inner.ResizeActive(window, arguments);
 
-    // There are no tiles to sink a Client into.
     public IReadOnlyList<Placement> ToggleFloating(WindowId window, Point? pointer = null)
     {
         _ = window;

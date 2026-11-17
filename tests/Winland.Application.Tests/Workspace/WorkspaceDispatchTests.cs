@@ -3,7 +3,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>Winland's workspace cases. Each test is named after its case, and sends the same commands.</summary>
 public class WorkspaceDispatchTests
 {
     [Fact]
@@ -50,7 +49,6 @@ public class WorkspaceDispatchTests
 
         desk.Ok("workspace", "1");
 
-        // Each Monitor shows its own Workspace 1. The new one does not take a number from this Monitor.
         desk.AddMonitor("HEADLESS-3", TestDesktop.Second);
         var monitors = Monitors(desk);
         Assert.Equal(2, monitors.Count(monitor => ShownOn(monitor) == "1 (1)"));
@@ -59,7 +57,6 @@ public class WorkspaceDispatchTests
         desk.Ok("focusmonitor", "HEADLESS-2");
         Assert.Equal("1 (1)", ActiveLabel(desk));
 
-        // r+1 is the next number on this Monitor. Workspace 3 still holds a window, and 2 is free.
         desk.Ok("workspace", "r+1");
         Assert.Equal("2 (2)", ActiveLabel(desk));
 
@@ -67,18 +64,15 @@ public class WorkspaceDispatchTests
         desk.Ok("workspace", "r~2");
         Assert.Equal("2 (2)", ActiveLabel(desk));
 
-        // m cycles the Workspaces on this Monitor: 1, 2, and 3.
         desk.Ok("workspace", "m+1");
         Assert.Equal("3 (3)", ActiveLabel(desk));
 
-        // The reference expects an error here and does not check the reply.
         desk.Dispatch("workspace", "1");
         Assert.Equal("1 (1)", ActiveLabel(desk));
 
         desk.Ok("workspace", "special:HELLO");
         Assert.Contains("special:HELLO", Monitors(desk).Select(SpecialOn));
 
-        // The reference does not check this reply either.
         desk.Dispatch("workspace", "3");
         Assert.Equal(2, Monitors(desk).Count(monitor => SpecialOn(monitor).Length == 0));
 
@@ -217,7 +211,6 @@ public class WorkspaceDispatchTests
         Assert.Equal(2, TestDesktop.Fullscreen(desk.ActiveWindow()));
         Assert.Contains("special:test_fs_special", Monitors(desk).Select(SpecialOn));
 
-        // The special workspace is hidden before a window opens on the regular one.
         desk.Ok("togglespecialworkspace", "test_fs_special");
         desk.Dispatch("workspace", "1");
         desk.Spawn("kitty_regular");
@@ -253,7 +246,6 @@ public class WorkspaceDispatchTests
 
     private static string[] Labels(TestDesktop desk) => [.. desk.Workspaces().Select(Label)];
 
-    // A Workspace as the reference reply writes it, `ADDRESS (NAME)`: its address, then its display name.
     private static string Label(JsonElement workspace) =>
         $"{workspace.GetProperty("address").GetString()} ({workspace.GetProperty("name").GetString()})";
 
@@ -268,7 +260,6 @@ public class WorkspaceDispatchTests
 
     private static string NameOf(JsonElement monitor) => monitor.GetProperty("name").GetString() ?? "";
 
-    // The reference writes a Monitor's Workspace as `ID (NAME)`.
     private static string ShownOn(JsonElement monitor)
     {
         var workspace = monitor.GetProperty("activeWorkspace");

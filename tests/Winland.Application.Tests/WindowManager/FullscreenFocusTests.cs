@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>On a workspace with a maximized or fullscreen Client, that Client owns the pointer.</summary>
 public class FullscreenFocusTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);

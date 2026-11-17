@@ -11,13 +11,8 @@ public sealed record RecoverySnapshot(IReadOnlyList<RecoveredClient> Clients)
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    /// <summary>
-    /// The snapshot a clean exit left, after it showed every hidden Client. A hidden Client that is not shown at the
-    /// next start was hidden by its program since, as one closed to the tray is.
-    /// </summary>
     public bool Clean { get; init; }
 
-    /// <summary>The windows held transparent that are no Clients, so a start after a crash makes them opaque again.</summary>
     public IReadOnlyList<HeldWindow> Held { get; init; } = [];
 
     public string ToJson()

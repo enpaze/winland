@@ -77,7 +77,6 @@ public static class ConfigValueSyntax
         return true;
     }
 
-    /// <summary>Every color of a gradient value, in the order the value lists them. Its angle is skipped.</summary>
     public static bool TryParseColors(string text, out BorderColor[] colors)
     {
         colors = [];

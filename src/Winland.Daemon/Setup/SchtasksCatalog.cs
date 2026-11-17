@@ -21,7 +21,6 @@ sealed class SchtasksCatalog : ITaskCatalog
             throw Failed("Could not start the logon task.", result);
     }
 
-    // Updates also migrate a task installed before the native launcher was introduced.
     public static bool UseLauncher(string executable)
     {
         var result = Run(["/query", "/tn", LogonTaskDefinition.TaskName, "/xml"]);
@@ -46,10 +45,6 @@ sealed class SchtasksCatalog : ITaskCatalog
             throw Failed("Could not remove the logon task.", result);
     }
 
-    // schtasks reads the definition from a file. In the user's %TEMP% any program the user runs
-    // could swap that file before schtasks reads it, and the task runs at the highest privileges.
-    // A new folder in the Windows temp folder that only administrators can write cannot be
-    // touched: users may create entries there but not rename or delete another's.
     private static void Register(LogonTask task, bool update)
     {
         var windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");

@@ -3,14 +3,10 @@ using Winland.Install;
 
 namespace Winland.Daemon;
 
-/// <summary>The commands that install, update, uninstall and tweak Winland: <c>winland install</c> and the rest.</summary>
 static class MaintenanceCommand
 {
     public static int Run(string[] args, InstallCommand command)
     {
-        // One approval for the machine install, and for uninstalling it. The per-user install never asks.
-        // The relaunch carries the invoking user. An over-the-shoulder approval runs as the administrator
-        // who approved it, which is not the account that logs on.
         var needsAdministrator = command is InstallCommand.Remove
             ? MachineInstalled()
             : command.RequiresAdministrator(machineInstallPresent: false);
@@ -144,7 +140,6 @@ static class MaintenanceCommand
                 throw new InvalidOperationException("Unexpected update result.");
         }
 
-        // A channel asked for is kept only once the update on it went through, so a failed one changes nothing.
         void Remember()
         {
             if (!Elevation.IsElevated() && requested is UpdateChannel chosen)
@@ -154,8 +149,6 @@ static class MaintenanceCommand
 
     private static string StageDirectory()
     {
-        // An elevated replace copies into Program Files. The unpacked zip stays in a folder only
-        // administrators can write, so another program cannot swap it after the hash check.
         if (Elevation.IsElevated())
         {
             var windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");

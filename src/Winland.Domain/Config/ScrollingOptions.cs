@@ -2,7 +2,6 @@ using System.Globalization;
 
 namespace Winland.Domain;
 
-/// <summary>Options under <c>scrolling:</c>. Gaps and borders stay on <see cref="LayoutOptions"/>.</summary>
 public sealed record ScrollingOptions
 {
     public const double MinColumnWidth = 0.05;
@@ -11,7 +10,6 @@ public sealed record ScrollingOptions
 
     public double ColumnWidth { get; init; } = 0.5;
 
-    /// <summary>The widths <c>colresize +conf</c> and <c>-conf</c> step through.</summary>
     public static IReadOnlyList<double> StepWidths { get; } = [0.333, 0.5, 0.667, 1.0];
 
     public static ScrollingOptions Defaults { get; } = new();

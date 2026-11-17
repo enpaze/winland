@@ -1,9 +1,5 @@
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Applies cursor requests from an outcome. Until <see cref="InstallSystem"/> the cursor is a
-/// stand-in, so tests that apply an outcome do not change the machine.
-/// </summary>
 public static class SessionEffects
 {
     private static readonly CursorIdle Idle = new(NullCursor.Instance);
@@ -38,12 +34,10 @@ public static class SessionEffects
             Idle.Moved();
     }
 
-    /// <summary>A touch pressed down.</summary>
     public static void NoteTouch() => Idle.Touched();
 
     public static void NoteKey() => Idle.KeyPressed();
 
-    /// <summary>Loads the user's own cursors again, after a run that may have left a drag's pointer shape behind.</summary>
     public static void RestoreCursors() => CursorShape.Restore();
 
     public static void Restore()

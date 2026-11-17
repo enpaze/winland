@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>The FALLBACK Monitor that holds the Workspaces while no Monitor is enabled.</summary>
 public class FallbackMonitorTests
 {
     [Fact]
@@ -17,11 +16,9 @@ public class FallbackMonitorTests
 
         desk.ReportEnabled(false);
         Assert.Contains("FALLBACK", desk.Send("j/monitors"), StringComparison.Ordinal);
-        // The occupied Workspace becomes a Guest. FALLBACK had none of its own, so the Guest is shown as Workspace 1.
         Assert.Equal("FALLBACK", desk.ActiveWorkspace().GetProperty("monitor").GetString());
         Assert.Equal(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
 
-        // The reference also asks its test plugin about workspace lifecycle state here, which has no counterpart.
         desk.Ok("workspace", "9");
         desk.Spawn("fallback-workspace-b");
 

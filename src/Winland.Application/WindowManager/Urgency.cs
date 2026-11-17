@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>A Client that asks for attention is reported urgent on the Event stream.</summary>
 public sealed partial class WindowManager
 {
     private Outcome Flash(WindowId window)

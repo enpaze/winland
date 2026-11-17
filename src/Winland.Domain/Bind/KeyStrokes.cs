@@ -6,10 +6,8 @@ public static class KeyStrokes
 {
     internal const int FirstMouseButton = 272;
 
-    // mouse:left to mouse:x2 name the buttons from 272 in order.
     private static readonly string[] MouseButtonNames = ["left", "right", "middle", "x1", "x2"];
 
-    /// <summary>The button of <c>mouse:N</c> or a named one such as <c>mouse:left</c>, which is 272.</summary>
     internal static bool TryMouse(string key, out int button)
     {
         button = 0;

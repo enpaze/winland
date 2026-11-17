@@ -1,10 +1,8 @@
 using Winland.Daemon;
 using Winland.Install;
 
-// An elevated relaunch writes back to the console that started it, before any argument is read.
 args = Elevation.SendOutputBack(args);
 
-// These answer here, with no Winland and no UAC: the names this winland knows, and a check of a config.
 if (ControlInvocation.TryListNames(args, out var names))
 {
     Console.WriteLine(names);
@@ -14,11 +12,9 @@ if (ControlInvocation.TryListNames(args, out var names))
 if (args.Length > 0 && args[0].Equals("check", StringComparison.OrdinalIgnoreCase))
     return Program.Check(args[1..], ConfigPaths.Default(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)), Console.Error);
 
-// A command for the running Winland is sent down its pipe before anything that starts one, so it never asks for UAC.
 if (ControlInvocation.TryCreate(args, out var line, out var events))
     return ControlCommand.Run(line, events, PipeName());
 
-// The debug options copy what Winland writes here to a file and to stdout.
 var log = new RollingLogWriter(Console.Error);
 Console.SetError(log);
 
@@ -42,7 +38,6 @@ switch (ManualStartElevation.Decide(
     limitedToken: UserAccess.HasLimitedToken()))
 {
     case ElevationChoice.Relaunch relaunch:
-        // The relaunch puts the loop argument first. Arguments Winland cannot start with ask for no approval.
         return Guard(() => IsStart([.. relaunch.Arguments.Skip(1)]) ? Relaunch(relaunch.Arguments) : Usage());
     case ElevationChoice.Refuse refuse:
         Console.Error.WriteLine(refuse.Message);
@@ -102,7 +97,6 @@ static int Run(string? path, RollingLogWriter log)
     }
 
     var configPath = path ?? ConfigPaths.Default(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-    // The default is written only without --config, when the file is absent or empty.
     var firstStart = path is null && DefaultConfig.WriteIfMissing(configPath);
     if (firstStart)
         Console.Error.WriteLine($"Wrote the default config to {configPath}.");
@@ -134,17 +128,11 @@ static int Run(string? path, RollingLogWriter log)
     CopyLog(log, core.Debug, logFile);
     var prior = store.Read();
 
-    // A recovery file is left by a run that did not exit cleanly, which may have left a drag's pointer shape behind.
     if (prior is not null)
         SessionEffects.RestoreCursors();
     SessionEffects.InstallSystem();
     TaskbarControl.InstallSystem();
-    // The host records each Client's process, class and title in the snapshot it hands on.
     using var host = new WindowHost(core, store.Save, PipeName());
-    // Log off and shut down clean up from WM_ENDSESSION, on the loop thread. Closing the console calls in from
-    // a thread of its own, so the cleanup is handed to the loop thread there too.
-    // The cleanup runs once. Closing the console can run it on the console's thread while the loop is busy, and the
-    // loop then reaches it on its way out: that one waits for the first and does nothing.
     var stopGate = new Lock();
     var stopped = false;
     void StopOnce()
@@ -167,7 +155,6 @@ static int Run(string? path, RollingLogWriter log)
         Salvage(host);
     };
     AppDomain.CurrentDomain.UnhandledException += onCrash;
-    // The watcher calls from a thread of its own. The reload runs on the loop, as the tray's does.
     using var watching = new ConfigWatcher(host.PostReload);
     watcher = watching;
     try
@@ -193,12 +180,9 @@ static int Run(string? path, RollingLogWriter log)
             }
         };
 
-        // Programs the config starts wait until the shell is up and the Monitors, the recovered Clients and the
-        // windows already open are laid out, so they open on the Workspace the session shows.
         host.Run(prior, () =>
         {
             store.Arm();
-            // Saves are read from now on, when the loop runs and can take the reload.
             watching.Watch(ConfigPaths.Watched(configPath, current.Sources));
             Persist(store, core.Recovery());
             LaunchConfigured(core, core.StartupLaunches(current));
@@ -208,7 +192,6 @@ static int Run(string? path, RollingLogWriter log)
     }
     finally
     {
-        // A save of the config while the cleanup runs is not read.
         watching.Dispose();
         StopOnce();
         AppDomain.CurrentDomain.UnhandledException -= onCrash;
@@ -218,15 +201,11 @@ static int Run(string? path, RollingLogWriter log)
 
 static void Persist(RecoveryStore store, RecoverySnapshot snapshot)
 {
-    // A Client that closed since the snapshot was taken is left out. The rest are still recorded.
     store.Save(WindowIdentity.Annotate(snapshot));
 }
 
 static void Stop(WindowHost host, RecoveryStore store, WindowManager core)
 {
-    // The state file is kept, without the changes the cleanup puts back, so the next start puts every Client back
-    // on its Workspace and in its place. A core in a bad state, often what ended the run, can fail here. The windows
-    // are then put back as after a crash, which needs no core.
     try
     {
         var final = core.Recovery();
@@ -235,7 +214,6 @@ static void Stop(WindowHost host, RecoveryStore store, WindowManager core)
         host.RestoreTaskbar();
         SessionEffects.Restore();
 
-        // A window that stopped answering kept the frame or the layered style the cleanup could not take off.
         store.Keep(WindowIdentity.Annotate(host.Stamp(final)) with { Clean = true });
     }
     catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -245,8 +223,6 @@ static void Stop(WindowHost host, RecoveryStore store, WindowManager core)
     }
 }
 
-// An exception on another thread ends the process without Stop. This puts back what it can, and keeps the
-// state file so the next start rejoins the Clients to their Workspaces.
 static void Salvage(WindowHost host)
 {
     try
@@ -268,8 +244,6 @@ static void Salvage(WindowHost host)
     }
 }
 
-// The elevated daemon writes and deletes the state file as an administrator, in a folder the user's
-// environment names. It uses only a folder the user could already empty (see StateLocation).
 static RecoveryStore StateStore()
 {
     var standard = Path.Combine(
@@ -330,9 +304,6 @@ static int Usage()
     return 2;
 }
 
-// debug:disable_logs false copies the log beside the state file, keeping the previous log as winland.log.1.
-// An elevated Winland writes no file: a folder the user can change could send a write by name somewhere only
-// administrators may write.
 static void CopyLog(RollingLogWriter log, DebugOptions options, string? file)
 {
     log.Copy(options, OpenLog);
@@ -362,10 +333,8 @@ static void CopyLog(RollingLogWriter log, DebugOptions options, string? file)
 
 internal partial class Program
 {
-    /// <summary><c>winland check [file]</c>: the file, or <paramref name="defaultConfig"/> without one. 2 for any other arguments.</summary>
     internal static int Check(string[] arguments, string defaultConfig, TextWriter error)
     {
-        // A blank file is usually an empty variable in a script, so it is a usage error, not the default config.
         if (arguments.Length > 1 || (arguments.Length == 1 && (string.IsNullOrWhiteSpace(arguments[0]) || arguments[0].StartsWith('-'))))
         {
             error.WriteLine("usage: winland check [file]");
@@ -388,7 +357,6 @@ internal partial class Program
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            // Catching here lets Run's finally show the hidden Clients and put the frames back first.
             Console.Error.WriteLine(ex);
             if (rethrow)
                 throw;

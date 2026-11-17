@@ -12,7 +12,6 @@ public class WorkspaceSelectorTests
         Appear(core, 3, left);
         core.Handle(new Dispatch("workspace", "1"));
 
-        // m walks the Workspaces on the focused Monitor. The other Monitor's Workspace 1 stays put.
         var monitorNext = core.Handle(new Dispatch("workspace", "m+1"));
         Assert.Equal(new WorkspaceId("3"), monitorNext.State.ActiveWorkspace);
         Assert.Equal(new MonitorId(0), monitorNext.State.ActiveMonitor);
@@ -36,7 +35,6 @@ public class WorkspaceSelectorTests
         Appear(core, 1, left);
         Appear(core, 2, right);
 
-        // r+1 is the next number on this Monitor. The same number on the other Monitor does not count.
         var stepped = core.Handle(new Dispatch("workspace", "r+1"));
         Assert.Equal(new WorkspaceId("2"), stepped.State.ActiveWorkspace);
         Assert.Equal(new MonitorId(0), stepped.State.ActiveMonitor);
@@ -117,7 +115,6 @@ public class WorkspaceSelectorTests
 
         Assert.Equal(new WorkspaceId("2"), core.Handle(new Dispatch("workspace", "empty")).State.ActiveWorkspace);
         core.Handle(new Dispatch("workspace", "1"));
-        // emptym searches this Monitor, the same way empty does.
         Assert.Equal(new WorkspaceId("2"), core.Handle(new Dispatch("workspace", "emptym")).State.ActiveWorkspace);
         core.Handle(new Dispatch("workspace", "1"));
         Assert.Equal(new WorkspaceId("2"), core.Handle(new Dispatch("workspace", "emptyn")).State.ActiveWorkspace);

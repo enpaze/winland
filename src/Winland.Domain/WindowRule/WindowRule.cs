@@ -11,19 +11,12 @@ public sealed record WindowRule(
     FullscreenRule? Fullscreen = null,
     RulePlacement? Placement = null);
 
-/// <summary>
-/// The argument of a <c>move</c>, <c>size</c> or <c>monitor</c> rule.
-/// </summary>
 public sealed record RulePlacement(RulePoint? Point = null, string? Monitor = null);
 
-/// <summary>
-/// Where a new Client opens: <c>move</c> and <c>center</c> replace each other, so at most one is set.
-/// </summary>
 internal readonly record struct MapPlacement(
     RulePoint? Move = null,
     RulePoint? Size = null,
     bool Center = false,
     string? Monitor = null);
 
-/// <summary>The fullscreen mode requested by a <c>fullscreen</c> or <c>maximize</c> rule.</summary>
 public readonly record struct FullscreenRule(FullscreenMode Mode);

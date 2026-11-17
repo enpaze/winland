@@ -1,12 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>
-/// A Client the system resizes by its border. Winland treats the resize request of a client like a
-/// <c>resizewindow</c> drag, so a tiled Client changes its split, live, while the border is held. The system
-/// resizes the window itself, so the core places that window in between only where the Layout stops its border
-/// short of the pointer, as against a neighbour at its minimum: its neighbours follow the border, and the window
-/// gets the Layout's rectangle when the border is let go. A floating Client keeps the frame the system gives it.
-/// </summary>
 public sealed partial class WindowManager
 {
     private Outcome BeginNativeSize(WindowSizeStarted started)
@@ -38,7 +31,6 @@ public sealed partial class WindowManager
         var self = new ClientId(sizing.Window.Value);
         var placements = resized.Where(placement => placement.Client != self).ToList();
 
-        // A border held past where the Layout lets it go would cover the neighbours, so the window is held at its tile.
         if (resized.FirstOrDefault(placement => placement.Client == self) is { } own && size.Overruns(sizing.Pointer, sizing.Bounds, own.Bounds))
             placements.Add(own);
 
@@ -60,18 +52,13 @@ public sealed partial class WindowManager
         var resized = layout.Drag(ended.Window, new PointerDrag(true, PointerDragPhase.Move, pointer));
         var released = layout.Drag(ended.Window, new PointerDrag(true, PointerDragPhase.End, pointer));
 
-        // Whatever the border did to the window, it goes back to the rectangle the Layout holds for it. The end
-        // can move the windows again (a scrolling tape recenters), so its placements win over the last step's.
         return View(released.Count > 0 ? released : resized.Count > 0 ? resized : covering);
     }
 
-    /// <summary>The system resizes this window by its border. A floating one is only followed, a tiled one changes its split.</summary>
     private sealed class NativeSize(WindowId window, bool floating, Point start, Rectangle? bounds) : PointerInteraction(window)
     {
         public bool Floating { get; } = floating;
 
-        // A border the system drags moves only its own edges, as a top border changes only the height. The pointer
-        // counts along an axis only while the system has moved an edge across it, so a split follows the border held.
         public Point Along(Point pointer, Rectangle? now)
         {
             if (bounds is not Rectangle before || now is not Rectangle after)
@@ -82,7 +69,6 @@ public sealed partial class WindowManager
             return new Point(across ? pointer.X : start.X, down ? pointer.Y : start.Y);
         }
 
-        // Whether the Layout keeps an edge the system moves more than a pixel short of where the pointer takes it.
         public bool Overruns(Point pointer, Rectangle? now, Rectangle tile)
         {
             if (bounds is not Rectangle before || now is not Rectangle after)

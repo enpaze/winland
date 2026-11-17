@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>The dwindle Layout, driven through pipe lines on a <see cref="TestDesktop"/>.</summary>
 public class DwindleLayoutTests
 {
     [Fact]

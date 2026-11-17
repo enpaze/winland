@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>Layout options and changing the Layout, driven through pipe lines on a <see cref="TestDesktop"/>.</summary>
 public class LayoutChangeTests
 {
     [Fact]

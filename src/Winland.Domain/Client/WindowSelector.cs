@@ -2,10 +2,6 @@ using System.Globalization;
 
 namespace Winland.Domain;
 
-/// <summary>
-/// Resolves a window selector against Clients on any Workspace.
-/// A match on the active window's Workspace wins when several Clients match.
-/// </summary>
 internal static class WindowSelector
 {
     internal static WindowId? Find(string selector, WindowId? active, IReadOnlyList<Client> clients)
@@ -20,7 +16,6 @@ internal static class WindowSelector
             Kind.Floating => First(floating: true, active, clients),
             Kind.Tiled => First(floating: false, active, clients),
 
-            // The stable id clients reports, in hex, compared exactly.
             Kind.StableId => FirstMatch(active, clients, client => client.Id.Value.ToString("x", CultureInfo.InvariantCulture) == argument),
             Kind.Address => FirstMatch(active, clients, client => client.Window.Address == argument),
             Kind.Pid => FirstMatch(active, clients, client => client.ProcessId.ToString(CultureInfo.InvariantCulture) == argument),
@@ -28,10 +23,6 @@ internal static class WindowSelector
         };
     }
 
-    /// <summary>
-    /// Why <paramref name="selector"/> is not one Find can read, such as a pattern that is not a valid regular
-    /// expression or a pid that is not a number, or null when it is. A well-formed selector may still match nothing.
-    /// </summary>
     internal static string? Malformed(string selector)
     {
         ArgumentNullException.ThrowIfNull(selector);
@@ -52,7 +43,6 @@ internal static class WindowSelector
 
     private enum Kind { Active, Floating, Tiled, StableId, Address, Pid, Class, InitialClass, Title, InitialTitle }
 
-    // What a selector asks for and the text after its prefix. Find and Malformed read selectors only through this.
     private static (Kind Kind, string Argument) Read(string selector)
     {
         var text = selector.Trim();
@@ -81,7 +71,6 @@ internal static class WindowSelector
                 return (kind, text[prefix.Length..]);
         }
 
-        // A bare pattern matches the class.
         return (Kind.Class, text);
     }
 

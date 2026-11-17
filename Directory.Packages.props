@@ -1,7 +1,6 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <!-- NU1507: a developer-level NuGet source (a private feed) adds a second source on top of nuget.config. -->
     <NoWarn>$(NoWarn);NU1507</NoWarn>
   </PropertyGroup>
 

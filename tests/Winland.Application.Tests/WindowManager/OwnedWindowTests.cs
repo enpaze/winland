@@ -2,9 +2,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>
-/// An owned window, which the system reports as a dialog that names its owner, on a <see cref="TestDesktop"/>.
-/// </summary>
 public class OwnedWindowTests
 {
     private static readonly WindowTraits Child = WindowTraits.Normal with { Dialog = true };
@@ -20,7 +17,6 @@ public class OwnedWindowTests
         desk.Ok("focuswindow", "class:child-test-parent");
         desk.Ok("pin", "enable");
 
-        // The reference's child names its parent, as a Windows dialog names its owner.
         desk.Spawn("child-test-child", traits: Child, owner: parent);
         desk.Ok("focuswindow", "class:child-test-child");
         Assert.Equal(2, desk.Clients().Length);
@@ -31,7 +27,6 @@ public class OwnedWindowTests
         desk.Close("child-test-parent");
         Assert.Empty(desk.Clients());
 
-        // A child that names a parent floats, so it does not join the focused Group.
         desk.Spawn("a");
         desk.Ok("togglegroup");
 

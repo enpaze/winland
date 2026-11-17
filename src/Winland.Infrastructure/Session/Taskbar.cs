@@ -23,26 +23,15 @@ internal static class Taskbar
     {
         lock (Gate)
         {
-            // With no taskbar yet, as while Explorer starts, there is no state to read. It is read once the bar appears.
             if (_savedState is null && Present())
                 Save();
 
-            // SW_HIDE takes the taskbar windows off the screen, but the shell still
-            // reserves their strip in the work area. ABM_SETSTATE with ABS_AUTOHIDE
-            // is the shell's own switch for that reservation: the bar gives the strip
-            // back and would normally slide out when the pointer hits the edge, which
-            // SW_HIDE prevents. The previous state is kept in the marker file so a
-            // later start can put it back if this process does not.
             SetState(AutoHide);
             SessionHidden = true;
             ConcealCore();
         }
     }
 
-    // The shell can recreate the tray after sleep or a reconnect. Autohide has
-    // to be set again or the work area keeps the strip the new bar reserved.
-    // general:hide_taskbar is off until this run hides the bars. Setting auto-hide
-    // here would take that strip even though the config left the bars alone.
     internal static void Rehide()
     {
         lock (Gate)
@@ -62,9 +51,6 @@ internal static class Taskbar
         }
     }
 
-    // A previous process may have exited without restoring the bars. They are put
-    // back before this run hides them, so a crash cannot leave them gone. Then the
-    // state to give back is read from the bar and kept in the marker.
     private static void Save()
     {
         if (MarkerPresent())
@@ -75,8 +61,6 @@ internal static class Taskbar
         WriteMarker(state);
     }
 
-    // The shell can mark the bars visible again while it applies the autohide
-    // state. Hide them whenever that happens until the session ends.
     internal static void Conceal()
     {
         lock (Gate)
@@ -92,8 +76,6 @@ internal static class Taskbar
             Show(state);
             _savedState = null;
 
-            // With no taskbar to put back, as while Explorer restarts or the session logs off, the marker stays, so
-            // the next start still knows the state to give back.
             if (!Primary().IsNull)
                 TryDeleteMarker();
         }
@@ -185,8 +167,6 @@ internal static class Taskbar
         }
     }
 
-    // The same %USERPROFILE%\.winland folder as the config and the state file. A Winland on a pipe of its own, set by
-    // WINLAND_PIPE, keeps a marker of its own, so it never puts back a taskbar another Winland hid.
     internal static string MarkerFile(string userProfile, string? pipe = null)
     {
         var name = string.IsNullOrWhiteSpace(pipe)
@@ -198,7 +178,6 @@ internal static class Taskbar
     private static string MarkerPath =>
         MarkerFile(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), Environment.GetEnvironmentVariable("WINLAND_PIPE"));
 
-    // User-file operations use the shell's token, so a link swap cannot borrow administrator rights.
     private static void WriteMarker(int state) => UserAccess.Run(() => WriteMarkerFile(state));
 
     private static void WriteMarkerFile(int state)

@@ -3,8 +3,6 @@ using System.Text;
 
 namespace Winland.Application;
 
-// The text forms Winland answers clients, activewindow, workspaces, activeworkspace and monitors with when
-// the request has no j/. They are written from the same records as the JSON forms, so the two agree.
 public static partial class CommandProtocol
 {
     internal static string FormatClientsText(State state)
@@ -123,7 +121,6 @@ public static partial class CommandProtocol
             .Append(CultureInfo.InvariantCulture, $"\t\tvrrCapable: {YesNo(monitor.HardwareDetails.VrrCapable)}\n\n");
     }
 
-    // An address without its 0x, as Winland's text writes a pointer.
     private static string Bare(string address) =>
         address.StartsWith("0x", StringComparison.Ordinal) ? address[2..] : address;
 

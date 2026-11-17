@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>The <c>fullscreen</c> dispatcher, and what a fullscreen Client covers.</summary>
 public sealed partial class WindowManager
 {
     private Outcome FullscreenDispatcher(string arguments)
@@ -35,8 +34,6 @@ public sealed partial class WindowManager
         return Present(desk, covered, placements);
     }
 
-    // Every change of a Client's fullscreen or maximized mode but the end of one goes through here. A Pinned Client
-    // stays as it is, and the request changes nothing: null.
     private IReadOnlyList<Placement>? SetFullscreen(LiveWorkspace desk, WindowId window, FullscreenMode mode, bool layoutAware = true)
     {
         if (desk.ClientOf(window) is null || _pins.IsPinned(window))
@@ -45,12 +42,9 @@ public sealed partial class WindowManager
         return desk.Layout.SetFullscreen(window, mode, layoutAware);
     }
 
-    // Ends a Client's fullscreen or maximized mode.
     private static IReadOnlyList<Placement> EndFullscreen(LiveWorkspace desk, WindowId window) =>
         desk.Layout.SetFullscreen(window, FullscreenMode.None);
 
-    // Reads the Workspace's options again. The Layout's placements when the options changed, with the given ones for the
-    // Clients those leave out, such as a floating one, or the ones given.
     private IReadOnlyList<Placement> Restamp(LiveWorkspace desk, IReadOnlyList<Placement> placements)
     {
         var options = desk.Options;
@@ -69,7 +63,6 @@ public sealed partial class WindowManager
         return merged;
     }
 
-    // A tiled window that opens on a Workspace with a fullscreen Client ends that mode.
     private static IReadOnlyList<Placement> OpenUnderFullscreen(LiveWorkspace desk, WindowId window, IReadOnlyList<Placement> placements)
     {
         if (desk.ClientOf(window) is not { Floating: false } || CoveringOther(desk, window) is not Client covering)
@@ -78,14 +71,10 @@ public sealed partial class WindowManager
         return EndFullscreen(desk, covering.Window);
     }
 
-    // A request to focus a tiled Client under another fullscreen one ends that mode.
-    // A floating Client is focused over it. The Client to focus, and the Layout's placements when a mode changed.
-    // A Client its Layout holds fullscreen is left alone, and the Layout scrolls to the Client asked for.
     private WindowId FocusUnderFullscreen(LiveWorkspace desk, WindowId window, out IReadOnlyList<Placement>? placements)
     {
         placements = null;
 
-        // A floating window focused over a default fullscreen one is let over it.
         if (desk.ClientOf(window) is { Floating: true } && CoveringOther(desk, window) is { LayoutFullscreen: false })
             _cover.SetFlag(window, true);
 
@@ -164,7 +153,6 @@ public sealed partial class WindowManager
 
     private Rectangle PlacedBounds(Client client, LiveWorkspace desk, Rectangle slot)
     {
-        // A Client its Layout holds fullscreen is where the Layout put it.
         if (client.Fullscreen == FullscreenMode.None || client.LayoutFullscreen)
             return slot;
 
@@ -179,8 +167,6 @@ public sealed partial class WindowManager
         return FullscreenGeometry.Cover(client.Fullscreen, work, monitor);
     }
 
-    // A maximized Client fills its Workspace's work area as Winland lays it out: less gaps_out for a tiled Client,
-    // and less its border.
     private static Rectangle Maximized(Client client, LiveWorkspace desk, Rectangle work)
     {
         var options = desk.Options;

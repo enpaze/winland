@@ -63,7 +63,8 @@ A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forc
 
 | Command | What it does |
 | --- | --- |
-| `pwsh -NoProfile -File scripts/check.ps1` | The lint: parses the PowerShell, rejects names that differ only by case, checks markdown links and the paths `AGENTS.md` names, and builds the solution. `-SkipBuild` checks docs without a build, as docs-only PRs do in CI. |
+| `pwsh -NoProfile -File scripts/check.ps1` | The lint: parses the PowerShell, rejects names that differ only by case, checks markdown links and the paths `AGENTS.md` names, rejects code comments, and builds the solution. `-SkipBuild` checks docs without a build, as docs-only PRs do in CI. |
+| `pwsh -NoProfile -File scripts/comments.ps1` | Lists every comment in the tracked C#, PowerShell, YAML, MSBuild and git config files, and fails if there is one. `-Fix` deletes them. Shebangs, `#requires` and `# zizmor: ignore[...]` stay. |
 | `pwsh -NoProfile -File scripts/test.ps1` | Runs every unit test project side by side, as CI does. |
 | `dotnet test tests/<project>` | The focused test for one project. |
 | `dotnet format Winland.slnx` | Apply the solution's formatting rules. Add `--verify-no-changes` to check without editing. |

@@ -48,7 +48,6 @@ public class CommandServerTests
         Assert.Equal(new byte[] { 1, 1, 0, 0, 0, 0, 0, 0x10, 0, 0x20, 0, 0 }, opaque[^12..]);
     }
 
-    // A process that took the name first would otherwise share it, and get some of the clients.
     [Fact]
     public void StartFailsWhenAnotherProcessHoldsThePipeName()
     {
@@ -206,8 +205,6 @@ public class CommandServerTests
         Assert.Equal("ok", CommandClient.Transact("dispatch workspace 1", name));
     }
 
-    // Every instance the name allows can be taken for a while. The pipe makes the next one once an
-    // instance is free again, instead of going quiet for the rest of the session.
     [Fact]
     public void ThePipeServesAgainAfterEveryInstanceWasTaken()
     {
@@ -251,8 +248,6 @@ public class CommandServerTests
         Assert.Equal(0, await read.WaitAsync(TimeSpan.FromSeconds(10)));
     }
 
-    // Status bars subscribe and then sit idle. A blocked thread each would starve the pool that
-    // runs the accept loop and the bind timers; the pool only keeps up by growing a thread at a time.
     [Fact]
     public void IdleSubscribersHoldNoPoolThreads()
     {
@@ -313,8 +308,6 @@ public class CommandServerTests
         throw new TimeoutException("The event subscriber did not connect.");
     }
 
-    // Everything a listener is sent arrives in order. A window opened now is the last thing it hears about,
-    // so reading up to that window leaves nothing queued from before. A quiet gap proves nothing on a slow machine.
     private static void Sync(WindowManager core, params Listener[] listeners)
     {
         const long marker = 0x270F;
@@ -330,8 +323,6 @@ public class CommandServerTests
         }
     }
 
-    // Reads the lines the test expects, however long a slow machine takes to deliver them. Anything that
-    // arrives right after them is returned too, so an unexpected extra line still fails the comparison.
     private static List<string> Take(Listener listener, int count)
     {
         var lines = new List<string>();
@@ -387,7 +378,6 @@ public class CommandServerTests
     }
 }
 
-// ThreadPool.ThreadCount is process-wide, so other collections must finish before these tests run.
 [CollectionDefinition(Name, DisableParallelization = true)]
 public sealed class CommandServerCollection
 {

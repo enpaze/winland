@@ -15,18 +15,14 @@ permissions:
 
 jobs:
   zizmor:
-    # Audits .github/ for unpinned actions, risky triggers, leaked credentials, and template injection.
-    # A finding that is safe on purpose gets a `# zizmor: ignore[<audit>]` comment explaining why.
     name: zizmor
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+      - uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b
         with:
-          # Report findings in the job log and on the PR diff; uploading to the Security tab needs code
-          # scanning, which private repos on a free plan don't have.
           advanced-security: false
           annotations: true

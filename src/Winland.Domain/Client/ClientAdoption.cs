@@ -1,9 +1,7 @@
 namespace Winland.Domain;
 
-/// <summary>The Client record a Layout keeps for a Window it adopts.</summary>
 internal static class ClientAdoption
 {
-    /// <summary>A Window adopted without an initial class or title starts with its current ones.</summary>
     public static Client Adopted(
         ClientId id,
         WindowId window,

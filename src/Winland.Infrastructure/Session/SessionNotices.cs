@@ -2,10 +2,8 @@ namespace Winland.Infrastructure;
 
 internal static class SessionNotices
 {
-    // GUID_CONSOLE_DISPLAY_STATE. 0 is off, 1 is on, 2 is dimmed.
     internal static readonly Guid ConsoleDisplayState = new("6fe69556-704a-47a0-8f24-c28d936fda47");
 
-    // GUID_MONITOR_POWER_ON. 0 is off, 1 is on.
     internal static readonly Guid MonitorPowerOn = new("02731015-4510-4526-99e6-e5a17ebd1aea");
 
     internal const uint PowerMessage = 0x0218;
@@ -18,16 +16,8 @@ internal static class SessionNotices
 
     internal const uint EndSessionMessage = 0x0016;
 
-    /// <summary>
-    /// True only for WM_ENDSESSION with wParam TRUE, when the session really ends. WM_QUERYENDSESSION only asks,
-    /// and a shutdown that another program cancels leaves the session running.
-    /// </summary>
     internal static bool EndsSession(uint message, nuint wParam) => message == EndSessionMessage && wParam != 0;
 
-    /// <summary>
-    /// What the session already is when Winland starts. One started inside a Remote Desktop session has no console
-    /// connected, so the console connecting again later is a change to lay out for.
-    /// </summary>
     internal static SessionSignal[] AtStart(bool remote) =>
         remote ? [SessionSignal.ConsoleDisconnected, SessionSignal.RemoteConnected] : [];
 
@@ -99,7 +89,6 @@ internal static class SessionNotices
                 return false;
             }
 
-            // A dimmed screen is still on, so undimming it is not a wake that needs the windows put back.
             signal = value == 0 ? SessionSignal.DisplayOff : SessionSignal.DisplayOn;
             return true;
         }

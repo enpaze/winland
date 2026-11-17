@@ -2,10 +2,6 @@ namespace Winland.Domain;
 
 internal static class ConfigDirectives
 {
-    /// <summary>
-    /// True for a <c># hyprlang if</c>, <c>else</c> or <c>endif</c> comment. Winland does not evaluate the condition, so
-    /// the lines inside apply, and the marker warns.
-    /// </summary>
     public static bool IsCondition(string raw)
     {
         var line = raw.Trim();

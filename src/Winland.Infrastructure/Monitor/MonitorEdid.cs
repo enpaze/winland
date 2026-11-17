@@ -3,7 +3,6 @@ using Microsoft.Win32;
 
 namespace Winland.Infrastructure;
 
-/// <summary>The EDID block Windows stores for a display-config target, read from its device path.</summary>
 internal static class MonitorEdid
 {
     public static byte[]? Read(string? devicePath)
@@ -24,10 +23,6 @@ internal static class MonitorEdid
         }
     }
 
-    /// <summary>
-    /// <c>\\?\DISPLAY#VEN#instance#{guid}</c> names
-    /// <c>SYSTEM\CurrentControlSet\Enum\DISPLAY\VEN\instance\Device Parameters</c>.
-    /// </summary>
     internal static string? RegistryKey(string? devicePath)
     {
         if (string.IsNullOrWhiteSpace(devicePath))

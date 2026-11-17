@@ -3,7 +3,6 @@ using Windows.Win32.Foundation;
 
 namespace Winland.Infrastructure;
 
-/// <summary>A window's own minimum and maximum size, read from the window and reported to the core when they change.</summary>
 public sealed partial class WindowAdapter : IDisposable
 {
     private void RereadLimits(HWND hwnd, WindowId window)
@@ -32,8 +31,6 @@ public sealed partial class WindowAdapter : IDisposable
         Apply(_core.Handle(new WindowLimitsChanged(window, min, max)));
     }
 
-    // WM_GETMINMAXINFO can take up to its timeout. A Client's limits are kept up to date as it moves, and a
-    // window that is described again and again, as its title changes, is asked once in a while.
     private (Size? Min, Size? Max) LimitsOf(HWND hwnd, WindowId window)
     {
         var now = Environment.TickCount64;

@@ -15,7 +15,6 @@ internal static class CommandFlagReader
         if (slash < 0)
             return CommandFlags.None;
 
-        // Only flags come before the slash. Anything else there is part of the request, which is read as it is.
         var flags = CommandFlags.None;
         for (var i = 0; i < slash; i++)
         {

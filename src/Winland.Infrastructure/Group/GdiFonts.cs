@@ -3,10 +3,6 @@ using Windows.Win32.Graphics.Gdi;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Creates GDI fonts from a LOGFONTW. CreateFont takes its character set as a byte, which the generated interop
-/// cannot marshal, so it fails at run time.
-/// </summary>
 internal static class GdiFonts
 {
     internal static unsafe DeleteObjectSafeHandle Create(int pixelHeight, int weight, FONT_QUALITY quality, string family)

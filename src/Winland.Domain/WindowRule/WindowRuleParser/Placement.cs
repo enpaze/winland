@@ -4,10 +4,6 @@ namespace Winland.Domain;
 
 internal static partial class WindowRuleParser
 {
-    /// <summary>
-    /// Parses <c>move</c>, <c>size</c>, <c>center</c> and <c>monitor</c>.
-    /// The error is empty when the name is none of them.
-    /// </summary>
     private static bool TryParsePlacement(
         string name,
         string? argument,
@@ -51,8 +47,6 @@ internal static partial class WindowRuleParser
         return false;
     }
 
-    // Two lengths. Each is a number of pixels, or a percentage of the work area when it ends in '%'.
-    // An expression is not a length, so the rule is skipped.
     private static bool TryParsePoint(string text, out RulePoint point)
     {
         point = default;
@@ -79,7 +73,6 @@ internal static partial class WindowRuleParser
         return true;
     }
 
-    // move and center clear each other, as the last matching one wins.
     private static MapPlacement Place(MapPlacement current, WindowRule rule) => rule.Effect switch
     {
         WindowRuleEffect.Move => current with { Move = rule.Placement?.Point, Center = false },

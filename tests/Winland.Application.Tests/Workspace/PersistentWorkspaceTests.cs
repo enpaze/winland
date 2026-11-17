@@ -2,7 +2,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>The empty Workspaces Winland lets go.</summary>
 public class PersistentWorkspaceTests
 {
     [Fact]
@@ -22,7 +21,6 @@ public class PersistentWorkspaceTests
 
         desk.AddMonitor("HEADLESS-LIFECYCLE-OWNERSHIP", TestDesktop.Second);
         Assert.Contains("HEADLESS-LIFECYCLE-OWNERSHIP", MonitorNames(desk));
-        // The empty Workspace it was showing comes back under that number.
         Assert.Contains("410 (410)", Labels(desk));
         desk.Ok("focusmonitor", "HEADLESS-LIFECYCLE-OWNERSHIP");
         Assert.Equal("410 (410)", Label(desk.ActiveWorkspace()));
@@ -33,7 +31,6 @@ public class PersistentWorkspaceTests
 
     private static string[] Labels(TestDesktop desk) => [.. desk.Workspaces().Select(Label)];
 
-    // A Workspace as the reference reply writes it, `ID (NAME)`: a numbered Workspace's id, or else its name, then its name.
     private static string Label(JsonElement workspace)
     {
         var id = workspace.TryGetProperty("id", out var number) ? number.GetInt32() : 0;

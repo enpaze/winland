@@ -2,15 +2,8 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>
-/// A nine-finger horizontal workspace swipe, step by step, and a swipe ending as cancelled. The fixture holds three
-/// Workspaces on the focused Monitor and shows the middle one. A test checks what the replies show: which Workspaces
-/// exist, which one each Monitor shows, and on which Monitor each is.
-/// </summary>
 public class WorkspaceSwipeTests
 {
-    // The fixture's Workspaces are rendered before the swipe starts, which has no core form, so these parts run as
-    // the ones without it.
     [Fact]
     public void WorkspaceSwipePreexistingForce()
     {
@@ -43,10 +36,8 @@ public class WorkspaceSwipeTests
 
     private const string PeerOutput = "HYPRTEST-SWIPE-B";
 
-    /// <summary>What the replies show of a Workspace: whether it exists, whether its Monitor shows it, and which Monitor.</summary>
     private readonly record struct Shot(bool Exists, bool Active, string Monitor);
 
-    /// <summary>The reference's swipe fixture and the checks it makes on it.</summary>
     private sealed class Fixture
     {
         private const string Options = """
@@ -76,7 +67,6 @@ public class WorkspaceSwipeTests
 
         internal Shot R { get; private set; }
 
-        /// <summary>The reference's run: the swipe options and gesture, then the fixture.</summary>
         internal static Fixture Run()
         {
             var desk = new TestDesktop(Options);
@@ -91,7 +81,6 @@ public class WorkspaceSwipeTests
             return swipe;
         }
 
-        /// <summary>The same fixture on two new outputs side by side, shown on the first.</summary>
         internal static Fixture RunOnOutputs()
         {
             var desk = new TestDesktop(Options + $"""
@@ -115,12 +104,10 @@ public class WorkspaceSwipeTests
 
         internal void Begin() => TestDesktop.Handle(new SwipeBegan(9));
 
-        // The checks speak of how far the strip of Workspaces travels. The fingers move the other way.
         internal void Update(double delta) => TestDesktop.Handle(new SwipeUpdated(9, -delta, 0));
 
         internal void End(bool cancelled) => TestDesktop.Handle(new SwipeEnded(cancelled));
 
-        /// <summary>The test plugin's cancel. The core's form of it is the swipe ending as cancelled.</summary>
         internal void Cancel() => TestDesktop.Handle(new SwipeEnded(Cancelled: true));
 
         internal Shot Snapshot(string name)
@@ -137,12 +124,10 @@ public class WorkspaceSwipeTests
             return new Shot(true, active, monitor);
         }
 
-        /// <summary>The Workspace is the one shown, on the origin's Monitor, with no swipe left over.</summary>
         internal void Neutral(string name) => Assert.Equal(new Shot(true, true, O.Monitor), Snapshot(name));
 
         internal void Baseline(string name, Shot expected) => Assert.Equal(expected, Snapshot(name));
 
-        /// <summary>The swipe is heading for <paramref name="name"/> and has not switched: the origin is still shown.</summary>
         internal void Preview(string name)
         {
             Assert.False(Snapshot(name).Active);

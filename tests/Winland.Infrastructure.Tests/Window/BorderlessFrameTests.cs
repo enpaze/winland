@@ -24,8 +24,6 @@ public class BorderlessFrameTests
         Assert.False(borderless.Owns(window));
     }
 
-    // Only the frame and popup bits are the ones mode 2 changed. A window shown, hidden, disabled for a modal dialog or
-    // maximized meanwhile keeps that.
     [Fact]
     public void LeavingPutsBackOnlyTheFrameAndKeepsWhatChangedSince()
     {
@@ -47,8 +45,6 @@ public class BorderlessFrameTests
         Assert.Equal(0x00CF0000u | Disabled, frames.Style[crashed]);
     }
 
-    // A style write waits for the window. One whose program stopped answering keeps its frame dropped at exit, and the
-    // snapshot records it, so the next start puts it back.
     [Fact]
     public void ReleasingAllSkipsAWindowThatStoppedAnsweringAndKeepsItForTheNextStart()
     {
@@ -105,8 +101,6 @@ public class BorderlessFrameTests
         Assert.False(borderless.Owns(second));
     }
 
-    // The exit cleanup puts every frame back, and then the process ends with the state file gone. An
-    // outcome from the hook worker or the pipe that arrives after that must not drop a frame again.
     [Fact]
     public void AfterReleasingAllNoFrameIsDropped()
     {
@@ -149,7 +143,6 @@ public class BorderlessFrameTests
         Assert.Equal(0x00CF0000u, frames.Style[window]);
     }
 
-    // Only the frame bits go, and the window becomes a popup. Everything else in the style stays.
     [Theory]
     [InlineData(0x00CF0000u, 0x800B0000u)]
     [InlineData(0x10000000u, 0x90000000u)]
@@ -160,7 +153,6 @@ public class BorderlessFrameTests
         Assert.Equal(stripped, BorderlessStyle.Strip(style));
     }
 
-    // A window with no frame to drop is still remembered, and nothing is written to it.
     [Fact]
     public void AWindowWithoutAFrameIsRememberedButNotWritten()
     {
@@ -204,7 +196,6 @@ public class BorderlessFrameTests
         Assert.False(borderless.Owns(window));
         Assert.Equal(writes, frames.Writes);
 
-        // The recorded frame, with the system menu and the minimize and maximize boxes the window has now.
         Assert.Equal(0x00CB0000u, frames.Style[window]);
     }
 

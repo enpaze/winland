@@ -5,7 +5,6 @@ using System.Text;
 
 namespace Winland.Daemon;
 
-/// <summary>The commands that talk to the running Winland over its pipe: <c>winland dispatch</c> and the rest.</summary>
 static class ControlCommand
 {
     public static int Run(string line, bool events, string? pipeName)
@@ -28,7 +27,6 @@ static class ControlCommand
 
     internal static int WriteReply(string line, string reply)
     {
-        // A reply with nothing in it means the server failed before it could answer.
         if (reply.Length == 0 || reply.StartsWith("error:", StringComparison.Ordinal))
         {
             Console.Error.WriteLine(reply.Length == 0 ? "error: no reply" : reply);
@@ -59,7 +57,6 @@ static class ControlCommand
             if (cancel.IsCancellationRequested)
                 return 0;
 
-            // Winland exited, or dropped this reader for falling too far behind, so a supervisor knows to reconnect.
             Console.Error.WriteLine("error: events stream ended");
             return 1;
         }
@@ -74,8 +71,6 @@ static class ControlCommand
         }
     }
 
-    // A bar or a script reads what this prints as UTF-8, whatever code page the console has. A console a person reads
-    // keeps its own writer, which shows every character.
     private static void WriteUtf8WhenRedirected()
     {
         var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
@@ -85,8 +80,6 @@ static class ControlCommand
             Console.SetError(new StreamWriter(Console.OpenStandardError(), utf8) { AutoFlush = true });
     }
 
-    // This process just had the user's key or click, so it may hand the foreground on. Winland, which answers on a pipe
-    // thread, can then focus the window a dispatcher asks for without its fallbacks.
     private static void LendForeground(NamedPipeClientStream pipe)
     {
         if (GetNamedPipeServerProcessId(pipe.SafePipeHandle.DangerousGetHandle(), out var server) && server != 0)

@@ -3,10 +3,6 @@ using Winland.Install;
 
 namespace Winland.Daemon;
 
-/// <summary>
-/// Copies and deletes the install folders. A link is never followed: the elevated task must start the
-/// file that was copied, not a file a junction was pointed at afterwards.
-/// </summary>
 sealed class WindowsInstallFiles : IFileTree
 {
     private int retirementScheduled;
@@ -61,8 +57,6 @@ sealed class WindowsInstallFiles : IFileTree
                 }
                 catch (Exception exception) when (exception is (IOException or UnauthorizedAccessException) && ImageDirectoryHolds(destination))
                 {
-                    // Windows will not delete the executable this process is running, or a library it has
-                    // loaded. It will rename them, and the new file can then take the old name.
                     aside = MoveAside(destination);
                 }
             }
@@ -76,8 +70,6 @@ sealed class WindowsInstallFiles : IFileTree
             }
             catch when (aside is not null)
             {
-                // A copy that fails, as on a full disk, puts the file it set aside back, so the install is not left
-                // without the executable that runs it. The retirement only removes names marked .winland-old.
                 try
                 {
                     File.Delete(destination);
@@ -130,7 +122,6 @@ sealed class WindowsInstallFiles : IFileTree
         }
         catch (Exception exception) when (ImageIsInside(directory) && exception is (IOException or UnauthorizedAccessException))
         {
-            // This process is winland.exe in the folder being removed, so Windows will not delete it yet.
             ScheduleDelete(directory);
         }
     }
@@ -284,8 +275,6 @@ sealed class WindowsInstallFiles : IFileTree
 
     private static void ScheduleDelete(string directory)
     {
-        // Every process started from the folder, not only this one. An uninstall that asked for UAC also has the
-        // unelevated winland.exe that relaunched it, which holds its files until this one has exited.
         var script = "$root = " + Quote(Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory)) + Path.DirectorySeparatorChar) + "\r\n"
             + "Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($root, [StringComparison]::OrdinalIgnoreCase) } | Wait-Process\r\n"
             + "function Remove-Tree([string]$Path) {\r\n"
@@ -329,7 +318,6 @@ sealed class WindowsInstallFiles : IFileTree
         using var process = Process.Start(new ProcessStartInfo
         {
             FileName = powershell,
-            // The default policy on a client, Restricted, refuses a script file. This one is written here and run once.
             ArgumentList = { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path },
             UseShellExecute = false,
             CreateNoWindow = true,

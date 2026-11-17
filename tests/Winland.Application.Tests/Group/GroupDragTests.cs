@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>A window dragged onto a Group joins it, as <c>group:drag_into_group</c> decides.</summary>
 public class GroupDragTests
 {
     private static readonly Rectangle Wide = new(0, 0, 1920, 1080);
@@ -42,7 +41,6 @@ public class GroupDragTests
         Assert.Single(Assert.Single(onBar.State.Groups));
     }
 
-    // Window 1 is a Group of one on the left, window 2 a tile on the right.
     [Fact]
     public void AMoveStartedOnATabTakesThatMemberOutAndDragsItAlone()
     {
@@ -108,7 +106,6 @@ public class GroupDragTests
         Assert.Empty(MoveLines(dropped));
     }
 
-    // Windows 1 and 3 are a Group on the left, window 2 a tile on the right.
     [Fact]
     public void AWindowHeldOverATabBarMarksWhereItWouldJoinAndJoinsThere()
     {
@@ -116,7 +113,6 @@ public class GroupDragTests
         var bar = Bar(core);
         Hold(core, 2);
 
-        // Lifting window 2 gives the Group its whole width, so the bar the drag shows is read again.
         var first = core.Handle(new PointerMoved(new Point(bar.Bounds.X + 2, bar.Bounds.Y + 2)));
         var held = Assert.Single(first.GroupBars);
         var pastFirstTab = new Point(held.Bounds.X + (held.TabWidth / 2) + 10, held.Bounds.Y + 2);
@@ -205,7 +201,6 @@ public class GroupDragTests
 
     private static GroupBar Bar(WindowManager core) => Assert.Single(core.Handle(new Dispatch("resizewindow")).GroupBars);
 
-    // Presses the mouse bind on the window, so the drag holds it.
     private static void Hold(WindowManager core, long window)
     {
         var from = Middle(Tile(core, window));

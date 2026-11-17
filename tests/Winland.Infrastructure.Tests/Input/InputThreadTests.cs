@@ -3,7 +3,6 @@ using Windows.Win32;
 
 namespace Winland.Infrastructure.Tests;
 
-// The hooks' thread. These tests drive it with stand-ins, so no hook sees the desktop's input.
 public class InputThreadTests
 {
     private const uint Probe = 0x8000 + 90;

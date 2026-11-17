@@ -27,7 +27,6 @@ public class ConfigPathsTests
         }
     }
 
-    // A source is read relative to the config's folder, so that is where a change to it is watched.
     [Fact]
     public void TheConfigAndEverySourceAreWatchedAtTheirFullPaths()
     {

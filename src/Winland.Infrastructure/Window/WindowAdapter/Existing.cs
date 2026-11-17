@@ -5,7 +5,6 @@ namespace Winland.Infrastructure;
 
 public sealed partial class WindowAdapter
 {
-    /// <summary>Adopts the windows that were already open before the event hooks started.</summary>
     public void AdoptExisting() => AdoptExisting(ExistingWindows());
 
     internal void AdoptExisting(IEnumerable<nint> windows)
@@ -25,7 +24,6 @@ public sealed partial class WindowAdapter
             }
         }
 
-        // One step takes them all in, so each tile is placed once.
         try
         {
             var outcome = _core.Adopt(described);
@@ -40,7 +38,6 @@ public sealed partial class WindowAdapter
         }
     }
 
-    /// <summary>Top-level windows that are shown and not minimized. The core decides which of them to manage.</summary>
     internal static IReadOnlyList<nint> ExistingWindows()
     {
         var found = new List<nint>();

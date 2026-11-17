@@ -3,7 +3,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>The scrolling Layout, driven through pipe lines on a <see cref="TestDesktop"/>.</summary>
 public class ScrollingBehaviorTests
 {
     private const string Scrolling = "general:layout = scrolling\n";
@@ -438,7 +437,6 @@ public class ScrollingBehaviorTests
         Assert.Empty(desk.Clients());
     }
 
-    // Shared by the layout handled and default handled cases. The default handled one asks for the default fullscreen.
     private static void FloatingOntopFullscreenWorkspaceFocusRetention(string handler)
     {
         var desk = new TestDesktop(Scrolling + "windowrule = float, class:kitty_floated\n");
@@ -504,7 +502,6 @@ public class ScrollingBehaviorTests
         ExpectFullscreen(desk, mode, mode);
     }
 
-    // The fields the reference reads from a client block. A null field is one the reference does not check there.
     private static void ExpectClient(TestDesktop desk, string windowClass, bool floating, bool acceptsInput, int fullscreen, bool? over = null, bool? visible = null)
     {
         var client = desk.Client(windowClass);

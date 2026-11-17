@@ -7,12 +7,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Draws each Client's border outside its frame, as Winland draws it, on its own thread. A border is four
-/// thin click-through layered windows, top, bottom, left and right, kept just above the Client in the z-order. They
-/// follow the window wherever it moves, by the frame Windows reports, so a move or an animation carries the border
-/// along. The borders go away with this process.
-/// </summary>
 internal static class BorderHost
 {
     private const string ClassName = DecorationStack.BorderClass;
@@ -38,10 +32,6 @@ internal static class BorderHost
     private static uint _thread;
     private static Thread? _worker;
 
-    /// <summary>
-    /// Replaces every border with <paramref name="rings"/>, except that the windows in <paramref name="keep"/> keep the
-    /// border they have. Starts the thread for the first one.
-    /// </summary>
     internal static void Update(IReadOnlyDictionary<WindowId, BorderRing> rings, IEnumerable<WindowId>? keep = null)
     {
         ArgumentNullException.ThrowIfNull(rings);
@@ -56,7 +46,6 @@ internal static class BorderHost
         }
     }
 
-    /// <summary>Some window changed its place in the z-order, so every border goes just above its window again.</summary>
     internal static void Restack()
     {
         lock (Gate)
@@ -69,7 +58,6 @@ internal static class BorderHost
         }
     }
 
-    /// <summary>The window moved, resized, showed or hid, so its border follows.</summary>
     internal static void Follow(WindowId window)
     {
         lock (Gate)
@@ -82,10 +70,6 @@ internal static class BorderHost
         }
     }
 
-    /// <summary>
-    /// Draws the border in one color while a border color animation runs, or puts its color back when
-    /// <paramref name="color"/> is null.
-    /// </summary>
     internal static void Tint(WindowId window, BorderColor? color)
     {
         lock (Gate)
@@ -93,7 +77,6 @@ internal static class BorderHost
             if (_worker is null)
                 return;
 
-            // A Client with no border, on a hidden Workspace or fullscreen, has no tint to put back.
             if (color is null && !Entries.ContainsKey(window) && _pending?.ContainsKey(window) != true)
             {
                 Tints.Remove(window);
@@ -106,14 +89,12 @@ internal static class BorderHost
         }
     }
 
-    /// <summary>The window is gone. A tint it held is dropped, so a window that gets its handle next starts without it.</summary>
     internal static void Forget(WindowId window)
     {
         lock (Gate)
             Tints.Remove(window);
     }
 
-    /// <summary>Removes every border and ends the thread.</summary>
     internal static void Stop()
     {
         Thread? worker;
@@ -141,7 +122,6 @@ internal static class BorderHost
         _ = worker.Join(TimeSpan.FromSeconds(2));
     }
 
-    // Called with the gate held.
     private static void Post()
     {
         if (_worker is null)
@@ -247,8 +227,6 @@ internal static class BorderHost
 
                 foreach (var (window, ring) in wanted)
                 {
-                    // A border whose ring is the same is left alone. Its window tells when it moves, and the z-order
-                    // tells when it changes.
                     if (!Entries.TryGetValue(window, out var entry))
                     {
                         entry = new Entry(window);
@@ -288,9 +266,6 @@ internal static class BorderHost
                 entry.Restack();
         }
 
-        // The borders that stay are drawn first, so a border that replaces another, as a Group's next member takes its
-        // tab, never leaves a frame with neither. Destroying a border window takes a while. A motion tinting another
-        // border waits for the gate meanwhile.
         foreach (var entry in gone)
             entry.Dispose();
     }
@@ -340,7 +315,6 @@ internal static class BorderHost
     {
         private readonly HWND[] _pieces = new HWND[4];
 
-        // Which pieces have a picture, and show while the border does. A piece with no area has none.
         private readonly bool[] _drawn = new bool[4];
         private Rectangle _box;
         private BorderRing? _painted;
@@ -353,8 +327,6 @@ internal static class BorderHost
 
         public BorderColor? Tint { get; set; }
 
-        // While a motion fades the window, the motion's alpha is the window's whole alpha. The ring is drawn opaque then
-        // and takes it from the pieces' alpha alone, so the window's opacity is not applied twice.
         private BorderRing Drawn(bool fading)
         {
             var ring = Tint is BorderColor tint ? Ring with { Color = tint } : Ring;
@@ -366,7 +338,6 @@ internal static class BorderHost
             var target = new HWND((nint)window.Value);
             var frame = default(Rectangle);
 
-            // A window with a stand-in is drawn in the stand-in's rectangle, and the border stacks on the stand-in.
             var standing = StandFrames.TryGet(window, out var shown, out var overlay);
             if (standing)
                 frame = shown;
@@ -391,7 +362,6 @@ internal static class BorderHost
             }
             else
             {
-                // A fade or a move keeps the pictures the pieces already have.
                 if (_alpha != _paintedAlpha)
                 {
                     for (var i = 0; i < pieces.Length; i++)
@@ -410,7 +380,6 @@ internal static class BorderHost
             Stack(_on);
         }
 
-        // The window kept its place and size, and the z-order around it changed.
         public void Restack()
         {
             if (_shown && !_on.IsNull)
@@ -442,9 +411,6 @@ internal static class BorderHost
             _shown = false;
         }
 
-        // Every piece is drawn first, and then they are handed to Windows one right after another, so a box that changes
-        // size shows its pieces at one size together as far as Windows allows. A new or hidden piece shows only once
-        // Stack has put it above the window.
         private unsafe void PaintAll(Rectangle box, Rectangle[] pieces, BorderRing ring)
         {
             var memories = new HDC[pieces.Length];
@@ -524,7 +490,6 @@ internal static class BorderHost
             _ = PInvoke.UpdateLayeredWindow(_pieces[index], HDC.Null, null, null, HDC.Null, null, new COLORREF(0), &blend, UPDATE_LAYERED_WINDOW_FLAGS.ULW_ALPHA);
         }
 
-        // The pieces move together in one batch, so no frame shows the top moved and the sides not.
         private void MoveAll(Rectangle box, Rectangle[] pieces)
         {
             var batch = PInvoke.BeginDeferWindowPos(pieces.Length);
@@ -547,7 +512,6 @@ internal static class BorderHost
             if (!batch.IsNull && PInvoke.EndDeferWindowPos(batch))
                 return;
 
-            // A batch Windows could not make moves them one by one.
             for (var i = 0; i < pieces.Length; i++)
                 Move(i, box, pieces[i]);
         }
@@ -567,9 +531,6 @@ internal static class BorderHost
                 SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
         }
 
-        // Just above the window, so a window raised over it covers its border too, and among the topmost windows only
-        // while the window is. Pieces already among the decorations right above it stay put, whatever order a tab bar
-        // took among them. A piece is shown here, once it is in its place.
         private void Stack(HWND target)
         {
             var chain = new List<HWND>();
@@ -586,8 +547,6 @@ internal static class BorderHost
             if (settled)
                 return;
 
-            // A window put under a topmost one becomes topmost, so a window at the top of the others puts its border on
-            // top of them instead.
             var after = !above.IsNull && IsTopmost(above) == topmost ? above : topmost ? Topmost : Top;
             for (var i = 0; i < _pieces.Length; i++)
             {
@@ -597,7 +556,6 @@ internal static class BorderHost
 
                 var flags = SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE;
 
-                // Only HWND_NOTOPMOST takes a window out of the topmost ones.
                 if (!topmost && IsTopmost(piece))
                     _ = PInvoke.SetWindowPos(piece, NotTopmost, 0, 0, 0, 0, flags);
 

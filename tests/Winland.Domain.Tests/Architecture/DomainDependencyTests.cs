@@ -1,6 +1,5 @@
 namespace Winland.Domain.Tests;
 
-/// <summary>The Domain is the innermost layer. It references no other Winland project and no package.</summary>
 public class DomainDependencyTests
 {
     [Fact]

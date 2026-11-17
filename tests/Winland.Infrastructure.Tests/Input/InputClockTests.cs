@@ -1,6 +1,5 @@
 namespace Winland.Infrastructure.Tests;
 
-// The clock is process-wide, so these run with the other tests that set process-wide state.
 [Collection(DesktopCollection.Name)]
 public class InputClockTests
 {
@@ -24,8 +23,6 @@ public class InputClockTests
         Assert.Equal(counts, InputClock.Recent(5_100));
     }
 
-    // A focus event is judged by when it happened, not by when Winland got round to it.
-    // A click 100 ms before the event is recent however late the event is handled.
     [Fact]
     public void AClickIsJudgedByTheEventTimeNotTheHandlingTime()
     {
@@ -36,7 +33,6 @@ public class InputClockTests
         Assert.False(InputClock.Recent(5_000 + InputClock.RecentMilliseconds + 1));
     }
 
-    // The tick count wraps after about 49 days. A click just before the wrap is still recent just after it.
     [Fact]
     public void AClickJustBeforeTheTickCountWrapsIsStillRecent()
     {

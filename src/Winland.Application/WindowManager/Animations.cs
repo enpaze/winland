@@ -1,15 +1,11 @@
 namespace Winland.Application;
 
-/// <summary>Plans the motions of an outcome: how each window gets from where it was to where it goes.</summary>
 public sealed partial class WindowManager
 {
     private readonly Dictionary<WindowId, Decoration> _painted = [];
 
-    /// <summary>Reads the system's reduced motion setting. When it returns true, nothing animates.</summary>
     public Func<bool>? ReducedMotion { get; set; }
 
-    // Plans the motions for an outcome by comparing it with the state before it. The placements,
-    // shows and hides stay as they are; a motion only says how the adapter gets the window there.
     private Outcome Animate(Outcome outcome, StateChange change)
     {
         var released = _released;
@@ -33,14 +29,11 @@ public sealed partial class WindowManager
             return outcome;
         }
 
-        // A live swipe's motions are already planned, and win over anything planned here for their windows.
         var own = outcome.Motions;
         var plan = new MotionPlan(this, change, outcome, released);
         plan.Workspaces(outcome.Hide, entering: false);
         plan.Workspaces(outcome.Show, entering: true);
 
-        // A window the pointer drags follows it at once, and the windows its Layout moves to make room for it, when it
-        // is lifted out or dropped, animate. A mouse resize moves every window at once.
         if (_interaction is not (Gesture { Resize: true } or NativeSize))
         {
             var held = (_interaction as Gesture)?.Window;
@@ -58,7 +51,6 @@ public sealed partial class WindowManager
             return outcome;
         }
 
-        // A window with no_anim moves, fades and changes border color at once, as Winland warps it.
         var planned = FromSwipe(plan.Finish(_painted)).Where(motion => _props.Own(motion.Window, WindowProp.NoAnim) != true).ToList();
         if (own.Count == 0)
             return outcome with { Motions = planned };
@@ -117,7 +109,6 @@ public sealed partial class WindowManager
                 if (!source.TryGetValue(window, out var client) || _motions.ContainsKey(window))
                     continue;
 
-                // A window that was already shown is not entering, and one already hidden is not leaving.
                 if (entering == _change.WasShown(window))
                     continue;
 
@@ -136,7 +127,6 @@ public sealed partial class WindowManager
                 _motions[window] = entering
                     ? new Motion(window, rest)
                     {
-                        // A window still leaving turns back from where it is.
                         From = moves ? away : null,
                         Move = moves ? timing : null,
                         FadeFrom = shift.Fades ? 0 : null,
@@ -167,13 +157,10 @@ public sealed partial class WindowManager
                 return;
             }
 
-            // A Client going into or out of fullscreen mode 2 moves between its rectangle and the monitor's, as in the
-            // Winland. One that stays fullscreen is put in place at once.
             var fullscreen = client.Fullscreen == FullscreenMode.Fullscreen;
             if (fullscreen && prior.Fullscreen == FullscreenMode.Fullscreen)
                 return;
 
-            // A window the system just moved starts from where it was dropped, not from the tile it was lifted out of.
             var from = _released is { } dropped && dropped.Window == window ? dropped.Bounds : prior.Bounds;
             if (_change.HiddenBefore.Contains(window) || from == bounds)
                 return;
@@ -182,7 +169,6 @@ public sealed partial class WindowManager
                 _motions[window] = new Motion(window, bounds) { From = from, Move = move };
         }
 
-        // Alpha and border changes of a window that stays shown.
         public void Switches(Dictionary<WindowId, Decoration> previous, Dictionary<WindowId, Decoration> painted)
         {
             var alphaTiming = Options.TransitionTiming;
@@ -249,7 +235,6 @@ public sealed partial class WindowManager
             return _change.Is.TryGetValue(window, out var client) ? client.Bounds : default;
         }
 
-        // Whether a Workspace is entering or leaving, and which side it travels from.
         private bool TrySwitch(WorkspaceId workspace, bool entering, out bool left)
         {
             left = entering;
@@ -304,7 +289,6 @@ public sealed partial class WindowManager
             return false;
         }
 
-        // Named workspaces sort below numbered ones, as their identifiers are negative.
         private static int Compare(WorkspaceId first, WorkspaceId second)
         {
             var numbered = first.TryGetNumber(out var a);

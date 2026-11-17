@@ -2,7 +2,6 @@ using static Winland.Domain.OrdinalText;
 
 namespace Winland.Application;
 
-/// <summary>Runs binds and dispatchers through the table in DispatcherTable.cs, and merges the outcomes of a bind with several.</summary>
 public sealed partial class WindowManager
 {
     private Outcome RunBind(BindDecision match)
@@ -34,7 +33,6 @@ public sealed partial class WindowManager
         return [new BindDispatch(match.Dispatcher, match.Arguments)];
     }
 
-    // Runs a dispatcher from the table and stamps its outcome with the entry's traits.
     private Outcome Execute(string name, string arguments)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -80,7 +78,6 @@ public sealed partial class WindowManager
             : launched;
     }
 
-    // The dispatchers the active Workspace's Layout answers: killactive, resizeactive, and the layout messages.
     private Outcome LayoutDispatch(string name, string arguments)
     {
         var active = ActiveWindow();

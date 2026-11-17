@@ -11,12 +11,6 @@ internal enum FullscreenAction
 
 internal readonly record struct FullscreenParse(bool Ignored, FullscreenMode Mode, FullscreenAction Action, bool LayoutAware = true);
 
-/// <summary>
-/// <c>fullscreen</c> arguments.
-/// The first <c>fullscreen</c> argument selects maximize only for <c>1</c>, <c>maximize</c>, or <c>maximized</c>.
-/// Every other argument, including <c>0</c> and <c>2</c>, selects fullscreen. The second argument is <c>toggle</c>, <c>set</c>, or <c>unset</c>.
-/// A last word <c>default</c> asks for the default fullscreen, as Winland's <c>layout_aware = false</c> does.
-/// </summary>
 internal static class FullscreenCommands
 {
     internal const string DefaultHandler = "default";

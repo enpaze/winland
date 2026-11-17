@@ -188,7 +188,6 @@ public class GestureTests
         Assert.Equal(new WorkspaceId("2"), Swipe(core, 4, Steps(20, -10, 0)).State.ActiveWorkspace);
     }
 
-    // Workspaces 1 and 2 each hold a Client, and 1 is shown.
     private static WindowManager Twin(string config)
     {
         var core = Load(config);

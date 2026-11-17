@@ -3,7 +3,6 @@ using static Winland.Domain.OrdinalText;
 
 namespace Winland.Domain;
 
-/// <summary>The arguments of <c>resizeactive</c>: two whole pixel numbers, after an optional <c>exact</c>.</summary>
 internal static class ResizeArguments
 {
     public static bool TryParse(string arguments, out int x, out int y, out bool exact)

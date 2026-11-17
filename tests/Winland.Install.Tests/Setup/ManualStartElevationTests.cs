@@ -63,7 +63,6 @@ public class ManualStartElevationTests
     [Fact]
     public void OptOutVariableStartsWithoutElevation()
     {
-        // WINLAND_NO_ELEVATE=1 exists for tests. Elevated features then do not work.
         var choice = ManualStartElevation.Decide(
             isElevated: false,
             optOutVariable: "1",

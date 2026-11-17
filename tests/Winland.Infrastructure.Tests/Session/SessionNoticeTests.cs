@@ -2,7 +2,6 @@ namespace Winland.Infrastructure.Tests;
 
 public class SessionNoticeTests
 {
-    // WM_QUERYENDSESSION only asks, and the shutdown can still be cancelled. WM_ENDSESSION with wParam TRUE is the end.
     [Fact]
     public void OnlyAnEndSessionThatIsTrueEndsTheSession()
     {
@@ -64,7 +63,6 @@ public class SessionNoticeTests
         return signal;
     }
 
-    // Started inside a Remote Desktop session, Winland lays the Workspaces out again when the user moves back to the console.
     [Fact]
     public void ASessionStartedRemotelyRecoversWhenTheConsoleConnects()
     {

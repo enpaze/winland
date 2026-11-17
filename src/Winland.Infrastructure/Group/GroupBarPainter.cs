@@ -5,21 +5,13 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Renders one Group's tab bar into a 32-bit bitmap and hands it to a layered window.
-/// The strip is almost transparent (alpha 1) so it still takes clicks. Indicators keep their alpha.
-/// GDI knows no alpha, so the titles are drawn white on black into a mask with grayscale antialiasing, and each title's
-/// color is laid over the bar as much as the mask covers each pixel.
-/// </summary>
 internal static class GroupBarPainter
 {
     private const string DefaultFont = "Segoe UI";
 
-    // Grayscale antialiasing, not ClearType, so the mask's channels are one coverage.
     private const FONT_QUALITY Quality = FONT_QUALITY.ANTIALIASED_QUALITY;
     private const int NormalWeight = 400;
 
-    /// <summary>The live title of each tab, or the title the core knows when the window has none.</summary>
     internal static string[] Titles(GroupBar bar)
     {
         var titles = new string[bar.Tabs.Count];
@@ -32,7 +24,6 @@ internal static class GroupBarPainter
         return titles;
     }
 
-    /// <summary>The bar window's own title, which a screen reader reads: every tab's title, the shown one marked.</summary>
     internal static string Name(GroupBar bar, IReadOnlyList<string> titles) =>
         string.Join(", ", bar.Tabs.Select((tab, i) => (i < titles.Count ? titles[i] : tab.Title) + (tab.Window == bar.Shown ? " (shown)" : "")));
 
@@ -92,8 +83,6 @@ internal static class GroupBarPainter
 
     private static unsafe void DrawTitles(HDC memory, Span<uint> pixels, int width, int height, GroupBar bar, IReadOnlyList<string> titles)
     {
-        // The titles go white on black into a mask of their own, so their antialiased edges are coverage, not a blend with
-        // whatever the strip holds.
         var info = new BITMAPINFO();
         info.bmiHeader.biSize = (uint)sizeof(BITMAPINFOHEADER);
         info.bmiHeader.biWidth = width;
@@ -148,7 +137,6 @@ internal static class GroupBarPainter
         _ = PInvoke.DeleteDC(maskDc);
     }
 
-    /// <summary>Draws the place a held window would join, in the active indicator color, over the strip's pixels.</summary>
     internal static void MarkInsertion(Span<uint> pixels, GroupBar bar)
     {
         if (bar.Insertion is null)
@@ -158,8 +146,6 @@ internal static class GroupBarPainter
         Fill(pixels, bar.Bounds.Width, bar.Bounds.Height, bar.InsertionBounds(), (_, _) => color);
     }
 
-    // Premultiplied BGRA of a color over the part of a pixel a shape covers. A pixel keeps an alpha of at least 1, so the
-    // strip still takes clicks there.
     private static uint Shaded(BorderColor color, double coverage)
     {
         var alpha = (uint)Math.Round(color.A * Math.Clamp(coverage, 0, 1));
@@ -183,8 +169,6 @@ internal static class GroupBarPainter
         }
     }
 
-    // Lays a title's color over the bar as much as the mask covers each pixel: the mask's white is full coverage, and its
-    // grays are the antialiased edges. The result is premultiplied and keeps an alpha of at least 1.
     internal static void ComposeText(Span<uint> pixels, ReadOnlySpan<uint> mask, int width, int height, Rectangle box, BorderColor color)
     {
         var left = Math.Max(0, box.X);
@@ -208,7 +192,6 @@ internal static class GroupBarPainter
         }
     }
 
-    // Premultiplied "over".
     private static uint Blend(uint top, uint under)
     {
         var keep = 255 - (top >> 24);

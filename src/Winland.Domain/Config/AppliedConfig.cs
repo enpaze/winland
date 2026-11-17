@@ -1,20 +1,13 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// The config in force: the document read last and every option it sets, read in one go. A reload replaces the whole
-/// record, so a reader that takes it once sees one config, never part of two.
-/// </summary>
 public sealed record AppliedConfig
 {
-    /// <summary>The options before any config is read. Layouts keep their own defaults until one is.</summary>
     public static AppliedConfig Unconfigured { get; } = new();
 
-    /// <summary>The document read last, or null before the first.</summary>
     public ConfigDocument? Document { get; init; }
 
     public IReadOnlyList<WindowRule> WindowRules => Document?.WindowRules ?? [];
 
-    /// <summary>Whether a window rule matches on <c>title</c>. <c>initial_title</c> cannot change, so it does not count.</summary>
     public bool TitleRules { get; init; }
 
     public IReadOnlyList<WorkspaceRule> WorkspaceRules => Document?.WorkspaceRules ?? WorkspaceRule.None;
@@ -28,7 +21,6 @@ public sealed record AppliedConfig
     public ScrollingOptions Scrolling { get; init; } = ScrollingOptions.Defaults;
 
 
-    /// <summary>The decoration options, with the system accent color filled in where the config asks for it.</summary>
     public DecorationOptions Decoration { get; init; } = DecorationOptions.Documented;
 
     public GroupOptions Groups { get; init; } = GroupOptions.Documented;
@@ -43,10 +35,6 @@ public sealed record AppliedConfig
 
     public InputOptions Input { get; init; } = InputOptions.Documented;
 
-    /// <summary>
-    /// Reads every option <paramref name="document"/> sets. <paramref name="accent"/> is the system accent color, and
-    /// <paramref name="contrast"/> the High Contrast colors while a High Contrast theme is on.
-    /// </summary>
     public static AppliedConfig From(ConfigDocument document, BorderColor? accent, HighContrast? contrast = null)
     {
         ArgumentNullException.ThrowIfNull(document);
@@ -67,7 +55,6 @@ public sealed record AppliedConfig
         };
     }
 
-    /// <summary>This config under another accent and High Contrast state. Only the colors they stand in for change.</summary>
     public AppliedConfig WithSystemColors(BorderColor? accent, HighContrast? contrast)
     {
         var document = Document ?? ConfigDocument.Empty;

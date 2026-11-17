@@ -9,10 +9,6 @@ using Windows.Win32.System.Threading;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// The process that answers on a pipe. Install and update find the running Daemon this way, not by
-/// the name winland, because the unelevated winland waiting on a UAC relaunch has that name too.
-/// </summary>
 public static class PipeServer
 {
     public static string DefaultName
@@ -24,7 +20,6 @@ public static class PipeServer
         }
     }
 
-    /// <summary>Null when nothing answers on <paramref name="pipeName"/> within <paramref name="timeoutMs"/>.</summary>
     public static int? ProcessId(string? pipeName = null, int timeoutMs = 2000)
     {
         using var pipe = new NamedPipeClientStream(".", pipeName ?? DefaultName, PipeDirection.InOut);
@@ -40,7 +35,6 @@ public static class PipeServer
         return VerifyServer(pipe);
     }
 
-    // Check before sending a command or lending foreground rights, including when a different pipe was requested.
     internal static int VerifyServer(NamedPipeClientStream pipe)
     {
         if (!PInvoke.GetNamedPipeServerProcessId(pipe.SafePipeHandle, out var id))

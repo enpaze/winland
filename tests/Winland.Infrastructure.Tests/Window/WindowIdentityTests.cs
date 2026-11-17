@@ -1,6 +1,5 @@
 namespace Winland.Infrastructure.Tests;
 
-// One test opens real windows, so the class runs alone with the other desktop tests.
 [Collection(DesktopCollection.Name)]
 public class WindowIdentityTests
 {
@@ -15,7 +14,6 @@ public class WindowIdentityTests
         Assert.Equal(WindowIdentity.Recognition.Other, WindowIdentity.Recognize(client, 42, "Edit", "a.txt"));
     }
 
-    // A hidden Client left behind by a crash must come back even if its title changed while it was hidden.
     [Fact]
     public void AHiddenClientIsTheSameClientWhateverItsTitle()
     {

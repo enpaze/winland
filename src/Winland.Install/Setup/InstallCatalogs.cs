@@ -10,7 +10,6 @@ public enum RegistryRoot
     User,
 }
 
-/// <summary>The files an install copies and removes. A link is reported and never followed.</summary>
 public interface IFileTree
 {
     bool Exists(string path);
@@ -23,13 +22,11 @@ public interface IFileTree
 
     void Copy(string source, string destination);
 
-    /// <summary>Removes one file. A link is removed itself and its target left alone.</summary>
     void DeleteFile(string path);
 
     void DeleteTree(string directory);
 }
 
-/// <summary>The registry values an install writes. <c>PATH</c> is stored expandable, so it is not expanded on the way through.</summary>
 public interface IRegistry
 {
     string? GetString(RegistryRoot root, string key, string name);
@@ -50,10 +47,8 @@ public interface IStartMenu
     void Remove(string linkPath);
 }
 
-/// <summary>Stops the running Daemon and starts the installed one.</summary>
 public interface IDaemonSession
 {
-    /// <summary>True when a Daemon was running and has exited.</summary>
     bool Stop();
 
     void Start(string executable, IReadOnlyList<string> arguments);

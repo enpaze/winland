@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>Monitors that are plugged in or out: which Workspaces go where, and which come back.</summary>
 public sealed partial class WindowManager
 {
     private readonly MonitorIdentity _identity = new();
@@ -34,8 +33,6 @@ public sealed partial class WindowManager
             next.Add(screen);
         }
 
-        // While no Monitor is enabled Winland keeps the Workspaces on a FALLBACK Monitor, and gives them back
-        // when one comes back.
         if (!next.Exists(screen => screen.Arranged.Enabled))
             next.Add(FindNamed(previous, FallbackName) ?? new LiveMonitor(NextMonitorId(previous, next), Fallback, Fallback));
 
@@ -58,8 +55,6 @@ public sealed partial class WindowManager
         Relocate(wasEnabled, enabled, home);
         EnsurePersistent();
         AssignActives(enabled);
-        // An empty Workspace a Monitor took from one that left is hidden there, so it goes,
-        // and the Monitor that comes back does not show it again.
         DropEmpty();
         RefitAll();
         EnsureFocus(home);
@@ -67,8 +62,6 @@ public sealed partial class WindowManager
         return View(ShownPlacements(), ShownWindows(), HiddenWindows(), focus: refocus);
     }
 
-    // A Monitor that comes back takes its Guests under their old numbers before a Monitor that leaves
-    // puts its Workspaces on the one that remains. Empty Workspaces of a Monitor that leaves are removed.
     private void Relocate(List<LiveMonitor> wasEnabled, List<LiveMonitor> enabled, LiveMonitor? host)
     {
         foreach (var screen in enabled)
@@ -86,8 +79,6 @@ public sealed partial class WindowManager
         RehomeSpecials(host, enabled);
     }
 
-    // A Monitor that goes away or comes back can hide the focused Client with its Workspace. The focus then
-    // goes to the Client the focused Monitor shows, so it does not stay on a window out of sight.
     private WindowId? RefocusShown()
     {
         if (_focus.Focused is not WindowId current || IsShownClient(current))
@@ -99,7 +90,6 @@ public sealed partial class WindowManager
         return next;
     }
 
-    // A Monitor is known again by its identity, or by its Windows name when it has no model and serial.
     private void Depart(LiveMonitor screen, LiveMonitor? host)
     {
         if (host is not null)
@@ -148,9 +138,6 @@ public sealed partial class WindowManager
                 claimed.Remove(preferred);
             }
 
-            // A Workspace that holds Clients is shown before an empty one. Workspace 1 is shown
-            // when it exists and opened when it is free, before a higher empty Workspace. When
-            // 1–10 are all taken, an empty one of those is shown before a number above 10 is made.
             LiveWorkspace? populated = null;
             LiveWorkspace? empty = null;
             long emptyNumber = long.MaxValue;
@@ -253,9 +240,6 @@ public sealed partial class WindowManager
         if (_monitors.Count == 0)
             return null;
 
-        // A window that opens while Winland runs opens on the focused Monitor, wherever its program put it, and a
-        // window with an owner on its owner's. One that was open when Winland started, or that places itself, stays
-        // where it is.
         if (appeared.Opened && !appeared.Traits.PlacesItself)
         {
             var home = appeared.Owner is WindowId owner && WorkspaceContaining(owner) is LiveWorkspace desk ? desk.Monitor : FocusedId();

@@ -8,15 +8,11 @@ namespace Winland.Infrastructure;
 internal sealed class Win32Desktop : IDesktop
 {
 
-    // HWND_TOP raises a window above every window that is not topmost. HWND_BOTTOM lowers it below all of them.
     private static readonly HWND Top = new(0);
     private static readonly HWND Bottom = new(1);
     private static readonly HWND Topmost = new(-1);
     private static readonly HWND NotTopmost = new(-2);
 
-    // A program that took this long to answer a call that waits on it is handled as hung for a while: its next
-    // placements and z-order changes are posted, not waited for. One busy program then holds Winland up once, not on
-    // every step until Windows calls it hung after five seconds.
     private const long SlowMilliseconds = 250;
     private const long SlowForMilliseconds = 3000;
 
@@ -75,7 +71,6 @@ internal sealed class Win32Desktop : IDesktop
         if (now - start < SlowMilliseconds)
             return;
 
-        // A slow window that closed is not asked about again, so marks that ran out are dropped here.
         foreach (var (slow, until) in _slowUntil)
         {
             if (now >= until)
@@ -172,7 +167,6 @@ internal sealed class Win32Desktop : IDesktop
         if (PresentClock.WaitForFrame())
             return;
 
-        // DwmFlush returns after the next composition pass. Without composition it fails at once.
         if (PInvoke.DwmFlush().Failed)
             Thread.Sleep(15);
     }
@@ -230,11 +224,9 @@ internal sealed class Win32Desktop : IDesktop
 
 internal sealed class Win32StandInSurface(HWND window, HWND overlay, nint picture) : IStandInSurface
 {
-    // DWM_TNP_RECTDESTINATION, DWM_TNP_RECTSOURCE, DWM_TNP_OPACITY, DWM_TNP_VISIBLE, DWM_TNP_SOURCECLIENTAREAONLY.
     private const uint ThumbnailParts = 0x1 | 0x2 | 0x4 | 0x8 | 0x10;
     private const uint ThumbnailOpacity = 0x4;
 
-    // The thumbnails that fill the area the window gained along its right and bottom edges, or 0 before one was needed.
     private nint _right;
     private nint _bottom;
     private bool _closed;
@@ -246,8 +238,6 @@ internal sealed class Win32StandInSurface(HWND window, HWND overlay, nint pictur
 
     public void Place(Rectangle bounds)
     {
-        // Just above the window, so whatever covers the window covers its stand-in too. A null handle is the top.
-        // The border stacks on the stand-in, so a stand-in that is already next to the window stays put.
         var above = PInvoke.GetWindow(window, GET_WINDOW_CMD.GW_HWNDPREV);
         var placed = above == overlay ? SET_WINDOW_POS_FLAGS.SWP_NOZORDER : 0;
         _ = PInvoke.SetWindowPos(
@@ -262,7 +252,6 @@ internal sealed class Win32StandInSurface(HWND window, HWND overlay, nint pictur
 
     public void Show(StandInSlot slot, StandInPiece? piece, byte alpha)
     {
-        // The thumbnails of the edges are made the first time they are needed.
         if (slot == StandInSlot.Right && piece is not null && _right == 0)
             _right = EdgeThumbnail();
         if (slot == StandInSlot.Bottom && piece is not null && _bottom == 0)

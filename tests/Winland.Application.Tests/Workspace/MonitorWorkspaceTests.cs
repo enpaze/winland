@@ -205,7 +205,6 @@ public class MonitorWorkspaceTests
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
 
         var gone = core.Handle(new MonitorsChanged([left]));
-        // The Guest that holds the hidden window is focused, then that Guest returns with its Monitor.
         core.Handle(new Dispatch("workspace", Client(gone, 5).Workspace.Name));
 
         var back = core.Handle(new MonitorsChanged([left, right]));
@@ -280,7 +279,6 @@ public class MonitorWorkspaceTests
 
         var back = core.Handle(new MonitorsChanged([left, right]));
 
-        // A special workspace is not a Guest, so it stays on the Monitor that took it.
         var stayed = Assert.Single(back.State.Screens, candidate => candidate.Monitor.Name == left.Name);
         var returned = Assert.Single(back.State.Screens, candidate => candidate.Monitor.Name == right.Name);
         Assert.Equal(new WorkspaceId("special:scratch"), stayed.SpecialWorkspace);

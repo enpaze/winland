@@ -1,10 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// One mouse move or resize in a Layout. A floating Client follows the pointer, or resizes from the
-/// grabbed corner, and snaps as it goes. A tiled Client is lifted out of the Layout on its first move
-/// and dropped back on release, or resized through the Layout.
-/// </summary>
 internal sealed class MouseDrag
 {
     private Grab? _grab;
@@ -21,7 +16,6 @@ internal sealed class MouseDrag
         };
     }
 
-    /// <summary>Ends the drag of a Client that leaves the Layout. True when it was being dragged.</summary>
     public bool Forget(ClientId id)
     {
         if (_grab is not { } grab || grab.Id != id)
@@ -31,10 +25,6 @@ internal sealed class MouseDrag
         return true;
     }
 
-    /// <summary>
-    /// Ends the drag here and begins it on <paramref name="next"/>, keeping the grab offset, so the window keeps
-    /// following the pointer after it joins another Workspace's Layout.
-    /// </summary>
     public void HandTo(MouseDrag next)
     {
         ArgumentNullException.ThrowIfNull(next);
@@ -63,7 +53,6 @@ internal sealed class MouseDrag
         if (_grab is not Grab grab || grab.Resize != resize)
             return [];
 
-        // A Client tiled again while its floating drag runs is left to its Layout.
         var floating = host.Floating;
         if (grab.WasFloating && !floating.Contains(grab.Id))
             return [];
@@ -93,7 +82,6 @@ internal sealed class MouseDrag
             grab.HotY = box.Height / 2;
         }
 
-        // The step that lifts a tile lays the others out without it. After that only the dragged Client moves.
         var next = new Rectangle(pointer.X - grab.HotX, pointer.Y - grab.HotY, grab.Start.Width, grab.Start.Height);
         floating.Set(grab.Id, next);
         var shown = host.ShowFloating(grab.Id);
@@ -118,10 +106,6 @@ internal sealed class MouseDrag
         return host.EndInPlace();
     }
 
-    /// <summary>
-    /// Where a drag started and where it is. A floating Client keeps the pointer's offset into it.
-    /// A lifted tile is held by its middle.
-    /// </summary>
     private sealed class Grab(ClientId id, bool resize, bool wasFloating, Point grab, Rectangle start, bool left, bool top, bool keepRatio)
     {
         public ClientId Id { get; } = id;
@@ -150,39 +134,30 @@ internal sealed class MouseDrag
     }
 }
 
-/// <summary>The steps of a <see cref="MouseDrag"/> that depend on how a Layout keeps its tiles.</summary>
 internal interface IMouseDragHost
 {
     FloatingClients Floating { get; }
 
     SizeLimits FloatingLimits(ClientId id);
 
-    /// <summary>The rectangle a drag of this Client starts from. False when it cannot be dragged.</summary>
     bool TryDragBounds(ClientId id, out Rectangle bounds, out bool floating);
 
-    /// <summary>Takes a tile out of the Layout and floats it at its tiled rectangle. False when it is not tiled.</summary>
     bool LiftTile(ClientId id, out Rectangle box);
 
-    /// <summary>Resizes a tile by the pointer's movement since the last step.</summary>
     IReadOnlyList<Placement> ResizeTile(ClientId id, int dx, int dy, (bool Left, bool Top) corner);
 
-    /// <summary>Puts a lifted tile back into the Layout at the pointer.</summary>
     IReadOnlyList<Placement> DropTile(ClientId id, Point pointer);
 
-    /// <summary>The placements after a floating Client moved.</summary>
     IReadOnlyList<Placement> ShowFloating(ClientId id);
 
-    /// <summary>The placements when a drag ends without a floating Client or a lifted tile.</summary>
     IReadOnlyList<Placement> EndInPlace();
 }
 
-/// <summary>A Layout that runs a <see cref="MouseDrag"/>, so a drag can move with a window onto another Workspace.</summary>
 internal interface IDragOwner
 {
     MouseDrag Drag { get; }
 }
 
-/// <summary>One step of a mouse move or resize. <see cref="KeepRatio"/> holds a floating Client's aspect ratio while it is resized.</summary>
 internal readonly record struct PointerDrag(bool Resize, PointerDragPhase Phase, Point Pointer, bool KeepRatio = false);
 
 public enum PointerDragPhase

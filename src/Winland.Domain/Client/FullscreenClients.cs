@@ -12,7 +12,6 @@ internal static class FullscreenClients
         {
             for (var i = 0; i < clients.Count; i++)
             {
-                // A Client its Layout holds fullscreen itself stays so beside another.
                 if (i == index || clients[i].Fullscreen == FullscreenMode.None || clients[i].LayoutFullscreen)
                     continue;
 

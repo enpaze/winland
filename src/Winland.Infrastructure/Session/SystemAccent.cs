@@ -6,10 +6,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// The Windows accent, the High Contrast colors and the text size, read outside the core. Tests replace
-/// <see cref="Read"/>, <see cref="Contrast"/> and <see cref="TextScale"/>.
-/// </summary>
 internal static class SystemAccent
 {
     private const int HighlightColor = 13;
@@ -68,7 +64,6 @@ internal static class SystemAccent
         }
     }
 
-    // GetSysColor packs a color as 0x00BBGGRR.
     private static BorderColor System(int index)
     {
         var packed = PInvoke.GetSysColor((SYS_COLOR_INDEX)index);

@@ -5,11 +5,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Owns the windows that stand in for a growing window during its motion, on a thread of its own with a
-/// message loop. Any thread may create one, move it and close it. The windows belong to this process, so
-/// they go away with it.
-/// </summary>
 internal static class StandInHost
 {
     private const string HostClass = "WinlandStandInHost";
@@ -26,7 +21,6 @@ internal static class StandInHost
     private static uint _thread;
     private static Thread? _worker;
 
-    /// <summary>A new hidden stand-in window, or a null handle when none could be made.</summary>
     internal static HWND Create()
     {
         HWND host;
@@ -44,14 +38,12 @@ internal static class StandInHost
         return new HWND((nint)PInvoke.SendMessage(host, CreateMessage, default, default).Value);
     }
 
-    /// <summary>Destroys a stand-in window on the thread that owns it.</summary>
     internal static void Close(HWND standIn)
     {
         if (!standIn.IsNull)
             _ = PInvoke.SendMessage(standIn, PInvoke.WM_CLOSE, default, default);
     }
 
-    /// <summary>Ends the thread, and with it every stand-in window.</summary>
     internal static void Stop()
     {
         Thread? worker;
@@ -74,7 +66,6 @@ internal static class StandInHost
         _ = worker.Join(TimeSpan.FromSeconds(2));
     }
 
-    // Waits until the thread has its host window, so the first stand-in is not lost.
     private static void Start()
     {
         using var ready = new ManualResetEventSlim();
@@ -85,7 +76,6 @@ internal static class StandInHost
         };
         _worker.Start();
 
-        // A thread that got ready with no host window failed, so the next stand-in starts one again.
         if (ready.Wait(TimeSpan.FromSeconds(2)) && _host.IsNull)
             _worker = null;
     }
@@ -134,7 +124,6 @@ internal static class StandInHost
     private static unsafe HWND CreateHost() =>
         PInvoke.CreateWindowEx(0, HostClass, "", 0, 0, 0, 0, 0, new HWND(-3), null, null, null);
 
-    // No redirection surface, so all it shows is the thumbnail placed on it.
     private static unsafe HWND CreateStandIn() =>
         PInvoke.CreateWindowEx(
             WINDOW_EX_STYLE.WS_EX_TOOLWINDOW | WINDOW_EX_STYLE.WS_EX_NOACTIVATE | WINDOW_EX_STYLE.WS_EX_NOREDIRECTIONBITMAP,

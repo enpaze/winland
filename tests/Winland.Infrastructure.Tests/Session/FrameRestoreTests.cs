@@ -1,6 +1,5 @@
 namespace Winland.Infrastructure.Tests;
 
-/// <summary>The frame a fullscreen Client lost is given back when the exit cleanup puts everything back.</summary>
 public class FrameRestoreTests
 {
     [Fact]
@@ -18,8 +17,6 @@ public class FrameRestoreTests
         Assert.Equal(original, windows.Desktop[1].Style);
     }
 
-    // The hook worker and the pipe still apply outcomes while the exit cleanup runs. One that arrives after
-    // the frames were put back must not strip a frame again: the process ends next, with the state file gone.
     [Fact]
     public void AnOutcomeAfterTheCleanupDoesNotStripTheFrameAgain()
     {

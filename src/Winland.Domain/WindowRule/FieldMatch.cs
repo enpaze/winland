@@ -1,8 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// A window-rule pattern. It matches the whole field, without case, and <c>*</c> is the only wildcard.
-/// </summary>
 internal static class FieldMatch
 {
     public static bool Is(string pattern, string text) => Match(pattern.AsSpan(), text.AsSpan());

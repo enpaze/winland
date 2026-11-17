@@ -18,8 +18,6 @@ public class StateLocationTests
         Assert.Empty(asked);
     }
 
-    // Any program the user runs can set the user's environment. Elevated, the variable is followed
-    // only to a folder the check passes, and otherwise the default is used and the reason logged.
     [Fact]
     public void ElevatedTheVariableIsFollowedOnlyToAFolderThatPasses()
     {
@@ -48,7 +46,6 @@ public class StateLocationTests
         Assert.Null(StateLocation.Refusal(@"C:\Users\me\.winland", granted, User));
     }
 
-    // Writing there as an administrator would replace and then delete a file the user could not touch.
     [Fact]
     public void AFolderOnlyAdministratorsCanEmptyIsRefused()
     {
@@ -70,7 +67,6 @@ public class StateLocationTests
         Assert.NotNull(StateLocation.Refusal(@"C:\Unreadable", null, User));
     }
 
-    // A drive root has no folder above it to check, so an elevated Winland does not follow it.
     [Fact]
     public void AVariableThatNamesNoFolderIsIgnoredElevated()
     {

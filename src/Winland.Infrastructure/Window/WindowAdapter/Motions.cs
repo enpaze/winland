@@ -6,7 +6,6 @@ namespace Winland.Infrastructure;
 
 public sealed partial class WindowAdapter
 {
-    // Splits an outcome's motions by the step of Apply that starts them.
     private static Dictionary<WindowId, Motion> MotionsOf(Outcome outcome)
     {
         var motions = new Dictionary<WindowId, Motion>(outcome.Motions.Count);
@@ -15,7 +14,6 @@ public sealed partial class WindowAdapter
         return motions;
     }
 
-    /// <summary>Steps the motions once, as their thread does, and returns whether any is still running. Only an adapter made unthreaded is stepped this way.</summary>
     internal bool Tick() => _motions.Tick();
 
     private void ConcealOrLeave(WindowId window, Dictionary<WindowId, Motion> motions)
@@ -36,14 +34,9 @@ public sealed partial class WindowAdapter
         {
             if (motions.Remove(window, out var motion))
             {
-                // A window that fades in is put where its motion starts first, and waited for. Moved without waiting,
-                // a window that just opened takes the move only when its program gets to it, and fades in where it
-                // opened meanwhile. One still moving carries on from where it is, so it is not put back to the start.
                 if (motion.FadeFrom == 0 && (motion.Warp || !_motions.Running(window)))
                     PlaceFrame(window, motion.From ?? bounds, borderless);
 
-                // A fade or a border change with no move of its own leaves a move still running toward this rectangle
-                // to the player, as a placement with no motion does.
                 if (_motions.Begin(motion) && (motion.Move is not null || _motions.Settle(window, bounds)))
                     return;
 
@@ -60,7 +53,6 @@ public sealed partial class WindowAdapter
         }
     }
 
-    // A step of a drag still held. The drag's end places the window exactly.
     private void PlaceLive(WindowId window, Rectangle bounds, bool borderless, Dictionary<WindowId, Motion> motions)
     {
         lock (_motions.For(window))
@@ -74,7 +66,6 @@ public sealed partial class WindowAdapter
         }
     }
 
-    // Called under the window's lock, so one placement of a window is under way at a time.
     private void PlaceFrame(WindowId window, Rectangle bounds, bool borderless)
     {
         _placing[window] = 0;
@@ -86,7 +77,6 @@ public sealed partial class WindowAdapter
                 return;
             }
 
-            // A borderless window already on its rectangle is left alone, as a framed one is.
             var trails = TryOuter(window, out var before) && _quick.Trails(window, before);
             if (!trails && before == bounds)
                 return;
@@ -129,7 +119,6 @@ public sealed partial class WindowAdapter
 
     private void DropMotion(WindowId window) => _motions.Drop(window);
 
-    // Every step asks, so the setting is read once and again after Windows broadcasts a change to the settings.
     private static readonly Lock SettingsGate = new();
     private static bool? _reducedMotion;
 
@@ -156,9 +145,6 @@ public sealed partial class WindowAdapter
     {
         public bool Hung(WindowId window) => adapter._desktop.Hung(window);
 
-        // An in-between frame does not wait for the window, so one that repaints slowly holds up no other. A window
-        // not shown yet, as one a Workspace brings in, is waited for: it is shown right after its first frame, and
-        // would take a posted frame only after it showed where it was hidden. A hidden window does not paint, so it is quick.
         public void Move(WindowId window, Rectangle bounds, Rectangle content)
         {
             GroupBarHost.Moves(window, true);
@@ -181,7 +167,6 @@ public sealed partial class WindowAdapter
 
         public void Place(WindowId window, Rectangle bounds)
         {
-            // A fullscreen window has no frame, so it is placed by its outer rectangle, as every placement of it is.
             adapter.PlaceFrame(window, bounds, adapter._borderless.Owns(window));
             adapter.EndStandIn(window, null);
             GroupBarHost.Moves(window, false);
@@ -192,13 +177,11 @@ public sealed partial class WindowAdapter
             adapter._opacity.Apply(window, alpha);
             adapter.StandInAlpha(window, alpha);
 
-            // The decorations fade with the window while its motion runs, and are opaque again once it has ended.
             MotionAlpha.Set(window, adapter._motions.Running(window) ? alpha : null);
         }
 
         public void Border(WindowId window, BorderColor color)
         {
-            // The exit cleanup put the border back. A motion step after that would leave its color.
             if (adapter._releasing)
                 return;
 
@@ -221,8 +204,6 @@ public sealed partial class WindowAdapter
 
         public void Close(WindowId window)
         {
-            // The window stays veiled while it closes, so it does not show for a frame on its Layout rectangle. A
-            // window that stays open is placed again, which ends its stand-in, and one that goes is dropped.
             adapter.HideStandIn(window);
             adapter._desktop.Close(window);
         }

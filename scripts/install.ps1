@@ -1,8 +1,3 @@
-# One-line install for Windows PowerShell 5.1 and PowerShell 7.
-#   irm https://raw.githubusercontent.com/enpaze/winland/main/scripts/install.ps1 | iex
-# The dev channel, built from main:
-#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/enpaze/winland/main/scripts/install.ps1))) -Channel dev
-# Dot-sourcing defines the decisions and runs nothing. scripts/install.tests.ps1 does that.
 param(
     [ValidateSet('stable', 'dev')]
     [string]$Channel = 'stable',
@@ -55,14 +50,12 @@ function Get-TweakArguments([bool]$PrecisionTouchpad) {
     return $arguments
 }
 
-# The channel is always named, so the stable one-liner also takes an install on dev back to stable.
 function Get-UpdateArguments([string]$Channel) {
     if ($Channel -eq 'dev') { return @('update', '--channel', 'dev') }
     return @('update', '--channel', 'stable')
 }
 
 function Get-FailureMessage([string[]]$Arguments, [int]$ExitCode, [string[]]$Output) {
-    # winland exits with 1223, ERROR_CANCELLED, when the UAC prompt is declined.
     if ($ExitCode -eq 1223) {
         if ($Arguments[0] -eq 'update') {
             return 'Administrator approval was declined. Winland was not updated. Run the command again to retry.'
@@ -95,7 +88,6 @@ function Get-SummaryLines([string]$Version, [string]$Folder, [string]$Config, [b
     return @($lines.ToArray())
 }
 
-# The install writes PATH to the registry, which only a new terminal reads. This is the PATH for the terminal that ran the script.
 function Get-SessionPath([string]$Path, [string]$Folder) {
     $separator = [System.IO.Path]::PathSeparator
     $entries = @($Path -split [regex]::Escape([string]$separator) | Where-Object { $_ -ne '' })
@@ -169,9 +161,6 @@ function Get-ReleaseDownloads([string]$Json, [bool]$AllowPrerelease = $false) {
 }
 
 function Test-PrecisionTouchpad {
-    # Microsoft documents this value as the precision touchpad status a driver queries.
-    # It exists when Windows has a precision touchpad, including when that touchpad is toggled off.
-    # https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/touchpad-enable-or-disable-toggle-button
     $key = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad\Status'
     $item = Get-ItemProperty -Path $key -Name 'Enabled' -ErrorAction SilentlyContinue
     return ($null -ne $item)
@@ -232,8 +221,6 @@ function Get-InstalledExecutable([bool]$User) {
     return (Join-Path $machine 'winland.exe')
 }
 
-# An install has its uninstall record as well as winland.exe. An uninstall that could not delete every file
-# leaves winland.exe behind without the record, and that folder gets a fresh install, not an update.
 function Find-InstalledWinland {
     $record = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Winland'
     $machine = Get-InstalledExecutable $false
@@ -244,7 +231,6 @@ function Find-InstalledWinland {
 }
 
 function Invoke-Winland([string]$Executable, [string[]]$Arguments) {
-    # Windows PowerShell 5.1 turns redirected stderr into errors, which Stop would make fatal.
     $ErrorActionPreference = 'Continue'
     $output = @(& $Executable @Arguments 2>&1 | ForEach-Object { [string]$_ })
     $code = $LASTEXITCODE
@@ -277,7 +263,6 @@ function Get-RateLimitMessage($Response) {
             return "The GitHub API rate limit is used up. Try again after $when UTC."
         }
     } catch {
-        # An absent reset header still gets a rate-limit explanation.
     }
     return 'The GitHub API rate limit is used up. Try again later.'
 }
@@ -310,7 +295,6 @@ function Update-Winland([string]$Executable, [string]$Channel) {
     }
 }
 
-# The elevated host receives this script in its command line, never from a user-writable .ps1 file.
 function Get-ProtectedInstallScript([string]$Zip, [string]$Hash, [string]$Account, [bool]$Logon, [bool]$Start) {
     $body = @'
 $ErrorActionPreference = 'Stop'
@@ -424,10 +408,8 @@ function Install-Winland([string]$Channel, [string]$Temp, [bool]$ChangeSettings 
         throw 'Winland did not finish installing. Run the command again.'
     }
     Invoke-Winland $copy @('install', '--winland-cleanup-user') | Out-Null
-    # Unelevated, so these settings belong to the signed-in user and not to an administrator who approved UAC.
     if ($ChangeSettings) { Invoke-Winland $copy (Get-TweakArguments (Test-PrecisionTouchpad)) | Out-Null }
     if ($Channel -eq 'dev') {
-        # Saves the dev channel for winland update. The copy is that commit, so nothing is downloaded.
         Invoke-Winland $copy (Get-UpdateArguments 'dev') | Out-Null
     }
     Write-Done
@@ -441,7 +423,6 @@ function Install-Winland([string]$Channel, [string]$Temp, [bool]$ChangeSettings 
 }
 
 function Invoke-InstallScript([string]$Channel, [bool]$ChangeSettings = $true) {
-    # These stay inside the function, so the terminal that ran irm | iex keeps its own settings.
     $ErrorActionPreference = 'Stop'
     $ProgressPreference = 'SilentlyContinue'
     Set-StrictMode -Version Latest
@@ -451,7 +432,6 @@ function Invoke-InstallScript([string]$Channel, [bool]$ChangeSettings = $true) {
 
     $temp = Join-Path ([System.IO.Path]::GetTempPath()) ('winland-install-' + [guid]::NewGuid().ToString('N'))
     try {
-        # No exit, because under irm | iex that would close the terminal.
         $installed = Find-InstalledWinland
         if ($installed) {
             Update-Winland $installed $Channel
@@ -469,12 +449,10 @@ function Invoke-InstallScript([string]$Channel, [bool]$ChangeSettings = $true) {
     Write-Host ''
 }
 
-# Dot-sourcing stops here. The functions above are defined and nothing is downloaded or installed.
 if ($MyInvocation.InvocationName -eq '.') { return }
 
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 } catch {
-    # This host already has a protocol that can reach the release.
 }
 Invoke-InstallScript $Channel (-not $NoTweaks)

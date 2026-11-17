@@ -1,8 +1,3 @@
-# Run unit test projects under tests/. Fails when none exist.
-# Smoke projects stay off this lane. A release run does not execute them either.
-# scripts/*.tests.ps1 run first when they exist.
-#   pwsh -NoProfile -File scripts/test.ps1            builds once, then runs every project at the same time
-#   pwsh -NoProfile -File scripts/test.ps1 -NoBuild   runs them on the Release build already there, as check.ps1 leaves it
 param(
     [switch]$NoBuild
 )
@@ -22,8 +17,6 @@ if ($projects.Count -eq 0) {
     throw 'No unit test project under tests/.'
 }
 
-# Building once first lets the projects run side by side: each one only runs its tests, and none rebuilds the
-# projects they share.
 if (-not $NoBuild) {
     $solution = Join-Path $root 'Winland.slnx'
     Write-Output "dotnet build $solution"
@@ -31,15 +24,11 @@ if (-not $NoBuild) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
-# Each project's output is printed whole once it finishes, so the logs do not interleave.
 $results = $projects | ForEach-Object -ThrottleLimit ([Math]::Max(2, [Environment]::ProcessorCount)) -Parallel {
     $output = & dotnet test $_.FullName --configuration Release --nologo --no-build 2>&1 | Out-String
     [pscustomobject]@{ Project = $_.FullName; ExitCode = $LASTEXITCODE; Output = $output }
 }
 
-# A project that fails runs once more on the same build. Failing again fails the run. Passing the second time
-# means a test is flaky: the run passes, and the tests that failed are named as flaky so they get fixed. On CI that
-# is a warning annotation and a line in the job summary.
 $failed = 0
 $flaky = [System.Collections.Generic.List[string]]::new()
 foreach ($result in $results | Sort-Object Project) {

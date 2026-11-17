@@ -1,8 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// Hit testing around a window, and resizing from the corner a drag grabbed. The pointer positions are supplied by the caller.
-/// </summary>
 internal static class BorderPointer
 {
     public static bool Contains(Rectangle box, Point point) =>
@@ -13,7 +10,6 @@ internal static class BorderPointer
         && point.X < box.X + box.Width
         && point.Y < box.Y + box.Height;
 
-    /// <summary>The point of <paramref name="box"/> nearest <paramref name="point"/>, one pixel in from the far edges.</summary>
     public static Point Clamp(Rectangle box, Point point) => new(
         Math.Clamp(point.X, box.X, Math.Max(box.X, box.X + box.Width - 1)),
         Math.Clamp(point.Y, box.Y, Math.Max(box.Y, box.Y + box.Height - 1)));
@@ -48,10 +44,6 @@ internal static class BorderPointer
             pointer.X < bounds.X + (bounds.Width / 2.0),
             pointer.Y < bounds.Y + (bounds.Height / 2.0));
 
-    /// <summary>
-    /// Resizes from the grabbed corner. With <paramref name="keepRatio"/> the larger of the two
-    /// proposed sides sets the size and the other follows the starting aspect ratio.
-    /// </summary>
     public static Rectangle Resize(Rectangle start, Point origin, Point pointer, bool left, bool top, bool keepRatio = false)
     {
         var dx = pointer.X - origin.X;

@@ -1,18 +1,11 @@
 namespace Winland.Infrastructure.Tests;
 
-/// <summary>
-/// A WindowManager and a WindowAdapter over a <see cref="FakeDesktop"/>, with a clock the test moves and motions it
-/// steps by hand. Windows are opened at <see cref="Area"/>, the way the core is told of them.
-/// </summary>
 internal sealed class TestWindows : IDisposable
 {
     internal static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
     private double _now;
 
-    /// <param name="config">Config lines after the one that turns the borders off. A border is a window of Winland's own, which no test puts on the desktop.</param>
-    /// <param name="reducedMotion">Windows move, hide and close at once, as with the system's setting.</param>
-    /// <param name="changed">What the adapter calls after it applied an outcome.</param>
     internal TestWindows(string config = "", bool reducedMotion = false, Action? changed = null)
     {
         Desktop = new FakeDesktop(() => _now);
@@ -28,10 +21,8 @@ internal sealed class TestWindows : IDisposable
 
     internal WindowAdapter Adapter { get; }
 
-    /// <summary>Milliseconds on the clock the adapter and the desktop read.</summary>
     internal double Now => _now;
 
-    /// <summary>Opens a window on <see cref="Area"/> and tells the core, then applies what it answers.</summary>
     internal WindowId Open(long id)
     {
         Desktop.Add(id, Area);
@@ -53,14 +44,12 @@ internal sealed class TestWindows : IDisposable
         Adapter.Apply(outcome);
     }
 
-    /// <summary>Moves the clock on and steps the motions once.</summary>
     internal bool Advance(double milliseconds)
     {
         _now += milliseconds;
         return Adapter.Tick();
     }
 
-    /// <summary>Plays the motions to their end, a frame at a time.</summary>
     internal void Settle()
     {
         for (var frame = 0; frame < 1000; frame++)

@@ -17,10 +17,6 @@ internal interface IWindowStyles
     bool TrySetAlpha(WindowId window, byte alpha);
 }
 
-/// <summary>
-/// Adds <c>WS_EX_LAYERED</c> only for windows that were not already layered, and puts that style back.
-/// A window that refuses the layered attribute is skipped until it is reset.
-/// </summary>
 internal sealed class OpacityAdapter
 {
     internal const uint LayeredStyle = 0x00080000;
@@ -35,8 +31,6 @@ internal sealed class OpacityAdapter
     private readonly Lock _gate = new();
     private bool _closed;
 
-    /// <param name="hung">Whether a window's program has stopped answering. A style write waits for the window, so
-    /// one that would block is put off until the program answers again.</param>
     internal OpacityAdapter(IWindowStyles styles, Func<WindowId, bool>? hung = null)
     {
         ArgumentNullException.ThrowIfNull(styles);
@@ -70,17 +64,12 @@ internal sealed class OpacityAdapter
         }
     }
 
-    /// <summary>The alpha the window was last given, which a veiled window shows once it is unveiled.</summary>
     internal byte Wanted(WindowId window)
     {
         lock (_gate)
             return _veiled.TryGetValue(window, out var alpha) ? alpha : _alphas.GetValueOrDefault(window, (byte)255);
     }
 
-    /// <summary>
-    /// Makes the window fully transparent until <see cref="Unveil"/>. An alpha applied meanwhile is kept for then.
-    /// Returns false when the window cannot be made transparent, and it is left as it was.
-    /// </summary>
     internal bool Veil(WindowId window)
     {
         lock (_gate)
@@ -100,7 +89,6 @@ internal sealed class OpacityAdapter
         }
     }
 
-    /// <summary>Gives a veiled window back the alpha it was last asked for.</summary>
     internal void Unveil(WindowId window)
     {
         lock (_gate)
@@ -110,7 +98,6 @@ internal sealed class OpacityAdapter
         }
     }
 
-    // Returns false when the window could not be given the alpha.
     private bool Set(WindowId window, byte alpha)
     {
         _alphas[window] = alpha;
@@ -119,7 +106,6 @@ internal sealed class OpacityAdapter
 
         if (_owned.TryGetValue(window, out var owned))
         {
-            // A hung window keeps its layered style at full alpha, which needs no answer from it.
             if (alpha == 255 && _hung(window))
                 return _styles.TrySetAlpha(window, alpha);
 
@@ -178,10 +164,6 @@ internal sealed class OpacityAdapter
         return false;
     }
 
-    /// <summary>
-    /// Gives the window back the style and alpha it had. One whose program stopped answering would hold this up, so it
-    /// is only made opaque, which does not wait, and stays owned: the exit's snapshot records it for the next start.
-    /// </summary>
     internal void Reset(WindowId window)
     {
         lock (_gate)
@@ -203,7 +185,6 @@ internal sealed class OpacityAdapter
         }
     }
 
-    /// <summary>Forgets a window that is gone, without touching it.</summary>
     internal void Forget(WindowId window)
     {
         lock (_gate)
@@ -216,10 +197,6 @@ internal sealed class OpacityAdapter
         }
     }
 
-    /// <summary>
-    /// Restores every window this made layered, for the exit cleanup. No window is made layered after that:
-    /// an outcome or a motion that arrives late would leave it so for good.
-    /// </summary>
     internal void ResetAll()
     {
         WindowId[] windows;
@@ -233,10 +210,6 @@ internal sealed class OpacityAdapter
             Reset(window);
     }
 
-    /// <summary>
-    /// Marks each Client this made layered, and records the other windows it made layered, the ones held transparent
-    /// while they were created hidden, so a crash does not leave them so.
-    /// </summary>
     internal RecoverySnapshot Stamp(RecoverySnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -275,15 +248,11 @@ internal sealed class OpacityAdapter
             if (!_styles.TryRead(window, out var chrome) || (chrome.ExStyle & LayeredStyle) == 0)
                 return;
 
-            // Recovery follows the same hung-window policy as exit: full alpha now, with the style repair kept for
-            // another start. Writing the style of an unresponsive held window would block all startup adoption.
             _owned[window] = new Original(chrome.ExStyle & ~LayeredStyle, 255);
             Reset(window);
         }
     }
 
-    // Only the layered style is Winland's. The rest is read again, so a style the program set meanwhile, such as always
-    // on top, stays.
     private void Restore(WindowId window, Original original)
     {
         if (_styles.TryRead(window, out var now))
@@ -340,8 +309,6 @@ internal sealed class Win32WindowStyles : IWindowStyles
         if (previous == 0 && Marshal.GetLastPInvokeError() != 0)
             return false;
 
-        // Becoming layered needs no new frame: the alpha set next is what shows. Asking the window to answer a frame
-        // change there would redraw it once more, before it has an alpha. Leaving the layered style needs the repaint.
         if ((exStyle & ~(uint)previous) == OpacityAdapter.LayeredStyle)
             return true;
 

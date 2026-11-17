@@ -81,8 +81,6 @@ internal sealed class SmokeDaemon : IDisposable
 
             if (TryRun("clients", TimeSpan.FromSeconds(2), out _, out var error))
             {
-                // The pipe accepts commands before the message loop blocks. Window events
-                // are delivered on that loop, so give it a moment to enter the pump.
                 Thread.Sleep(300);
                 return;
             }
@@ -123,8 +121,6 @@ internal sealed class SmokeDaemon : IDisposable
             if (Exited)
                 return true;
 
-            // WM_QUIT is the message the daemon posts for a console cancel. GetMessage
-            // returns and the process shows hidden windows and, when this run hid the taskbars, restores them.
             _ = NativeQuit.Post(thread);
             if (_process.WaitForExit(200))
                 return true;
@@ -241,8 +237,6 @@ internal sealed class SmokeDaemon : IDisposable
         info.Environment["WINLAND_PIPE"] = pipe;
         info.Environment["WINLAND_STATE"] = state;
         info.Environment["DOTNET_ROOT"] = dotnetRoot;
-        // A hand start relaunches elevated. WINLAND_NO_ELEVATE=1 exists for tests.
-        // Elevated features then do not work.
         info.Environment["WINLAND_NO_ELEVATE"] = "1";
 
         var process = new Process { StartInfo = info };

@@ -9,7 +9,6 @@ public interface ICursorSurface
     void Show();
 }
 
-/// <summary>Hides the cursor on a key press, and on touch, until the mouse moves.</summary>
 public sealed class CursorIdle
 {
     private readonly Lock _gate = new();
@@ -44,13 +43,10 @@ public sealed class CursorIdle
         }
     }
 
-    /// <summary>Moves the cursor. A hidden cursor stays hidden: only the mouse shows it again.</summary>
-    // Not under the lock: the move it makes reaches the mouse hook at once, which takes the lock in Moved.
     public void Warp(Point position) => _cursor.Warp(position);
 
     public void Moved() => Reveal();
 
-    /// <summary>Touch pressed down: the cursor hides until the mouse moves.</summary>
     public void Touched()
     {
         lock (_gate)

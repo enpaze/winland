@@ -80,7 +80,6 @@ public class InitialWorkspaceTests
         return core;
     }
 
-    // Runs exec as a bind or the pipe does, and reports the process the adapter started for it.
     private static void Start(WindowManager core, int pid)
     {
         var launch = Assert.Single(core.Execute("dispatch exec app").Effect.Launches);

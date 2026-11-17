@@ -11,7 +11,6 @@ public sealed record State(IReadOnlyList<Client> Clients)
 
     public WorkspaceId ActiveWorkspace { get; init; } = WorkspaceId.Initial;
 
-    /// <summary>The special workspace shown on the focused Monitor, when one is open.</summary>
     public WorkspaceId? SpecialWorkspace { get; init; }
 
     public MonitorId ActiveMonitor { get; init; } = MonitorId.Primary;
@@ -22,10 +21,8 @@ public sealed record State(IReadOnlyList<Client> Clients)
 
     public IReadOnlyList<MonitorSnapshot> Screens { get; init; } = [];
 
-    /// <summary>The members of each Group, in Group order.</summary>
     public IReadOnlyList<IReadOnlyList<WindowId>> Groups { get; init; } = [];
 
-    /// <summary>The Clients from the bottom of the stacking order to the top, as far as Winland raised or lowered them.</summary>
     public IReadOnlyList<WindowId> Stacking { get; init; } = [];
 }
 
@@ -35,13 +32,10 @@ public sealed record Outcome(
     bool Consumed = false,
     WindowId? Focus = null)
 {
-    /// <summary>What the Dispatcher that produced this outcome does beyond the outcome itself, or null when no Dispatcher ran.</summary>
     public DispatcherTraits? Traits { get; init; }
 
-    /// <summary>Clients to close, in order. A key with several binds can close several.</summary>
     public IReadOnlyList<WindowId> Closes { get; init; } = [];
 
-    /// <summary>The first Client to close, or null. Setting it replaces <see cref="Closes"/> with that one Client.</summary>
     public WindowId? Close
     {
         get => Closes.Count > 0 ? Closes[0] : null;
@@ -52,14 +46,10 @@ public sealed record Outcome(
 
     public IReadOnlyList<WindowId> Hide { get; init; } = [];
 
-    // Minimized Clients that were hidden with their Workspace and must be shown
-    // again without leaving the minimized state.
     public IReadOnlyList<WindowId> ShowMinimized { get; init; } = [];
 
-    /// <summary>Programs to start, in order: every exec the outcome ran and every on-created-empty command.</summary>
     public IReadOnlyList<Launch> Launches { get; init; } = [];
 
-    /// <summary>The first program to start, or null. Setting it replaces <see cref="Launches"/> with that one program.</summary>
     public Launch? Launch
     {
         get => Launches.Count > 0 ? Launches[0] : null;
@@ -70,24 +60,16 @@ public sealed record Outcome(
 
     public IReadOnlyList<Decoration> Decorations { get; init; } = [];
 
-    /// <summary>How the windows in this outcome animate to their placements, shows, hides and closes.</summary>
     public IReadOnlyList<Motion> Motions { get; init; } = [];
 
-    /// <summary>
-    /// One step of a drag that is still held. Another step follows soon, and the drag's end places every
-    /// window exactly, so the adapter moves the windows the quickest way it can.
-    /// </summary>
     public bool Live { get; init; }
 
     public IReadOnlyList<WindowId> ResetDecorations { get; init; } = [];
 
-    /// <summary>Every Group tab bar to draw now. A bar that is not listed is removed.</summary>
     public IReadOnlyList<GroupBar> GroupBars { get; init; } = [];
 
-    /// <summary>The config notification to show, or null when this load had no config errors. The same notice stays until a later load replaces it.</summary>
     public ConfigNotice? ConfigNotice { get; init; }
 
-    /// <summary>The notification-area icon, or null when this outcome does not say.</summary>
     public TrayIcon? Tray { get; init; }
 
 
@@ -95,31 +77,17 @@ public sealed record Outcome(
 
     public CursorBehavior? Cursor { get; init; }
 
-    /// <summary>The border cursor while the pointer is over a resize grab. Null when it is not.</summary>
     public string? ResizeCursor { get; init; }
 
     public string? Error { get; init; }
 
 
-    /// <summary>Stop the daemon after the command reply is written.</summary>
     public bool Exit { get; init; }
 
-    /// <summary>Clients to raise above or lower below the other windows, in order.</summary>
     public IReadOnlyList<ZOrderRequest> ZOrder { get; init; } = [];
 
-    /// <summary>
-    /// True when the step asked for nothing the adapter has not already done, so the adapter returns at once. Its
-    /// <see cref="State"/> is still the step's, and every other property is unset.
-    /// </summary>
     public bool IsEmpty { get; init; }
 
-    /// <summary>
-    /// This outcome followed by <paramref name="next"/>, as one: what both ask the adapter to do, in order, and the state
-    /// after the second. Requests are joined. What describes the state after the step is the second's. A value the second
-    /// leaves unset keeps the first's, and the first error wins, so a later step cannot hide an earlier failure.
-    /// The traits of both are kept, so a bind that moves focus warps the cursor even when a later Dispatcher in it does not.
-    /// A property added to this record needs a rule here; a test counts them.
-    /// </summary>
     public Outcome Then(Outcome next)
     {
         ArgumentNullException.ThrowIfNull(next);
@@ -128,8 +96,6 @@ public sealed record Outcome(
             Placements = Union(Placements, next.Placements, next.State),
             Focus = next.Focus ?? Focus,
             Closes = [.. Closes, .. next.Closes],
-            // A window one step shows and the next hides, or the other way round, ends as the second leaves it, so it
-            // does not blink on the way.
             Show = [.. Show.Where(window => !next.Hide.Contains(window)), .. next.Show],
             Hide = [.. Hide.Where(window => !next.Show.Contains(window)), .. next.Hide],
             ShowMinimized = [.. ShowMinimized, .. next.ShowMinimized],
@@ -146,12 +112,6 @@ public sealed record Outcome(
         };
     }
 
-    /// <summary>
-    /// Whether applying this outcome after <paramref name="applied"/>, the last one the adapter was given, would change
-    /// nothing. No request may be set. A step also rebuilds the decorations, group bars, tray icon, config notice, cursor
-    /// behavior and resize cursor each time, so those count only when they differ from the last applied ones. A property
-    /// added to this record needs a rule here; a test counts them.
-    /// </summary>
     internal bool IsEmptyAfter(Outcome? applied) =>
         applied is not null
         && Placements.Count == 0
@@ -179,10 +139,6 @@ public sealed record Outcome(
         && GroupBars.Count == applied.GroupBars.Count
         && GroupBars.Zip(applied.GroupBars, (bar, last) => bar.SameAs(last)).All(same => same);
 
-    /// <summary>
-    /// What <see cref="IsEmptyAfter"/> compares a later outcome with: the parts a step rebuilds each time, without
-    /// the requests, which name windows that may since have closed.
-    /// </summary>
     internal Outcome Lasting() =>
         Empty(State) with
         {
@@ -194,12 +150,8 @@ public sealed record Outcome(
             GroupBars = GroupBars,
         };
 
-    /// <summary>An outcome that asks for nothing, which describes <paramref name="state"/>.</summary>
     internal static Outcome Empty(State state) => new([], state) { IsEmpty = true };
 
-    // Every placement of the later outcome, and each earlier one it does not replace, for a Client that is still
-    // open and not hidden. A command that moves one floating window places only that window, so the earlier
-    // command's window would otherwise keep its old rectangle.
     internal static IReadOnlyList<Placement> Union(IReadOnlyList<Placement> first, IReadOnlyList<Placement> second, State state)
     {
         if (first.Count == 0)
@@ -227,18 +179,14 @@ public sealed record Outcome(
     }
 }
 
-/// <summary>What else a Dispatcher's outcome does, beyond what it runs.</summary>
 [Flags]
 public enum DispatcherTraits
 {
     None = 0,
 
-    /// <summary>Moves the cursor to the window it focuses, under the <c>cursor</c> options.</summary>
     WarpsToFocused = 1,
 
-    /// <summary>Puts the cursor in the middle of a Monitor it leaves with nothing to focus.</summary>
     WarpsToEmptyMonitor = 2,
 }
 
-/// <summary>A request to raise a Client to the top of the z-order, or lower it to the bottom.</summary>
 public readonly record struct ZOrderRequest(WindowId Window, bool Top);

@@ -1,9 +1,7 @@
 namespace Winland.Domain;
 
-/// <summary>Paints a <see cref="BorderRing"/> as premultiplied 32-bit pixels, a piece of its box at a time.</summary>
 public static class BorderPainter
 {
-    /// <summary>The four pieces of a ring box: the top and bottom strips hold the corners, and the sides fill between them.</summary>
     public static Rectangle[] Pieces(int boxWidth, int boxHeight, BorderRing ring)
     {
         ArgumentNullException.ThrowIfNull(ring);
@@ -19,11 +17,6 @@ public static class BorderPainter
         ];
     }
 
-    /// <summary>
-    /// Paints the part of a <paramref name="boxWidth"/> by <paramref name="boxHeight"/> ring box that
-    /// <paramref name="piece"/> covers into <paramref name="pixels"/>, row by row, as premultiplied BGRA. Pixels off the
-    /// ring are left clear. Every pixel of the ring is <see cref="BorderRing.Color"/>.
-    /// </summary>
     public static void Paint(Span<uint> pixels, BorderRing ring, int boxWidth, int boxHeight, Rectangle piece)
     {
         ArgumentNullException.ThrowIfNull(ring);
@@ -43,7 +36,6 @@ public static class BorderPainter
         }
     }
 
-    /// <summary>How much of the pixel at <paramref name="x"/>, <paramref name="y"/> of the ring box the ring covers, from 0 to 1.</summary>
     public static double Coverage(int x, int y, int boxWidth, int boxHeight, BorderRing ring)
     {
         ArgumentNullException.ThrowIfNull(ring);
@@ -54,7 +46,6 @@ public static class BorderPainter
         return Math.Clamp(outer * (1 - inner), 0, 1);
     }
 
-    // How much of a pixel at px, py from the middle lies inside a rounded rectangle of these half sizes.
     internal static double Inside(double px, double py, double halfWidth, double halfHeight, double radius)
     {
         if (halfWidth <= 0 || halfHeight <= 0)

@@ -2,10 +2,6 @@ using System.Globalization;
 
 namespace Winland.Domain;
 
-/// <summary>
-/// Names a key from its virtual key, scan code and the layout's unshifted characters,
-/// and resolves a config key to that same name.
-/// </summary>
 public static class KeyNames
 {
     private static readonly string[] Letters =
@@ -80,7 +76,6 @@ public static class KeyNames
 
     public static bool PassesThrough(int virtualKey) => virtualKey is 0xE5 or 0xE7;
 
-    /// <summary>The key's unshifted name. It does not follow the modifiers held or latched lock state.</summary>
     public static string Name(int virtualKey, int scanCode, bool extended, KeyLayout layout)
     {
         ArgumentNullException.ThrowIfNull(layout);
@@ -108,11 +103,6 @@ public static class KeyNames
         return code > 0 ? $"code:{code}" : $"vk:{virtualKey}";
     }
 
-    /// <summary>
-    /// Whether a bind on <paramref name="configName"/> can ever run: a key the layout or Winland's tables know, a
-    /// <c>code:</c>, a mouse button or a wheel direction. A misspelt name, <c>catchall</c> and a chord of keys joined
-    /// with <c>&amp;</c> cannot.
-    /// </summary>
     public static bool Matchable(string configName, KeyLayout layout)
     {
         ArgumentNullException.ThrowIfNull(configName);
@@ -134,7 +124,6 @@ public static class KeyNames
     {
         ArgumentNullException.ThrowIfNull(configName);
         ArgumentNullException.ThrowIfNull(layout);
-        // A mouse button keeps its number, and a named one such as mouse:left becomes that number.
         if (configName.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase))
             return KeyStrokes.TryMouse(configName, out var button) ? $"mouse:{button.ToString(CultureInfo.InvariantCulture)}" : configName;
 
@@ -165,7 +154,6 @@ public static class KeyNames
         return configName;
     }
 
-    /// <summary>XKB keycode for a Windows scan code: the evdev keycode plus 8. Zero when this scan is not in the table.</summary>
     public static int XkbCode(int virtualKey, int scanCode, bool extended)
     {
         if (scanCode <= 0 || IsSyntheticAltGrControl(virtualKey, scanCode, extended))
@@ -296,7 +284,6 @@ public static class KeyNames
         return true;
     }
 
-    // code:N, and a bare number above 9, as Winland reads a keycode. 0 to 9 are digit keys.
     private static bool TryCode(string text, out string code)
     {
         code = "";
@@ -319,7 +306,6 @@ public static class KeyNames
 
     private static int Evdev(int virtualKey, int scan, bool extended)
     {
-        // Pause shares num lock's scan. The virtual key tells them apart.
         if (virtualKey == 0x13 && scan == 0x45)
             return 119;
 
@@ -349,7 +335,6 @@ public static class KeyNames
             };
         }
 
-        // Set-1 scan codes for these keys are the evdev keycodes.
         if (scan is >= 0x01 and <= 0x53 or 0x57 or 0x58)
             return scan;
 

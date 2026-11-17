@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// How far a window's outer rectangle extends past its visible frame, in physical pixels.
-/// Placement moves the outer rectangle. The Layout sizes the visible frame.
-/// </summary>
 public readonly record struct FrameInsets(int Left, int Top, int Right, int Bottom)
 {
     public static FrameInsets None { get; } = new(0, 0, 0, 0);
@@ -24,10 +20,6 @@ public readonly record struct FrameInsets(int Left, int Top, int Right, int Bott
 
     public static bool AppliesAt(int measuredAt, int dpi) => measuredAt == dpi;
 
-    /// <summary>
-    /// One follow-up after a placement. Each axis is corrected on its own: an axis the window refused keeps
-    /// the size it landed at, and an axis it accepted grows by the inset the visible frame is short.
-    /// </summary>
     public static Correction Correct(Rectangle target, Rectangle requested, Rectangle landedOuter, Rectangle landedVisible)
     {
         if (landedVisible == target)

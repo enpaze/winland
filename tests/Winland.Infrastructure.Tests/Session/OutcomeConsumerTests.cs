@@ -2,40 +2,38 @@ namespace Winland.Infrastructure.Tests;
 
 public class OutcomeConsumerTests
 {
-    // Every request the core puts in an outcome must reach the system. A new field fails here until
-    // someone decides where it is applied and adds it to this list.
     [Fact]
     public void EveryOutcomeFieldHasAKnownConsumer()
     {
         string[] known =
         [
-            nameof(Outcome.Placements), // WindowAdapter.ApplyCore
-            nameof(Outcome.State), // WindowAdapter.ApplyCore, SessionEffects, queries
-            nameof(Outcome.Consumed), // the hooks swallow consumed input
-            nameof(Outcome.Traits), // Cursor, before the outcome leaves the core
-            nameof(Outcome.Closes), // WindowAdapter.ApplyCore
-            nameof(Outcome.Close), // shorthand for Closes
-            nameof(Outcome.Focus), // WindowAdapter.ApplyCore
-            nameof(Outcome.Show), // WindowAdapter.ApplyCore
-            nameof(Outcome.Hide), // WindowAdapter.ApplyCore
-            nameof(Outcome.ShowMinimized), // WindowAdapter.ApplyCore
-            nameof(Outcome.Launches), // WindowAdapter.ApplyCore
-            nameof(Outcome.Launch), // shorthand for Launches
-            nameof(Outcome.Events), // WindowManager.Noticed, the event stream
-            nameof(Outcome.Decorations), // WindowAdapter.ApplyCore
-            nameof(Outcome.Motions), // WindowAdapter.ApplyCore
-            nameof(Outcome.Live), // WindowAdapter.ApplyCore
-            nameof(Outcome.ResetDecorations), // WindowAdapter.ApplyCore
-            nameof(Outcome.GroupBars), // WindowAdapter.ApplyCore
-            nameof(Outcome.ConfigNotice), // WindowAdapter.ApplyCore, TrayHost
-            nameof(Outcome.Tray), // WindowAdapter.ApplyCore, TrayHost
-            nameof(Outcome.Warp), // SessionEffects
-            nameof(Outcome.Cursor), // SessionEffects
-            nameof(Outcome.ResizeCursor), // not applied: behavior.md says the system pointer is not changed
-            nameof(Outcome.Error), // command replies
-            nameof(Outcome.Exit), // WindowAdapter.ApplyCore
-            nameof(Outcome.ZOrder), // WindowAdapter.ApplyCore
-            nameof(Outcome.IsEmpty), // WindowAdapter.Apply
+            nameof(Outcome.Placements),
+            nameof(Outcome.State),
+            nameof(Outcome.Consumed),
+            nameof(Outcome.Traits),
+            nameof(Outcome.Closes),
+            nameof(Outcome.Close),
+            nameof(Outcome.Focus),
+            nameof(Outcome.Show),
+            nameof(Outcome.Hide),
+            nameof(Outcome.ShowMinimized),
+            nameof(Outcome.Launches),
+            nameof(Outcome.Launch),
+            nameof(Outcome.Events),
+            nameof(Outcome.Decorations),
+            nameof(Outcome.Motions),
+            nameof(Outcome.Live),
+            nameof(Outcome.ResetDecorations),
+            nameof(Outcome.GroupBars),
+            nameof(Outcome.ConfigNotice),
+            nameof(Outcome.Tray),
+            nameof(Outcome.Warp),
+            nameof(Outcome.Cursor),
+            nameof(Outcome.ResizeCursor),
+            nameof(Outcome.Error),
+            nameof(Outcome.Exit),
+            nameof(Outcome.ZOrder),
+            nameof(Outcome.IsEmpty),
         ];
 
         var fields = typeof(Outcome)

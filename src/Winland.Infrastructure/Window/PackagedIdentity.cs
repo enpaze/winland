@@ -5,9 +5,6 @@ using Windows.Win32.UI.Shell.PropertiesSystem;
 
 namespace Winland.Infrastructure;
 
-// A Store app's top-level window belongs to ApplicationFrameHost. The app itself
-// is a CoreWindow child in another process, and that child is created after the
-// frame. A frame that does not host an app yet is not a window to adopt.
 internal static class PackagedIdentity
 {
     private const string FrameClass = "ApplicationFrameWindow";
@@ -23,7 +20,6 @@ internal static class PackagedIdentity
     private static readonly Lock Gate = new();
     private static readonly Dictionary<long, CacheEntry> Cache = [];
 
-    // ProcessId is the hosted app's process for a frame that hosts one, and the window's own process otherwise.
     internal readonly record struct Resolved(string Class, string Exe, string Aumid, bool UnresolvedFrame, uint ProcessId);
 
     private readonly record struct CacheEntry(uint ProcessId, Resolved Identity);
@@ -36,8 +32,6 @@ internal static class PackagedIdentity
         {
             ForgetClosed();
 
-            // A frame that hosted no app yet is looked at again every time. Its app's CoreWindow can be
-            // attached after the frame was titled, and a cached answer would still say no app when it is shown.
             if (Cache.TryGetValue(key, out var cached)
                 && cached.ProcessId == processId
                 && !cached.Identity.UnresolvedFrame)
@@ -69,7 +63,6 @@ internal static class PackagedIdentity
         return new Resolved(WindowAdapter.ClassName(child), childExe, aumid, UnresolvedFrame: false, childProcess);
     }
 
-    /// <summary>Whether <paramref name="hwnd"/> is a Store app's CoreWindow inside the frame <paramref name="root"/>.</summary>
     internal static bool IsHostedApp(HWND hwnd, HWND root) =>
         WindowAdapter.ClassName(hwnd) == CoreClass && WindowAdapter.ClassName(root) == FrameClass;
 
@@ -178,7 +171,6 @@ internal static class PackagedIdentity
         return path.Length == 0 ? "" : Path.GetFileName(path);
     }
 
-    /// <summary>The program's full path, or empty when it cannot be read. <see cref="ExeFile"/> is that path's file name.</summary>
     internal static string ImagePath(uint processId)
     {
         if (processId == 0)
@@ -188,7 +180,6 @@ internal static class PackagedIdentity
             PROCESS_ACCESS_RIGHTS.PROCESS_QUERY_LIMITED_INFORMATION,
             false,
             processId);
-        // Reading the main module needs more rights than this, so a process this cannot read has no path to give.
         if (process is null || process.IsInvalid)
             return "";
 

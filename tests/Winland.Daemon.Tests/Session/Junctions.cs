@@ -1,6 +1,5 @@
 namespace Winland.Daemon.Tests;
 
-/// <summary>Makes a directory junction. Unlike a symbolic link, it needs no privilege.</summary>
 internal static class Junctions
 {
     public static void Create(string link, string target)
@@ -20,10 +19,6 @@ internal static class Junctions
         Assert.Equal(0, process.ExitCode);
     }
 
-    /// <summary>
-    /// Removes the junction itself. A recursive delete of the folder holding it first tries to
-    /// unmount it as a volume, which a process that is not elevated may not do.
-    /// </summary>
     public static void Delete(string link)
     {
         if (Directory.Exists(link))

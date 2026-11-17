@@ -1,10 +1,5 @@
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// What was read about each raw input device, by its handle. A device that could not be read is
-/// tried again after a delay rather than written off, and a removed device is forgotten, since
-/// Windows can give its handle to the next device. Used on one thread.
-/// </summary>
 internal sealed class DeviceCache<T> : IDisposable
     where T : class, IDisposable
 {

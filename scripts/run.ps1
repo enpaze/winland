@@ -1,14 +1,3 @@
-# Builds this checkout and runs it as the Winland of this session, in place of the one that is running.
-#   pwsh -NoProfile -File scripts/run.ps1                 build, stop the running winland, start the new build
-#   pwsh -NoProfile -File scripts/run.ps1 -Elevated       start it with administrator rights, which asks for one UAC approval
-#   pwsh -NoProfile -File scripts/run.ps1 -Stop           stop the running winland and start nothing
-#   pwsh -NoProfile -File scripts/run.ps1 -Config <file>  read this .conf file instead of the one in %USERPROFILE%\.winland
-#
-# Without -Elevated the build starts as the normal user and no prompt appears, so it can place no window of an
-# elevated program. A build is published to a folder of its own first, so a build that fails leaves the running
-# winland alone and a running one never locks the files of the next. The running winland is asked to exit
-# through its pipe, which puts every window back, and is stopped by force only when it does not.
-# WINLAND_PIPE and WINLAND_STATE are passed on to it, so a second pipe name runs a second copy.
 param(
     [string]$Configuration = 'Release',
     [switch]$Elevated,
@@ -21,7 +10,6 @@ $root = Split-Path -Parent $PSScriptRoot
 $dev = Join-Path $env:LOCALAPPDATA 'winland-dev'
 $keep = 3
 
-# The apphost finds the runtime through DOTNET_ROOT, and the dotnet on PATH is not always the one with it.
 function Resolve-DotnetRoot {
     $dotnet = (Get-Command dotnet -ErrorAction Stop).Source
     $beside = Split-Path -Parent $dotnet
@@ -35,8 +23,6 @@ function Resolve-DotnetRoot {
     throw 'Could not find a .NET install to set DOTNET_ROOT.'
 }
 
-# An empty pipe marker means the session's default, without depending on its actual name.
-# Unmarked dev builds are left alone because their pipe cannot be identified safely.
 function Get-Winland {
     $found = @(Get-CimInstance Win32_Process -Filter "Name = 'winland.exe'" -ErrorAction SilentlyContinue)
     $pipe = if ([string]::IsNullOrWhiteSpace($env:WINLAND_PIPE)) { '' } else { $env:WINLAND_PIPE }
@@ -60,7 +46,6 @@ function Stop-Winland([string]$cli) {
 
     Write-Output "Stopping winland ($(($running | ForEach-Object { $_.Id }) -join ', '))."
     if ($cli -and (Test-Path -LiteralPath $cli)) {
-        # The pipe takes the current user, elevated or not, so this reaches an elevated winland too.
         & $cli dispatch exit *> $null
     }
 
@@ -88,7 +73,6 @@ if ($Stop) {
     return
 }
 
-# The config is checked before anything is published or stopped, so a bad path leaves the running winland alone.
 $arguments = @()
 if (-not $Elevated) { $arguments += '--no-elevate' }
 if ($Config) {
@@ -118,10 +102,6 @@ Stop-Winland $exe
 $stdout = Join-Path $build 'winland.out.log'
 $stderr = Join-Path $build 'winland.err.log'
 
-# The shell starts it, not this process, so it inherits none of this process's handles. One that did would hold
-# open the pipe a caller reads this script's output from, and the caller would wait for winland to exit.
-# A start without elevation goes through cmd to put the output in files. An elevated one relaunches itself,
-# which cannot be redirected.
 if ($Elevated) {
     Write-Output 'Approve the UAC prompt to start winland.'
     $start = @{ FilePath = $exe; WorkingDirectory = $build; WindowStyle = 'Hidden'; PassThru = $true }
@@ -135,7 +115,6 @@ else {
 
 $process = Start-Process @start
 
-# Ready when the pipe answers. An elevated start waits for the approval first.
 $deadline = [DateTime]::UtcNow.AddSeconds($(if ($Elevated) { 90 } else { 30 }))
 $ready = $false
 while ([DateTime]::UtcNow -lt $deadline) {
@@ -152,7 +131,6 @@ if (-not $ready) {
     throw 'The new winland did not come up.'
 }
 
-# Keep the pipe records of other copies, including live builds in another session.
 $pipe = if ([string]::IsNullOrWhiteSpace($env:WINLAND_PIPE)) { '' } else { $env:WINLAND_PIPE }
 $active = @(Get-CimInstance Win32_Process -Filter "Name = 'winland.exe'" -ErrorAction SilentlyContinue |
     Where-Object ExecutablePath | ForEach-Object { Split-Path (Split-Path $_.ExecutablePath -Parent) -Parent })

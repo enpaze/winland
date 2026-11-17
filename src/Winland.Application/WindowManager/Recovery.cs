@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>Saves where hidden Clients are, so a restart after a crash finds them again.</summary>
 public sealed partial class WindowManager
 {
     private readonly Dictionary<WindowId, RecoveredClient> _restored = [];
@@ -25,10 +24,8 @@ public sealed partial class WindowManager
             : remembered;
     }
 
-    // Where each tile a restart found was, until the tiles are arranged as they were.
     private readonly Dictionary<WindowId, Rectangle> _restoredTiles = [];
 
-    // The Workspaces a restart found shown, from the Clients that were not hidden.
     private readonly HashSet<WorkspaceId> _restoredShown = [];
 
     public RecoverySnapshot Recovery()
@@ -58,8 +55,6 @@ public sealed partial class WindowManager
         }
     }
 
-    // Each Monitor shows the Workspace it showed, and each Workspace's tiles go back where they were. A hidden
-    // Workspace is placed when it is shown. The focus stays on the Monitor that has it.
     private Outcome ArrangeRestored()
     {
         var placements = new List<Placement>();
@@ -78,8 +73,6 @@ public sealed partial class WindowManager
             hide.AddRange(switched.Hide);
         }
 
-        // Each switch gives the focus to the Workspace's remembered window, which after a restart is none, so the
-        // window that had the focus takes it back.
         Focus(focused);
         if (window is WindowId kept && WorkspaceContaining(kept) is { } home && _workspaces.Shown.IsShown(home.Id))
             _focus.Take(kept, home);
@@ -93,7 +86,6 @@ public sealed partial class WindowManager
 
         _restoredTiles.Clear();
 
-        // A tile the switch placed and the arrangement placed again goes where it was arranged.
         var last = new Dictionary<ClientId, Placement>();
         foreach (var placement in placements)
         {
@@ -150,7 +142,6 @@ public sealed partial class WindowManager
         return new RecoverySnapshot(clients);
     }
 
-    // A covering Client's bounds are the area it covers. Its own slot is what it goes back to.
     private Rectangle SlotOf(Client client) =>
         client.Fullscreen != FullscreenMode.None
             && WorkspaceContaining(client.Window) is LiveWorkspace desk
@@ -158,7 +149,6 @@ public sealed partial class WindowManager
             ? slot
             : client.Bounds;
 
-    // What a snapshot recorded about a Client wins over the window rules, which decided it the first time.
     private static WindowDecision Recovered(WindowDecision decision, RecoveredClient? restored)
     {
         if (restored is null)

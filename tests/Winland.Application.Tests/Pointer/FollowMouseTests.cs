@@ -25,8 +25,6 @@ public class FollowMouseTests
         Assert.Contains(followed.Events, item => item is FocusChanged changed && changed.Window == new WindowId(1));
     }
 
-    // A browser's extension panel is a window Winland does not manage. It takes the foreground from the browser, and
-    // the pointer crosses the browser on its way to the panel.
     [Fact]
     public void CrossingTheClientAPanelOpenedOverLeavesThePanelTheFocus()
     {
@@ -165,7 +163,6 @@ public class FollowMouseTests
     [Fact]
     public void ClosingPrefersATileOverAFloatOnTop()
     {
-        // The float opens first, so it comes before both tiles and would win a tie on distance.
         var core = Floats("");
         core.Handle(Box(3, 1390, 490));
         core.Handle(new WindowAppeared(new WindowId(1), Area));

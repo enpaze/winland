@@ -1,19 +1,10 @@
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// The pixels of the notification-area icon: a blue disc with a white rim and the label in white. Each edge is
-/// smoothed by how much of a pixel it covers. The label is centered by the pixels it inks, because the font's cell
-/// keeps room below the digits for descenders and beside them for spacing.
-/// </summary>
 internal static class TrayBadge
 {
     private const uint Blue = 0x2F6FED;
     private const uint White = 0xFFFFFF;
 
-    /// <summary>
-    /// Turns <paramref name="pixels"/>, the label drawn white on black, top row first, into the icon's pixels with
-    /// straight alpha.
-    /// </summary>
     internal static void Compose(Span<uint> pixels, int size)
     {
         var ink = new byte[size * size];
@@ -61,10 +52,8 @@ internal static class TrayBadge
         }
     }
 
-    /// <summary>Whether the icon shows nothing at this pixel, which the icon's mask marks transparent.</summary>
     internal static bool Clear(uint pixel) => pixel >> 24 == 0;
 
-    // The share of a pixel an edge covers, from how far the pixel's center is inside it.
     private static double Coverage(double inside) => Math.Clamp(inside + 0.5, 0, 1);
 
     private static uint Mix(uint from, uint to, double amount)

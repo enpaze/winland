@@ -1,14 +1,9 @@
 namespace Winland.Domain;
 
-/// <summary>The hint an unknown config name gets when it is a typo of exactly one name Winland knows.</summary>
 internal static class DidYouMean
 {
     private const int MaxDistance = 2;
 
-    /// <summary>
-    /// <c> Did you mean 'name'?</c> when exactly one of <paramref name="known"/> is within two edits of
-    /// <paramref name="name"/>, ignoring case, and otherwise empty. Two close names would make the hint a guess.
-    /// </summary>
     public static string For(string name, IEnumerable<string> known)
     {
         string? match = null;
@@ -25,11 +20,9 @@ internal static class DidYouMean
         return match is null ? "" : $" Did you mean '{match}'?";
     }
 
-    /// <summary>A pipe error, such as <c>error: no such option</c>, with the hint after it as a sentence of its own.</summary>
     public static string After(string error, string name, IEnumerable<string> known) =>
         For(name, known) is { Length: > 0 } hint ? error + "." + hint : error;
 
-    // Levenshtein distance, row by row. Case does not count.
     private static int Distance(string a, string b)
     {
         if (Math.Abs(a.Length - b.Length) > MaxDistance)

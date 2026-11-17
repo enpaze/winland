@@ -1,7 +1,3 @@
-# Parse scripts, check documentation, and build the solution.
-#   pwsh -NoProfile -File scripts/check.ps1
-#   pwsh -NoProfile -File scripts/check.ps1 -Ref <sha>
-#   pwsh -NoProfile -File scripts/check.ps1 -Ref <sha> -Test   also runs scripts/test.ps1 on that commit
 param(
     [string]$Ref,
     [switch]$Test,
@@ -11,7 +7,6 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($SkipBuild -and $Test) { throw '-SkipBuild cannot be combined with -Test.' }
 
-# Clear inherited Git paths so commands in this script use the checkout.
 foreach ($name in @('GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_PREFIX')) {
     Remove-Item "Env:$name" -ErrorAction SilentlyContinue
 }
@@ -38,8 +33,6 @@ function Get-LintFiles([string]$start, [string]$filter) {
     return $found
 }
 
-# Check the inline links in tracked markdown, and the repo paths AGENTS.md names in backticks.
-# Prints one line per failure and returns how many there were.
 function Test-MarkdownLinks([string]$Root, [string[]]$Tracked) {
     $files = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::Ordinal)
     $dirs = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::Ordinal)
@@ -51,7 +44,6 @@ function Test-MarkdownLinks([string]$Root, [string[]]$Tracked) {
         }
     }
 
-    # Domain documentation is optional in AGENTS.md.
     $optional = @('GLOSSARY.md', 'docs/adr', 'docs/adr/README.md')
     $pathExtensions = '\.(md|ps1|json|yml|yaml|props|slnx|csproj)$'
 
@@ -149,8 +141,6 @@ try {
         }
     }
 
-    # Windows and macOS keep one file where Linux keeps two. Reject tracked paths,
-    # and the folders on the way to them, that differ only by case.
     $tracked = @(& git -c core.quotepath=off -C $root ls-files)
     if ($LASTEXITCODE -ne 0) { throw 'git ls-files failed' }
     $spellings = @{}
@@ -176,6 +166,9 @@ try {
 
     if ((Test-MarkdownLinks $root $tracked) -gt 0) { $failed = 1 }
 
+    & (Join-Path $PSScriptRoot 'comments.ps1') -Root $root
+    if ($LASTEXITCODE -ne 0) { $failed = 1 }
+
     if (-not $SkipBuild) {
         $solution = Join-Path $root 'Winland.slnx'
         Write-Output "dotnet build $solution"
@@ -183,11 +176,9 @@ try {
         if ($LASTEXITCODE -ne 0) { $failed = 1 }
     }
 
-    # The tests run from the checked commit's own scripts/test.ps1. A failed lint skips them.
     if ($Test -and $failed -eq 0) {
         $testScript = Join-Path $root 'scripts/test.ps1'
         Write-Output "pwsh $testScript"
-        # The solution was just built above in Release, so the tests run on that build.
         pwsh -NoProfile -File $testScript -NoBuild
         if ($LASTEXITCODE -ne 0) { $failed = 1 }
     }

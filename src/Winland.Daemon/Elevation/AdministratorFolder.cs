@@ -4,16 +4,9 @@ using System.Security.Principal;
 
 namespace Winland.Daemon;
 
-/// <summary>Folders that only SYSTEM and Administrators can write, for the elevated programs.</summary>
 [SupportedOSPlatform("windows")]
 public static class AdministratorFolder
 {
-    /// <summary>
-    /// Creates a new folder in <paramref name="parent"/> whose access list is set as it is created:
-    /// SYSTEM and Administrators get full control and Users may read. Throws
-    /// <see cref="InvalidOperationException"/> when the folder that results is not protected, such as
-    /// one a non-administrator made first, or one made by a process that is not elevated.
-    /// </summary>
     public static string CreateNew(string parent, string prefix)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(parent);
@@ -29,10 +22,6 @@ public static class AdministratorFolder
         return folder;
     }
 
-    /// <summary>
-    /// The protected access list. With <paramref name="owner"/>, Administrators also becomes the
-    /// owner, which only an elevated process may set.
-    /// </summary>
     internal static DirectorySecurity Security(bool owner)
     {
         const InheritanceFlags inherit = InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit;

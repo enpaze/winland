@@ -2,16 +2,8 @@ using System.Globalization;
 
 namespace Winland.Domain;
 
-/// <summary>
-/// The notification-area icon. It shows the number of the Workspace the focused Monitor is showing,
-/// and its menu runs Winland.
-/// </summary>
 public sealed record TrayIcon(string Number)
 {
-    /// <summary>
-    /// The menu. Open log is there only when <paramref name="logExists"/>: Winland writes the log file only with
-    /// <c>debug:disable_logs</c> false and no elevation, so most of the time there is nothing to open.
-    /// </summary>
     public static IReadOnlyList<TrayMenuItem> MenuFor(bool logExists)
     {
         List<TrayMenuItem> menu =
@@ -26,16 +18,10 @@ public sealed record TrayIcon(string Number)
         return menu;
     }
 
-    /// <summary>The tooltip: the program, which a lone number in the overflow does not say, and the Workspace the icon is showing.</summary>
     public string Tip => "Winland, Workspace " + Number;
 
-    /// <summary>The icon for the Workspace the focused Monitor is showing.</summary>
     public static TrayIcon For(WorkspaceId workspace) => new(Text(workspace));
 
-    /// <summary>
-    /// The text the icon draws. A numbered Workspace contributes its number, including a Guest's number on
-    /// the Monitor that is showing it. A special workspace contributes the name after <c>special:</c>.
-    /// </summary>
     public static string Text(WorkspaceId workspace)
     {
         if (workspace.TryGetNumber(out var number))
@@ -50,10 +36,8 @@ public sealed record TrayIcon(string Number)
     }
 }
 
-/// <summary>A menu row: the command it runs and the words the menu shows. The letter after <c>&amp;</c> is its access key.</summary>
 public readonly record struct TrayMenuItem(TrayCommand Command, string Label);
 
-/// <summary>One command on the notification-area icon's menu.</summary>
 public enum TrayCommand
 {
     Reload,

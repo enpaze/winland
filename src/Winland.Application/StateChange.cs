@@ -1,9 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>
-/// What changed between the <see cref="State"/> before a step and the one after it: each Client before and after, by
-/// window, which were hidden, and which Clients closed and opened.
-/// </summary>
 internal sealed record StateChange
 {
     private StateChange(State before, State after)
@@ -22,20 +18,16 @@ internal sealed record StateChange
 
     public State After { get; }
 
-    /// <summary>Each Client before the step, by window.</summary>
     public IReadOnlyDictionary<WindowId, Client> Was { get; }
 
-    /// <summary>Each Client after the step, by window.</summary>
     public IReadOnlyDictionary<WindowId, Client> Is { get; }
 
     public IReadOnlySet<WindowId> HiddenBefore { get; }
 
     public IReadOnlySet<WindowId> HiddenAfter { get; }
 
-    /// <summary>The Clients that went away, in the order the State before listed them.</summary>
     public IReadOnlyList<WindowId> Closed { get; }
 
-    /// <summary>The Clients that are new, in the order the State after lists them.</summary>
     public IReadOnlyList<WindowId> Opened { get; }
 
     public static StateChange Between(State before, State after)
@@ -45,7 +37,6 @@ internal sealed record StateChange
         return new StateChange(before, after);
     }
 
-    /// <summary>True when <paramref name="window"/> was a Client shown before the step.</summary>
     public bool WasShown(WindowId window) => Was.ContainsKey(window) && !HiddenBefore.Contains(window);
 
     private static Dictionary<WindowId, Client> ByWindow(IReadOnlyList<Client> clients)

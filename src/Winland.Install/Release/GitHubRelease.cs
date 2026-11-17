@@ -3,13 +3,8 @@ using System.Text.Json;
 
 namespace Winland.Install;
 
-/// <summary>
-/// A release to install: its version, where the zip and the checksums are, and the commit for the dev channel.
-/// Stable leaves <see cref="Commit"/> empty and compares versions.
-/// </summary>
 public sealed record ReleaseListing(string Version, string ArchiveUrl, string ChecksumsUrl, string Commit = "");
 
-/// <summary>Reads a published release. Tests supply their own. No test calls GitHub.</summary>
 public interface IReleaseFeed
 {
     ReleaseListing Latest(UpdateChannel channel);
@@ -19,7 +14,6 @@ public interface IReleaseFeed
 
 public sealed record ParsedRelease(string ArchiveUrl, string ChecksumsUrl, string VersionUrl);
 
-/// <summary>The JSON of a GitHub release and of its <c>version.json</c>.</summary>
 public static class GitHubReleaseParser
 {
     public static ParsedRelease ReadRelease(string json, bool allowPrerelease = false)
@@ -79,7 +73,6 @@ public static class GitHubReleaseParser
         return version;
     }
 
-    /// <summary>The <c>commit</c> in <c>version.json</c>, or null when that field is absent.</summary>
     public static string? ReadCommit(string json)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(json);
@@ -115,11 +108,6 @@ public static class GitHubReleaseParser
     }
 }
 
-/// <summary>
-/// The GitHub release API, called with no credentials. <see cref="ReleaseAssets.LatestUrl"/> is the newest
-/// published release. <see cref="ReleaseAssets.DevUrl"/> is the rolling prerelease on the tag <c>dev</c>.
-/// Each file is fetched from the URL that release names.
-/// </summary>
 public sealed class GitHubReleaseFeed : IReleaseFeed
 {
     private readonly HttpClient http;
@@ -180,7 +168,6 @@ public sealed class GitHubReleaseFeed : IReleaseFeed
             throw new InvalidOperationException("The release feed refused a download that is not https.");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        // GitHub refuses a request that names no user agent. Nothing here sends a token.
         request.Headers.TryAddWithoutValidation("User-Agent", ReleaseAssets.UserAgent);
         request.Headers.TryAddWithoutValidation(
             "Accept",

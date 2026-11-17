@@ -12,8 +12,6 @@ public class EmptyStepTests
 
     private static readonly Rectangle Tile = new(0, 0, 100, 100);
 
-    // What a step rebuilds each time carries a value of its own here, so that an outcome built from it with one change
-    // differs from it in that property alone.
     private static readonly Outcome Applied = new([], new State([]))
     {
         Decorations = [new Decoration(One, new BorderColor(255, 0, 0, 0), CornerPreference.Round)],
@@ -24,7 +22,6 @@ public class EmptyStepTests
         ResizeCursor = "right_side",
     };
 
-    // Every property of Outcome, with a change that makes the empty rule see it, or true when it deliberately does not.
     private static readonly Dictionary<string, (Func<Outcome, Outcome> Change, bool StaysEmpty)> Rules = new()
     {
         [nameof(Outcome.Placements)] = (o => o with { Placements = [new Placement(One, Tile)] }, false),
@@ -63,7 +60,6 @@ public class EmptyStepTests
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(property => property.Name);
 
-        // A new property fails here until the empty rule in Outcome.IsEmptyAfter decides what it means and this table says so.
         Assert.Equal(Rules.Keys.Order(StringComparer.Ordinal), properties.Order(StringComparer.Ordinal));
     }
 
@@ -128,7 +124,6 @@ public class EmptyStepTests
 
         var moved = Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_100);
 
-        // A step would describe a State of its own. A move that runs none hands back the last one decided.
         Assert.True(moved.IsEmpty);
         Assert.Same((decided ?? laid).State, moved.State);
     }

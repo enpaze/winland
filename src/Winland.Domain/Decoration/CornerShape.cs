@@ -1,10 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// Picks how one Client's corners are drawn. DWM draws circular corners of 8 and 4 pixels and scales
-/// them with the window's DPI, so a radius of either uses that preference. Any other radius is cut
-/// as a region instead.
-/// </summary>
 public static class CornerShape
 {
     public const int Round = 8;
@@ -32,11 +27,6 @@ public static class CornerShape
         return new CornerChoice(CornerPreference.DoNotRound, new CornerRegion((int)Math.Min(radius, int.MaxValue / 2)));
     }
 
-    /// <summary>
-    /// The outline of a <paramref name="width"/> by <paramref name="height"/> frame with these corners,
-    /// clockwise from the left end of the top left corner. A radius larger than half the shorter
-    /// side is cut to that half. Each corner is a circle.
-    /// </summary>
     public static IReadOnlyList<Point> Outline(int width, int height, CornerRegion region)
     {
         if (width <= 0 || height <= 0)
@@ -80,7 +70,6 @@ public static class CornerShape
     }
 }
 
-/// <summary>The corners of a rectangle that are round.</summary>
 [Flags]
 public enum Corners
 {
@@ -92,10 +81,8 @@ public enum Corners
     All = TopLeft | TopRight | BottomLeft | BottomRight,
 }
 
-/// <summary>Corners cut from the window: a circular radius in physical pixels.</summary>
 public readonly record struct CornerRegion(int Radius);
 
-/// <summary>The DWM corner preference for one Client, and the region to cut when no preference matches the radius.</summary>
 public readonly record struct CornerChoice(CornerPreference Preference, CornerRegion? Region)
 {
     public static CornerChoice Square { get; } = new(CornerPreference.DoNotRound, null);

@@ -2,8 +2,6 @@ namespace Winland.Domain.Tests;
 
 public class RecoverySnapshotTests
 {
-    // A window made transparent while it was created hidden is not a Client. It is recorded apart, so a start after
-    // the process was ended can make it opaque again.
     [Fact]
     public void AHeldWindowIsWrittenAndReadBack()
     {

@@ -6,7 +6,6 @@ using System.Text.Json.Serialization;
 
 namespace Winland.Application;
 
-/// <summary>The replies to the smaller requests: binds, version, the cursor, config errors and files.</summary>
 public static partial class CommandProtocol
 {
     public static string FormatBinds(IReadOnlyList<Bind> binds)
@@ -19,7 +18,6 @@ public static partial class CommandProtocol
         return JsonSerializer.Serialize(views);
     }
 
-    /// <summary>One config line per bind, as the config would write it.</summary>
     public static string FormatBindsText(IReadOnlyList<Bind> binds)
     {
         ArgumentNullException.ThrowIfNull(binds);
@@ -69,7 +67,6 @@ public static partial class CommandProtocol
         return JsonSerializer.Serialize(errors, Relaxed);
     }
 
-    /// <summary>One warning per line, worded as the config notification words it. <paramref name="configPath"/> names the file a warning with no source was read from.</summary>
     public static string FormatErrorsText(IReadOnlyList<ConfigWarning> warnings, string? configPath)
     {
         ArgumentNullException.ThrowIfNull(warnings);
@@ -80,7 +77,6 @@ public static partial class CommandProtocol
         return string.Join('\n', lines);
     }
 
-    /// <summary>The config Winland read and the log it writes, as full paths. Either is null when there is none.</summary>
     public static string FormatFiles(string? config, string? log) =>
         JsonSerializer.Serialize(new FilesJson(config, log), Relaxed);
 

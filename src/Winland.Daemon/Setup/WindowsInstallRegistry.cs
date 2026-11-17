@@ -48,7 +48,6 @@ sealed class WindowsInstallRegistry : IRegistry
         return RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
     }
 
-    // A new terminal reads PATH when it starts. Explorer learns the value from this broadcast.
     private static void BroadcastEnvironment()
     {
         _ = SendMessageTimeout(new IntPtr(0xffff), 0x001A, UIntPtr.Zero, "Environment", 0x0002, 1000, out _);

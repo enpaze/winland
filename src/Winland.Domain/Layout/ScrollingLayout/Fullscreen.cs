@@ -1,11 +1,7 @@
 namespace Winland.Domain;
 
-// Fullscreen and maximized tiles the scrolling Layout lays out itself, as Winland's scrolling Layout does.
-// Such a tile has a column of its own, as wide as the Monitor when fullscreen and as the view when maximized, and it
-// stays on the tape. It covers the Workspace while its column fills the view, and scrolls away with the tape.
 internal sealed partial class ScrollingLayout
 {
-    // The width each held tile's column had before it went fullscreen, given back when it leaves.
     private readonly Dictionary<ClientId, double> _restoreWidths = [];
     private bool _syncing;
 
@@ -23,7 +19,6 @@ internal sealed partial class ScrollingLayout
         if (client.Floating || !layoutAware || CellFor(window) is not { Column: Column column } cell)
             return DefaultFullscreen(window, client, mode);
 
-        // A Client fullscreen the default way leaves that mode as the Layout takes it.
         var held = client.LayoutFullscreen ? client.Fullscreen : FullscreenMode.None;
         if (held != mode && mode != FullscreenMode.None)
         {
@@ -38,7 +33,6 @@ internal sealed partial class ScrollingLayout
         }
         else if (held != mode && held == FullscreenMode.Fullscreen)
         {
-            // A fullscreen column is wider than the view, so the view moves back by the work area's inset.
             AdjustOffset(Viewport().X - Usable().X);
         }
 
@@ -84,7 +78,6 @@ internal sealed partial class ScrollingLayout
         return placements;
     }
 
-    // The mode the Layout holds this tile in, or null when it holds none.
     private FullscreenMode? HeldFullscreen(ClientId id)
     {
         foreach (var client in _clients)
@@ -96,11 +89,9 @@ internal sealed partial class ScrollingLayout
         return null;
     }
 
-    // A held tile's column covers the view when it starts and ends within a pixel of the view's edges.
     private bool Covers(double start, double size) =>
         start <= _offset + 1 && start + size >= _offset + PrimaryLength() - 1;
 
-    // A fullscreen column is as wide as the Monitor, in shares of the view.
     private double FullscreenWidth()
     {
         var usable = Usable();
@@ -108,8 +99,6 @@ internal sealed partial class ScrollingLayout
         return usable.Width <= 0 ? 1 : Math.Max(1, monitor.Width / (double)usable.Width);
     }
 
-    // A held tile covering the view fills the Monitor, or the work area when maximized. Scrolled away, it keeps that
-    // height and its place on the tape. A maximized tile keeps its gaps and border, a fullscreen one has neither.
     private void PlaceFullscreen(Cell cell, FullscreenMode mode, int index, double start, double size, double primaryPos)
     {
         var usable = Usable();
@@ -139,8 +128,6 @@ internal sealed partial class ScrollingLayout
         cell.Box = box;
     }
 
-    // A held tile that shares its column, after a consume or a move, leaves fullscreen. One
-    // that floats or leaves the tape is no longer the Layout's to hold, but a minimized one is still held.
     private void SyncFullscreen()
     {
         if (_syncing)

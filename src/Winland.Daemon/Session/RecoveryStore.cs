@@ -3,13 +3,6 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Winland.Daemon;
 
-/// <summary>
-/// Keeps the recovery file. Winland runs elevated and the file sits in a folder the user can change,
-/// so no path is trusted twice. The folder is opened once per operation, and an elevated Winland
-/// checks who may empty it through that handle. Each file is opened without following a link at its
-/// own name, used only when the handle shows it is in that same folder, and renamed into the folder
-/// by handle. A junction or a rename on the way cannot send a write or a delete anywhere else.
-/// </summary>
 sealed class RecoveryStore
 {
     private readonly string _path;
@@ -19,17 +12,11 @@ sealed class RecoveryStore
     private readonly Lock _gate = new();
     private bool _armed;
 
-    /// <summary>The recovery file.</summary>
     public string File => _path;
     private bool _closed;
     private bool _reported;
     private string? _written;
 
-    /// <param name="path">The recovery file.</param>
-    /// <param name="refuseFolder">
-    /// Checks the folder, through its open handle, before anything is read or written there. An elevated
-    /// Winland passes one, and null means the folder may be used.
-    /// </param>
     public RecoveryStore(string path, Func<SafeFileHandle, string?>? refuseFolder = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -103,10 +90,6 @@ sealed class RecoveryStore
         }
     }
 
-    /// <summary>
-    /// Writes the last snapshot of a clean exit, and nothing after it. A run that quits before it was armed, before
-    /// it laid anything out, leaves the file of the run before it alone.
-    /// </summary>
     public void Keep(RecoverySnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -163,8 +146,6 @@ sealed class RecoveryStore
         using var folder = OpenFolder()
             ?? throw new IOException($"The folder '{_folder}' is gone.");
 
-        // A temporary file left by a run that died is removed first. The new one must be new: an
-        // existing file, or a link of that name, could be someone else's.
         DeleteEntry(_temp, folder);
         using var file = WindowsFileHandles.CreateNewFile(_temp, FileShare.None);
         if (!InFolder(file, folder))
@@ -175,8 +156,6 @@ sealed class RecoveryStore
 
         RandomAccess.Write(file, Encoding.UTF8.GetBytes(json), 0);
 
-        // A rename cannot replace a junction. A link at the file's name is only a way elsewhere, so
-        // the link itself goes; a file there is replaced in one step.
         using (var existing = OpenEntry(_path, WindowsFileHandles.Delete, folder, link: true))
         {
             if (existing is not null && WindowsFileHandles.Attributes(existing).HasFlag(FileAttributes.ReparsePoint))
@@ -186,7 +165,6 @@ sealed class RecoveryStore
         WindowsFileHandles.Rename(file, folder, Path.GetFileName(_path));
     }
 
-    // Null when the folder does not exist. Throws when it may not be used.
     private SafeFileHandle? OpenFolder()
     {
         SafeFileHandle folder;
@@ -213,9 +191,6 @@ sealed class RecoveryStore
         throw new UnauthorizedAccessException(refused);
     }
 
-    // Null when nothing has that name. A link of that name is opened itself, and an entry that is
-    // not in the open folder, because a folder on the way was swapped, is not touched. Only a link
-    // itself may be deleted, never read: what it points to could be anyone's.
     private static SafeFileHandle? OpenEntry(string path, uint access, SafeFileHandle folder, bool link = false)
     {
         SafeFileHandle entry;
@@ -253,7 +228,6 @@ sealed class RecoveryStore
             StringComparison.OrdinalIgnoreCase);
     }
 
-    // A folder that may not be used fails every save the same way, so it is said once.
     private void Report(string message)
     {
         if (_reported)

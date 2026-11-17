@@ -4,8 +4,6 @@ namespace Winland.Domain;
 
 internal sealed partial class ScrollingLayout
 {
-    // movefocus and the dispatchers that look for a neighbour do not wrap around the strip, as Winland
-    // looks in a direction across Monitors there. Only layoutmsg focus wraps.
     public WindowId? MoveFocus(WindowId active, string arguments)
     {
         if (!Sides.TryParse(First(arguments), out _) || !FocusToward(active, arguments, out var next, wrap: false))
@@ -55,7 +53,6 @@ internal sealed partial class ScrollingLayout
         if (CellFor(window) is not Cell cell || cell.Column is null)
             return [];
 
-        // exact names the window's size, which is the cell less its gaps and border.
         if (exact)
         {
             x -= cell.Logical.Width;
@@ -65,12 +62,6 @@ internal sealed partial class ScrollingLayout
         return ResizeCell(cell, x, y, corner: null);
     }
 
-    /// <summary>
-    /// Resizes a tiled cell by a pixel delta. A mouse resize names the grabbed corner; a dispatcher resize names none.
-    /// The camera stays where it is. The column's far edge stays inside the viewport, and a grabbed near edge
-    /// moves the camera so the far edge stays put. Rows take their space from the row on the grabbed side,
-    /// or with no corner from the row before, when there is one.
-    /// </summary>
     private IReadOnlyList<Placement> ResizeCell(Cell cell, int deltaX, int deltaY, (bool Left, bool Top)? corner)
     {
         if (cell.Column is not Column column || !TryStrip(column, out var start, out var size, out var primary))

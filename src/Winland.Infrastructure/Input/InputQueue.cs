@@ -1,10 +1,5 @@
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Carries input from the hooks to the one worker that hands it to the core. An item that replaces
-/// the newest waiting one takes its place, so a burst of pointer moves while the worker is busy
-/// leaves one move waiting, never a backlog ahead of the next key bind. Order is kept otherwise.
-/// </summary>
 internal sealed class InputQueue<T>
 {
     private readonly object _gate = new();
@@ -14,8 +9,6 @@ internal sealed class InputQueue<T>
     private List<T> _taken = [];
     private bool _completed;
 
-    /// <param name="replaces">True when the second item, posted after the first, makes the first pointless.</param>
-    /// <param name="join">The one item that does the work of both, when the two add up, such as two steps of a swipe.</param>
     internal InputQueue(Func<T, T, bool> replaces, Func<T, T, (bool Joined, T Item)>? join = null)
     {
         ArgumentNullException.ThrowIfNull(replaces);
@@ -23,7 +16,6 @@ internal sealed class InputQueue<T>
         _join = join;
     }
 
-    /// <summary>Queues an item. False once the queue is completed.</summary>
     internal bool Post(T item)
     {
         lock (_gate)
@@ -52,10 +44,6 @@ internal sealed class InputQueue<T>
         }
     }
 
-    /// <summary>
-    /// Waits for input and hands over everything waiting, in order. Empty once the queue is
-    /// completed and drained. For one reader: the list is reused by the next call.
-    /// </summary>
     internal IReadOnlyList<T> Take()
     {
         lock (_gate)

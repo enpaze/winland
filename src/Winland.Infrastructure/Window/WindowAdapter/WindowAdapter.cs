@@ -21,11 +21,9 @@ public sealed partial class WindowAdapter : IDisposable
     private readonly Lock _showGate = new();
     private volatile bool _releasing;
 
-    // The windows Winland hid, so an application hiding its own window can be told from it.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, byte> _concealed = new();
     private readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, byte> _revealed = new();
 
-    // The windows the core was last told are disabled.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, byte> _disabled = new();
 
     private readonly WindowManager _core;
@@ -33,8 +31,6 @@ public sealed partial class WindowAdapter : IDisposable
     private readonly Action? _changed;
     private readonly WINEVENTPROC _callback;
 
-    // The object events OnEvent reads, as the fewest ranges that hold them. A range hooked wide delivers every event
-    // inside it across processes, and browsers and editors raise focus, selection and value changes constantly.
     internal static readonly (uint First, uint Last)[] ObjectEvents =
     [
         (PInvoke.EVENT_OBJECT_CREATE, PInvoke.EVENT_OBJECT_REORDER),
@@ -56,7 +52,6 @@ public sealed partial class WindowAdapter : IDisposable
     private volatile RecoverySnapshot? _published;
     private volatile bool _disposed;
 
-    // Every window this decorated, with the decoration it shows when no motion holds any of it.
     private readonly Dictionary<WindowId, Decoration?> _painted = [];
     private readonly OpacityAdapter _opacity;
     private readonly BorderlessFrame _borderless;
@@ -69,32 +64,23 @@ public sealed partial class WindowAdapter : IDisposable
     private readonly Func<double> _clock;
     private readonly MotionPlayer _motions;
 
-    // Where Winland last asked each window to be, and the frames sent without waiting.
     private readonly QuickMove _quick = new();
 
-    // The windows being placed now, waiting for each to take its rectangle.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, byte> _placing = new();
 
     private const long SettleMilliseconds = 1500;
 
-    // The frames a window shown in place of another is given to paint before the other is hidden.
     private const int PaintFrames = 4;
 
-    // Windows whose maximize request was just answered, and when they stop being watched for drifting off their tile.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, long> _settling = new();
 
-    // Windows that cover their monitor by their own doing, as a browser does for a video.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, byte> _ownFullscreen = new();
 
-    /// <param name="changed">Called after an outcome is applied, to say the recovery snapshot is out of date. <see cref="Capture"/> builds the new one.</param>
     public WindowAdapter(WindowManager core, Action? changed = null)
         : this(core, new Win32Desktop(), changed, null)
     {
     }
 
-    /// <param name="desktop">Where the windows are. Tests pass a stand-in.</param>
-    /// <param name="clock">Milliseconds, for the motions and for how long a window is given to paint what it gained.</param>
-    /// <param name="threaded">False leaves the motions to <see cref="Tick"/>.</param>
     internal WindowAdapter(WindowManager core, IDesktop desktop, Action? changed, Func<double>? clock, bool threaded = true)
     {
         ArgumentNullException.ThrowIfNull(core);
@@ -215,9 +201,6 @@ public sealed partial class WindowAdapter : IDisposable
         uint idEventThread,
         uint dwmsEventTime)
     {
-        // A reorder names the parent whose children moved, so it is not a window event. Only the desktop's children are
-        // windows that can be Clients: then every border and tab bar is stacked again, and the floating Clients go back
-        // above a tile that was raised over them. Programs reorder their own child windows all the time.
         if (@event == PInvoke.EVENT_OBJECT_REORDER)
         {
             if (hwnd == PInvoke.GetDesktopWindow())
@@ -233,9 +216,6 @@ public sealed partial class WindowAdapter : IDisposable
         if (idObject != 0 || idChild != 0 || hwnd.IsNull)
             return;
 
-        // A child window is never a Client. Programs move, rename and show their child windows by the thousand, and
-        // reading each would hold up the next window that opens. Its destruction still goes on, in case it was one
-        // before a program made it a child.
         if (@event != PInvoke.EVENT_OBJECT_DESTROY
             && ((WINDOW_STYLE)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE)).HasFlag(WINDOW_STYLE.WS_CHILD))
             return;
@@ -243,7 +223,6 @@ public sealed partial class WindowAdapter : IDisposable
         Notice(@event, hwnd, dwmsEventTime);
     }
 
-    /// <summary>Handles one window event. The hook calls it; tests call it with the event they need.</summary>
     internal void Notice(uint @event, nint handle, uint time = 0) => Notice(@event, new HWND(handle), time);
 
     private void Notice(uint @event, HWND hwnd, uint dwmsEventTime)
@@ -258,7 +237,6 @@ public sealed partial class WindowAdapter : IDisposable
         {
             var window = new WindowId(((IntPtr)hwnd).ToInt64());
 
-            // A Client's border follows its window wherever it goes, and hides with it.
             if (@event is PInvoke.EVENT_OBJECT_LOCATIONCHANGE or PInvoke.EVENT_OBJECT_SHOW or PInvoke.EVENT_OBJECT_HIDE
                 or PInvoke.EVENT_OBJECT_CLOAKED or PInvoke.EVENT_OBJECT_UNCLOAKED or PInvoke.EVENT_SYSTEM_MINIMIZESTART
                 or PInvoke.EVENT_SYSTEM_MINIMIZEEND or PInvoke.EVENT_SYSTEM_FOREGROUND)
@@ -266,7 +244,6 @@ public sealed partial class WindowAdapter : IDisposable
                 BorderHost.Follow(window);
             }
 
-            // A Group's shown member raised or shown takes its tab bar up with it.
             if (@event is PInvoke.EVENT_SYSTEM_FOREGROUND or PInvoke.EVENT_OBJECT_SHOW)
                 GroupBarHost.Follow(window);
 
@@ -288,7 +265,6 @@ public sealed partial class WindowAdapter : IDisposable
                     ForgetProbe(window);
                     _declined.Forget(window);
                     Apply(_core.Handle(new WindowClosed(window)));
-                    // A window held when it was created may never have been shown.
                     _opacity.Forget(window);
                     BorderHost.Forget(window);
                     _motions.Forget(window);
@@ -318,11 +294,6 @@ public sealed partial class WindowAdapter : IDisposable
 
                     if (!_placing.ContainsKey(window))
                     {
-                        // A frame or a placement Winland sent arrives here too, often after Apply returned. Asking
-                        // a window being placed for its limits again would wait on it while it is busy taking it. A move the
-                        // application made itself lands somewhere Winland did not put it, and is still read.
-                        // A window the user drags reads its limits once the drag ends, not on every step of it.
-                        // A frame of Winland's own is neither the window resizing itself nor asking for fullscreen.
                         var ours = TryOuter(window, out var now) && _quick.Ours(window, now);
                         if (!ours && _moving != window)
                             RereadLimits(hwnd, window);
@@ -341,7 +312,6 @@ public sealed partial class WindowAdapter : IDisposable
                     BeginMove(hwnd, window);
                     return;
                 case PInvoke.EVENT_OBJECT_STATECHANGE:
-                    // Windows disables the owner of a modal dialog while it is open.
                     if (_core.Manages(window))
                         NoteEnabled(hwnd, window);
 
@@ -389,17 +359,11 @@ public sealed partial class WindowAdapter : IDisposable
                             Apply(_core.Handle(new WindowRestored(window)));
                             AdoptShown(hwnd, window);
                             break;
-                        // Windows are created, renamed and shown hidden by the thousand, child windows among them. Only a
-                        // shown top-level window can become a Client, and reading the others would hold up the next
-                        // window that opens. A Store app's CoreWindow can join its frame after the frame was shown, as
-                        // Settings does, so a frame that hosted no app when it was offered is offered again then.
                         case VisibilityAction.Adopt when PInvoke.GetAncestor(hwnd, GET_ANCESTOR_FLAGS.GA_ROOT) is var root && root != hwnd:
                             var frame = new WindowId(((IntPtr)root).ToInt64());
                             if (@event == PInvoke.EVENT_OBJECT_SHOW && PackagedIdentity.IsHostedApp(hwnd, root) && !_core.Manages(frame))
                                 AdoptHidden(root, frame);
                             break;
-                        // Windows draws a window the moment it is shown, before Winland hears of it. One created hidden is
-                        // made transparent now, while nothing shows it, and is held until it is adopted when shown.
                         case VisibilityAction.Adopt when !facts.Visible:
                             if (@event == PInvoke.EVENT_OBJECT_CREATE && Holds(hwnd))
                                 _opacity.Apply(window, 0);
@@ -421,12 +385,8 @@ public sealed partial class WindowAdapter : IDisposable
         }
     }
 
-    // A window is on screen where it opened before Winland has read it, so for a frame or two it shows away from its
-    // tile. One that looks like an application window is made transparent first. Once adopted, its opening motion or
-    // its decoration gives it its alpha. One that neither touched, such as a window that was not adopted, is opaque again.
     private void AdoptHidden(HWND hwnd, WindowId window)
     {
-        // A window held since it was created stays held, even if it no longer looks like one to hold.
         var held = _opacity.Wanted(window) == 0 || Holds(hwnd);
         if (held)
             _opacity.Apply(window, 0);
@@ -448,8 +408,6 @@ public sealed partial class WindowAdapter : IDisposable
         }
     }
 
-    // An application window has a title bar or a sizing border, and a title. A program that draws its own title bar,
-    // as Windows Terminal does, keeps only the sizing border.
     private static bool Holds(HWND hwnd)
     {
         var style = PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE);
@@ -461,8 +419,6 @@ public sealed partial class WindowAdapter : IDisposable
             && PInvoke.GetWindowTextLength(hwnd) > 0;
     }
 
-    // Tooltips, menus and popups are shown all the time, and no window rule makes one of them a Client. They are told
-    // apart from their styles before their program and their size limits are read, which can wait on the window.
     private static bool CanBeClient(HWND hwnd)
     {
         var style = PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE);
@@ -474,7 +430,6 @@ public sealed partial class WindowAdapter : IDisposable
             && PInvoke.GetAncestor(hwnd, GET_ANCESTOR_FLAGS.GA_ROOT) == hwnd;
     }
 
-    // A window's state changes often, as it gains focus or is pressed, so only a change of enabled reaches the core.
     private void NoteEnabled(HWND hwnd, WindowId window)
     {
         var disabled = !PInvoke.IsWindowEnabled(hwnd);
@@ -494,7 +449,6 @@ public sealed partial class WindowAdapter : IDisposable
         return disabled;
     }
 
-    // With inspecting, the read notes nothing and asks the window nothing: inspect reads its facts, not its limits.
     private bool TryDescribe(HWND hwnd, WindowId window, out WindowAppeared appeared, bool inspecting = false)
     {
         appeared = null!;
@@ -514,7 +468,6 @@ public sealed partial class WindowAdapter : IDisposable
         var outer = PInvoke.GetWindowRect(hwnd, out var rect) ? From(rect) : default;
         var bounds = TryVisible(window, out var visible) ? visible : outer;
         var monitorRect = From(info.rcMonitor);
-        // A Store app's frame belongs to ApplicationFrameHost. The Client's process is the app it hosts.
         long processId = identity.ProcessId;
         var facts = ProcessFacts.Shared.For(identity.ProcessId);
         var (min, max) = inspecting ? default : LimitsOf(hwnd, window);
@@ -555,16 +508,12 @@ public sealed partial class WindowAdapter : IDisposable
         return true;
     }
 
-    // A window that opens floating unless a rule tiles it: a Win32 dialog, a window with a modal frame, one a visible
-    // window owns, such as a WPF, Qt or Electron dialog or settings window, and one that stays on top, such as a
-    // browser's picture in picture. A main window some frameworks give a hidden owner still tiles.
     private bool Dialogish(string className, int extended, HWND owner) =>
         className == "#32770"
         || (extended & DialogStyle) != 0
         || (extended & TopmostStyle) != 0
         || (!owner.IsNull && (PInvoke.IsWindowVisible(owner) || _concealed.ContainsKey(new WindowId((nint)owner))));
 
-    // The class window rules match: a Store frame's is its hosted app's once the frame hosts one.
     private static string RuleClass(HWND hwnd)
     {
         var owner = PInvoke.GetWindowThreadProcessId(hwnd, out var pid) == 0 ? 0 : pid;

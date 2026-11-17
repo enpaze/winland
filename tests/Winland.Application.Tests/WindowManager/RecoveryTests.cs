@@ -229,8 +229,6 @@ public class RecoveryTests
         Assert.Equal([new WindowId(5)], outcome.Hide);
     }
 
-    // A restart puts each Monitor back on the Workspace it showed and each tile back where it was, as the tiles
-    // would split differently when they are added one by one.
     [Fact]
     public void ARestartShowsTheWorkspaceThatWasShownWithItsTilesWhereTheyWere()
     {

@@ -2,7 +2,6 @@ using static Winland.Domain.OrdinalText;
 
 namespace Winland.Domain;
 
-/// <summary>One consistent bind table. Published as a whole on config load and reload.</summary>
 public sealed class BindTable
 {
     public static BindTable Empty { get; } = new([]);
@@ -17,7 +16,6 @@ public sealed class BindTable
 
     internal KeyLayout Layout { get; }
 
-    /// <summary>Milliseconds after a wheel bind runs before the next wheel turn can run one.</summary>
     internal const int ScrollDelay = 300;
 
     internal static BindTable From(ConfigDocument config)

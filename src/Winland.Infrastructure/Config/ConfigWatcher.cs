@@ -12,10 +12,8 @@ public sealed class ConfigWatcher : IDisposable
     private Timer? _timer;
     private bool _disposed;
 
-    // What the watched files held when the last save reloaded them, so a save that changed nothing reloads nothing.
     private string? _lastRead;
 
-    // A file an editor is still writing can refuse to be read for a moment.
     private static readonly TimeSpan ReadRetry = TimeSpan.FromMilliseconds(100);
 
     public ConfigWatcher(Action reload, TimeSpan? debounce = null)
@@ -131,8 +129,6 @@ public sealed class ConfigWatcher : IDisposable
             Schedule();
     }
 
-    // A file of the same kind as a watched one, appearing or going in a watched folder, may be one a glob source
-    // such as conf.d/*.conf takes in or loses.
     private bool Sibling(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -192,8 +188,6 @@ public sealed class ConfigWatcher : IDisposable
             paths = [.. _paths];
         }
 
-        // A file still being written is waited for once. A save that changed nothing, as Ctrl+S on an unchanged file
-        // or an editor that writes twice, does not run the config's exec lines again.
         var read = Read(paths);
         if (read is null)
         {
@@ -203,7 +197,6 @@ public sealed class ConfigWatcher : IDisposable
 
         lock (_gate)
         {
-            // Disposed while the files were read: the exit has begun.
             if (_disposed || (read is not null && read == _lastRead))
                 return;
 
@@ -220,8 +213,6 @@ public sealed class ConfigWatcher : IDisposable
         }
     }
 
-    // The text of every watched file, in a fixed order, or null when one could not be read. A file that is gone reads
-    // as gone.
     private static string? Read(string[] paths)
     {
         Array.Sort(paths, StringComparer.OrdinalIgnoreCase);
@@ -239,7 +230,6 @@ public sealed class ConfigWatcher : IDisposable
             }
         }
 
-        // The files a glob source could take in, so one that appears or goes is a change.
         foreach (var directory in Directories(new HashSet<string>(paths, StringComparer.OrdinalIgnoreCase)))
         {
             var extensions = paths.Select(path => Path.GetExtension(path) ?? "").Where(extension => extension.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase);

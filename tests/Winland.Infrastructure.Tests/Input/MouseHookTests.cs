@@ -19,7 +19,6 @@ public class MouseHookTests
         Assert.Equal(expectedUp, up);
     }
 
-    // The side button is in the high word of mouseData. The low word is reserved and may hold anything.
     [Theory]
     [InlineData(XDown, 0x0001_0000u, "mouse:275", false)]
     [InlineData(XUp, 0x0001_0000u, "mouse:275", true)]
@@ -68,8 +67,6 @@ public class MouseHookTests
         Assert.Equal("", moved);
     }
 
-    // A button bound to movewindow with no argument or to resizewindow drags. movewindow with a
-    // direction moves the window once.
     [Theory]
     [InlineData("movewindow", "", true)]
     [InlineData("MoveWindow", "", true)]
@@ -104,7 +101,6 @@ public class MouseHookTests
         Assert.False(MouseHook.OnlyDrag(new BindDecision(true, "killactive")));
     }
 
-    // A button bound to several dispatchers drags with the first that drags.
     [Fact]
     public void TheFirstDragAmongSeveralDispatchersIsTheDrag()
     {

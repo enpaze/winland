@@ -1,6 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>The <c>group:groupbar:*</c> options: the font, title row and colors of a Group's tab bar.</summary>
 public sealed record GroupOptions
 {
     public static GroupOptions Documented { get; } = new();
@@ -21,7 +20,6 @@ public sealed record GroupOptions
         OfBar("col.inactive", OptionValue.Color, b => b.Inactive, (b, v) => b with { Inactive = v }),
     ]);
 
-    /// <summary>The options <paramref name="document"/> sets, over the High Contrast colors while <paramref name="contrast"/> is on.</summary>
     public static GroupOptions From(ConfigDocument document, HighContrast? contrast = null) =>
         Options.From(contrast is HighContrast colors ? InContrast(colors) : Documented, document);
 
@@ -32,7 +30,6 @@ public sealed record GroupOptions
         Bar = Documented.Bar with { TextColor = colors.Text, Active = colors.Highlight, Inactive = colors.GrayText },
     };
 
-    // An Option of the tab bar, under group:groupbar.
     private static Option<GroupOptions> OfBar<T>(string key, OptionValue<T> value, Func<GroupBarStyle, T> get, Func<GroupBarStyle, T, GroupBarStyle> set) =>
         Option<GroupOptions>.Of("group:groupbar:" + key, value, o => get(o.Bar), (o, v) => o with { Bar = set(o.Bar, v) });
 }

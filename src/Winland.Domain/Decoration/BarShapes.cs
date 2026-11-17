@@ -1,14 +1,9 @@
 namespace Winland.Domain;
 
-/// <summary>The shapes of the tab bar, as Winland draws them.</summary>
 public static class BarShapes
 {
     private const int Samples = 4;
 
-    /// <summary>
-    /// The round corners of tab <paramref name="index"/> of <paramref name="count"/>: the outer corners of the first tab and
-    /// of the last, and none between. A lone tab has all four.
-    /// </summary>
     public static Corners Rounded(int index, int count, int radius)
     {
         if (radius <= 0)
@@ -23,10 +18,6 @@ public static class BarShapes
         return index == count - 1 ? Corners.TopRight | Corners.BottomRight : Corners.None;
     }
 
-    /// <summary>
-    /// How much of the pixel at <paramref name="x"/>, <paramref name="y"/> lies inside <paramref name="box"/> with its
-    /// <paramref name="corners"/> rounded to a circle, from 0 to 1. The radius is at most half the box's shorter side.
-    /// </summary>
     public static double Coverage(int x, int y, Rectangle box, int radius, Corners corners)
     {
         if (x < box.X || y < box.Y || x >= box.X + box.Width || y >= box.Y + box.Height)

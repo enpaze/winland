@@ -1,13 +1,10 @@
 namespace Winland.Application;
 
-/// <summary>The workspace swipe: a touchpad gesture that slides between Workspaces.</summary>
 public sealed partial class WindowManager
 {
-    // Pixels of travel before a swipe locks to a direction, and the speed that forces a switch short of half the distance.
     private const int DirectionLockThreshold = 10;
     private const int MinSpeedToForce = 30;
 
-    // Pixels of touchpad travel that slide one whole Workspace.
     private const int SwipeDistance = 300;
 
     private readonly SwipeRecognizer _swipeGesture = new();
@@ -19,7 +16,6 @@ public sealed partial class WindowManager
         return View([]);
     }
 
-    // The update that picks a workspace gesture starts the workspace swipe and is its first step.
     private Outcome UpdateSwipe(SwipeUpdated updated)
     {
         var step = _swipeGesture.Update(updated, _config.Gestures);
@@ -44,8 +40,6 @@ public sealed partial class WindowManager
         _workspaceSwipe = new WorkspaceSwipe(_workspaces.Shown.ActiveOn(monitor), monitor);
     }
 
-    // An update that adds up several of the touchpad's reports counts as that many, so the average speed per report
-    // is the same however many waited together.
     private Outcome StepWorkspaceSwipe(WorkspaceSwipe swipe, double delta, int steps)
     {
         const int distance = SwipeDistance;
@@ -72,7 +66,6 @@ public sealed partial class WindowManager
             return PreviewSwipe(swipe, null);
         }
 
-        // Once the swipe has gone far enough one way, the other way is ignored.
         var sign = swipe.Delta < 0 ? -1 : 1;
         if (swipe.LockedSign != 0 && swipe.LockedSign != sign)
             swipe.Delta = 0;
@@ -87,7 +80,6 @@ public sealed partial class WindowManager
         return PreviewSwipe(swipe, target);
     }
 
-    // A swipe whose Workspace stopped being shown, by a bind or a Monitor change, or that a lock caught, goes back.
     private bool SwipeOvertaken(WorkspaceSwipe swipe) =>
         _workspaces.Shown.ActiveOn(swipe.Monitor) != swipe.Begin || SessionLock?.Locked == true || _keyState.Inhibited;
 
@@ -97,7 +89,6 @@ public sealed partial class WindowManager
         var (left, right) = Neighbours(swipe.Monitor);
         var begin = swipe.Begin;
 
-        // Swiping off the right end picks the id of a new Workspace now.
         if (SwipeRank(right) <= SwipeRank(begin))
             right = Resolve("r+1", swipe.Monitor);
 
@@ -128,8 +119,6 @@ public sealed partial class WindowManager
     private WorkspaceId? Resolve(string address, MonitorId monitor) =>
         WorkspaceAddress.TryResolve(address, Context(monitor), out var id) ? id : null;
 
-    // Workspace ids order as numbers. A Workspace that is not numbered sorts below every number, and an
-    // unresolved one is -1, the invalid id the comparisons were written against.
     private long SwipeRank(WorkspaceId? id)
     {
         if (id is not WorkspaceId workspace)
@@ -171,7 +160,6 @@ public sealed partial class WindowManager
 
         public int SpeedPoints { get; set; }
 
-        /// <summary>The sign of the way the swipe first went far enough.</summary>
         public int LockedSign { get; set; }
     }
 }

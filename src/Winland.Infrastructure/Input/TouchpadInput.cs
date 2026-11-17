@@ -7,12 +7,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Reads precision touchpad reports as raw input, in the background, on a message-only window. The window proc
-/// only parses and queues; the bind worker hands each swipe to the core. Raw input cannot be consumed, so
-/// Windows still acts on its own touchpad gestures. The fingers of each report are also noted for the mouse hook, so a
-/// touchpad move is not turned with the mouse.
-/// </summary>
 internal sealed class TouchpadInput : IDisposable
 {
     private const string ClassName = "WinlandTouchpad";
@@ -22,7 +16,6 @@ internal sealed class TouchpadInput : IDisposable
     private const nuint DeviceArrived = 1;
     private const nuint DeviceRemoved = 2;
 
-    // A pad that could not be read is read again at most this often, not on every report.
     private const long RetryMs = 1000;
     private const ushort DigitizerPage = 0x0D;
     private const ushort TouchPadUsage = 0x05;
@@ -53,7 +46,6 @@ internal sealed class TouchpadInput : IDisposable
         _swipe.Framed = OnFrame;
     }
 
-    /// <summary>Starts listening. A machine without a touchpad, or a refused registration, only logs.</summary>
     internal void Start()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -112,7 +104,6 @@ internal sealed class TouchpadInput : IDisposable
         }
         else if (message == DeviceChangeMessage && active is { _disposed: false } && wParam.Value is DeviceArrived or DeviceRemoved)
         {
-            // A handle can be handed to the next device, so what was read for it no longer holds.
             active._pads.Remove((nint)lParam);
         }
 
@@ -232,7 +223,6 @@ internal sealed class TouchpadInput : IDisposable
         return hwnd;
     }
 
-    /// <summary>The parsing layout of one precision touchpad. A device that is not one has no pad.</summary>
     private sealed unsafe class Pad : IDisposable
     {
         private readonly nint _preparsed;
@@ -365,8 +355,6 @@ internal sealed class TouchpadInput : IDisposable
             return null;
         }
 
-        // Millimetres per logical unit, from the physical range and its unit. A pad that reports no physical
-        // size is taken as 100 millimetres across.
         private static double Millimetres(HIDP_VALUE_CAPS value)
         {
             var logical = (double)value.LogicalMax - value.LogicalMin;

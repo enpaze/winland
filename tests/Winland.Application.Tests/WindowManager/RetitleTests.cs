@@ -2,7 +2,6 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
-/// <summary>A window that changes its title is followed, as Winland follows a toplevel's title.</summary>
 public class RetitleTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);

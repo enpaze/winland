@@ -4,7 +4,6 @@ public class GroupBarPainterTests
 {
     private static readonly BorderColor Orange = new(0xFF, 0xFF, 0x80, 0x40);
 
-    // A screen reader reads the bar window's title, so it lists the tabs and marks the shown one.
     [Fact]
     public void TheBarIsNamedByItsTabsWithTheShownOneMarked()
     {
@@ -14,7 +13,6 @@ public class GroupBarPainterTests
         Assert.Equal("one, Two live (shown)", GroupBarPainter.Name(bar, ["one", "Two live"]));
     }
 
-    // The place a held window would join is drawn in the active indicator color over whatever the strip has there.
     [Fact]
     public void TheInsertionMarkIsDrawnInTheActiveColorWhereTheDropJoins()
     {
@@ -26,7 +24,6 @@ public class GroupBarPainterTests
 
         GroupBarPainter.MarkInsertion(pixels, bar);
 
-        // Tabs of 2 with gaps_in 2: the gap is pixels 2 and 3, and the one-pixel mark is on its middle line, at 3.
         uint[] row = [0x01000000, 0x01000000, 0x01000000, 0xFFFF8040, 0x01000000, 0x01000000];
         Assert.Equal([.. row, .. row], pixels);
 
@@ -36,7 +33,6 @@ public class GroupBarPainterTests
         Assert.All(none, pixel => Assert.Equal(0x01000000u, pixel));
     }
 
-    // Where the mask is white the title's color covers the pixel. Where it is black the strip keeps what it had.
     [Fact]
     public void FullCoverageTakesTheTitleColorAndNoCoverageLeavesTheStrip()
     {
@@ -49,7 +45,6 @@ public class GroupBarPainterTests
         Assert.Equal(0x01000000u, pixels[1]);
     }
 
-    // An antialiased edge covers part of a pixel, so the color goes over the strip at that share, premultiplied.
     [Fact]
     public void AnEdgeLaysThePartItCoversOverWhatIsUnder()
     {
@@ -61,7 +56,6 @@ public class GroupBarPainterTests
         Assert.Equal(0xFF80409Fu, pixels[0]);
     }
 
-    // The title color's own alpha scales the coverage, and a clear title still leaves the strip's alpha of 1 for clicks.
     [Fact]
     public void TheColorsAlphaScalesTheCoverageAndAClearTitleStillTakesClicks()
     {

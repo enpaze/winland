@@ -19,7 +19,6 @@ public class ControlCommandTests
         Assert.Equal((reply.Length == 0 ? "error: no reply" : reply) + Environment.NewLine, result.Error);
     }
 
-    // A malformed selector fails the command. A well-formed one that matches nothing is an answer, not a failure.
     [Theory]
     [InlineData("inspect class:[", 1)]
     [InlineData("j/inspect pid:12a", 1)]

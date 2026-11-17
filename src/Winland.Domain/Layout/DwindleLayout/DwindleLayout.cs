@@ -246,7 +246,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return new Rectangle(_area.X + gaps.Left, _area.Y + gaps.Top, width, height);
     }
 
-    // A split keeps the direction it was made with, however its box changes shape.
     private static void Recalculate(Node node)
     {
         if (node.First is null || node.Second is null)
@@ -272,7 +271,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
     private static bool SplitsTop(Rectangle box) =>
         box.Height > box.Width;
 
-    // The epsilon keeps a ratio set from a whole pixel delta, such as 1.614 of 500, from truncating to the pixel below.
     private static int FirstShare(int size, double splitRatio) => (int)((size / 2.0 * splitRatio) + 1e-6);
 
     private static Rectangle Shrink(Rectangle box, int left, int top, int right, int bottom)

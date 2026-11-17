@@ -1,6 +1,5 @@
 namespace Winland.Application.Tests;
 
-/// <summary>Where a new floating Client opens: its own size, centered in the floating work area.</summary>
 internal static class NewFloat
 {
     public static Rectangle Centered(Rectangle area, Rectangle bounds) =>

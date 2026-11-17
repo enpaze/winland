@@ -1,8 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// Decides which Client the pointer focuses. Distances are logical pixels. Hit boxes are physical pixels.
-/// </summary>
 internal static class PointerFocus
 {
     internal readonly record struct Target(WindowId Window, bool Floating, Rectangle Bounds);

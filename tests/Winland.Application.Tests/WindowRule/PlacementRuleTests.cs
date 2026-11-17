@@ -15,7 +15,6 @@ public class PlacementRuleTests
 
         var outcome = core.Handle(Dialog(1, area));
 
-        // The work area is 100..1920 by 0..1040, so its center is (1010, 520).
         Assert.Equal(new Rectangle(910, 445, 200, 150), BoundsOf(outcome, 1));
     }
 

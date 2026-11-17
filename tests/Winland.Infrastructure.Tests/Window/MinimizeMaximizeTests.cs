@@ -1,6 +1,5 @@
 namespace Winland.Infrastructure.Tests;
 
-/// <summary>Winland has no minimize, and a client's maximize request is maximize mode 1.</summary>
 [Collection(DesktopCollection.Name)]
 public class MinimizeMaximizeTests
 {

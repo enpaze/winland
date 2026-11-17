@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// The Groups of a Workspace. The shown member of each Group is in the Layout. The other members wait
-/// here, hidden, with what the Layout knew about them so one of them can take the tile.
-/// </summary>
 internal sealed partial class LiveWorkspace
 {
     private readonly List<WindowGroup> _groups = [];
@@ -11,7 +7,6 @@ internal sealed partial class LiveWorkspace
 
     public IReadOnlyList<WindowGroup> Groups => _groups;
 
-    /// <summary>The members that are not shown, in no particular order.</summary>
     public IEnumerable<Client> WaitingClients
     {
         get
@@ -34,7 +29,6 @@ internal sealed partial class LiveWorkspace
         return null;
     }
 
-    /// <summary>Makes a Group of one from a Client in this Layout.</summary>
     public WindowGroup StartGroup(WindowId window)
     {
         var group = new WindowGroup(window);
@@ -42,10 +36,6 @@ internal sealed partial class LiveWorkspace
         return group;
     }
 
-    /// <summary>
-    /// Ends a Group. The last member keeps the tile, as Winland does, and the others are
-    /// returned in member order to be added back to the Layout.
-    /// </summary>
     public List<(WindowId Window, Taken Taken)> EndGroup(WindowGroup group)
     {
         var released = new List<(WindowId, Taken)>();
@@ -62,7 +52,6 @@ internal sealed partial class LiveWorkspace
         return released;
     }
 
-    /// <summary>Adds a window that is in no Layout to <paramref name="group"/> at <paramref name="position"/>, hidden.</summary>
     public void Join(WindowGroup group, WindowId window, Taken taken, int position)
     {
         group.Insert(position, window);
@@ -71,7 +60,6 @@ internal sealed partial class LiveWorkspace
         _waiting[window] = Wait(window, taken with { Floating = floating, Minimized = false });
     }
 
-    /// <summary>Shows the member at <paramref name="index"/> in the Group's tile. The member shown before waits.</summary>
     public bool Show(WindowGroup group, int index)
     {
         if (index < 0 || index >= group.Count || index == group.Current)
@@ -97,10 +85,6 @@ internal sealed partial class LiveWorkspace
         return true;
     }
 
-    /// <summary>
-    /// Takes <paramref name="window"/> out of its Group. When it was shown, the next member takes the tile.
-    /// <paramref name="taken"/> is set when the window left the Layout.
-    /// </summary>
     public GroupExit Leave(WindowGroup group, WindowId window, out Taken taken)
     {
         taken = default;
@@ -146,7 +130,6 @@ internal sealed partial class LiveWorkspace
         return GroupExit.Detached;
     }
 
-    /// <summary>Moves a Group's record and waiting members to <paramref name="destination"/>. Its shown member moves on its own.</summary>
     public void HandGroup(WindowGroup group, LiveWorkspace destination)
     {
         if (!_groups.Remove(group))
@@ -160,10 +143,6 @@ internal sealed partial class LiveWorkspace
         }
     }
 
-    /// <summary>
-    /// A member that takes a minimized slot was only hidden, never minimized. It shows, so the slot is restored
-    /// in the Layout instead of keeping a window nothing would ever bring back.
-    /// </summary>
     private void Unminimize(WindowId window)
     {
         if (ClientOf(window) is { Minimized: true })

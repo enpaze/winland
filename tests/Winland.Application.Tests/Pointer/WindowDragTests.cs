@@ -1,9 +1,7 @@
 namespace Winland.Application.Tests;
 
-/// <summary>Dragging a window with a bound mouse button, on a <see cref="TestDesktop"/>.</summary>
 public class WindowDragTests
 {
-    // The reference rebinds the left button to a drag with no modifier before its first window.
     private const string DragOnLeftButton = """
         unbind = SUPER, mouse:272
         bindm = , mouse:272, movewindow
@@ -17,13 +15,11 @@ public class WindowDragTests
         Assert.Single(desk.Clients());
         desk.Ok("focuswindow", "class:kitty");
 
-        // Grab well away from the center, so centering is observable.
         var (grabX, grabY) = Grab(desk);
         MoveCursor(desk, grabX, grabY);
         Click(desk, pressed: true);
         MoveCursor(desk, 700, 500);
 
-        // The grab point is ignored: the floating window is centered on the cursor.
         var moved = Active(desk);
         Assert.True(Nearly(moved.X + (moved.Width / 2), 700));
         Assert.True(Nearly(moved.Y + (moved.Height / 2), 500));
@@ -42,13 +38,11 @@ public class WindowDragTests
         desk.Place("kitty", 100, 100, 600, 400);
         desk.Ok("fullscreen", "0 set");
 
-        // Grab well away from the center, so centering is observable.
         var (grabX, grabY) = Grab(desk);
         MoveCursor(desk, grabX, grabY);
         Click(desk, pressed: true);
         MoveCursor(desk, 700, 500);
 
-        // The grab point is ignored: the restored window is centered on the cursor.
         var moved = Active(desk);
         Assert.Equal(0, TestDesktop.Fullscreen(desk.ActiveWindow()));
         Assert.True(Nearly(moved.X + (moved.Width / 2), 700));
@@ -59,7 +53,6 @@ public class WindowDragTests
 
     private static Rectangle Active(TestDesktop desk) => desk.Placed(desk.ActiveId());
 
-    // Three quarters across and down the active window.
     private static (int X, int Y) Grab(TestDesktop desk)
     {
         var bounds = Active(desk);
@@ -71,7 +64,6 @@ public class WindowDragTests
         desk.MovePointer(x, y);
     }
 
-    // The test plugin's click: the left button, where the pointer is.
     private static void Click(TestDesktop desk, bool pressed)
     {
         if (pressed)
@@ -80,11 +72,9 @@ public class WindowDragTests
             desk.Handle(new PointerButtonReleased("mouse:272") { Position = desk.Pointer });
     }
 
-    // The test plugin's scroll: a positive delta turns the wheel down.
     private static void Scroll(TestDesktop desk, int delta) =>
         desk.Handle(new WheelTurned(delta > 0 ? "mouse_down" : "mouse_up", Environment.TickCount64));
 
-    // The test plugin reads the drag controller: whether a drag holds a window, and whether it has picked it up.
     private static void ExpectDragState(TestDesktop desk, bool active, bool reached)
     {
         var interaction = typeof(WindowManager).GetField("_interaction", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(desk.WindowManager);

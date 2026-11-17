@@ -1,6 +1,5 @@
 namespace Winland.Application;
 
-/// <summary>The pointer: key and mouse binds and focus follows mouse.</summary>
 public sealed partial class WindowManager
 {
     private string? _resizeCursor;
@@ -9,8 +8,6 @@ public sealed partial class WindowManager
     {
         var match = _keyState.Decide(_config.Binds, input);
 
-        // The mouse dispatcher bound to a key drags the window under the pointer while the key is held, as in the pinned
-        // release, and the key's release drops it.
         if (input is KeyPressed pressed && _interaction is null && KeyDrag(match) is { } drag && DragTarget(_pointer) is WindowId window)
         {
             var begun = BeginGesture(window, drag, pressed.Key, _pointer!.Value);
@@ -47,7 +44,6 @@ public sealed partial class WindowManager
     {
         var match = _keyState.Decide(_config.Binds, pressed);
 
-        // A drag already running keeps the pointer. A second drag button does not start another one.
         if (_interaction is null && TryDragHit(match, out var drag) && (TabUnder(drag, pressed.Position) ?? DragTarget(pressed.Position)) is WindowId target)
         {
             var tabbed = TakeTabOut(drag, pressed.Position, out var window);
@@ -102,8 +98,6 @@ public sealed partial class WindowManager
         return View([], focus: Follow(moved, Track(moved)));
     }
 
-    // A pointer move with no drag notes where the pointer is outside a step. It takes one only when it would focus a
-    // window or a Monitor, or change the resize cursor.
     private bool Glides(PointerMoved moved, Outcome last, out PointerAim aim)
     {
         _ = _keyState.Decide(_config.Binds, moved);
@@ -116,7 +110,6 @@ public sealed partial class WindowManager
         return true;
     }
 
-    // What a pointer move asks for once it is noted: the focused Monitor to change, or the window it would focus.
     private readonly record struct PointerAim(double Traveled, bool Monitor, WindowId? Focus);
 
     private PointerAim Track(PointerMoved moved)
@@ -130,7 +123,6 @@ public sealed partial class WindowManager
 
         var traveled = Advance(moved.Position, now);
 
-        // Focusing another Monitor changes the focused window, so the window to focus is chosen after it.
         if (_config.Input.FollowMouse && MonitorAt(moved.Position) is { } screen && screen.Id != FocusedId())
             return new PointerAim(traveled, true, null);
 
@@ -161,13 +153,9 @@ public sealed partial class WindowManager
         if (decision.RememberMouse)
             _lastMouse = decision.LastMouse;
 
-        // A window Winland does not manage, such as a browser's extension panel, took the foreground from the Client
-        // it opened over. The pointer crossing that Client on its way to the panel leaves the panel the focus.
         if (_focus.Focused is null && _focus.Unmanaged is not null && decision.Focus == _focus.BeforeUnmanaged)
             return null;
 
-        // A context menu or drop-down list over a tile is what the pointer is on. Focusing the tile under it would
-        // close the menu, which takes no focus from the window that opened it.
         if (moved.Under is WindowId over && decision.Focus is WindowId target && over != target && Find(over) is null)
             return null;
 
@@ -219,7 +207,6 @@ public sealed partial class WindowManager
         if (point is not Point at)
             return null;
 
-        // A special workspace open over the normal one answers first, floating and tiled alike.
         return PointerFocus.At(Targets(at, special: true), at)
             ?? PointerFocus.At(Targets(at, special: false), at);
     }
@@ -246,8 +233,6 @@ public sealed partial class WindowManager
             var showing = desk.Showing();
             if (CoveringClient(desk, showing) is { } covering)
             {
-                // A maximized or fullscreen Client owns the pointer on its Workspace. The tiles behind it
-                // take no focus, and a maximized one answers only where it is drawn.
                 var slot = desk.Layout.TryBounds(covering.Window, out var found) ? found : covering.Bounds;
                 targets.Add(new PointerFocus.Target(covering.Window, covering.Floating, PlacedBounds(covering, desk, slot)));
                 continue;
@@ -265,7 +250,6 @@ public sealed partial class WindowManager
             }
         }
 
-        // Floating windows are tried from the top of the stacking order down, as Winland finds the topmost.
         var tiles = targets.Where(target => !target.Floating);
         var floats = targets.Where(target => target.Floating).OrderBy(target => _stacking.IndexOf(target.Window));
         return [.. tiles, .. floats];
@@ -297,11 +281,8 @@ public sealed partial class WindowManager
         return Math.Sqrt((dx * dx) + (dy * dy));
     }
 
-    // A drag shows its own cursor while it holds a window. Nothing else changes the pointer.
     private void NoteDragCursor() => _resizeCursor = (_interaction as Gesture)?.Cursor;
 
-    // The Workspace the pointer is over: the special workspace open on the Monitor under it, else that Monitor's, else
-    // the focused one when no Monitor is under it.
     private LiveWorkspace PointerWorkspace(Point pointer)
     {
         if (MonitorAt(pointer) is { } screen && (_workspaces.Shown.SpecialOn(screen.Id) ?? _workspaces.Shown.Shown(screen.Id)) is WorkspaceId shown && _workspaces.Find(shown) is LiveWorkspace desk)
@@ -310,10 +291,6 @@ public sealed partial class WindowManager
         return CurrentWorkspace();
     }
 
-    /// <summary>
-    /// The window whose ring of <c>reach</c> pixels around its tile holds the pointer, with the tile. The pointer inside
-    /// a window's tile is that window's own, so it has no ring.
-    /// </summary>
     private bool TryRingTarget(Point pointer, int reach, out WindowId window, out Rectangle bounds)
     {
         window = default;
@@ -321,9 +298,6 @@ public sealed partial class WindowManager
         if (reach <= 0)
             return false;
 
-        // The pointer meets the special workspace open on the Monitor under it before that Monitor's Workspace, as the
-        // Winland looks on the Monitor under the pointer. A maximized or fullscreen Client has no ring and hides the
-        // tiles behind it, but a floating window allowed over it keeps its ring.
         var desk = PointerWorkspace(pointer);
         var showing = desk.Showing();
         var covering = CoveringClient(desk, showing);
@@ -339,10 +313,8 @@ public sealed partial class WindowManager
             clients.Add(client);
         }
 
-        // The floating windows are tried from the top of the stacking order down.
         clients = [.. clients.Where(client => !client.Floating), .. clients.Where(client => client.Floating).OrderBy(client => _stacking.IndexOf(client.Window))];
 
-        // Floating windows lie above the tiles, so a floating ring over a tile is still that window's.
         if (TryRing(desk, clients, pointer, reach, floatingOnly: true, out var inside, out window, out bounds))
             return true;
 
@@ -369,7 +341,6 @@ public sealed partial class WindowManager
             if (client.Minimized || client.Floating != floatingOnly || !desk.Layout.TryBounds(client.Window, out bounds))
                 continue;
 
-            // The topmost window under the pointer takes it: inside its rectangle the press is that window's own.
             if (BorderPointer.Contains(bounds, pointer))
             {
                 inside = true;

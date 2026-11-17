@@ -102,8 +102,6 @@ internal sealed partial class ScrollingLayout
         return _columns[^1];
     }
 
-    // The camera stays on whole pixels. Each column's edges are rounded on their own, so a camera between pixels
-    // would change a column's width by a pixel as it scrolls, and resize every window instead of moving it.
     private void SetOffset(double offset)
     {
         _offset = _inhibited ? _inhibitedOffset : Math.Floor(offset + 0.5);

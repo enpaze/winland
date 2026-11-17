@@ -1,15 +1,9 @@
 namespace Winland.Application;
 
-/// <summary><c>inspect</c>: a Window read afresh, whether Winland manages it and why, and a rule that would change that.</summary>
 public sealed partial class WindowManager
 {
-    /// <summary>
-    /// Reads a Window afresh for <c>inspect</c>: the one given, or with null the top-level Window under the pointer.
-    /// Null when there is none, or it closed. The Windows adapter answers, and changes nothing.
-    /// </summary>
     public Func<WindowId?, WindowAppeared?>? DescribeWindow { get; set; }
 
-    // A query: it reads the Window and the State and changes neither.
     private string Inspect(InspectRequest request)
     {
         var pointer = request.Selector.Trim().Length == 0;
@@ -17,7 +11,6 @@ public sealed partial class WindowManager
         WindowId? selected = null;
         if (!pointer)
         {
-            // A selector that cannot be read is a mistake in the request, not a Window that is not there.
             if (WindowSelector.Malformed(request.Selector) is { } problem)
                 return "error: invalid selector: " + problem;
 
@@ -30,7 +23,6 @@ public sealed partial class WindowManager
         if (DescribeWindow is null)
             return "error: no desktop to read windows from";
 
-        // A Window that closed since it was selected reads as nothing, rather than as half of what it was.
         if (DescribeWindow(selected) is not { } read || (selected is WindowId id && read.Window != id))
             return Format(new InspectJson("not_found", target, Reason: pointer ? "no_window" : "closed"));
 
@@ -51,8 +43,6 @@ public sealed partial class WindowManager
             Json(request) ? CommandProtocol.FormatInspect(inspected) : CommandProtocol.FormatInspectText(inspected);
     }
 
-    // A Client: why it was adopted is history, so it is said as such. Its floating reason holds only while it still
-    // floats or tiles as it did then.
     private InspectJson Managed(InspectJson found, Client client, WindowTraits traits)
     {
         var admitted = _props.AdmittedOf(client.Window);
@@ -69,8 +59,6 @@ public sealed partial class WindowManager
         };
     }
 
-    // A Window Winland does not manage: the rules in force now are matched against what was just read. No rule is
-    // offered for what Windows itself rules out, nor for the shell, which Winland leaves to Windows.
     private InspectJson Unmanaged(InspectJson found, WindowTraits traits)
     {
         var decision = WindowRuleParser.Decide(traits.WithInitialNames(), _config.WindowRules);

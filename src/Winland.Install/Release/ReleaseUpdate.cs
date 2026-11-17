@@ -2,7 +2,6 @@ using System.Text;
 
 namespace Winland.Install;
 
-/// <summary>What <c>winland update</c> decided. The caller prints it and, when asked, relaunches elevated.</summary>
 public closed record UpdateResult
 {
     private UpdateResult()
@@ -13,7 +12,6 @@ public closed record UpdateResult
 
     public sealed record Current : UpdateResult;
 
-    /// <summary>The machine install needs one approval before the files are replaced. The zip has already been checked.</summary>
     public sealed record NeedsAdministrator : UpdateResult;
 
     public sealed record Rejected : UpdateResult;
@@ -21,11 +19,6 @@ public closed record UpdateResult
     public sealed record Updated(string Version) : UpdateResult;
 }
 
-/// <summary>
-/// Reads the release of one channel and, when it differs, replaces the install this process was started from.
-/// Stable differs by version text. Dev differs by commit, so switching back to stable installs that release
-/// even when its version is older. The copy, the stop and the start are <see cref="AppInstall"/>'s.
-/// </summary>
 public sealed class ReleaseUpdate
 {
     private readonly IReleaseFeed feed;
@@ -87,7 +80,6 @@ public sealed class ReleaseUpdate
         if (!ReleaseChecksum.Matches(archive, sums))
             return new UpdateResult.Rejected();
 
-        // The approval is for the replace. A current install, a rejected zip and a per-user install never ask.
         if (kind == InstallKind.Machine && !elevated)
             return new UpdateResult.NeedsAdministrator();
 

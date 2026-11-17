@@ -2,7 +2,6 @@ using Events = Windows.Win32.PInvoke;
 
 namespace Winland.Infrastructure.Tests;
 
-/// <summary>Window events driven straight into the adapter. The window ids are not real windows.</summary>
 public class WindowEventTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
@@ -21,8 +20,6 @@ public class WindowEventTests
         Assert.Equal(tile, windows.Desktop[window.Value].Visible);
     }
 
-    // Only the window being placed is busy taking its placement. Another window that moved itself meanwhile is still
-    // read, and put back.
     [Fact]
     public void AWindowThatMovesItselfWhileAnotherIsPlacedIsPutBack()
     {
@@ -49,7 +46,6 @@ public class WindowEventTests
         Assert.Equal(tile, windows.Desktop[tiled.Value].Visible);
     }
 
-    // The events the adapter reads. A hook range that holds any other object event delivers it across processes for nothing.
     [Fact]
     public void TheObjectEventHooksHoldTheEventsTheAdapterReadsAndNoOthers()
     {
@@ -87,7 +83,6 @@ public class WindowEventTests
         Assert.True(adapter.StartDrag(next, sizing: true, new Point(10, 10)));
     }
 
-    // The id is not a window, so the title read is empty, which the core takes for the window's new title.
     [Fact]
     public void AClientsTitleChangeGoesToTheCore()
     {
@@ -104,8 +99,6 @@ public class WindowEventTests
         Assert.Equal("", Assert.Single(decided).State.Clients.Single().Title);
     }
 
-    // Switching virtual desktops cloaks every window on the old one, hidden Clients too. A hidden
-    // window is not adopted again when it is uncloaked, so releasing it would leave it hidden for good.
     [Fact]
     public void AHiddenClientThatIsCloakedStaysAClient()
     {
@@ -122,8 +115,6 @@ public class WindowEventTests
         Assert.True(core.Manages(window));
     }
 
-    // An application that hides its own window unmaps it. Left a Client, it would keep a tile, and
-    // its minimum size, that nothing on screen fills.
     [Fact]
     public void AClientItsApplicationHidesStopsBeingAClient()
     {
@@ -138,9 +129,6 @@ public class WindowEventTests
         Assert.False(core.Manages(window));
     }
 
-    // Claude's screen overlay is layered, click-through, topmost and never activated (0x08280028). A WinUI tooltip,
-    // as Magpie shows over its buttons, is layered and never activated (0x08280000). Asking for a taskbar button
-    // does not make a no-activate window safe to focus or hide.
     [Theory]
     [InlineData(0x08280028, true)]
     [InlineData(0x00080020, true)]
@@ -158,7 +146,6 @@ public class WindowEventTests
         Assert.Equal(overlay, WindowAdapter.IsOverlay(extended));
     }
 
-    // A window of this process's own class of the same name stands in for the secondary taskbar. It is never shown.
     [Theory]
     [InlineData("Shell_SecondaryTrayWnd", true)]
     [InlineData("Shell_SecondaryTrayWndProbe", false)]
@@ -178,13 +165,11 @@ public class WindowEventTests
         }
     }
 
-    // Winland hides the Clients of a Workspace it does not show, and the system reports that hide too.
     [Fact]
     public void AClientWinlandHidStaysAClient()
     {
         var core = new WindowManager();
         using var adapter = new WindowAdapter(core);
-        // The adapter reads the system's setting. Without motion the hide happens as the outcome is applied.
         core.ReducedMotion = () => true;
         var window = new WindowId(0x700D);
         core.Handle(new WindowAppeared(window, Area) { Traits = WindowTraits.Normal });

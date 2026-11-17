@@ -61,7 +61,6 @@ public class GitHubReleaseTests
     [Fact]
     public void LatestReadsTheApiThenVersionJsonAndNamesNoToken()
     {
-        // The handler answers every call. An unexpected URL fails here, so the test never reaches GitHub.
         var handler = new RecordingHandler(url =>
         {
             if (url == ReleaseAssets.LatestUrl)

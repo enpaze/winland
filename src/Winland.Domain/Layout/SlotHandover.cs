@@ -1,12 +1,7 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// Shared steps for <see cref="Layout.Substitute"/>: a Layout hands one Client's slot to a Window it
-/// does not hold, and the slot keeps its place, size and floating state.
-/// </summary>
 internal static class SlotHandover
 {
-    /// <summary>What the Layout knew about the Client that leaves the slot.</summary>
     public static Taken Describe(Client client, Rectangle bounds, SizeLimits limits, double? scrollingWidth = null) =>
         new(
             client.Floating,
@@ -24,7 +19,6 @@ internal static class SlotHandover
             TiledLimits = limits.Tiled,
         };
 
-    /// <summary>The slot's Client record, now naming <paramref name="next"/>.</summary>
     public static Client Rename(Client client, WindowId next, Taken incoming) =>
         client with
         {

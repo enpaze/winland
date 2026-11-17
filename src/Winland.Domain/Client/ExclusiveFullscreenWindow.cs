@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// A popup with no caption that already covers its monitor is left alone.
-/// An exclusive fullscreen game uses that shape, and adopting it would fight the game.
-/// </summary>
 public static class ExclusiveFullscreenWindow
 {
     public const uint Popup = 0x80000000;

@@ -36,8 +36,6 @@ public class MonitorTests
         Assert.DoesNotContain(second.Placements, placement => placement.Client == first.State.Clients[0].Id);
     }
 
-    // A program such as Windows Terminal puts its new window where its last one was. The window still opens on the
-    // focused Monitor, as a window that was open before Winland started stays on the one it is on.
     [Fact]
     public void AWindowThatOpensGoesToTheFocusedMonitorWhereverItsProgramPutIt()
     {
@@ -53,8 +51,6 @@ public class MonitorTests
         Assert.Equal(right.WorkArea, BoundsOf(opened, 2));
     }
 
-    // A tray icon's flyout, such as JetBrains Toolbox's, puts itself above the tray and hides when it loses focus. Moved
-    // to the middle of the focused Monitor, it would hide as the pointer crossed a tile on its way there.
     [Fact]
     public void AFramelessWindowOpensWhereItsProgramPutIt()
     {

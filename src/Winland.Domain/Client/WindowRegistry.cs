@@ -1,10 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// Forgets a window in every piece of per-window state it tracks. The core registers each map, set and
-/// list it keys by window, and each field that names a window, so closing a window clears them all in
-/// one call.
-/// </summary>
 internal sealed class WindowRegistry
 {
     private readonly List<Action<WindowId>> _forgetters = [];
@@ -27,7 +22,6 @@ internal sealed class WindowRegistry
         _forgetters.Add(window => list.RemoveAll(item => item == window));
     }
 
-    /// <summary>Registers state that is not a collection, such as a field that names one window.</summary>
     public void Track(Action<WindowId> forget)
     {
         ArgumentNullException.ThrowIfNull(forget);

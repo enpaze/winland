@@ -1,9 +1,5 @@
 namespace Winland.Domain;
 
-/// <summary>
-/// What Windows reports for one display. <see cref="Split"/> is true when HDR and wide color are two switches, which
-/// they are from Windows 11 24H2 on. Luminance is in nits, or -1 when Windows did not report it.
-/// </summary>
 public readonly record struct DisplayColorReading(
     bool HdrSupported,
     bool WideSupported,

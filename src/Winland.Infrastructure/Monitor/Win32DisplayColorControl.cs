@@ -7,19 +7,11 @@ using Windows.Win32.Graphics.Dxgi;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Reads Windows' HDR and wide color switches. The bits per channel have no switch of their own: advanced color is
-/// what raises them above 8. Winland reads the switches and does not change them.
-/// </summary>
 internal static class Win32DisplayColorControl
 {
     private const int GetAdvancedColorInfo = 9;
     private const int GetAdvancedColorInfo2 = 15;
 
-    /// <summary>
-    /// Reads the switches of the panel display config names by its adapter and target. <paramref name="panels"/> is
-    /// what <see cref="Panels"/> read for this pass.
-    /// </summary>
     internal static bool TryDescribe(string device, LUID adapter, uint target, IReadOnlyDictionary<string, Panel> panels,
         out DisplayColorReading reading)
     {
@@ -45,7 +37,6 @@ internal static class Win32DisplayColorControl
         return true;
     }
 
-    /// <summary>A panel's mastering luminance, and whether it reports its color primaries.</summary>
     internal readonly record struct Panel(float Min, float Max, float Average, bool Chroma);
 
     private static unsafe bool TryRead2(LUID adapter, uint target, out DisplayColorReading reading)
@@ -61,7 +52,6 @@ internal static class Win32DisplayColorControl
             return false;
         }
 
-        // Bit 0 is advanced color supported, 4 HDR supported, 5 HDR on, 6 wide color supported, 7 wide color on.
         reading = new DisplayColorReading(
             Bit(info.Value, 4),
             Bit(info.Value, 6),
@@ -86,16 +76,11 @@ internal static class Win32DisplayColorControl
             return false;
         }
 
-        // Bit 0 is advanced color supported, 1 on. It is HDR; wide color has no switch of its own here.
         var supported = Bit(info.Value, 0);
         reading = new DisplayColorReading(supported, false, Bit(info.Value, 1), false, supported, false, Bits(info.BitsPerColorChannel));
         return true;
     }
 
-    /// <summary>
-    /// Every panel DXGI lists, keyed by its device name, read with one factory for a whole Monitor read. A failure
-    /// leaves out the panels not read yet, whose luminance stays unknown.
-    /// </summary>
     internal static Dictionary<string, Panel> Panels()
     {
         var panels = new Dictionary<string, Panel>(StringComparer.OrdinalIgnoreCase);
@@ -183,7 +168,7 @@ internal static class Win32DisplayColorControl
 
     private static int Bits(uint value) => value > int.MaxValue ? int.MaxValue : (int)value;
 
-#pragma warning disable CS0649 // Windows fills these in.
+#pragma warning disable CS0649
     private struct ColorInfo
     {
         public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;

@@ -1,15 +1,11 @@
 namespace Winland.Application;
 
-/// <summary>The pipe's requests: every verb, how its line reads, and the request it makes.</summary>
 public static partial class CommandProtocol
 {
-    // Infrastructure adds the Windows session id to this base name.
     public const string PipeName = "winland";
 
     private const string Unknown = "error: unknown request";
 
-    // Every verb the pipe answers, in the order the usage lists them. Each reads the rest of the line after the verb
-    // and returns its request, or null when the rest does not fit.
     private static readonly Verb[] VerbList =
     [
         new("dispatch", "<name> [args]", (rest, _) => Dispatch(rest)),
@@ -32,7 +28,6 @@ public static partial class CommandProtocol
     private static readonly Dictionary<string, Verb> Verbs =
         VerbList.ToDictionary(verb => verb.Name, StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Each verb with what follows it, such as <c>dispatch &lt;name&gt; [args]</c>, in the order the usage lists them.</summary>
     public static IEnumerable<string> VerbForms =>
         VerbList.Select(verb => verb.Arguments.Length == 0 ? verb.Name : verb.Name + " " + verb.Arguments);
 
@@ -68,10 +63,8 @@ public static partial class CommandProtocol
         return new DispatchRequest(name, arguments);
     }
 
-    // A verb that takes nothing after it.
     private static CommandRequest? Bare(string rest, CommandRequest request) => rest.Length == 0 ? request : null;
 
-    // The first word, and the rest with its leading space trimmed.
     private static (string First, string After) SplitOnce(string text)
     {
         var end = IndexOfWhitespace(text);
@@ -107,7 +100,6 @@ public sealed record ActiveWorkspaceRequest : CommandRequest;
 
 public sealed record ActiveWindowRequest : CommandRequest;
 
-/// <summary><c>inspect</c>: the Window under the pointer, or with a selector the Client it names.</summary>
 public sealed record InspectRequest(string Selector) : CommandRequest;
 
 public sealed record EventsRequest : CommandRequest;

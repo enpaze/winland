@@ -1,13 +1,11 @@
 namespace Winland.Application;
 
-/// <summary>Where the cursor goes after a focus change or a switch, unless <c>cursor:no_warps</c> is set.</summary>
 public sealed partial class WindowManager
 {
     private Point? _pointer;
 
     private Outcome FinishCursor(Captured before, Outcome outcome, Input? input)
     {
-        // A drag moves the pointer too, though the hook reports its steps as the drag's and not as pointer moves.
         if (input is PointerMoved moved)
             _pointer = moved.Position;
         else if (input is PointerGesture gesture)
@@ -33,8 +31,6 @@ public sealed partial class WindowManager
         };
     }
 
-    // movefocus moves the cursor to the middle of the window it focuses, as Winland's switch to a window does.
-    // Leaving a fullscreen window for another on its Workspace does not, and cursor:no_warps stops it.
     private WarpTo? SwitchWarp(Captured before, Outcome outcome)
     {
         if (outcome.Traits?.HasFlag(DispatcherTraits.WarpsToFocused) != true
@@ -68,8 +64,6 @@ public sealed partial class WindowManager
         return new WarpTo(point);
     }
 
-    // focusmonitor, and movefocus onto another Monitor, put the pointer in the middle of a Monitor with nothing to
-    // focus, as Winland does, unless cursor:no_warps is set.
     private WarpTo? EmptyMonitorMiddle(Outcome outcome)
     {
         if (_config.Cursor.NoWarps || outcome.Traits?.HasFlag(DispatcherTraits.WarpsToEmptyMonitor) != true || FocusedClient(outcome.State) is not null)

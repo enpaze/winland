@@ -4,16 +4,8 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-/// <summary>
-/// Shows the pointer shape the core names while a drag holds a window or the pointer is on a border that resizes,
-/// as Winland overrides its cursor. Windows lets a program set the pointer only over its own windows, so
-/// every system cursor is replaced by that shape for the time, and the user's own scheme is loaded again after it,
-/// at exit, and on the next start after a crash.
-/// </summary>
 internal static unsafe class CursorShape
 {
-    // The system cursors a program can show, every one of which takes the shape, so a window under the pointer that sets
-    // its own, such as a text field's I-beam, shows it too.
     private static readonly SYSTEM_CURSOR_ID[] Replaced =
     [
         SYSTEM_CURSOR_ID.OCR_NORMAL,
@@ -35,7 +27,6 @@ internal static unsafe class CursorShape
     private static readonly Lock Gate = new();
     private static string? _shown;
 
-    /// <summary>The standard Windows cursor for a cursor name the core reports, or null for one it has none of.</summary>
     internal static SYSTEM_CURSOR_ID? For(string? name) => name switch
     {
         "grabbing" => SYSTEM_CURSOR_ID.OCR_SIZEALL,
@@ -46,7 +37,6 @@ internal static unsafe class CursorShape
         _ => null,
     };
 
-    /// <summary>Shows <paramref name="name"/>'s shape, or the user's own cursors again for null.</summary>
     internal static void Show(string? name)
     {
         var shape = For(name);
@@ -66,7 +56,6 @@ internal static unsafe class CursorShape
             var cursor = PInvoke.LoadCursor(default, new PCWSTR((char*)(nint)(int)id));
             foreach (var replaced in Replaced)
             {
-                // SetSystemCursor takes the handle it is given and destroys it, so each cursor gets a copy.
                 var copy = PInvoke.CopyIcon(new HICON(cursor.Value));
                 if (!copy.IsNull)
                     _ = PInvoke.SetSystemCursor(new HCURSOR(copy.Value), replaced);
@@ -76,7 +65,6 @@ internal static unsafe class CursorShape
         }
     }
 
-    /// <summary>Loads the user's own cursors again, when a shape is shown, at exit.</summary>
     internal static void Reset()
     {
         lock (Gate)
@@ -89,7 +77,6 @@ internal static unsafe class CursorShape
         }
     }
 
-    /// <summary>Loads the user's own cursors again unconditionally, after a run that may have left a shape behind.</summary>
     internal static void Restore() =>
         _ = PInvoke.SystemParametersInfo(SYSTEM_PARAMETERS_INFO_ACTION.SPI_SETCURSORS, 0, null, 0);
 }

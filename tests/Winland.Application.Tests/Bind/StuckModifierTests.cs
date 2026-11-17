@@ -1,8 +1,5 @@
 namespace Winland.Application.Tests;
 
-// The OS keeps a key logically down until it sees that key's release. A release is
-// swallowed only when its press was swallowed too, so no key is ever left down. Super and
-// Alt get a mask key while the chord runs, so their release does not open Start or a menu.
 public class StuckModifierTests
 {
     [Fact]
@@ -164,7 +161,6 @@ public class StuckModifierTests
         core.Decide(new KeyPressed("Super_L"), session);
         core.Decide(new KeyPressed("T"), session);
 
-        // The releases happened where the hook could not see them, such as the lock screen.
         session.Forget(_ => false);
 
         Assert.False(core.Decide(new KeyPressed("T"), session).Consumed);
@@ -209,7 +205,6 @@ public class StuckModifierTests
         core.Decide(new KeyReleased("F23"), session);
         var up = core.Decide(new KeyReleased("Super_L"), session);
 
-        // The OS never saw this Super, so it is never masked and never owed a release.
         Assert.Equal("exec", down.Dispatcher);
         Assert.True(down.Consumed);
         Assert.False(down.Mask);
