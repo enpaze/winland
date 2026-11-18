@@ -128,54 +128,6 @@ public class ConfigTests
     }
 
     [TestMethod]
-    public void ASectionBlockPrefixesItsKeysSoTheyWarnAsUnknown()
-    {
-        var document = ConfigParser.Parse("general {\n    gaps_in = 5\n    col.active_border = rgba(33ccffee)\n}\n");
-
-        Assert.IsEmpty(document.Settings);
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new ConfigWarning(2, "Unsupported keyword 'general:gaps_in'."),
-                new ConfigWarning(3, "Unsupported keyword 'general:col.active_border'."),
-            },
-            document.Warnings);
-    }
-
-    [TestMethod]
-    public void NestedBlocksPrefixEveryKeyWithEachBlock()
-    {
-        var text = "decoration {\n    rounding = 10\n    blur {\n        popups = true\n    }\n}\nrounding = 10\n";
-
-        var document = ConfigParser.Parse(text);
-
-        Assert.AreEqual(new Setting("rounding", "10"), Assert.ContainsSingle(document.Settings));
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new ConfigWarning(2, "Unsupported keyword 'decoration:rounding'."),
-                new ConfigWarning(4, "Unsupported keyword 'decoration:blur:popups'."),
-            },
-            document.Warnings);
-    }
-
-    [TestMethod]
-    [DataRow("general")]
-    [DataRow("decoration")]
-    [DataRow("dwindle")]
-    [DataRow("binds")]
-    [DataRow("windowrule")]
-    public void UnhonoredCategoryKeywordWarnsAndIsSkipped(string category)
-    {
-        var document = ConfigParser.Parse($"{category} {{\n    sample = 1\n}}\n");
-
-        Assert.IsEmpty(document.Settings);
-        Assert.AreEqual(
-            new ConfigWarning(2, $"Unsupported keyword '{category}:sample'."),
-            Assert.ContainsSingle(document.Warnings));
-    }
-
-    [TestMethod]
     public void KeptKeywordsLoadWithoutAWarning()
     {
         var text = """
@@ -266,26 +218,6 @@ public class ConfigTests
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(new Setting("gaps_in", "9"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void SourceInsideACategoryInheritsIt()
-    {
-        var source = new MemorySource(new Dictionary<string, string>
-        {
-            ["inner.conf"] = "gaps_in = 4\n",
-        });
-
-        var document = ConfigParser.Parse("general {\n    source = inner.conf\n    gaps_out = 8\n}\n", source);
-
-        Assert.IsEmpty(document.Settings);
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new ConfigWarning(1, "Unsupported keyword 'general:gaps_in'.", "inner.conf"),
-                new ConfigWarning(3, "Unsupported keyword 'general:gaps_out'."),
-            },
-            document.Warnings);
     }
 
     [TestMethod]
@@ -483,41 +415,6 @@ public class ConfigTests
 
         Assert.AreEqual(new ConfigWarning(1, "Unsupported keyword 'plugin'."), Assert.ContainsSingle(document.Warnings));
         Assert.AreEqual(new Setting("gaps_in", "2"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void UnclosedCategoryWarnsAfterTheLinesInsideIt()
-    {
-        var document = ConfigParser.Parse("general {\n    gaps_in = 5\n");
-
-        Assert.IsEmpty(document.Settings);
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new ConfigWarning(2, "Unsupported keyword 'general:gaps_in'."),
-                new ConfigWarning(1, "Unclosed category 'general'."),
-            },
-            document.Warnings);
-    }
-
-    [TestMethod]
-    public void UnclosedCategoryInASourceDoesNotLeak()
-    {
-        var source = new MemorySource(new Dictionary<string, string>
-        {
-            ["inner.conf"] = "general {\n    border_size = 3\n",
-        });
-
-        var document = ConfigParser.Parse("source = inner.conf\ngaps_in = 1\n", source);
-
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new ConfigWarning(2, "Unsupported keyword 'general:border_size'.", "inner.conf"),
-                new ConfigWarning(1, "Unclosed category 'general'.", "inner.conf"),
-            },
-            document.Warnings);
-        Assert.AreEqual(new Setting("gaps_in", "1"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]

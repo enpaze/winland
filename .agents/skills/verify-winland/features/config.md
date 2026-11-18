@@ -9,7 +9,7 @@ Winland reads one config file and the files it `source`s, reloads them when one 
 - `request:get files` reports the config Winland read and the log it writes, each as a full path.
 - `config-check` validates a file and its sources with `winland check [file]`, without a Daemon, and exits 0 when clean, 1 for diagnostics or a read failure, and 2 for invalid usage.
 - `reload-on-save` reloads the config when it is saved, applies the new values and reports `configreloaded` on the Event stream.
-- `unknown-keyword-warning` warns on an unknown Option, ends the warning `Did you mean '<option>'?` when one Option is within two edits, and loads the rest.
+- `unknown-keyword-warning` warns on an unknown Option, ends the warning `Did you mean '<option>'?` when one Option is within two edits, warns `Malformed line.` on a line that is not blank, a comment or `name = value`, and loads the rest.
 
 ## How to get to it (user POV)
 
@@ -29,7 +29,7 @@ Preconditions:
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature config`. It prints `== feature config: passed`.
 - **Check a clean file.** The driver writes `good.conf`, which sets `gaps_in = 3` and has `source = ./extra.conf`, and runs `winland check good.conf`. It exits 0 and prints nothing.
-- **Check a file with a typo.** The driver writes `bad.conf` with `gaps_inn = 4` on line 2 and runs `winland check bad.conf`. It exits 1, and standard error holds `bad.conf:2:` and `Did you mean 'gaps_in'?`.
+- **Check a file with a typo.** The driver writes `bad.conf` with `gaps_inn = 4` on line 2 and `general {` on line 3, and runs `winland check bad.conf`. It exits 1, and standard error holds `bad.conf:2:`, `Did you mean 'gaps_in'?` and `bad.conf:3: Malformed line.`.
 - **Invalid usage and a missing file.** `winland check good.conf bad.conf` exits 2. `winland check missing.conf` exits 1.
 - **Files and errors.** `winland -j get files` reports the run's config path as `config`. `winland get errors` replies `no config errors`.
 - **Open a window.** The driver opens `WinlandVerify 1`. It becomes a Client and fills the work area, because `gaps_out` is 0.

@@ -8,7 +8,7 @@ Winland reads `%USERPROFILE%\.winland\winland.conf`, or the file `--config` name
 
 `winland check [file]` validates that exact file and its sources, or the normal default config when no file is given. It uses the same reader, keyboard layout and names as a load. It writes no defaults, changes no running configuration, launches no programs, and needs no Daemon, instance lock or elevation. A missing or unreadable file fails; an existing empty file succeeds unchanged. Standard output is empty on success. Each diagnostic goes to standard error as `file:line: message` where a line is available. Exit 0 means no diagnostics, 1 means a warning or read failure, and 2 means invalid usage. Supply at most one file path; a supplied blank path is invalid usage.
 
-Comments do not hide warnings. The copied markers `# hyprlang if`, `# hyprlang else` and `# hyprlang endif` warn that Winland does not evaluate conditions; the lines inside still apply.
+Comments do not hide warnings.
 
 The starter uses `$mod = Win` for its Windows-key binds, as in `bind = $mod+Q, "Close the window", close`, and gives each bind a description that `winland get binds` prints. Changing that variable can introduce conflicts with Windows shortcuts or other binds. The starter deliberately runs both `float` and `pin` on Win+O. Nonempty user configs are never rewritten.
 
@@ -16,7 +16,7 @@ A line that ends with a backslash is joined to the next line, so a value that en
 
 `source` reads another file in place of the line. A relative path is read from the folder of the file containing the `source` line, and a glob reads each file it matches in name order. A glob with no matches warns and its folder is still watched for new files. A file is named the same however its path is spelled: paths are compared without case, after a relative path is joined to the folder of the file containing it. Warnings from a sourced file name its full path. A `source` that names a file already being read, the config itself included, warns `Source '<path>' includes itself.` and is skipped. A glob passes over such a file without a warning, so `source = ./*.conf` in the config's own folder does not read the config a second time.
 
-An Option is one line, `name = value`, such as `gaps_in = 4`. A key inside a `name { }` block is read as `name:key`, which names no Option, so it warns.
+An Option is one line, `name = value`, such as `gaps_in = 4`. A line that is not blank or a comment needs a name, then `=`, or it warns `Malformed line.` A value is read as written apart from its `$name` variables.
 
 Variable expansion stops and warns if the expanded text would exceed 65,536 characters, or if expansion does not finish in 100 passes. That line is skipped and the rest still loads. Boolean options accept `1`, or text starting with `true`, `yes` or `on`, without case, as true. `0`, `false`, `no` and `off` are false.
 
@@ -155,8 +155,6 @@ In the scrolling Layout a resize keeps the camera where it is. A column's far ed
 Winland turns the turns of a high resolution wheel, which Windows sends in parts of a notch, into whole notches. It takes a mouse wheel turn that is not a whole multiple of 120. The touchpad is never taken. The first turn of a run, the same axis and direction with under half a second between turns, sends a notch at once, and after that one notch goes out for every 120 units the turns add up to. A wheel that sends whole notches is untouched.
 
 A wheel turn over the ring around a window, not inside it, is the border, where Windows would send the turn to whatever lies under the cursor, usually nothing. The lookup never waits for the core: when the core is busy the turn is left to Windows. Winland posts a wheel message to the window at the nearest point inside its tile without moving the cursor. A turn that runs a bind goes to the bind first. A turn over no window, such as a gap or the desktop, is left alone.
-
-A `device[name]` line, and every field inside a `device[name]` block, warns `Unsupported keyword` and is not applied. Nothing is stored for that device.
 
 `focus_follows_mouse` defaults to true. When enabled, moving the pointer focuses the Client under it. A move after the pointer has been still for half a second does not move focus yet. A context menu or other unmanaged window over a Client keeps the focus where it is. When false, pointer movement changes neither the focused Client nor the focused Monitor; a click or a key can still change focus. A new background Window leaves an existing focused Window alone; a Window already in the foreground can keep it.
 

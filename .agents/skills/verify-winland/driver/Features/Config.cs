@@ -16,7 +16,7 @@ public class Config
         var bad = Path.Combine(folder, "bad.conf");
         File.WriteAllText(good, "gaps_in = 3\nsource = ./extra.conf\n");
         File.WriteAllText(Path.Combine(folder, "extra.conf"), "gaps_out = 5\n");
-        File.WriteAllText(bad, "gaps_in = 3\ngaps_inn = 4\n");
+        File.WriteAllText(bad, "gaps_in = 3\ngaps_inn = 4\ngeneral {\n");
 
         var clean = run.Cli("check", good);
         Assert.AreEqual(0, clean.ExitCode);
@@ -25,6 +25,7 @@ public class Config
         Assert.AreEqual(1, warned.ExitCode);
         Assert.Contains("bad.conf:2:", warned.Error, StringComparison.Ordinal);
         Assert.Contains("Did you mean 'gaps_in'?", warned.Error, StringComparison.Ordinal);
+        Assert.Contains("bad.conf:3: Malformed line.", warned.Error, StringComparison.Ordinal);
         Assert.AreEqual(2, run.Cli("check", good, bad).ExitCode);
         Assert.AreEqual(1, run.Cli("check", Path.Combine(folder, "missing.conf")).ExitCode);
 
