@@ -2,14 +2,14 @@ using System.IO.Pipes;
 
 namespace Winland.Infrastructure.Tests;
 
-public class PipeServerTests
+public class CommandClientTests
 {
     [Fact]
     public void TheDefaultPipeNameBelongsToTheCurrentSession()
     {
         using var process = System.Diagnostics.Process.GetCurrentProcess();
 
-        Assert.Equal("winland-" + process.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), PipeServer.DefaultName);
+        Assert.Equal("winland-" + process.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture), CommandClient.DefaultName);
     }
 
     [Fact]
@@ -17,7 +17,7 @@ public class PipeServerTests
     {
         var missing = "winland-missing-" + Guid.NewGuid().ToString("N");
 
-        Assert.Null(PipeServer.ProcessId(missing, 200));
+        Assert.Null(CommandClient.ProcessId(missing, 200));
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public class PipeServerTests
         using var server = new NamedPipeServerStream(name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
         var connected = server.WaitForConnectionAsync();
 
-        var id = PipeServer.ProcessId(name);
+        var id = CommandClient.ProcessId(name);
 
         await connected.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal(Environment.ProcessId, id);

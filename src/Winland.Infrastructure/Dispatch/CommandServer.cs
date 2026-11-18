@@ -45,7 +45,7 @@ public sealed class CommandServer : IDisposable
         ArgumentNullException.ThrowIfNull(apply);
         _core = core;
         _apply = apply;
-        _pipeName = pipeName ?? PipeServer.DefaultName;
+        _pipeName = pipeName ?? CommandClient.DefaultName;
         _core.Noticed += OnNoticed;
     }
 

@@ -20,7 +20,7 @@ sealed class DaemonSession : IDaemonSession
     private static bool StopCurrent()
     {
         var pipe = Pipe();
-        if (PipeServer.ProcessId(pipe) is not int id)
+        if (CommandClient.ProcessId(pipe) is not int id)
             return false;
 
         Process daemon;

@@ -1,29 +1,46 @@
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO.Pipes;
+using System.Security.Principal;
 using System.Text;
+using Windows.Win32;
+using Windows.Win32.Security;
+using Windows.Win32.System.Threading;
 
 namespace Winland.Infrastructure;
 
 public static class CommandClient
 {
-    public static string Transact(string command, string? pipeName = null, int timeoutMs = 2000, Action<NamedPipeClientStream>? connected = null, int replyTimeoutMs = 10_000)
+    public static string DefaultName
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(command);
-        using var pipe = new NamedPipeClientStream(
-            ".",
-            pipeName ?? PipeServer.DefaultName,
-            PipeDirection.InOut,
-            PipeOptions.Asynchronous);
+        get
+        {
+            using var process = Process.GetCurrentProcess();
+            return CommandProtocol.PipeName + "-" + process.SessionId.ToString(CultureInfo.InvariantCulture);
+        }
+    }
 
+    public static int? ProcessId(string? pipeName = null, int timeoutMs = 2000)
+    {
+        using var pipe = new NamedPipeClientStream(".", pipeName ?? DefaultName, PipeDirection.InOut);
         try
         {
             pipe.Connect(timeoutMs);
         }
         catch (TimeoutException)
         {
-            throw new InvalidOperationException("Winland is not running.");
+            return null;
         }
 
-        PipeServer.VerifyServer(pipe);
+        return VerifyServer(pipe);
+    }
+
+    public static string Transact(string command, string? pipeName = null, int timeoutMs = 2000, Action<NamedPipeClientStream>? connected = null, int replyTimeoutMs = 10_000)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(command);
+        using var pipe = new NamedPipeClientStream(".", pipeName ?? DefaultName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        Connect(pipe, timeoutMs);
         connected?.Invoke(pipe);
         using var timeout = new CancellationTokenSource(replyTimeoutMs);
         try
@@ -45,22 +62,8 @@ public static class CommandClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
         ArgumentNullException.ThrowIfNull(onLine);
-        using var pipe = new NamedPipeClientStream(
-            ".",
-            pipeName ?? PipeServer.DefaultName,
-            PipeDirection.InOut,
-            PipeOptions.Asynchronous);
-
-        try
-        {
-            pipe.Connect(timeoutMs);
-        }
-        catch (TimeoutException)
-        {
-            throw new InvalidOperationException("Winland is not running.");
-        }
-
-        PipeServer.VerifyServer(pipe);
+        using var pipe = new NamedPipeClientStream(".", pipeName ?? DefaultName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        Connect(pipe, timeoutMs);
         using var registration = cancel.Register(static state =>
         {
             var stream = (NamedPipeClientStream)state!;
@@ -85,6 +88,45 @@ public static class CommandClient
         catch (Exception exception) when (cancel.IsCancellationRequested && exception is IOException or ObjectDisposedException or InvalidOperationException)
         {
         }
+    }
+
+    private static int Connect(NamedPipeClientStream pipe, int timeoutMs)
+    {
+        try
+        {
+            pipe.Connect(timeoutMs);
+        }
+        catch (TimeoutException)
+        {
+            throw new InvalidOperationException("Winland is not running.");
+        }
+
+        return VerifyServer(pipe);
+    }
+
+    private static int VerifyServer(NamedPipeClientStream pipe)
+    {
+        if (!PInvoke.GetNamedPipeServerProcessId(pipe.SafePipeHandle, out var id))
+            throw new Win32Exception();
+
+        using var server = Process.GetProcessById((int)id);
+        using var current = Process.GetCurrentProcess();
+        if (server.SessionId != current.SessionId)
+            throw new InvalidOperationException("The command pipe belongs to another session.");
+
+        using var process = PInvoke.OpenProcess_SafeHandle(PROCESS_ACCESS_RIGHTS.PROCESS_QUERY_LIMITED_INFORMATION, false, id);
+        if (process.IsInvalid || !PInvoke.OpenProcessToken(process, TOKEN_ACCESS_MASK.TOKEN_QUERY, out var token))
+            throw new Win32Exception();
+
+        using (token)
+        using (var owner = new WindowsIdentity(token.DangerousGetHandle()))
+        using (var identity = WindowsIdentity.GetCurrent())
+        {
+            if (owner.User != identity.User)
+                throw new InvalidOperationException("The command pipe belongs to another user.");
+        }
+
+        return (int)id;
     }
 
     private static string ReadReply(Stream stream, CancellationToken cancel)

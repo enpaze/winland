@@ -51,7 +51,7 @@ public class CommandFailureTests
         };
         server.Start();
 
-        Assert.Equal(Environment.ProcessId, PipeServer.ProcessId(name));
+        Assert.Equal(Environment.ProcessId, CommandClient.ProcessId(name));
         Assert.False(SpinWait.SpinUntil(() => Volatile.Read(ref followed) != 0, TimeSpan.FromMilliseconds(500)));
         Assert.Equal(0, Volatile.Read(ref applied));
         Assert.Equal("ok", CommandClient.Transact("dispatch workspace 2", name));
