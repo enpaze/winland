@@ -20,7 +20,6 @@ public sealed partial class WindowManager
     private readonly FocusState _focus;
     private readonly ClientProps _props = new();
     private List<StreamEvent>? _configEvents;
-    private List<StreamEvent>? _noted;
     private readonly HashSet<WindowId> _concealedMinimized = [];
 
     private Outcome? _applied;
@@ -208,7 +207,6 @@ public sealed partial class WindowManager
         {
             _configEvents = null;
             _extraEvents = null;
-            _noted = null;
             _activated = null;
             _readdressed = null;
             _crossMonitorWarp = null;

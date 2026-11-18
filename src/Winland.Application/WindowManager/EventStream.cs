@@ -44,12 +44,6 @@ public sealed partial class WindowManager
             _extraEvents = null;
         }
 
-        if (_noted is not null)
-        {
-            events.AddRange(_noted);
-            _noted = null;
-        }
-
         return events.Count == 0 ? outcome : outcome with { Events = events };
     }
 
