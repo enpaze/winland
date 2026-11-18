@@ -151,6 +151,7 @@ public class WorkspaceTests
         var core = Load("""
             bind = SUPER SHIFT, 3, move, 3 stay
             bind = SUPER, M, workspace, next
+            bind = SUPER, P, workspace, last
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -162,6 +163,10 @@ public class WorkspaceTests
         var cycled = Tap(core, "M");
         Assert.AreEqual(new WorkspaceId("3"), cycled.State.ActiveWorkspace);
         Assert.AreSequenceEqual([new WindowId(2)], cycled.Show);
+
+        var back = Tap(core, "P");
+        Assert.AreEqual(new WorkspaceId("1"), back.State.ActiveWorkspace);
+        Assert.AreSequenceEqual([new WindowId(1)], back.Show);
     }
 
     [TestMethod]

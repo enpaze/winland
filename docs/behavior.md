@@ -224,11 +224,11 @@ The `get monitors` reply lists the enabled Monitors, and `get monitors all` adds
 | `close` | none | Asks the Focused window to close |
 | `float` | `on`, `off` or none | Floats or tiles the Focused window, or toggles it |
 | `pin` | `on`, `off` or none | Pins or unpins a floating window, or toggles it |
-| `fullscreen` | `on`, `off` or none, then `default` | Toggles fullscreen |
-| `maximize` | `on`, `off` or none, then `default` | Toggles maximize |
+| `fullscreen` | `on`, `off` or none, and an optional last word `default` | Toggles fullscreen, or sets it with `on` or `off` |
+| `maximize` | `on`, `off` or none, and an optional last word `default` | Toggles maximize, or sets it with `on` or `off` |
 | `focus` | a direction or a window selector | Focuses a window |
 | `focus-monitor` | a Monitor | Focuses a Monitor |
-| `move` | a direction, a Workspace or `mon:<monitor>`, then `stay` | Moves the Focused window, or on a mouse button with no argument drags it |
+| `move` | a direction, or a Workspace or `mon:<monitor>` with an optional `stay` | Moves the Focused window, or on a mouse button with no argument drags it |
 | `swap` | a direction | Swaps the Focused window with its neighbour |
 | `resize` | two numbers, or `exact` and two numbers | Resizes the Focused window, or on a mouse button with no argument drags its size |
 | `workspace` | a Workspace | Shows a Workspace |

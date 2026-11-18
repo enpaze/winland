@@ -20,7 +20,7 @@ internal static class MonitorSelector
         if (text.Equals("prev", StringComparison.OrdinalIgnoreCase))
             return Step(monitors, current, -1);
 
-        if (int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id))
+        if (int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var id))
             return ById(monitors, id);
 
         if (text.StartsWith("desc:", StringComparison.OrdinalIgnoreCase))

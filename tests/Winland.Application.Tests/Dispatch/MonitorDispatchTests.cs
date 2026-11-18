@@ -214,8 +214,12 @@ public class MonitorDispatchTests
         var back = core.Handle(new Dispatch("focus-monitor", "prev"));
         Assert.AreEqual(new MonitorId(0), back.State.ActiveMonitor);
 
-        var removed = core.Handle(new Dispatch("focus-monitor", "current"));
-        Assert.AreEqual("error: monitor not found", removed.Error);
+        foreach (var removed in new[] { "current", "+1", "-1" })
+        {
+            var refused = core.Handle(new Dispatch("focus-monitor", removed));
+            Assert.AreEqual("error: monitor not found", refused.Error);
+            Assert.AreEqual(new MonitorId(0), refused.State.ActiveMonitor);
+        }
 
         var missing = core.Handle(new Dispatch("focus-monitor", "missing"));
         Assert.AreEqual("error: monitor not found", missing.Error);
