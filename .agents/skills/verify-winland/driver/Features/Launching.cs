@@ -20,7 +20,7 @@ public class Launching
         var formPid = Path.Combine(folder, "form.pid");
         var title = "WinlandLaunched " + Guid.NewGuid().ToString("N");
         var form = Convert.ToBase64String(Encoding.Unicode.GetBytes(
-            $"Set-Content -LiteralPath '{formPid}' -Value $PID; Add-Type -AssemblyName System.Windows.Forms; $form = New-Object System.Windows.Forms.Form; $form.Text = '{title}'; [void]$form.ShowDialog()"));
+            $"Set-Content -LiteralPath '{formPid}' -Value $PID; Add-Type -AssemblyName System.Windows.Forms; $form = New-Object System.Windows.Forms.Form; $form.Text = '{title}'; [System.Windows.Forms.Application]::Run($form)"));
         try
         {
             var config =
@@ -37,7 +37,8 @@ public class Launching
                 run.Holds("a launch line with an unsupported rule block does not launch", () => !File.Exists(once + ".block"), 500);
 
                 run.Until("the [workspace 3] exec-once line opened its window on workspace 3", () => Launched(run, title) is { } client
-                    && client.GetProperty("workspace").GetProperty("name").GetString() == "3", 30_000);
+                    && client.GetProperty("workspace").GetProperty("name").GetString() == "3", 30_000,
+                    () => $"form.pid {Read(formPid) ?? "missing"}.");
                 Assert.AreEqual(1, run.ActiveWorkspace(), "the [workspace 3] block switched away from workspace 1");
                 run.Say("the launched window is on workspace 3 and workspace 1 is still active");
                 CloseLaunched(formPid);

@@ -2,7 +2,7 @@ namespace Winland.Domain;
 
 internal static class LaunchParser
 {
-    internal const string UnsupportedBlock = "Unsupported rule block. Only [workspace N] is supported.";
+    private const string UnsupportedBlock = "Unsupported rule block. Only [workspace N] is supported.";
 
     internal static LaunchParse Parse(string arguments)
     {
@@ -27,7 +27,6 @@ internal static class LaunchParser
     internal static IReadOnlyList<Launch> FromConfig(ConfigDocument config, Func<long, WorkspaceId> workspace)
     {
         ArgumentNullException.ThrowIfNull(config);
-        ArgumentNullException.ThrowIfNull(workspace);
         var launches = new List<Launch>();
         foreach (var setting in config.Settings)
         {
