@@ -1,6 +1,5 @@
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.WindowsAndMessaging;
 
@@ -544,24 +543,10 @@ internal static class BorderHost
 
         private static bool IsTopmost(HWND hwnd) => (PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE) & TopmostStyle) != 0;
 
-        private static unsafe bool Visible(HWND target)
-        {
-            if (!PInvoke.IsWindowVisible(target) || PInvoke.IsIconic(target))
-                return false;
+        private static bool Visible(HWND target) =>
+            PInvoke.IsWindowVisible(target) && !PInvoke.IsIconic(target) && !WindowAdapter.IsCloaked(target);
 
-            uint cloaked = 0;
-            return PInvoke.DwmGetWindowAttribute(target, DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, &cloaked, sizeof(uint)).Failed || cloaked == 0;
-        }
-
-        private static unsafe bool TryFrame(HWND target, out Rectangle frame)
-        {
-            frame = default;
-            RECT rect;
-            if (PInvoke.DwmGetWindowAttribute(target, DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, &rect, (uint)sizeof(RECT)).Failed)
-                return false;
-
-            frame = new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
-            return frame.Width > 0 && frame.Height > 0;
-        }
+        private static bool TryFrame(HWND target, out Rectangle frame) =>
+            WindowRect.TryFrameBounds(target, out frame) && frame.Width > 0 && frame.Height > 0;
     }
 }

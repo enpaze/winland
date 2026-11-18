@@ -283,7 +283,4 @@ public sealed partial class WindowAdapter : IDisposable
         var result = PInvoke.DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, value);
         return result.Succeeded && System.Runtime.InteropServices.MemoryMarshal.Read<int>(value) != 0;
     }
-
-    private static Rectangle From(RECT rect) =>
-        new(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 }

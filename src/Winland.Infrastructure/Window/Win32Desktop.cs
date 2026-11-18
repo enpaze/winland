@@ -162,18 +162,15 @@ internal sealed class Win32Desktop : IDesktop
         }
     }
 
-    public unsafe bool TryFrame(WindowId window, out Rectangle outer, out Rectangle visible)
+    public bool TryFrame(WindowId window, out Rectangle outer, out Rectangle visible)
     {
         outer = default;
         visible = default;
         if (!TryWindow(window, out var hwnd) || PInvoke.IsIconic(hwnd) || !PInvoke.GetWindowRect(hwnd, out var rect))
             return false;
 
-        outer = From(rect);
-        Span<byte> value = stackalloc byte[sizeof(RECT)];
-        visible = PInvoke.DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, value).Succeeded
-            ? From(MemoryMarshal.Read<RECT>(value))
-            : outer;
+        outer = WindowRect.From(rect);
+        visible = WindowRect.TryFrameBounds(hwnd, out var bounds) ? bounds : outer;
         return true;
     }
 
@@ -254,21 +251,11 @@ internal sealed class Win32Desktop : IDesktop
         if (!PInvoke.GetWindowRect(Handle(window), out var rect))
             return false;
 
-        outer = From(rect);
+        outer = WindowRect.From(rect);
         return true;
     }
 
-    public unsafe bool TryVisible(WindowId window, out Rectangle visible)
-    {
-        visible = default;
-        Span<byte> value = stackalloc byte[sizeof(RECT)];
-        var result = PInvoke.DwmGetWindowAttribute(Handle(window), DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, value);
-        if (result.Failed)
-            return false;
-
-        visible = From(MemoryMarshal.Read<RECT>(value));
-        return true;
-    }
+    public bool TryVisible(WindowId window, out Rectangle visible) => WindowRect.TryFrameBounds(Handle(window), out visible);
 
     public unsafe void SetAttribute(WindowId window, int attribute, uint value) =>
         _ = PInvoke.DwmSetWindowAttribute(Handle(window), (DWMWINDOWATTRIBUTE)attribute, &value, sizeof(uint));
@@ -381,9 +368,6 @@ internal sealed class Win32Desktop : IDesktop
     };
 
     private static HWND Handle(WindowId window) => new((nint)window.Value);
-
-    private static Rectangle From(RECT rect) =>
-        new(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 }
 
 internal sealed class Win32StandInSurface(HWND window, HWND overlay, nint picture) : IStandInSurface

@@ -447,15 +447,15 @@ public sealed partial class WindowAdapter : IDisposable
         var identity = PackagedIdentity.Resolve(hwnd, className, ProcessFacts.Shared.For(owner).Exe);
         var topLevel = PInvoke.GetAncestor(hwnd, GET_ANCESTOR_FLAGS.GA_ROOT) == hwnd && (style & ChildStyle) == 0;
         Point? pointer = PInvoke.GetCursorPos(out var cursor) ? new Point(cursor.X, cursor.Y) : null;
-        var outer = PInvoke.GetWindowRect(hwnd, out var rect) ? From(rect) : default;
+        var outer = PInvoke.GetWindowRect(hwnd, out var rect) ? WindowRect.From(rect) : default;
         var bounds = TryVisible(window, out var visible) ? visible : outer;
-        var monitorRect = From(info.rcMonitor);
+        var monitorRect = WindowRect.From(info.rcMonitor);
         long processId = identity.ProcessId;
         var facts = ProcessFacts.Shared.For(identity.ProcessId);
         var (min, max) = inspecting ? default : LimitsOf(hwnd, window);
 
         var ownerWindow = PInvoke.GetWindow(hwnd, GET_WINDOW_CMD.GW_OWNER);
-        appeared = new WindowAppeared(window, From(info.rcWork))
+        appeared = new WindowAppeared(window, WindowRect.From(info.rcWork))
         {
             Foreground = PInvoke.GetForegroundWindow() == hwnd,
             Pointer = pointer,
