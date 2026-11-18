@@ -18,10 +18,7 @@ public sealed record Client(
     bool Pinned = false,
     bool LayoutFullscreen = false,
     bool AllowedOverFullscreen = true,
-    bool BelowFullscreen = false)
-{
-    public FullscreenMode FullscreenClient => Fullscreen;
-}
+    bool BelowFullscreen = false);
 
 public readonly record struct WindowId(long Value)
 {

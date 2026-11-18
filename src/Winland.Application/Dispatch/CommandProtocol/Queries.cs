@@ -127,7 +127,7 @@ public static partial class CommandProtocol
             client.ProcessId,
             client.Pinned,
             (int)client.Fullscreen,
-            (int)client.FullscreenClient,
+            (int)client.Fullscreen,
             FullscreenHandlerOf(state, client),
             client.AllowedOverFullscreen,
             GroupedOf(state, client.Window),
@@ -383,7 +383,7 @@ public static partial class CommandProtocol
         if (client.LayoutFullscreen)
             return "scrolling";
 
-        if (client.Floating || client.Fullscreen != FullscreenMode.None || client.FullscreenClient != FullscreenMode.None)
+        if (client.Floating || client.Fullscreen != FullscreenMode.None)
             return "default";
 
         foreach (var workspace in state.Workspaces)
