@@ -286,7 +286,7 @@ public sealed partial class WindowManager
     {
         foreach (var special in new[] { true, false })
         {
-            var targets = Targets(point, special);
+            var targets = FocusTargets(point, special);
             targets.RemoveAll(target => target.Window == except);
             if (PointerFocus.At(targets, point) is WindowId found)
                 return found;
@@ -337,7 +337,7 @@ public sealed partial class WindowManager
         foreach (var special in new[] { true, false })
         {
             var grown = new List<PointerFocus.Target>();
-            foreach (var target in Targets(at, special))
+            foreach (var target in FocusTargets(at, special))
             {
                 var border = WorkspaceContaining(target.Window)?.Options.BorderFor(new ClientId(target.Window.Value)) ?? 0;
                 var bounds = target.Bounds;

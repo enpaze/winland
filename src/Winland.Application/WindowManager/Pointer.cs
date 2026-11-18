@@ -207,11 +207,11 @@ public sealed partial class WindowManager
         if (point is not Point at)
             return null;
 
-        return PointerFocus.At(Targets(at, special: true), at)
-            ?? PointerFocus.At(Targets(at, special: false), at);
+        return PointerFocus.At(FocusTargets(at, special: true), at)
+            ?? PointerFocus.At(FocusTargets(at, special: false), at);
     }
 
-    private List<PointerFocus.Target> Targets(Point point, bool special)
+    private List<PointerFocus.Target> FocusTargets(Point point, bool special)
     {
         LiveMonitor? screen = null;
         if (_monitors.Count > 0)
