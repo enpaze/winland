@@ -316,8 +316,8 @@ public class MonitorDispatchTests
     }
 
     [TestMethod]
-    [DataRow("bind = SUPER, K, exec, notepad\nbind = SUPER, K, focus, r\n")]
-    [DataRow("bind = SUPER, K, focus, r\nbind = SUPER, K, exec, notepad\n")]
+    [DataRow("bind = Win+K, exec notepad\nbind = Win+K, focus r\n")]
+    [DataRow("bind = Win+K, focus r\nbind = Win+K, exec notepad\n")]
     public void ABindThatMovesFocusMovesTheCursorWhateverOtherDispatchersItRuns(string config)
     {
         var core = TwoMonitors(config);

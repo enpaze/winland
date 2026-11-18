@@ -42,7 +42,7 @@ public class CommandTests
     public void BoundExecRuns()
     {
         var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = SUPER, E, exec, notepad")));
+        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = Win+E, exec notepad")));
         core.Handle(new KeyPressed("Super_L"));
 
         var outcome = core.Handle(new KeyPressed("E"));
@@ -339,7 +339,7 @@ public class CommandTests
     public void BoundWorkspaceSwitches()
     {
         var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = SUPER, 2, workspace, 2")));
+        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = Win+2, workspace 2")));
         core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 100, 100)));
         core.Handle(new KeyPressed("Super_L"));
 

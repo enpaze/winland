@@ -13,7 +13,7 @@ public sealed class CheckCommandTests : IDisposable
     public void AConfigAndItsSourcesWithNoWarningsPass()
     {
         var path = Write("winland.conf", "source = binds.conf\ngeneral:gaps_in = 4\n");
-        Write("binds.conf", "bind = SUPER, Q, close\n");
+        Write("binds.conf", "bind = Win+Q, close\n");
 
         var (exit, error) = Check(path);
 
@@ -31,7 +31,7 @@ public sealed class CheckCommandTests : IDisposable
             ghostkeyword = 1
             exec-once = cmd.exe /c type nul > "{marker}"
             """);
-        var binds = Write("binds.conf", "bind = SUPER, Q, closs\nbind = SUPER, W, close\n");
+        var binds = Write("binds.conf", "bind = Win+Q, closs\nbind = Win+W, close\n");
 
         var (exit, error) = Check(path);
 
@@ -57,7 +57,7 @@ public sealed class CheckCommandTests : IDisposable
     public void ASourceWindowsCannotNameWarnsOnItsLineAndTheRestIsStillRead()
     {
         Directory.CreateDirectory(Path.Combine(_root, "conf"));
-        var binds = Write(Path.Combine("conf", "binds.conf"), "bind = SUPER, Q, closs\n");
+        var binds = Write(Path.Combine("conf", "binds.conf"), "bind = Win+Q, closs\n");
         var path = Write("winland.conf", $"""
             source = bad{'\0'}name.conf
             source = bad{'\0'}folder/*.conf

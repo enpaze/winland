@@ -53,7 +53,7 @@ public class ActionVocabularyTests
 
         Assert.AreEqual($"error: {action} is a drag; bind it to a mouse button", desk.Dispatch(action));
 
-        var document = ConfigParser.Parse($"bind = SUPER, R, {action}\nbind = SUPER, mouse:left, {action}\n");
+        var document = ConfigParser.Parse($"bind = Win+R, {action}\nbind = Win+mouse:left, {action}\n");
         Assert.AreEqual($"{action} is a drag; bind it to a mouse button.", Assert.ContainsSingle(document.Warnings).Message);
         Assert.AreEqual("mouse:left", Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds)).Key);
     }

@@ -24,7 +24,7 @@ To install by hand, download `Winland-win-x64.zip` from [Releases](https://githu
 
 ## Hotkeys
 
-The starter uses `$mainMod = SUPER` and describes each bind. Run `winland get binds` to list the hotkeys as config lines with those descriptions. Edit the config through the tray menu; save to reload. Changing the modifier can create shortcut conflicts.
+The starter uses `$mod = Win` and describes each bind. Run `winland get binds` to list the hotkeys as config lines with those descriptions. Edit the config through the tray menu; save to reload. Changing the modifier can create shortcut conflicts.
 
 ### Windows
 
@@ -52,7 +52,7 @@ The starter uses `$mainMod = SUPER` and describes each bind. Run `winland get bi
 | --- | --- |
 | Win+1 … Win+0 | Switch to workspace 1 to 10 |
 | Win+Shift+1 … Win+Shift+0 | Move the window to a workspace and follow it |
-| Win+Shift+Alt+1 … Win+Shift+Alt+0 | Move the window to a workspace and stay |
+| Win+Alt+Shift+1 … Win+Alt+Shift+0 | Move the window to a workspace and stay |
 | Win+Tab / Win+Shift+Tab | Next / previous workspace |
 | Win+scroll wheel | Next / previous workspace |
 | Win+Ctrl+Tab | Back to the last workspace |
@@ -67,8 +67,8 @@ The backtick key uses its US keyboard position on other layouts too.
 | Keys | Does |
 | --- | --- |
 | Ctrl+Alt+Shift+Tab | Focus the previous monitor |
-| Win+Shift+Ctrl+Arrows | Move the window to another monitor |
-| Win+Shift+Alt+Arrows | Move the whole workspace to another monitor |
+| Win+Ctrl+Shift+Arrows | Move the window to another monitor |
+| Win+Alt+Shift+Arrows | Move the whole workspace to another monitor |
 
 ### Groups (tabbed windows)
 

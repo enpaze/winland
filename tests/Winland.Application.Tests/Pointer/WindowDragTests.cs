@@ -4,8 +4,8 @@ namespace Winland.Application.Tests;
 public class WindowDragTests
 {
     private const string DragOnLeftButton = """
-        unbind = SUPER, mouse:left
-        bind = , mouse:left, move
+        unbind = Win+mouse:left
+        bind = mouse:left, move
         """;
 
     [TestMethod]

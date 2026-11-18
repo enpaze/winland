@@ -13,7 +13,7 @@ public class BindLayoutTests
     [DataRow("1", "ampersand", 10)]
     public void BindsAlsoMatchThePhysicalKeyInTheConfigLayout(string bound, string activeName, int code)
     {
-        var table = BindTable.From(ConfigParser.Parse($"bind = SUPER, {bound}, close\n", layout: ConfigLayout));
+        var table = BindTable.From(ConfigParser.Parse($"bind = Win+{bound}, close\n", layout: ConfigLayout));
         var session = new BindSession();
         session.Decide(table, new KeyPressed("Super_L"));
 

@@ -43,7 +43,7 @@ public class ControlRequestTests
     {
         const string description = "hyprctl binds JSON regression";
         var desk = new TestDesktop();
-        desk.Set("bindd", $"SUPER, F12, {description}, exec, true");
+        desk.Set("bind", $"Win+F12, \"{description}\", exec true");
 
         var binds = Json(desk.Send("j/get binds")).EnumerateArray().ToArray();
         Assert.ContainsSingle(bind => bind.GetProperty("key").GetString() == "F12", binds);
@@ -52,9 +52,9 @@ public class ControlRequestTests
             && bind.GetProperty("hasDescription").GetBoolean()
             && bind.GetProperty("description").GetString() == description, binds);
 
-        Assert.Contains($"bindd = SUPER, F12, {description}, exec, true", desk.Send("get binds").Split('\n'));
+        Assert.Contains($"bind = Win+F12, \"{description}\", exec true", desk.Send("get binds").Split('\n'));
 
-        desk.Set("unbind", "SUPER, F12");
+        desk.Set("unbind", "Win+F12");
     }
 
     private static void ExpectConfigured(TestDesktop desk)

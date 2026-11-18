@@ -5,15 +5,14 @@ public static class BindText
     public static string Line(Bind bind)
     {
         ArgumentNullException.ThrowIfNull(bind);
-        var fields = new List<string> { ModifierNames.Format(bind.Modifiers), bind.Key };
+        var line = "bind = " + Chord.Format(bind.Modifiers, bind.Key) + ", ";
         if (bind.Description is not null)
-            fields.Add(bind.Description);
+            line += "\"" + bind.Description + "\", ";
 
-        fields.Add(bind.Dispatcher);
+        line += bind.Dispatcher;
         if (bind.Arguments.Length > 0)
-            fields.Add(bind.Arguments);
+            line += " " + bind.Arguments;
 
-        var keyword = bind.Description is null ? "bind" : "bindd";
-        return keyword + " = " + string.Join(", ", fields).Replace("#", "##", StringComparison.Ordinal);
+        return line.Replace("#", "##", StringComparison.Ordinal);
     }
 }

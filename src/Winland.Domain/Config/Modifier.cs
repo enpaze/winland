@@ -4,16 +4,11 @@ namespace Winland.Domain;
 public enum Modifier
 {
     None = 0,
-    Super = 1 << 0,
+    Win = 1 << 0,
     Alt = 1 << 1,
     Ctrl = 1 << 2,
     Shift = 1 << 3,
-
-    Caps = 1 << 4,
-
-    Mod2 = 1 << 5,
-
-    Mod3 = 1 << 6,
-
-    Mod5 = 1 << 7,
+    CapsLock = 1 << 4,
+    NumLock = 1 << 5,
+    AltGr = 1 << 6,
 }

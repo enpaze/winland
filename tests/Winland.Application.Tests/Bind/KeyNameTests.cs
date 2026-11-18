@@ -24,7 +24,7 @@ public class KeyNameTests
     [DataRow("u+00e4")]
     public void ConfigNamesForAUmlautResolveToTheLayoutSymbol(string written)
     {
-        var document = ConfigParser.Parse($"bind = SUPER, {written}, close\n", layout: German());
+        var document = ConfigParser.Parse($"bind = Win+{written}, close\n", layout: German());
 
         var bind = Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds));
         Assert.AreEqual("adiaeresis", bind.Key);
@@ -134,7 +134,7 @@ public class KeyNameTests
     public void AltGrChordDoesNotRunACtrlAltBind()
     {
         var german = German();
-        var core = Load("bind = CTRL ALT, Q, close\n", german);
+        var core = Load("bind = Ctrl+Alt+Q, close\n", german);
         Appear(core, 1, new Rectangle(0, 0, 800, 600));
 
         Press(core, KeyNames.Name(0xA2, 0x21D, false, german));
@@ -146,7 +146,7 @@ public class KeyNameTests
     [TestMethod]
     public void RealCtrlAltStillRunsACtrlAltBind()
     {
-        var core = Load("bind = CTRL ALT, Q, close\n", KeyLayout.UnitedStates);
+        var core = Load("bind = Ctrl+Alt+Q, close\n", KeyLayout.UnitedStates);
         Appear(core, 1, new Rectangle(0, 0, 800, 600));
         Press(core, "Control_L");
         Press(core, "Alt_L");
@@ -220,7 +220,7 @@ public class KeyNameTests
     [TestMethod]
     public void CodeBindUsesTheXkbNumber()
     {
-        var core = Load("bind = SUPER, code:36, close\n", KeyLayout.UnitedStates);
+        var core = Load("bind = Win+code:36, close\n", KeyLayout.UnitedStates);
         Appear(core, 1, new Rectangle(0, 0, 800, 600));
         Press(core, "Super_L");
 
@@ -232,7 +232,7 @@ public class KeyNameTests
     [TestMethod]
     public void ABareNumberAboveNineBindsThatKeycode()
     {
-        var core = Load("bind = SUPER, 36, close\n", KeyLayout.UnitedStates);
+        var core = Load("bind = Win+36, close\n", KeyLayout.UnitedStates);
         Appear(core, 1, new Rectangle(0, 0, 800, 600));
         Press(core, "Super_L");
 
@@ -264,7 +264,7 @@ public class KeyNameTests
         Assert.AreEqual("mouse:left", KeyNames.Resolve("mouse:left", german));
         Assert.AreEqual("catchall", KeyNames.Resolve("catchall", german));
 
-        var document = ConfigParser.Parse("bind = SUPER, mouse:left, move\n", layout: german);
+        var document = ConfigParser.Parse("bind = Win+mouse:left, move\n", layout: german);
         var bind = Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds));
         Assert.AreEqual("mouse:left", bind.Key);
     }
@@ -277,7 +277,7 @@ public class KeyNameTests
     [DataRow("Mouse:X2", "mouse:x2")]
     public void AMouseButtonNameIsKeptInLowerCase(string written, string button)
     {
-        var document = ConfigParser.Parse($"bind = SUPER, {written}, move\n", layout: German());
+        var document = ConfigParser.Parse($"bind = Win+{written}, move\n", layout: German());
 
         Assert.IsEmpty(document.Warnings);
         var bind = Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds));
@@ -290,7 +290,7 @@ public class KeyNameTests
     [DataRow("mouse:276")]
     public void AnUnknownMouseButtonNameIsAnUnknownKey(string written)
     {
-        var document = ConfigParser.Parse($"bind = SUPER, {written}, move\nunbind = SUPER, {written}\n");
+        var document = ConfigParser.Parse($"bind = Win+{written}, move\nunbind = Win+{written}\n");
 
         Assert.IsEmpty(document.Binds);
         Assert.HasCount(2, document.Warnings);
@@ -308,7 +308,7 @@ public class KeyNameTests
     public void GermanUmlautBindMatchesTheNameTheLayoutProduces()
     {
         var german = German();
-        var core = Load("bind = SUPER, odiaeresis, close\n", german);
+        var core = Load("bind = Win+odiaeresis, close\n", german);
         Appear(core, 1, new Rectangle(0, 0, 800, 600));
         Press(core, "Super_L");
 

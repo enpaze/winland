@@ -218,7 +218,7 @@ public class ConfigTests
     [TestMethod]
     public void LongerVariableNamesExpandBeforeShorterOnes()
     {
-        var text = "$main = SUPER\n$mainMod = ALT\nbind = $mainMod, Q, close\n";
+        var text = "$m = Win\n$mod = Alt\nbind = $mod+Q, close\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -384,7 +384,7 @@ public class ConfigTests
     [TestMethod]
     public void MistypedDispatcherWarnsWithTheOneDispatcherItIsCloseTo()
     {
-        var document = ConfigParser.Parse("bind = SUPER, Q, closs\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("bind = Win+Q, closs\n", dispatchers: WindowManager.DispatcherNames);
 
         Assert.AreEqual(
             new ConfigWarning(1, "Unknown dispatcher 'closs'. Did you mean 'close'?"),
@@ -424,7 +424,7 @@ public class ConfigTests
     [TestMethod]
     public void ANameCloseToTwoNamesGetsNoHint()
     {
-        var document = ConfigParser.Parse("general:gaps_ou = 5\nbind = SUPER, Q, ex\nwindowrule = pize, class:kitty\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("general:gaps_ou = 5\nbind = Win+Q, ex\nwindowrule = pize, class:kitty\n", dispatchers: WindowManager.DispatcherNames);
 
         Assert.AreSequenceEqual(
             new[]
@@ -439,7 +439,7 @@ public class ConfigTests
     [TestMethod]
     public void ANameFarFromEveryNameGetsNoHint()
     {
-        var document = ConfigParser.Parse("ghostkeyword = path\nbind = SUPER, Q, teleportwindow\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("ghostkeyword = path\nbind = Win+Q, teleportwindow\n", dispatchers: WindowManager.DispatcherNames);
 
         Assert.AreSequenceEqual(
             new[]
@@ -532,24 +532,25 @@ public class ConfigTests
     }
 
     [TestMethod]
-    public void EmptyDispatcherParsesWithoutAWarning()
+    public void ABindWithoutAnActionWarnsAndIsSkipped()
     {
-        var document = ConfigParser.Parse("bind = SUPER, Q,\nbindd = , Super_L, Menu, \n");
+        var document = ConfigParser.Parse("bind = Win+Q\nbind = Super_L, \"Menu\"\nbind = Win+W,\n");
 
-        Assert.IsEmpty(document.Warnings);
         Assert.AreSequenceEqual(
-            new BindDirective[]
+            new[]
             {
-                new Bind(Modifier.Super, "Q", "", "", null),
-                new Bind(Modifier.None, "Super_L", "", "", "Menu"),
+                new ConfigWarning(1, "Bind is missing an action."),
+                new ConfigWarning(2, "Bind is missing an action."),
+                new ConfigWarning(3, "Bind is missing an action."),
             },
-            document.Binds);
+            document.Warnings);
+        Assert.IsEmpty(document.Binds);
     }
 
     [TestMethod]
     public void BindIsParsedIntoModifiersKeyAndDispatcher()
     {
-        var text = "$mainMod = SUPER\nbind = $mainMod, Q, close\nbind = WIN SHIFT, code:28, exec, notepad --title hello\n";
+        var text = "$mod = Win\nbind = $mod+Q, close\nbind = Win+Shift+code:28, exec notepad --title hello\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -557,8 +558,8 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "Q", "close", "", null),
-                new Bind(Modifier.Super | Modifier.Shift, "code:28", "exec", "notepad --title hello", null),
+                new Bind(Modifier.Win, "Q", "close", "", null),
+                new Bind(Modifier.Win | Modifier.Shift, "code:28", "exec", "notepad --title hello", null),
             },
             document.Binds);
     }
@@ -567,8 +568,8 @@ public class ConfigTests
     public void AMouseKeyBindAndADescriptionAreParsed()
     {
         var text =
-            "bind = SUPER, mouse:left, move\n" +
-            "bindd = SUPER, Return, Open a terminal, exec, kitty\n";
+            "bind = Win+mouse:left, move\n" +
+            "bind = Win+Return, \"Open a terminal\", exec kitty\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -576,79 +577,74 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "mouse:left", "move", "", null),
-                new Bind(Modifier.Super, "Return", "exec", "kitty", "Open a terminal"),
+                new Bind(Modifier.Win, "mouse:left", "move", "", null),
+                new Bind(Modifier.Win, "Return", "exec", "kitty", "Open a terminal"),
             },
             document.Binds);
     }
 
     [TestMethod]
-    [DataRow("SUPER", Modifier.Super)]
-    [DataRow("WIN", Modifier.Super)]
-    [DataRow("LOGO", Modifier.Super)]
-    [DataRow("MOD4", Modifier.Super)]
-    [DataRow("ALT", Modifier.Alt)]
-    [DataRow("MOD1", Modifier.Alt)]
-    [DataRow("CTRL", Modifier.Ctrl)]
-    [DataRow("CONTROL", Modifier.Ctrl)]
-    [DataRow("SHIFT", Modifier.Shift)]
-    [DataRow("META", Modifier.Super)]
-    [DataRow("super", Modifier.Super)]
-    [DataRow("SUPER_SHIFT", Modifier.Super | Modifier.Shift)]
-    [DataRow("SUPER+SHIFT", Modifier.Super | Modifier.Shift)]
-    [DataRow("SUPER + SHIFT", Modifier.Super | Modifier.Shift)]
-    [DataRow("SUPERSHIFT", Modifier.Super | Modifier.Shift)]
-    [DataRow("Ctrl_Alt", Modifier.Ctrl | Modifier.Alt)]
-    [DataRow("SUPER SHIFT CTRL ALT", Modifier.Super | Modifier.Shift | Modifier.Ctrl | Modifier.Alt)]
+    [DataRow("Win", Modifier.Win)]
+    [DataRow("win", Modifier.Win)]
+    [DataRow("WIN", Modifier.Win)]
+    [DataRow("Alt", Modifier.Alt)]
+    [DataRow("Ctrl", Modifier.Ctrl)]
+    [DataRow("ctrl", Modifier.Ctrl)]
+    [DataRow("Shift", Modifier.Shift)]
+    [DataRow("Win+Shift", Modifier.Win | Modifier.Shift)]
+    [DataRow("Win + Shift", Modifier.Win | Modifier.Shift)]
+    [DataRow("Shift+Win", Modifier.Win | Modifier.Shift)]
+    [DataRow("Win+Shift+Ctrl+Alt", Modifier.Win | Modifier.Shift | Modifier.Ctrl | Modifier.Alt)]
     public void ModifierNamesAreParsed(string name, Modifier expected)
     {
-        var document = ConfigParser.Parse($"bind = {name}, Q, close\n");
+        var document = ConfigParser.Parse($"bind = {name}+Q, close\n");
 
+        Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(
             new Bind(expected, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
     [TestMethod]
-    public void AModifierVariableJoinedWithAnUnderscoreIsParsed()
+    [DataRow("SUPER")]
+    [DataRow("CONTROL")]
+    [DataRow("MOD4")]
+    [DataRow("CAPS")]
+    [DataRow("Win Shift")]
+    public void AModifierOtherThanWinShiftCtrlOrAltWarnsAndTheBindIsSkipped(string name)
     {
-        var document = ConfigParser.Parse("$mainMod = SUPER\nbind = $mainMod_SHIFT, Q, close\n");
+        var document = ConfigParser.Parse($"bind = {name}+Q, close\n");
+
+        Assert.AreEqual(
+            $"Unknown modifier '{name}' in chord '{name}+Q'. The modifiers are Win, Shift, Ctrl and Alt.",
+            Assert.ContainsSingle(document.Warnings).Message);
+        Assert.IsEmpty(document.Binds);
+    }
+
+    [TestMethod]
+    public void AModifierVariableJoinedWithAPlusIsParsed()
+    {
+        var document = ConfigParser.Parse("$mod = Win\nbind = $mod+Shift+Q, close\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Super | Modifier.Shift, "Q", "close", "", null),
+            new Bind(Modifier.Win | Modifier.Shift, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
     [TestMethod]
-    [DataRow("CAPS", Modifier.Caps, 2)]
-    [DataRow("SUPER_MOD5", Modifier.Super | Modifier.Mod5, 64 | 128)]
-    [DataRow("MOD2", Modifier.Mod2, 16)]
-    [DataRow("MOD3 SHIFT", Modifier.Mod3 | Modifier.Shift, 32 | 1)]
-    public void TheLockAndLevelModifiersAreRead(string name, Modifier modifiers, int mask)
-    {
-        var document = ConfigParser.Parse($"bind = {name}, Q, close\n");
-
-        Assert.IsEmpty(document.Warnings);
-        Assert.AreEqual(modifiers, Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds)).Modifiers);
-        Assert.AreEqual(mask, CommandProtocol.ModMask(modifiers));
-    }
-
-    [TestMethod]
-    public void ABindOnCapsFiresWhileCapsLockIsHeldAndAnotherDoesNot()
+    public void HoldingCapsLockKeepsAModifierBindFromFiringAndNumLockIsAKey()
     {
         var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("bind = CAPS, Q, exec, held\nbind = SUPER, Q, exec, super\nbind = , Num_Lock, exec, lock\n")));
+        core.Handle(new Configure(ConfigParser.Parse("bind = Win+Q, exec super\nbind = Num_Lock, exec lock\n")));
 
-        core.Handle(new KeyPressed("Caps_Lock"));
-        var held = core.Handle(new KeyPressed("q"));
-        core.Handle(new KeyReleased("q"));
-        core.Handle(new KeyReleased("Caps_Lock"));
         core.Handle(new KeyPressed("Super_L"));
+        var alone = core.Handle(new KeyPressed("q"));
+        core.Handle(new KeyReleased("q"));
         core.Handle(new KeyPressed("Caps_Lock"));
         var both = core.Handle(new KeyPressed("q"));
 
-        Assert.AreSequenceEqual(["held"], held.Launches.Select(launch => launch.CommandLine));
+        Assert.AreSequenceEqual(["super"], alone.Launches.Select(launch => launch.CommandLine));
         Assert.IsEmpty(both.Launches);
         core.Handle(new KeyReleased("q"));
         core.Handle(new KeyReleased("Caps_Lock"));
@@ -660,25 +656,29 @@ public class ConfigTests
     public void InvalidBindIsSkippedAndALaterBindLoads()
     {
         var text =
-            "bindz = SUPER, Q, close\n" +
-            "bind = SUPER, Q\n" +
-            "bindzz = SUPER, Q, close\n" +
-            "bind = FOO, Q, close\n" +
-            "bind = SUPER, Q, close\n";
+            "bindd = Win+Q, \"Close\", close\n" +
+            "bind = Win+Q\n" +
+            "bind = SUPER, Q, close\n" +
+            "bind = FOO+Q, close\n" +
+            "bind = Win+Q, \"Close, close\n" +
+            "bind = Win+, close\n" +
+            "bind = Win+Q, close\n";
 
         var document = ConfigParser.Parse(text);
 
         Assert.AreSequenceEqual(
             new[]
             {
-                new ConfigWarning(1, "Bind flag 'z' is not supported."),
-                new ConfigWarning(2, "Bind has too few arguments."),
-                new ConfigWarning(3, "Bind flag 'z' is not supported."),
-                new ConfigWarning(4, "Invalid modifier 'FOO'."),
+                new ConfigWarning(1, "Unsupported keyword 'bindd'. Did you mean 'bind'?"),
+                new ConfigWarning(2, "Bind is missing an action."),
+                new ConfigWarning(3, "Unknown key 'SUPER'."),
+                new ConfigWarning(4, "Unknown modifier 'FOO' in chord 'FOO+Q'. The modifiers are Win, Shift, Ctrl and Alt."),
+                new ConfigWarning(5, "Bind description is missing its closing quote."),
+                new ConfigWarning(6, "Chord 'Win+' is missing a key."),
             },
             document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Super, "Q", "close", "", null),
+            new Bind(Modifier.Win, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
@@ -686,9 +686,9 @@ public class ConfigTests
     public void UnbindIsParsedInOrder()
     {
         var text =
-            "bind = SUPER, Q, close\n" +
-            "unbind = SUPER, Q\n" +
-            "bind = SUPER, R, close\n" +
+            "bind = Win+Q, close\n" +
+            "unbind = Win+Q\n" +
+            "bind = Win+R, close\n" +
             "unbind = all\n";
 
         var document = ConfigParser.Parse(text);
@@ -697,9 +697,9 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "Q", "close", "", null),
-                new Unbind(Modifier.Super, "Q"),
-                new Bind(Modifier.Super, "R", "close", "", null),
+                new Bind(Modifier.Win, "Q", "close", "", null),
+                new Unbind(Modifier.Win, "Q"),
+                new Bind(Modifier.Win, "R", "close", "", null),
                 new UnbindAll(),
             },
             document.Binds);

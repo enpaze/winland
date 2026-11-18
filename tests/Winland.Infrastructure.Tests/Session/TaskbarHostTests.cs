@@ -29,14 +29,14 @@ public class TaskbarHostTests
     [TestMethod]
     public void AKeyBoundToReloadHidesTheTaskbarTheConfigNowHides()
     {
-        using var files = new ConfigDir("bind = SUPER, R, reload\n");
+        using var files = new ConfigDir("bind = Win+R, reload\n");
         var bars = new RecordingTaskbar();
         var core = Core(files);
         using var host = new SessionLoop(core, bars);
         Assert.AreEqual("ok", host.Reload().Text);
         Assert.AreEqual(0, bars.Hides);
 
-        files.Write("general:hide_taskbar = true\nbind = SUPER, R, reload\n");
+        files.Write("general:hide_taskbar = true\nbind = Win+R, reload\n");
         core.Handle(new KeyPressed("Super_L"));
         core.Handle(new KeyPressed("R"));
 

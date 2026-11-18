@@ -39,7 +39,7 @@ public class ReloadTests
             general:gaps_in = 0
             general:gaps_out = 0
             general:border_size = 0
-            bind = SUPER, Q, close
+            bind = Win+Q, close
             """)));
         core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
@@ -52,7 +52,7 @@ public class ReloadTests
             general:gaps_in = 0
             general:gaps_out = 10
             general:border_size = 0
-            bind = SUPER, W, close
+            bind = Win+W, close
             windowrule = float, class:kitty
             """)));
 
@@ -133,7 +133,7 @@ public class ReloadTests
             general:gaps_in = 0
             general:gaps_out = 0
             general:border_size = 0
-            bind = SUPER, Q, close
+            bind = Win+Q, close
             """)));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.ReadConfig = () => new ConfigRead(
@@ -222,13 +222,13 @@ public class ReloadTests
     public void AKeyBoundToReloadAppliesTheDocumentAndNotifiesOnce()
     {
         var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("bind = SUPER, R, reload")));
+        core.Handle(new Configure(ConfigParser.Parse("bind = Win+R, reload")));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         var document = ConfigParser.Parse("""
             general:gaps_in = 0
             general:gaps_out = 10
             general:border_size = 0
-            bind = SUPER, R, reload
+            bind = Win+R, reload
             """);
         core.ReadConfig = () => new ConfigRead(document);
         var seen = new List<ConfigDocument>();
