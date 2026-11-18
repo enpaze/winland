@@ -48,6 +48,37 @@ public class WindowEventTests
     }
 
     [TestMethod]
+    public void ANeighbourStillBusyDuringALiveResizeCatchesUpToTheNewestStep()
+    {
+        using var windows = new TestWindows(reducedMotion: true);
+        var left = windows.Open(0x7031);
+        var right = windows.Open(0x7032);
+        var gap = Gap(windows, left, right);
+        var start = windows.Desktop[right.Value].Visible;
+        var middle = start.Y + (start.Height / 2);
+        windows.Apply(windows.Core.Handle(new WindowSizeStarted(right, new Point(start.X, middle), start)));
+        windows.Desktop[left.Value].Holding = true;
+
+        for (var step = 1; step <= 3; step++)
+        {
+            var sized = start with { X = start.X + (step * 40), Width = start.Width - (step * 40) };
+            windows.Desktop[right.Value].Visible = sized;
+            windows.Apply(windows.Core.Handle(new WindowSizing(right, new Point(sized.X, middle), sized)));
+        }
+
+        while (windows.Desktop.Land(left.Value))
+            windows.Adapter.Notice(Events.EVENT_OBJECT_LOCATIONCHANGE, (nint)left.Value);
+
+        Assert.AreEqual(gap, Gap(windows, left, right), string.Join(" | ", windows.Desktop.Calls));
+    }
+
+    private static int Gap(TestWindows windows, WindowId left, WindowId right)
+    {
+        var before = windows.Desktop[left.Value].Visible;
+        return windows.Desktop[right.Value].Visible.X - (before.X + before.Width);
+    }
+
+    [TestMethod]
     public void TheObjectEventHooksHoldTheEventsTheAdapterReadsAndNoOthers()
     {
         uint[] read =
