@@ -1,6 +1,6 @@
 namespace Winland.Install.Tests;
 
-public sealed class FileSettingsTextTests : IDisposable
+public sealed class TextFileTests : IDisposable
 {
     private readonly string directory = Path.Combine(Path.GetTempPath(), "winland-settings-" + Guid.NewGuid().ToString("N"));
 
@@ -8,7 +8,7 @@ public sealed class FileSettingsTextTests : IDisposable
     public void WriteCreatesTheFolderAndDeleteRemovesOnlyTheFile()
     {
         var path = Path.Combine(directory, ".winland", "windows-settings.json");
-        var file = new FileSettingsText(path);
+        var file = new TextFile(path);
 
         Assert.Null(file.Read());
 

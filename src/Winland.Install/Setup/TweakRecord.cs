@@ -12,15 +12,6 @@ public interface IWindowsTweaks
     int? FourFingerSlide { get; set; }
 }
 
-public interface ISettingsText
-{
-    string? Read();
-
-    void Write(string text);
-
-    void Delete();
-}
-
 public interface ITweakRestore
 {
     void Restore();
@@ -40,9 +31,9 @@ public sealed class TweakRecord : ITweakRestore
         "The settings record in .winland could not be read. It was left in place. Fix that file and try again.";
 
     private readonly IWindowsTweaks windows;
-    private readonly ISettingsText file;
+    private readonly ITextFile file;
 
-    public TweakRecord(IWindowsTweaks windows, ISettingsText file)
+    public TweakRecord(IWindowsTweaks windows, ITextFile file)
     {
         ArgumentNullException.ThrowIfNull(windows);
         ArgumentNullException.ThrowIfNull(file);

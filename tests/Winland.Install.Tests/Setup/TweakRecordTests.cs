@@ -6,7 +6,7 @@ namespace Winland.Install.Tests;
 public class TweakRecordTests
 {
     private readonly FakeTweaks windows = new();
-    private readonly MemorySettingsText file = new();
+    private readonly MemoryTextFile file = new();
     private readonly TweakRecord settings;
 
     public TweakRecordTests()
@@ -247,7 +247,7 @@ public class TweakRecordTests
         }
     }
 
-    private sealed class MemorySettingsText : ISettingsText
+    private sealed class MemoryTextFile : ITextFile
     {
         public string? Text { get; set; }
 

@@ -92,7 +92,7 @@ static class MaintenanceCommand
 
     private static int UpdateInstalled(UpdateChannel? requested)
     {
-        var saved = new FileSettingsText(UpdateChannelFile.PathFor(
+        var saved = new TextFile(UpdateChannelFile.PathFor(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
         var channel = UpdateChannelFile.Choose(requested, UserAccess.IsElevated ? null : saved.Read());
         var executable = Environment.ProcessPath
@@ -173,7 +173,7 @@ static class MaintenanceCommand
 
     private static TweakRecord RecordedTweaks() => new(
         new WindowsTweaks(),
-        new FileSettingsText(InstallLocations.SettingsFile(
+        new TextFile(InstallLocations.SettingsFile(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))));
 
     private static string CurrentUser()
