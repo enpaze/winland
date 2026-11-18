@@ -19,12 +19,19 @@ public class BlurShadowRoundingTests
     }
 
     [TestMethod]
-    public void TheBackdropOptionIsHonoredAndBlurAndShadowKeysWarn()
+    public void TheBackdropOptionIsHonoredAndTheBlurAndShadowKeysWarn()
     {
         var document = ConfigParser.Parse("""
             backdrop = none
-            blur = true
-            shadow = false
+            decoration {
+                blur {
+                    popups = true
+                }
+                shadow {
+                    enabled = false
+                    range = 20
+                }
+            }
             """);
         var core = new WindowManager();
         core.Handle(new Configure(document));
@@ -34,8 +41,9 @@ public class BlurShadowRoundingTests
 
         Assert.AreSequenceEqual(
             [
-                new ConfigWarning(2, "Unsupported keyword 'blur'."),
-                new ConfigWarning(3, "Unsupported keyword 'shadow'."),
+                new ConfigWarning(4, "Unsupported keyword 'decoration:blur:popups'."),
+                new ConfigWarning(7, "Unsupported keyword 'decoration:shadow:enabled'."),
+                new ConfigWarning(8, "Unsupported keyword 'decoration:shadow:range'."),
             ],
             document.Warnings);
         Assert.IsFalse(off.Blur);

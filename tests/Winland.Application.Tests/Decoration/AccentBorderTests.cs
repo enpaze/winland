@@ -55,6 +55,15 @@ public class AccentBorderTests
     }
 
     [TestMethod]
+    public void AccentAfterAColorDropsThatColorWithoutAnAccentOrUnderHighContrast()
+    {
+        var document = ConfigParser.Parse("border_color = rgba(aabbccff)\nborder_color = accent\n");
+
+        Assert.AreEqual(new BorderColor(0xFF, 0xFF, 0xFF, 0xFF), DecorationOptions.From(document).ActiveBorder);
+        Assert.AreEqual(Contrast.Highlight, DecorationOptions.From(document, Contrast).ActiveBorder);
+    }
+
+    [TestMethod]
     public void AnInactiveClientKeepsTheDimBorder()
     {
         var core = Configured("");

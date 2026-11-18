@@ -13,7 +13,9 @@ public sealed record DecorationOptions
 
     public BorderColor InactiveBorder { get; init; }
 
-    public bool AccentBorder { get; init; } = true;
+    public BorderColor? ChosenBorder { get; init; }
+
+    public bool AccentBorder => ChosenBorder is null;
 
     public DecorationOptions WithAccent(BorderColor? accent) =>
         AccentBorder && accent is BorderColor color ? this with { ActiveBorder = color } : this;
@@ -44,7 +46,7 @@ public sealed record DecorationOptions
 
     internal static OptionSet<DecorationOptions> Options { get; } = new(
     [
-        Option<DecorationOptions>.Of("border_color", ColorOrAccent, (o, v) => v is BorderColor color ? o with { ActiveBorder = color, AccentBorder = false } : o with { AccentBorder = true }),
+        Option<DecorationOptions>.Of("border_color", ColorOrAccent, (o, v) => o with { ChosenBorder = v }),
         Option<DecorationOptions>.Of("border_color_inactive", OptionValue.Color, (o, v) => o with { InactiveBorder = v }),
         Option<DecorationOptions>.Of("rounding", Radius, (o, v) => o with { Rounding = v }),
         Option<DecorationOptions>.Of("backdrop", OptionValue.OneOf("acrylic", "none"), (o, v) => o with { Acrylic = v == "acrylic" }),
@@ -52,8 +54,11 @@ public sealed record DecorationOptions
         Option<DecorationOptions>.Of("inactive_opacity", OptionValue.Single(0f, 1f), (o, v) => o with { InactiveOpacity = v }),
     ]);
 
-    public static DecorationOptions From(ConfigDocument document, HighContrast? contrast = null) =>
-        Options.From(
+    public static DecorationOptions From(ConfigDocument document, HighContrast? contrast = null)
+    {
+        var options = Options.From(
             contrast is HighContrast colors ? Documented with { ActiveBorder = colors.Highlight, InactiveBorder = colors.GrayText } : Documented,
             document);
+        return options.ChosenBorder is BorderColor chosen ? options with { ActiveBorder = chosen } : options;
+    }
 }
