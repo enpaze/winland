@@ -184,12 +184,8 @@ public class InspectTests
     }
 
     [TestMethod]
-    [DataRow("class:[", "'[' is not a valid pattern")]
-    [DataRow("[", "'[' is not a valid pattern")]
-    [DataRow("title:(a", "'(a' is not a valid pattern")]
     [DataRow("pid:12a", "pid: takes a process id, such as pid:1234")]
     [DataRow("address:zz", "address: takes a window address, such as address:0x2a")]
-    [DataRow("stableid:xyz", "stableid: takes the stableID clients reports, such as stableid:2a")]
     public void AMalformedSelectorIsAnErrorEvenWithNoClients(string selector, string problem)
     {
         var desktop = new TestDesktop();
@@ -203,16 +199,40 @@ public class InspectTests
     [TestMethod]
     [DataRow("class:nothing")]
     [DataRow("nothing")]
+    [DataRow("[")]
+    [DataRow("class:[")]
+    [DataRow("title:(a")]
+    [DataRow("exe:nothing.exe")]
     [DataRow("pid:999")]
     [DataRow("address:0x999")]
     [DataRow("0x999")]
-    [DataRow("stableid:ff")]
     public void AWellFormedSelectorThatMatchesNoClientIsNotFound(string selector)
     {
         var desktop = new TestDesktop();
 
         Assert.AreEqual("window not found: no Client matches", desktop.Send("inspect " + selector));
         Assert.AreEqual("no_client", Inspect(desktop, selector).GetProperty("reason").GetString());
+        desktop.Spawn("term");
+        Assert.AreEqual("window not found: no Client matches", desktop.Send("inspect " + selector));
+        Assert.AreEqual("no_client", Inspect(desktop, selector).GetProperty("reason").GetString());
+    }
+
+    [TestMethod]
+    [DataRow("term")]
+    [DataRow("TERM")]
+    [DataRow("class:t*")]
+    [DataRow("title:My*")]
+    [DataRow("exe:term.EXE")]
+    [DataRow("ADDRESS:0x1")]
+    public void APatternOrAddressInspectsTheClientItMatches(string selector)
+    {
+        var desktop = new TestDesktop();
+        desktop.Spawn("term", "My Doc", WindowTraits.Normal with { Exe = "term.exe" });
+
+        var inspected = Inspect(desktop, selector);
+
+        Assert.AreEqual("found", inspected.GetProperty("status").GetString());
+        Assert.AreEqual("0x1", inspected.GetProperty("address").GetString());
     }
 
     [TestMethod]

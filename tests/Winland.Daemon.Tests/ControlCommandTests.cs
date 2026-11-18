@@ -16,7 +16,7 @@ public class ControlCommandTests
     }
 
     [TestMethod]
-    [DataRow("inspect class:[", 1)]
+    [DataRow("inspect address:zz", 1)]
     [DataRow("j/inspect pid:12a", 1)]
     [DataRow("inspect class:nothing", 0)]
     [DataRow("j/inspect class:nothing", 0)]

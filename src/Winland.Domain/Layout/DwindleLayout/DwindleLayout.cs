@@ -49,6 +49,7 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         WorkspaceId workspace,
         string windowClass = "",
         string title = "",
+        string exe = "",
         Rectangle monitor = default,
         long processId = 0,
         string? initialClass = null,
@@ -73,7 +74,7 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
 
         _floating.Remember(id, placed);
         var floats = floating || overflows;
-        var client = ClientAdoption.Adopted(id, window, workspace, windowClass, title, floats, processId, initialClass, initialTitle);
+        var client = ClientAdoption.Adopted(id, window, workspace, windowClass, title, exe, floats, processId, initialClass, initialTitle);
         if (floats)
         {
             _clients.Add(client);

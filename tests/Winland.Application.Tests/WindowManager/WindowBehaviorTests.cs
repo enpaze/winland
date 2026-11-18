@@ -189,7 +189,6 @@ public class WindowBehaviorTests
         var target = desk.ActiveWindow();
         var address = Address(target);
         var pid = target.GetProperty("pid").GetInt64().ToString(CultureInfo.InvariantCulture);
-        var stableId = target.GetProperty("stableId").GetString();
 
         desk.Dispatch("focuswindow", "class:kitty_A");
         desk.Ok("focuswindow", "address:" + address);
@@ -197,10 +196,6 @@ public class WindowBehaviorTests
 
         desk.Dispatch("focuswindow", "class:kitty_A");
         desk.Ok("focuswindow", "pid:" + pid);
-        Assert.AreEqual("kitty_B", desk.ActiveClass());
-
-        desk.Dispatch("focuswindow", "class:kitty_A");
-        desk.Ok("focuswindow", "stableid:" + stableId);
         Assert.AreEqual("kitty_B", desk.ActiveClass());
     }
 

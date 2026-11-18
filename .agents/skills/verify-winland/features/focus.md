@@ -5,7 +5,7 @@ Focus moves the keyboard to another Client, either one picked by a window select
 ## Sub-features
 
 - `dispatcher:movefocus` focuses the Client in a direction: `l`, `r`, `u` or `d`.
-- `dispatcher:focuswindow` focuses the Client a window selector matches, such as `address:<hwnd>` or `title:<text>`.
+- `dispatcher:focuswindow` focuses the Client a window selector matches, such as `address:<hwnd>`, `title:<pattern>` or `exe:<pattern>`.
 - `cursor-warp` moves the cursor to the middle of the window `movefocus` focuses.
 - `unmatched-selector` leaves focus where it is when `focuswindow` matches no Client.
 
@@ -27,6 +27,9 @@ Preconditions:
 - **Focus by address.** The driver runs `winland dispatch focuswindow address:<hwnd>` for the left window. `winland -j activewindow` reports its address.
 - **Focus right.** The driver runs `winland dispatch movefocus r`. `winland -j activewindow` reports the right window, and the cursor sits in the middle of that window, within 4 pixels.
 - **Focus left.** The driver runs `winland dispatch movefocus l`. `winland -j activewindow` reports the left window again.
+- **Focus by title pattern.** The driver runs `winland dispatch focuswindow title:winlandverify*<n>`, with the right window's number and its title in lower case. `winland -j activewindow` reports the right window.
+- **Focus by exe pattern.** The driver runs `winland dispatch focuswindow exe:<EXE>`, the driver process's file name in upper case. It answers `ok`, and `winland -j activewindow` reports one of the two windows.
+- **Focus by address again.** The driver runs `winland dispatch focuswindow address:<hwnd>` for the left window. `winland -j activewindow` reports it.
 - **Unmatched selector.** The driver runs `winland dispatch focuswindow title:NoSuchWindow`. For half a second after, `winland -j activewindow` still reports the left window.
 
 ## Gotchas
@@ -36,4 +39,5 @@ Preconditions:
 - A Workspace with a fullscreen or maximized Client offers no window to `movefocus` in a direction, so focus goes to the neighbouring Monitor or stays.
 - `movefocus` continues onto the neighbouring Monitor when nothing in that direction can take focus. The driver does not reach that.
 - Among Dispatchers, only `focuswindow` takes a window selector. The driver does not assert the reply to an unmatched selector, only that focus stays.
+- Both test windows belong to the driver's process, so `exe:` matches both. The driver does not assert which one it focuses.
 - The keys in the first list come from the starter config. The driver's config has no binds, so it drives these Dispatchers through `winland dispatch`. [Binds](./binds.md) proves the key path.

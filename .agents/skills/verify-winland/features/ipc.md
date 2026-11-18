@@ -37,6 +37,7 @@ Preconditions:
 - **Open a window.** The driver starts `winland events` and opens `WinlandVerify 1`. It becomes a Client, and the Event stream holds an `openwindow` line with the window's address, without `0x`, followed by Workspace `1`.
 - **Queries.** The driver focuses the window with `winland dispatch focuswindow address:<hwnd>`. `winland clients` names `WinlandVerify 1`, `winland -j activewindow` reports title `WinlandVerify 1`, `winland -j activeworkspace` reports `windows` `1`, and `winland -j workspaces` lists id `1`.
 - **Inspect a Client.** The driver runs `winland -j inspect address:<hwnd>`. It reports `status` `found`, `target` `selector`, `managed` `true` and `class` `WinlandVerifyWindow`.
+- **Inspect by pattern.** The driver runs `winland -j inspect winlandverify*`, a class pattern in lower case, and `winland -j inspect exe:<EXE>`, the driver process's file name in upper case. Each reports the window's address.
 - **Inspect a missing Client.** The driver runs `winland -j inspect title:NoSuchWindow`. It exits 0 and reports `status` `not_found` and `reason` `no_client`.
 - **Malformed selector.** The driver runs `winland inspect pid:abc`. It exits 1, and standard error starts with `error: invalid selector`.
 - **Unknown Dispatcher.** The driver runs `winland dispatch nosuchdispatcher`. It exits 1, and standard error starts with `error:`.

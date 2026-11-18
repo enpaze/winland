@@ -15,11 +15,11 @@ internal static class WindowSelector
             Kind.Active => active,
             Kind.Floating => First(floating: true, active, clients),
             Kind.Tiled => First(floating: false, active, clients),
-
-            Kind.StableId => FirstMatch(active, clients, client => client.Id.Value.ToString("x", CultureInfo.InvariantCulture) == argument),
-            Kind.Address => FirstMatch(active, clients, client => client.Window.Address == argument),
+            Kind.Address => TryAddress(argument, out var window) ? FirstMatch(active, clients, client => client.Window == window) : null,
             Kind.Pid => FirstMatch(active, clients, client => client.ProcessId.ToString(CultureInfo.InvariantCulture) == argument),
-            _ => FirstMatch(active, clients, client => Matches(Field(client, kind), argument)),
+            Kind.Title => FirstMatch(active, clients, client => FieldMatch.Is(argument, client.Title)),
+            Kind.Exe => FirstMatch(active, clients, client => FieldMatch.Is(argument, client.Exe)),
+            _ => FirstMatch(active, clients, client => FieldMatch.Is(argument, client.Class)),
         };
     }
 
@@ -29,58 +29,54 @@ internal static class WindowSelector
         var (kind, argument) = Read(selector);
         return kind switch
         {
-            Kind.StableId when argument.Length == 0 || !argument.All(char.IsAsciiHexDigit) =>
-                "stableid: takes the stableID clients reports, such as stableid:2a",
-            Kind.Address when !argument.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-                || !long.TryParse(argument.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out _) =>
-                "address: takes a window address, such as address:0x2a",
+            Kind.Address when !TryAddress(argument, out _) => "address: takes a window address, such as address:0x2a",
             Kind.Pid when argument.Length == 0 || !argument.All(char.IsAsciiDigit) => "pid: takes a process id, such as pid:1234",
-            Kind.Class or Kind.InitialClass or Kind.Title or Kind.InitialTitle when !WholeMatch.IsValid(argument) =>
-                $"'{argument}' is not a valid pattern",
             _ => null,
         };
     }
 
-    private enum Kind { Active, Floating, Tiled, StableId, Address, Pid, Class, InitialClass, Title, InitialTitle }
+    private enum Kind { Active, Floating, Tiled, Address, Pid, Class, Title, Exe }
 
     private static (Kind Kind, string Argument) Read(string selector)
     {
         var text = selector.Trim();
-        if (text.Length == 0 || text.StartsWith("active", StringComparison.Ordinal))
-            return (Kind.Active, "");
-
-        if (text.StartsWith("floating", StringComparison.Ordinal))
-            return (Kind.Floating, "");
-
-        if (text.StartsWith("tiled", StringComparison.Ordinal))
-            return (Kind.Tiled, "");
+        switch (text)
+        {
+            case "" or "active":
+                return (Kind.Active, "");
+            case "floating":
+                return (Kind.Floating, "");
+            case "tiled":
+                return (Kind.Tiled, "");
+        }
 
         (string Prefix, Kind Kind)[] prefixed =
         [
-            ("stableid:", Kind.StableId),
             ("address:", Kind.Address),
             ("pid:", Kind.Pid),
-            ("initialtitle:", Kind.InitialTitle),
-            ("title:", Kind.Title),
-            ("initialclass:", Kind.InitialClass),
             ("class:", Kind.Class),
+            ("title:", Kind.Title),
+            ("exe:", Kind.Exe),
         ];
         foreach (var (prefix, kind) in prefixed)
         {
-            if (text.StartsWith(prefix, StringComparison.Ordinal))
+            if (text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return (kind, text[prefix.Length..]);
         }
 
         return (Kind.Class, text);
     }
 
-    private static string Field(Client client, Kind kind) => kind switch
+    private static bool TryAddress(string text, out WindowId window)
     {
-        Kind.Title => client.Title,
-        Kind.InitialTitle => client.InitialTitle,
-        Kind.InitialClass => client.InitialClass,
-        _ => client.Class,
-    };
+        window = default;
+        if (!text.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+            || !long.TryParse(text.AsSpan(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var value))
+            return false;
+
+        window = new WindowId(value);
+        return true;
+    }
 
     private static WindowId? FirstMatch(WindowId? active, IReadOnlyList<Client> clients, Func<Client, bool> match)
     {
@@ -138,6 +134,4 @@ internal static class WindowSelector
 
         return null;
     }
-
-    private static bool Matches(string text, string pattern) => WholeMatch.IsMatch(pattern, text);
 }

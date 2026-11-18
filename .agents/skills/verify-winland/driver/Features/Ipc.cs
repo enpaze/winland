@@ -28,6 +28,10 @@ public class Ipc
         Assert.AreEqual("selector", found.GetProperty("target").GetString());
         Assert.IsTrue(found.GetProperty("managed").GetBoolean());
         Assert.AreEqual("WinlandVerifyWindow", found.GetProperty("class").GetString());
+        var patterned = run.Json("inspect", "winlandverify*");
+        Assert.AreEqual(VerifyRun.Address(window), patterned.GetProperty("address").GetString());
+        var byExe = run.Json("inspect", "exe:" + Path.GetFileName(Environment.ProcessPath)!.ToUpperInvariant());
+        Assert.AreEqual(VerifyRun.Address(window), byExe.GetProperty("address").GetString());
         var missing = run.Json("inspect", "title:NoSuchWindow");
         Assert.AreEqual("not_found", missing.GetProperty("status").GetString());
         Assert.AreEqual("no_client", missing.GetProperty("reason").GetString());

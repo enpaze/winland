@@ -8,7 +8,7 @@ public class Focus
 
     public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void FocusesByAddressAndByDirection() => VerifyRun.Drive(TestContext, run =>
+    public void FocusesBySelectorAndByDirection() => VerifyRun.Drive(TestContext, run =>
     {
         var (left, right) = run.OpenPair();
 
@@ -23,6 +23,16 @@ public class Focus
 
         run.Dispatch("movefocus l");
         run.Until("movefocus l focuses the left window again", () => run.Active() == VerifyRun.Address(left));
+
+        var title = run.ClientOf(right).GetProperty("title").GetString()!;
+        run.Dispatch($"focuswindow title:{title.Replace(' ', '*').ToLowerInvariant()}");
+        run.Until("a title pattern focuses the right window", () => run.Active() == VerifyRun.Address(right));
+
+        run.Dispatch($"focuswindow exe:{Path.GetFileName(Environment.ProcessPath)!.ToUpperInvariant()}");
+        run.Until("an exe pattern focuses a window of the driver's process", () => run.Active() == VerifyRun.Address(left) || run.Active() == VerifyRun.Address(right));
+
+        run.Dispatch("focuswindow address:" + VerifyRun.Address(left));
+        run.Until("address focuses the left window", () => run.Active() == VerifyRun.Address(left));
 
         run.Cli("dispatch", "focuswindow", "title:NoSuchWindow");
         run.Holds("focuswindow on an unmatched selector leaves focus where it is", () => run.Active() == VerifyRun.Address(left), 500);
