@@ -240,27 +240,100 @@ sealed class WindowsInstallFiles : IFileTree
         if (Interlocked.Exchange(ref retirementScheduled, 1) != 0)
             return;
 
-        var script = "Wait-Process -Id " + Environment.ProcessId + "\r\n"
-            + "function Remove-Retired([string]$Path) {\r\n"
-            + "  if (-not (Test-Path -LiteralPath $Path)) { return }\r\n"
-            + "  $attributes = [IO.File]::GetAttributes($Path)\r\n"
-            + "  $link = ($attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0\r\n"
-            + "  $container = ($attributes -band [IO.FileAttributes]::Directory) -ne 0\r\n"
-            + "  if ($link) { return }\r\n"
-            + "  if ($container) {\r\n"
-            + "    foreach ($child in [IO.Directory]::EnumerateFileSystemEntries($Path)) { Remove-Retired $child }\r\n"
-            + "    return\r\n"
-            + "  }\r\n"
-            + "  if ([IO.Path]::GetFileName($Path).Contains('.winland-old')) {\r\n"
-            + "    [IO.File]::SetAttributes($Path, [IO.FileAttributes]::Normal)\r\n"
-            + "    [IO.File]::Delete($Path)\r\n"
-            + "  }\r\n"
-            + "}\r\n"
-            + "Remove-Retired " + Quote(directory) + "\r\n"
-            + "Remove-Item -LiteralPath $PSCommandPath -Force\r\n"
-            + "Remove-Item -LiteralPath $PSScriptRoot -Force\r\n";
+        StartCleanupScript(RetirementScript(Environment.ProcessId, directory));
+    }
 
-        StartCleanupScript(script);
+    internal static string RetirementScript(int processId, string directory) =>
+        "Wait-Process -Id " + processId + " -ErrorAction SilentlyContinue\r\n"
+        + "function Remove-Retired([string]$Path) {\r\n"
+        + "  if (-not (Test-Path -LiteralPath $Path)) { return }\r\n"
+        + "  $attributes = [IO.File]::GetAttributes($Path)\r\n"
+        + "  $link = ($attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0\r\n"
+        + "  $container = ($attributes -band [IO.FileAttributes]::Directory) -ne 0\r\n"
+        + "  if ($link) { return }\r\n"
+        + "  if ($container) {\r\n"
+        + "    foreach ($child in [IO.Directory]::EnumerateFileSystemEntries($Path)) { Remove-Retired $child }\r\n"
+        + "    return\r\n"
+        + "  }\r\n"
+        + "  if ([IO.Path]::GetFileName($Path).Contains('.winland-old')) {\r\n"
+        + "    try {\r\n"
+        + "      [IO.File]::SetAttributes($Path, [IO.FileAttributes]::Normal)\r\n"
+        + "      [IO.File]::Delete($Path)\r\n"
+        + "    } catch {\r\n"
+        + "      $reason = $_.Exception\r\n"
+        + "      while ($null -ne $reason.InnerException) { $reason = $reason.InnerException }\r\n"
+        + "      if (($reason -is [System.IO.IOException]) -or ($reason -is [System.UnauthorizedAccessException])) { return }\r\n"
+        + "      throw\r\n"
+        + "    }\r\n"
+        + "  }\r\n"
+        + "}\r\n"
+        + "Remove-Retired " + Quote(directory) + "\r\n"
+        + "Remove-Item -LiteralPath $PSCommandPath -Force\r\n"
+        + "Remove-Item -LiteralPath $PSScriptRoot -Force\r\n";
+
+    internal static void DeleteRetired(string directory)
+    {
+        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+            return;
+
+        try
+        {
+            if (File.GetAttributes(directory).HasFlag(FileAttributes.ReparsePoint))
+                return;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+
+        DeleteRetiredEntries(directory);
+    }
+
+    private static void DeleteRetiredEntries(string directory)
+    {
+        string[] entries;
+        try
+        {
+            entries = Directory.GetFileSystemEntries(directory);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+
+        foreach (var entry in entries)
+        {
+            FileAttributes attributes;
+            try
+            {
+                attributes = File.GetAttributes(entry);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                continue;
+            }
+
+            if (attributes.HasFlag(FileAttributes.ReparsePoint))
+                continue;
+
+            if (attributes.HasFlag(FileAttributes.Directory))
+            {
+                DeleteRetiredEntries(entry);
+                continue;
+            }
+
+            if (!Path.GetFileName(entry).Contains(".winland-old", StringComparison.Ordinal))
+                continue;
+
+            try
+            {
+                File.SetAttributes(entry, FileAttributes.Normal);
+                File.Delete(entry);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
     }
 
     private static bool ImageIsInside(string directory)
