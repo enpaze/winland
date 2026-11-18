@@ -51,7 +51,7 @@ public sealed partial class WindowAdapter : IDisposable
     private volatile bool _disposed;
 
     private readonly Dictionary<WindowId, Decoration?> _painted = [];
-    private readonly OpacityAdapter _opacity;
+    private readonly WindowOpacity _opacity;
     private readonly BorderlessFrame _borderless;
     private readonly DwmEffects _effects;
     private readonly Lock _paintGate = new();
@@ -86,7 +86,7 @@ public sealed partial class WindowAdapter : IDisposable
         _core = core;
         _desktop = desktop;
         _clock = clock ?? PresentClock.Now;
-        _opacity = new OpacityAdapter(desktop, desktop.Hung);
+        _opacity = new WindowOpacity(desktop, desktop.Hung);
         _borderless = new BorderlessFrame(desktop, desktop.Hung);
         _effects = new DwmEffects(desktop, desktop.Hung);
         _motions = new MotionPlayer(new MotionTarget(this), _clock, threaded);

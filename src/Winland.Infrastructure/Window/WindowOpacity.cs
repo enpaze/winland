@@ -3,18 +3,7 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-internal readonly record struct WindowChrome(uint ExStyle, bool ColorKey, byte Alpha);
-
-internal interface IWindowStyles
-{
-    bool TryRead(WindowId window, out WindowChrome chrome);
-
-    bool TryWriteExStyle(WindowId window, uint exStyle);
-
-    bool TrySetAlpha(WindowId window, byte alpha);
-}
-
-internal sealed class OpacityAdapter
+internal sealed class WindowOpacity
 {
     private readonly IWindowStyles _styles;
     private readonly Func<WindowId, bool> _hung;
@@ -26,7 +15,7 @@ internal sealed class OpacityAdapter
     private readonly Lock _gate = new();
     private bool _closed;
 
-    internal OpacityAdapter(IWindowStyles styles, Func<WindowId, bool>? hung = null)
+    internal WindowOpacity(IWindowStyles styles, Func<WindowId, bool>? hung = null)
     {
         ArgumentNullException.ThrowIfNull(styles);
         _styles = styles;
