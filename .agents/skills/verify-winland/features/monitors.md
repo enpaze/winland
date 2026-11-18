@@ -38,7 +38,7 @@ Preconditions:
 - On one Monitor, as on CI, the driver does not reach moving focus and a Workspace to another Monitor, and it does not reach plugging or unplugging a Monitor. A pass on one Monitor proves only the listing, the error reply, and that `focusmonitor` and `movecurrentworkspacetomonitor current` answer `ok` on that Monitor.
 - `monitors` lists only the enabled Monitors. Use `monitors all` to see the disabled ones.
 - A failed `winland dispatch` exits 1 and writes its `error:` reply to standard error, not standard output.
-- Focusing a Monitor that already shows its Workspace emits `focus` and not `workspace`.
+- Focusing another Monitor emits `focus` and not `workspace`, because that Monitor already shows its Workspace. Focusing the Monitor that already has focus emits nothing.
 - Moving a Workspace leaves its pinned Clients on the source Monitor, on the Workspace that Monitor shows next.
 - Monitor configuration belongs in Windows Settings, not in the Winland config.
 - The keys in the first list come from the starter config. The driver's config has no binds, so it drives these Dispatchers through `winland dispatch`. [Binds](./binds.md) proves the key path.

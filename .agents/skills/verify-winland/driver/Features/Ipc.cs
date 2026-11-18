@@ -22,12 +22,12 @@ public class Ipc
         run.UntilJsonEvent("openwindow", line =>
             line.GetProperty("address").GetString() == VerifyRun.Address(window)
             && line.GetProperty("workspace").GetProperty("id").GetInt32() == 1);
-        run.Focus(window);
         run.UntilJsonEvent("focus", line =>
             line.GetProperty("window") is { ValueKind: JsonValueKind.Object } focused
             && focused.GetProperty("address").GetString() == VerifyRun.Address(window)
             && focused.GetProperty("title").GetString() == "WinlandVerify 1"
             && focused.GetProperty("class").GetString() == "WinlandVerifyWindow");
+        run.Focus(window);
         Assert.Contains("WinlandVerify 1", run.Ask("clients"), StringComparison.Ordinal);
         Assert.AreEqual("WinlandVerify 1", run.Json("activewindow").GetProperty("title").GetString());
         Assert.AreEqual(1, run.Json("activeworkspace").GetProperty("windows").GetInt32());

@@ -325,9 +325,21 @@ public class CommandServerTests
             while (!seen)
             {
                 Assert.IsTrue(listener.TryTake(TimeSpan.FromSeconds(10), out var line), "The marker window was never reported.");
-                seen = line.Contains("focus", StringComparison.Ordinal) && line.Contains("270f", StringComparison.Ordinal);
+                seen = line == "focus>>,1,1,270f," || IsJsonFocusOn(line, "0x270f");
             }
         }
+    }
+
+    private static bool IsJsonFocusOn(string line, string address)
+    {
+        if (!line.StartsWith('{'))
+            return false;
+
+        using var parsed = JsonDocument.Parse(line);
+        var root = parsed.RootElement;
+        return root.GetProperty("event").GetString() == "focus"
+            && root.GetProperty("window") is { ValueKind: JsonValueKind.Object } window
+            && window.GetProperty("address").GetString() == address;
     }
 
     private static List<string> Take(Listener listener, int count)
