@@ -14,7 +14,7 @@ Show another Workspace, and move windows onto other Workspaces, with or without 
 
 - Spec: [Dispatchers](behavior.md#dispatchers)
 - Code: [Workspaces.cs](../src/Winland.Application/WindowManager/Workspaces.cs), [Workspace](../src/Winland.Domain/Workspace)
-- Dispatchers: `workspace`, `movetoworkspace`, `movetoworkspacesilent`
+- Dispatchers: `workspace`, `movetoworkspace`
 - Driver: `pwsh -NoProfile -File scripts/smoke.ps1 -Feature workspaces`
 
 ## layouts
