@@ -39,6 +39,7 @@ SendInput
 SendMessage
 SetForegroundWindow
 SetProcessDpiAwarenessContext
+SetWindowPos
 SetWindowText
 ShowWindow
 SystemParametersInfo

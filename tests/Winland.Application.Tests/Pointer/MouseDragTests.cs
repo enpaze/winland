@@ -24,6 +24,37 @@ public class MouseDragTests
     }
 
     [TestMethod]
+    public void AFloatingMoveKeepsTheSizeTheWindowGaveItself()
+    {
+        var core = Flat("bind = SUPER, mouse:left, movewindow\n");
+        Appear(core, 1);
+        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new WindowDrifted(new WindowId(1), new Rectangle(640, 340, 800, 500)) { TiledOnly = true });
+        Press(core, "Super_L");
+        core.Handle(new PointerButtonPressed("mouse:left") { Position = new Point(700, 400) });
+
+        var moved = core.Handle(new PointerMoved(new Point(750, 430)));
+
+        Assert.AreEqual(new Rectangle(690, 370, 800, 500), BoundsOf(moved, 1));
+    }
+
+    [TestMethod]
+    public void AFloatingMoveKeepsTheSizeABorderDragGave()
+    {
+        var core = Flat("bind = SUPER, mouse:left, movewindow\n");
+        Appear(core, 1);
+        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new WindowSizeStarted(new WindowId(1), new Point(1280, 740), new Rectangle(640, 340, 640, 400)));
+        core.Handle(new WindowSizeEnded(new WindowId(1), new Point(1440, 840), new Rectangle(640, 340, 800, 500)));
+        Press(core, "Super_L");
+        core.Handle(new PointerButtonPressed("mouse:left") { Position = new Point(700, 400) });
+
+        var moved = core.Handle(new PointerMoved(new Point(750, 430)));
+
+        Assert.AreEqual(new Rectangle(690, 370, 800, 500), BoundsOf(moved, 1));
+    }
+
+    [TestMethod]
     public void TiledDragDropsTheClientIntoTheTreeUnderThePointer()
     {
         var core = Flat("bind = SUPER, mouse:left, movewindow\n");
