@@ -59,7 +59,7 @@ public class ControlRequestTests
         Assert.ContainsSingle(bind => bind.GetProperty("key").GetString() == "F12", binds);
         Assert.Contains(bind =>
             bind.GetProperty("key").GetString() == "F12"
-            && bind.GetProperty("has_description").GetBoolean()
+            && bind.GetProperty("hasDescription").GetBoolean()
             && bind.GetProperty("description").GetString() == description, binds);
 
         Assert.Contains($"bindd = SUPER, F12, {description}, exec, true", desk.Send("binds").Split('\n'));

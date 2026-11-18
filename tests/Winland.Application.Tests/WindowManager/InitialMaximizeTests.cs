@@ -12,8 +12,7 @@ public class InitialMaximizeTests
 
         var client = Assert.ContainsSingle(desk.Clients());
         Assert.AreEqual("xdg-initial-maximize", TestDesktop.ClassOf(client));
-        Assert.IsTrue(client.GetProperty("mapped").GetBoolean());
+        Assert.IsFalse(client.GetProperty("hidden").GetBoolean());
         Assert.AreEqual(0, TestDesktop.Fullscreen(client));
-        Assert.AreEqual(0, TestDesktop.FullscreenClient(client));
     }
 }

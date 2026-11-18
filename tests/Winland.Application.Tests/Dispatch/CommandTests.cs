@@ -388,7 +388,6 @@ public class CommandTests
         Assert.AreEqual(address, client.GetProperty("address").GetString());
         Assert.AreEqual(floating, client.GetProperty("floating").GetBoolean());
         Assert.AreEqual(hidden, client.GetProperty("hidden").GetBoolean());
-        Assert.AreEqual(!hidden, client.GetProperty("mapped").GetBoolean());
         Assert.AreEqual(workspaceId, client.GetProperty("workspace").GetProperty("id").GetInt32());
         Assert.AreEqual(workspaceName, client.GetProperty("workspace").GetProperty("name").GetString());
     }

@@ -130,11 +130,11 @@ public class GroupBehaviorTests
         desk.Spawn("kitty_B");
 
         desk.Ok("fullscreen", "0");
-        ExpectFullscreen(desk, 2, 2);
+        ExpectFullscreen(desk, 2);
 
         desk.CloseActive();
         Assert.ContainsSingle(desk.Clients());
-        ExpectFullscreen(desk, 0, 0);
+        ExpectFullscreen(desk, 0);
     }
 
     private static int CountAt(TestDesktop desk, string at) =>
@@ -146,10 +146,6 @@ public class GroupBehaviorTests
     private static int Grouped(JsonElement client) => client.GetProperty("grouped").GetArrayLength();
 
 
-    private static void ExpectFullscreen(TestDesktop desk, int fullscreen, int fullscreenClient)
-    {
-        var active = desk.ActiveWindow();
-        Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(active));
-        Assert.AreEqual(fullscreenClient, TestDesktop.FullscreenClient(active));
-    }
+    private static void ExpectFullscreen(TestDesktop desk, int fullscreen) =>
+        Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(desk.ActiveWindow()));
 }

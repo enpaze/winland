@@ -125,7 +125,7 @@ public static class ControlInvocation
     }
 
     private static string VersionJson() =>
-        JsonSerializer.Serialize(new VersionView("", BuildStamp.Commit, BuildStamp.Version, BuildStamp.Dirty, "", "", "", "", []));
+        JsonSerializer.Serialize(new VersionView(BuildStamp.Version, BuildStamp.Commit, BuildStamp.Dirty));
 
     private static string VersionText()
     {
@@ -141,13 +141,7 @@ public static class ControlInvocation
     }
 
     private sealed record VersionView(
-        [property: JsonPropertyName("branch")] string Branch,
-        [property: JsonPropertyName("commit")] string Commit,
         [property: JsonPropertyName("version")] string Version,
-        [property: JsonPropertyName("dirty")] bool Dirty,
-        [property: JsonPropertyName("commit_message")] string CommitMessage,
-        [property: JsonPropertyName("commit_date")] string CommitDate,
-        [property: JsonPropertyName("tag")] string Tag,
-        [property: JsonPropertyName("commits")] string Commits,
-        [property: JsonPropertyName("flags")] string[] Flags);
+        [property: JsonPropertyName("commit")] string Commit,
+        [property: JsonPropertyName("dirty")] bool Dirty);
 }

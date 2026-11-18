@@ -9,7 +9,7 @@ public class ExtraCommandTests
 
     private const string SuperKill =
         """
-        [{"mouse":false,"has_description":false,"modmask":64,"key":"Q","keycode":0,"description":"","dispatcher":"killactive","arg":""}]
+        [{"mouse":false,"hasDescription":false,"modMask":64,"key":"Q","keyCode":0,"description":"","dispatcher":"killactive","arg":""}]
         """;
 
     [TestMethod]
@@ -43,28 +43,25 @@ public class ExtraCommandTests
             """)));
         var binds = Json(core.Execute("j/binds").Text);
         var second = binds[1];
-        Assert.AreEqual(65, second.GetProperty("modmask").GetInt32());
+        Assert.AreEqual(65, second.GetProperty("modMask").GetInt32());
         Assert.AreEqual("E", second.GetProperty("key").GetString());
 
         var described = binds[2];
-        Assert.IsTrue(described.GetProperty("has_description").GetBoolean());
+        Assert.IsTrue(described.GetProperty("hasDescription").GetBoolean());
         Assert.AreEqual("Close", described.GetProperty("description").GetString());
 
         var coded = binds[3];
         Assert.AreEqual("", coded.GetProperty("key").GetString());
-        Assert.AreEqual(42, coded.GetProperty("keycode").GetInt32());
+        Assert.AreEqual(42, coded.GetProperty("keyCode").GetInt32());
     }
 
     [TestMethod]
     public void VersionHasItsShape()
     {
         Assert.IsTrue(ControlInvocation.TryAnswerLocally(["-j", "version"], out var json));
-        var version = Json(json);
-        Assert.AreEqual(BuildStamp.Version, version.GetProperty("version").GetString());
-        Assert.AreEqual(BuildStamp.Commit, version.GetProperty("commit").GetString());
-        Assert.AreEqual("", version.GetProperty("tag").GetString());
-        Assert.AreEqual(JsonValueKind.Array, version.GetProperty("flags").ValueKind);
-        Assert.StartsWith("{\"branch\":", json, StringComparison.Ordinal);
+        Assert.AreEqual(
+            JsonSerializer.Serialize(new { version = BuildStamp.Version, commit = BuildStamp.Commit, dirty = BuildStamp.Dirty }),
+            json);
     }
 
     [TestMethod]

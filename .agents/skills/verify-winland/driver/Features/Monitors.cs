@@ -17,9 +17,12 @@ public class Monitors
         Assert.AreEqual(count, monitors.Count);
         Assert.IsTrue(run.Json("monitors", "all").GetArrayLength() >= count);
         foreach (var monitor in monitors)
-{
-    Assert.IsTrue(monitor.GetProperty("width").GetInt32() > 0 && monitor.GetProperty("height").GetInt32() > 0);
-}
+        {
+            Assert.IsTrue(monitor.GetProperty("width").GetInt32() > 0 && monitor.GetProperty("height").GetInt32() > 0);
+            Assert.AreEqual(
+                "id name description make model serial width height refreshRate x y activeWorkspace specialWorkspace reserved scale focused disabled currentFormat hardwareDetails",
+                string.Join(' ', monitor.EnumerateObject().Select(property => property.Name)));
+        }
         run.Say($"saw: monitors lists the {count} monitor(s) Windows reports");
 
         var focused = monitors.Single(monitor => monitor.GetProperty("focused").GetBoolean());

@@ -28,16 +28,12 @@ public static partial class CommandProtocol
         return string.Join('\n', lines);
     }
 
-    public static string FormatErrors(IReadOnlyList<ConfigWarning> warnings)
+    public static string FormatErrors(IReadOnlyList<ConfigWarning> warnings, string? configPath)
     {
         ArgumentNullException.ThrowIfNull(warnings);
-        var errors = new string[warnings.Count];
+        var errors = new ErrorJson[warnings.Count];
         for (var i = 0; i < warnings.Count; i++)
-        {
-            errors[i] = warnings[i].Line > 0
-                ? string.Create(CultureInfo.InvariantCulture, $"line {warnings[i].Line}: {warnings[i].Message}")
-                : warnings[i].Message;
-        }
+            errors[i] = new ErrorJson(ConfigNotice.FileOf(warnings[i], configPath), warnings[i].Line, warnings[i].Message);
 
         return JsonSerializer.Serialize(errors, Relaxed);
     }
@@ -112,13 +108,18 @@ public static partial class CommandProtocol
 
     private sealed record BindJson(
         [property: JsonPropertyName("mouse")] bool Mouse,
-        [property: JsonPropertyName("has_description")] bool HasDescription,
-        [property: JsonPropertyName("modmask")] int Modmask,
+        [property: JsonPropertyName("hasDescription")] bool HasDescription,
+        [property: JsonPropertyName("modMask")] int ModMask,
         [property: JsonPropertyName("key")] string Key,
-        [property: JsonPropertyName("keycode")] int Keycode,
+        [property: JsonPropertyName("keyCode")] int KeyCode,
         [property: JsonPropertyName("description")] string Description,
         [property: JsonPropertyName("dispatcher")] string Dispatcher,
         [property: JsonPropertyName("arg")] string Arg);
+
+    private sealed record ErrorJson(
+        [property: JsonPropertyName("file")] string? File,
+        [property: JsonPropertyName("line")] int Line,
+        [property: JsonPropertyName("message")] string Message);
 
     private sealed record FilesJson(
         [property: JsonPropertyName("config")] string? Config,

@@ -35,7 +35,7 @@ Preconditions:
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature ipc`. It prints `== feature ipc: passed`.
 - **Empty replies.** With no window open, `winland clients` replies `no open windows`, `winland activewindow` prints nothing and exits 0, and `winland -j activewindow` replies `null`.
 - **Open a window.** The driver starts `winland -j events` and opens `WinlandVerify 1`. It becomes a Client, and the Event stream holds an `openwindow` JSON object with the window's `address`, with `0x`, and `workspace` id `1`. The new window takes focus, so the stream also holds a `focus` JSON object whose `window` has the window's `address`, `title` `WinlandVerify 1` and `class` `WinlandVerifyWindow`.
-- **Queries.** The driver focuses the window with `winland dispatch focuswindow address:<hwnd>`. `winland clients` names `WinlandVerify 1`, `winland -j activewindow` reports title `WinlandVerify 1`, `winland -j activeworkspace` reports `windows` `1`, and `winland -j workspaces` lists id `1`.
+- **Queries.** The driver focuses the window with `winland dispatch focuswindow address:<hwnd>`. `winland clients` names `WinlandVerify 1`, `winland -j activewindow` reports title `WinlandVerify 1`, `winland -j activeworkspace` reports `windows` `1`, and `winland -j workspaces` lists id `1`. The window's `monitor` is the Workspace's `monitor` name, and the two replies have exactly the camelCase keys in [IPC pipe](../../../../docs/behavior.md#ipc-pipe).
 - **Inspect a Client.** The driver runs `winland -j inspect address:<hwnd>`. It reports `status` `found`, `target` `selector`, `managed` `true` and `class` `WinlandVerifyWindow`.
 - **Inspect by pattern.** The driver runs `winland -j inspect winlandverify*`, a class pattern in lower case, and `winland -j inspect exe:<EXE>`, the driver process's file name in upper case. Each reports the window's address.
 - **Inspect a missing Client.** The driver runs `winland -j inspect title:NoSuchWindow`. It exits 0 and reports `status` `not_found` and `reason` `no_client`.
@@ -43,7 +43,7 @@ Preconditions:
 - **Unknown Dispatcher.** The driver runs `winland dispatch nosuchdispatcher`. It exits 1, and standard error starts with `error:`.
 - **Drag outside a drag.** The driver runs `winland dispatch resizewindow`. It exits 1, and standard error is `error: resizewindow is a drag; bind it to a mouse button`.
 - **List Dispatchers.** The driver runs `winland dispatch` with no name. It exits 0 and prints one name per line, `workspace` among them.
-- **Version without a Daemon.** The driver stops Winland. `winland clients` now exits 1, `winland version` exits 0 with one line, `winland <version> (<commit>)`, and `winland -j version` exits 0 with JSON whose `version` is the same.
+- **Version without a Daemon.** The driver stops Winland. `winland clients` now exits 1, `winland version` exits 0 with one line, `winland <version> (<commit>)`, and `winland -j version` exits 0 with JSON whose `version` is the same and whose keys are `version`, `commit` and `dirty`.
 
 ## Gotchas
 
