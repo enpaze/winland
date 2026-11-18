@@ -19,12 +19,12 @@ public class BlurShadowRoundingTests
     }
 
     [TestMethod]
-    public void TheBlurSwitchIsHonoredAndTheOtherBlurAndShadowKeywordsWarn()
+    public void TheBackdropOptionIsHonoredAndTheBlurAndShadowKeysWarn()
     {
         var document = ConfigParser.Parse("""
+            backdrop = none
             decoration {
                 blur {
-                    enabled = false
                     popups = true
                 }
                 shadow {
@@ -48,10 +48,19 @@ public class BlurShadowRoundingTests
             document.Warnings);
         Assert.IsFalse(off.Blur);
 
-        var reloaded = core.Handle(new Configure(ConfigParser.Parse("decoration:blur:enabled = true\n")));
+        var reloaded = core.Handle(new Configure(ConfigParser.Parse("backdrop = acrylic\n")));
 
         Assert.IsTrue(For(reloaded, 1).Blur);
         Assert.IsEmpty(reloaded.ResetDecorations);
+    }
+
+    [TestMethod]
+    public void ABackdropOtherThanAcrylicOrNoneWarnsAndKeepsAcrylic()
+    {
+        var document = ConfigParser.Parse("backdrop = mica\n");
+
+        Assert.AreEqual(new ConfigWarning(1, "Invalid value 'mica' for backdrop."), Assert.ContainsSingle(document.Warnings));
+        Assert.IsTrue(DecorationOptions.From(document).Acrylic);
     }
 
     [TestMethod]
@@ -85,7 +94,7 @@ public class BlurShadowRoundingTests
     public void AnExactRadiusIsCutAtTheClientsMonitorScale()
     {
         var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("decoration:rounding = 10\n")));
+        core.Handle(new Configure(ConfigParser.Parse("rounding = 10\n")));
         var scaled = new Monitor("DISPLAY1", "DISPLAY1", 0, 0, 1600, 1200, 2, true, new Rectangle(0, 0, 1600, 1200));
         core.Handle(new MonitorsChanged([scaled]));
 

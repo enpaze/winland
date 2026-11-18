@@ -54,7 +54,7 @@ public class ConfigNoticeTests
     {
         var core = Loaded("blur = on\n");
 
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 4\n", path: Path)));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 4\n", path: Path)));
 
         Assert.IsNull(Notice(core));
     }
@@ -105,7 +105,7 @@ public class ConfigNoticeTests
     public void TheFirstStartWelcomesTheUserAndAClickOpensTheConfig()
     {
         var core = new WindowManager { FirstStart = true };
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 4\n", path: Path)));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 4\n", path: Path)));
         var notice = Notice(core);
 
         Assert.IsNotNull(notice);
@@ -121,15 +121,15 @@ public class ConfigNoticeTests
 
     [TestMethod]
     public void AStartThatWroteNoConfigShowsNoWelcome() =>
-        Assert.IsNull(Load("general:gaps_in = 4\n"));
+        Assert.IsNull(Load("gaps_in = 4\n"));
 
     [TestMethod]
     public void ALaterLoadTakesTheWelcomeAwayAndDoesNotShowItAgain()
     {
         var core = new WindowManager { FirstStart = true };
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 4\n", path: Path)));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 4\n", path: Path)));
 
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 5\n", path: Path)));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 5\n", path: Path)));
 
         Assert.IsNull(Notice(core));
     }

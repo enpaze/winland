@@ -19,7 +19,7 @@ public class LayoutChangeTests
         desk.Ok("focus-monitor", "HEADLESS-2");
         desk.Ok("workspace", "1");
 
-        desk.Set("general:layout", "scrolling");
+        desk.Set("layout", "scrolling");
 
         Assert.Contains("HEADLESS-5", desk.Send("get monitors all"), StringComparison.Ordinal);
     }
@@ -58,14 +58,14 @@ public class LayoutChangeTests
     [TestMethod]
     public void FocusPreservedLayoutChange()
     {
-        var desk = new TestDesktop("general:layout = dwindle\n");
+        var desk = new TestDesktop("layout = dwindle\n");
         desk.Spawn("kitty_A");
         desk.Spawn("kitty_B");
         desk.Spawn("kitty_C");
         desk.Spawn("kitty_D");
 
         desk.Ok("focus", "class:kitty_C");
-        desk.Set("general:layout", "scrolling");
+        desk.Set("layout", "scrolling");
 
         Assert.AreEqual("kitty_C", desk.ActiveClass());
     }

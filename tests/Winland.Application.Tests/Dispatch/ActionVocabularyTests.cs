@@ -128,7 +128,7 @@ public class ActionVocabularyTests
     [TestMethod]
     public void SplitWorksOnlyInDwindle()
     {
-        var desk = new TestDesktop("general:layout = scrolling\n");
+        var desk = new TestDesktop("layout = scrolling\n");
         desk.Spawn("a");
         desk.Spawn("b");
 

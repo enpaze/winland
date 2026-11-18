@@ -8,7 +8,7 @@ public class Layouts
 
     public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void TilesSplitsResizesAndSwitchesLayouts() => VerifyRun.Drive(TestContext, "general:layout = dwindle\n", run =>
+    public void TilesSplitsResizesAndSwitchesLayouts() => VerifyRun.Drive(TestContext, "layout = dwindle\n", run =>
     {
         var (left, right) = run.OpenPair();
         Assert.AreEqual("dwindle", run.Json("get", "workspace").GetProperty("tiledLayout").GetString());

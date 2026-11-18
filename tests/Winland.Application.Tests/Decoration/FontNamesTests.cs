@@ -24,7 +24,7 @@ public class FontNamesTests
 
         Assert.AreEqual("Segoe UI", Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style.FontFamily);
 
-        core.Handle(new Configure(ConfigParser.Parse("group:groupbar:font_family = Fira Code\n")));
+        core.Handle(new Configure(ConfigParser.Parse("tab_font = Fira Code\n")));
         Assert.AreEqual("Fira Code", Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style.FontFamily);
     }
 }

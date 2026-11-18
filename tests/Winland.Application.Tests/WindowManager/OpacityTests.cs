@@ -9,10 +9,10 @@ public class OpacityTests
     public void OpacityFractionsClampAndABadValueKeepsThePreviousOne()
     {
         var options = DecorationOptions.From(ConfigParser.Parse("""
-            decoration:active_opacity = 0.8
-            decoration:active_opacity = 2
-            decoration:inactive_opacity = -0.4
-            decoration:inactive_opacity = no
+            active_opacity = 0.8
+            active_opacity = 2
+            inactive_opacity = -0.4
+            inactive_opacity = no
             """));
 
         Assert.AreEqual(1f, options.ActiveOpacity);
@@ -23,9 +23,9 @@ public class OpacityTests
     public void OpacityKeysAreHonored()
     {
         var document = ConfigParser.Parse("""
-            decoration:active_opacity = 0.8
-            decoration:inactive_opacity = 0.4
-            decoration:blur:enabled = true
+            active_opacity = 0.8
+            inactive_opacity = 0.4
+            backdrop = acrylic
             """);
 
         Assert.IsEmpty(document.Warnings);
@@ -63,8 +63,8 @@ public class OpacityTests
     public void ActiveAndInactiveClientsUseTheirFractions()
     {
         var core = CoreWith("""
-            decoration:active_opacity = 0.8
-            decoration:inactive_opacity = 0.4
+            active_opacity = 0.8
+            inactive_opacity = 0.4
             """);
 
         var first = core.Handle(Appeared(1, Area));
@@ -83,7 +83,7 @@ public class OpacityTests
     public void RuleOpacityMultipliesAndTheLastRuleWins()
     {
         var multiplied = CoreWith("""
-            decoration:active_opacity = 0.5
+            active_opacity = 0.5
             windowrule = opacity 0.5, class:kitty
             windowrule = opacity 0.8, class:kitty
             """);
@@ -91,7 +91,7 @@ public class OpacityTests
         Assert.AreEqual(102, Alpha(both, 1));
 
         var replaced = multiplied.Handle(new Configure(ConfigParser.Parse("""
-            decoration:active_opacity = 0.8
+            active_opacity = 0.8
             windowrule = opacity 0.8, class:kitty
             """)));
         Assert.AreEqual(163, Alpha(replaced, 1));
@@ -101,13 +101,13 @@ public class OpacityTests
     public void AClosedClientsOpacityRuleDoesNotStickToTheNextWindow()
     {
         var core = CoreWith("""
-            decoration:active_opacity = 1
+            active_opacity = 1
             windowrule = opacity 0.8, class:kitty
             """);
         var first = core.Handle(Appeared(1, Area, windowClass: "kitty"));
         Assert.AreEqual(204, Alpha(first, 1));
         core.Handle(new WindowClosed(new WindowId(1)));
-        core.Handle(new Configure(ConfigParser.Parse("decoration:active_opacity = 0.5\n")));
+        core.Handle(new Configure(ConfigParser.Parse("active_opacity = 0.5\n")));
 
         var appeared = core.Handle(Appeared(1, Area, windowClass: "kitty"));
 

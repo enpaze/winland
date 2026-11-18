@@ -15,7 +15,7 @@ public class GroupTests
     [TestMethod]
     public void ABackgroundGroupMemberLeavesTheShownMemberFocusedWhenFollowingIsOff()
     {
-        var core = Opened("input:follow_mouse = false\n", First);
+        var core = Opened("focus_follows_mouse = false\n", First);
         core.Execute("group");
 
         var opened = core.Handle(Appear(Second, "two"));
@@ -31,10 +31,10 @@ public class GroupTests
     public void GroupBordersKeepTheirFixedColorsWhenOtherColorsChange()
     {
         var core = Opened("""
-            general:col.active_border = 0xffff0000
-            general:col.inactive_border = 0xff0000ff
-            group:groupbar:col.active = 0xff00ff00
-            group:groupbar:col.inactive = 0xffffffff
+            border_color = 0xffff0000
+            border_color_inactive = 0xff0000ff
+            tab_color = 0xff00ff00
+            tab_color_inactive = 0xffffffff
             """, First);
         var grouped = core.Execute("group").Effect;
         Assert.AreEqual(new BorderColor(0x66, 0xFF, 0xFF, 0), Decoration(grouped, First).Border);
@@ -340,7 +340,7 @@ public class GroupTests
     [TestMethod]
     public void TheTitleRowHeightShapesTheBar()
     {
-        var core = Opened("group:groupbar:height = 20\n", First);
+        var core = Opened("tab_height = 20\n", First);
 
         var bar = Assert.ContainsSingle(core.Execute("group").Effect.GroupBars);
 
@@ -388,8 +388,8 @@ public class GroupTests
     public void GroupKeywordsAreHonored()
     {
         var document = ConfigParser.Parse("""
-            group:groupbar:font_size = 10
-            group:groupbar:col.active = rgba(ff0000ff)
+            tab_font_size = 10
+            tab_color = rgba(ff0000ff)
             """);
 
         Assert.IsEmpty(document.Warnings);

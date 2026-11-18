@@ -36,7 +36,7 @@ sealed class RollingLogWriter(TextWriter inner) : TextWriter
         ArgumentNullException.ThrowIfNull(openFile);
         lock (_gate)
         {
-            if (options.DisableLogs)
+            if (!options.LogFile)
             {
                 CloseFile();
                 return;

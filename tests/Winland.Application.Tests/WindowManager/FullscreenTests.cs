@@ -115,9 +115,9 @@ public class FullscreenTests
     public void RulesRequestFullscreenAndMaximize()
     {
         var core = new WindowManager(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 0
             windowrule = fullscreen, class:game
             windowrule = maximize, class:edit
             """));
@@ -264,7 +264,7 @@ public class FullscreenTests
         OpenWindows(core, 2);
         core.Handle(new Dispatch("fullscreen"));
 
-        var reloaded = core.Handle(new Configure(ConfigParser.Parse("general:layout = master\n")));
+        var reloaded = core.Handle(new Configure(ConfigParser.Parse("layout = master\n")));
 
         Assert.AreEqual(FullscreenMode.Fullscreen, Client(reloaded, 2).Fullscreen);
         Assert.AreEqual(MonitorBounds, Bounds(core, 2));
@@ -273,7 +273,7 @@ public class FullscreenTests
     [TestMethod]
     public void MaximizeLeavesGapsOutAndTheBorder()
     {
-        var core = Desk("general:gaps_out = 20\ngeneral:border_size = 2\n");
+        var core = Desk("gaps_out = 20\nborder_size = 2\n");
         OpenWindows(core, 2);
 
         var maximized = core.Handle(new Dispatch("maximize"));
@@ -284,7 +284,7 @@ public class FullscreenTests
     [TestMethod]
     public void AFloatingClientMaximizesInsideTheWorkAreaWithoutGapsOut()
     {
-        var core = Desk("general:gaps_out = 20\ngeneral:border_size = 2\n");
+        var core = Desk("gaps_out = 20\nborder_size = 2\n");
         OpenWindows(core, 1);
         core.Handle(new Dispatch("float"));
 
@@ -298,7 +298,7 @@ public class FullscreenTests
     [DataRow(true)]
     public void AMaximizedGroupMemberLeavesRoomForTheBar(bool floating)
     {
-        var core = Desk("general:gaps_out = 0\ngeneral:border_size = 0\n");
+        var core = Desk("gaps_out = 0\nborder_size = 0\n");
         OpenWindows(core, 1);
         core.Handle(new Dispatch("group"));
         core.Handle(new WindowAppeared(new WindowId(2), Work));
@@ -342,7 +342,7 @@ public class FullscreenTests
     [TestMethod]
     public void TheScrollingLayoutKeepsAFullscreenTileOnItsTapeWhenFocusScrollsAway()
     {
-        var core = Desk("general:layout = scrolling\n");
+        var core = Desk("layout = scrolling\n");
         OpenWindows(core, 2);
 
         var entered = core.Handle(new Dispatch("fullscreen"));
@@ -365,7 +365,7 @@ public class FullscreenTests
     [TestMethod]
     public void DefaultFullscreenInTheScrollingLayoutCoversTheMonitorAsElsewhere()
     {
-        var core = Desk("general:layout = scrolling\n");
+        var core = Desk("layout = scrolling\n");
         OpenWindows(core, 2);
 
         var entered = core.Handle(new Dispatch("fullscreen", "default"));

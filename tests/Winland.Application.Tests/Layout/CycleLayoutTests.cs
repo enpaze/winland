@@ -108,7 +108,7 @@ public class CycleLayoutTests
     [TestMethod]
     public void AReloadReturnsToTheConfigLayout()
     {
-        var config = ConfigParser.Parse("general:layout = scrolling\n");
+        var config = ConfigParser.Parse("layout = scrolling\n");
         var core = new WindowManager(config);
         core.Handle(Appeared(1, Area));
         var cycled = core.Handle(new Dispatch("layout", "next"));

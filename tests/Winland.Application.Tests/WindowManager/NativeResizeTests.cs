@@ -128,7 +128,7 @@ public class NativeResizeTests
     [TestMethod]
     public void TheEndPlacesTheClientWhereTheLayoutHoldsItAfterTheRelease()
     {
-        var core = Flat("general:layout = scrolling\nscrolling:column_width = 0.3\n");
+        var core = Flat("layout = scrolling\ncolumn_width = 0.3\n");
         Appear(core, 1);
         Appear(core, 2);
 

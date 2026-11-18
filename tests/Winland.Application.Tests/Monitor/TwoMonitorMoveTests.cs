@@ -114,13 +114,9 @@ public class TwoMonitorMoveTests
     }
 
     [TestMethod]
-    public void PointerNoWarpsFocusesMonitorOnly()
+    public void PointerWithoutWarpFocusesMonitorOnly()
     {
-        var desk = Prepare(new TestDesktop("""
-            cursor {
-                no_warps = true
-            }
-            """));
+        var desk = Prepare(new TestDesktop("warp_cursor = false\n"));
 
         desk.Ok("focus-monitor", Right);
         desk.Ok("workspace", "301");

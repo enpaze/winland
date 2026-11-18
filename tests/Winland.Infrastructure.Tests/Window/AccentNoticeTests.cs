@@ -55,7 +55,7 @@ public class AccentNoticeTests
         try
         {
             var core = new WindowManager();
-            core.Handle(new Configure(ConfigParser.Parse("general:col.active_border = rgba(aabbccff)\n")));
+            core.Handle(new Configure(ConfigParser.Parse("border_color = rgba(aabbccff)\n")));
             using var host = new SessionLoop(core);
 
             host.NoteAccent();

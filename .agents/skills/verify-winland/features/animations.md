@@ -9,7 +9,7 @@ Winland moves windows to their tiles through frames instead of at once: a Window
 
 ## How to get to it (user POV)
 
-- Leave `animations:enabled` at its default of true. The starter config has `animations:enabled = true` as a comment. False moves every window at once.
+- Leave `animations` at its default of true. The starter config has `animations = true` as a comment. False moves every window at once.
 - Keep the Windows setting Animation effects on. With it off, every window moves at once.
 - Press `Win+1` to `Win+0`, `Win+Tab` or `Win+Shift+Tab` to switch Workspace and watch it slide in, or run `winland workspace 2`.
 - Open a window, resize a tile with the keyboard, or toggle fullscreen with `Win+F` to see the other motions.
@@ -19,7 +19,7 @@ Winland moves windows to their tiles through frames instead of at once: a Window
 Preconditions:
 
 - The baseline in [README.md](./README.md) holds, and `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Doctor` prints `doctor: ok`.
-- The driver's config adds `animations:enabled = true` to the baseline config.
+- The driver's config adds `animations = true` to the baseline config.
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature animations`. It prints `== feature animations: passed`.
 - **Animation effects.** When the Windows setting Animation effects is off, the driver turns it on for the run without saving the change, and prints a line that says so.
@@ -30,6 +30,6 @@ Preconditions:
 
 ## Gotchas
 
-- The baseline config sets `animations:enabled = false`, so every other driver moves windows at once. Only this driver's line turns animations on.
+- The baseline config sets `animations = false`, so every other driver moves windows at once. Only this driver's line turns animations on.
 - The driver turns Animation effects off again in its cleanup. A run killed before that leaves the setting on.
 - The driver checks only a Workspace with a higher number sliding in from the right. It does not reach a Window opening or fading in, a tile moving or resizing, fullscreen, a Window closing, a lower Workspace sliding in from the left, the special workspace fade, or opacity and border blends.

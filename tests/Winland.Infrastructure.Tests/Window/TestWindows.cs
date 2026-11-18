@@ -10,7 +10,7 @@ internal sealed class TestWindows : IDisposable
     {
         Desktop = new FakeDesktop(() => _now);
         Core = new WindowManager();
-        Core.Handle(new ConfigLoaded(ConfigParser.Parse("general:border_size = 0\n" + config)));
+        Core.Handle(new ConfigLoaded(ConfigParser.Parse("border_size = 0\n" + config)));
         Adapter = new WindowAdapter(Core, Desktop, changed, () => _now, threaded: false);
         Core.ReducedMotion = () => reducedMotion;
     }

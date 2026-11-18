@@ -59,7 +59,7 @@ public class MonitorDispatchTests
     public void FocusCrossesToTheTileThatSharesTheEdgeWithDefaultGaps()
     {
         var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 5\ngeneral:gaps_out = 20\ngeneral:border_size = 2\n")));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 5\ngaps_out = 20\nborder_size = 2\n")));
         var left = Display(@"\\.\DISPLAY1", "Dell", new Rectangle(0, 0, 1080, 1920));
         var right = Display(@"\\.\DISPLAY2", "Samsung", new Rectangle(1080, 0, 1080, 1920));
         core.Handle(new MonitorsChanged([left, right]));
@@ -100,7 +100,7 @@ public class MonitorDispatchTests
     public void FocusCrossesToTheMostRecentNeighbor()
     {
         var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n")));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\n")));
         var left = Display(@"\\.\DISPLAY1", "Dell", new Rectangle(0, 0, 1080, 1920));
         var right = Display(@"\\.\DISPLAY2", "Samsung", new Rectangle(1080, -300, 1080, 1920));
         core.Handle(new MonitorsChanged([left, right]));
@@ -165,10 +165,10 @@ public class MonitorDispatchTests
     public void MasterMoveWindowCrossesWhenItCannotMoveInsideTheWorkspace()
     {
         var core = Gapped("""
-            general:layout = master
-            general:gaps_in = 0
-            general:gaps_out = 20
-            general:border_size = 0
+            layout = master
+            gaps_in = 0
+            gaps_out = 20
+            border_size = 0
             """);
 
         var outcome = core.Handle(new Dispatch("move", "r"));
@@ -306,9 +306,9 @@ public class MonitorDispatchTests
     }
 
     [TestMethod]
-    public void NoWarpsKeepsTheCursorWhereItIsOnFocus()
+    public void WarpCursorOffKeepsTheCursorWhereItIsOnFocus()
     {
-        var core = TwoMonitors("cursor:no_warps = true\n");
+        var core = TwoMonitors("warp_cursor = false\n");
 
         var moved = core.Handle(new Dispatch("focus", "r"));
 
@@ -342,9 +342,9 @@ public class MonitorDispatchTests
     private static WindowManager Gapped(string? config = null)
     {
         var text = config ?? """
-            general:gaps_in = 0
-            general:gaps_out = 20
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 20
+            border_size = 0
             """;
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(text)));

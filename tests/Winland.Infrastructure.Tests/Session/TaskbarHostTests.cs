@@ -14,14 +14,14 @@ public class TaskbarHostTests
         Assert.AreEqual(0, bars.Hides);
         Assert.AreEqual(0, bars.Restores);
 
-        files.Write("general:hide_taskbar = true\n");
+        files.Write("hide_taskbar = true\n");
         Assert.AreEqual("ok", host.Reload().Text);
         Assert.AreEqual(1, bars.Hides);
 
         Assert.AreEqual("ok", host.Reload().Text);
         Assert.AreEqual(1, bars.Hides);
 
-        files.Write("general:hide_taskbar = false\n");
+        files.Write("hide_taskbar = false\n");
         Assert.AreEqual("ok", host.Reload().Text);
         Assert.AreEqual(1, bars.Restores);
     }
@@ -36,7 +36,7 @@ public class TaskbarHostTests
         Assert.AreEqual("ok", host.Reload().Text);
         Assert.AreEqual(0, bars.Hides);
 
-        files.Write("general:hide_taskbar = true\nbind = Win+R, reload\n");
+        files.Write("hide_taskbar = true\nbind = Win+R, reload\n");
         core.Handle(new KeyPressed("Super_L"));
         core.Handle(new KeyPressed("R"));
 
@@ -61,7 +61,7 @@ public class TaskbarHostTests
     [TestMethod]
     public void ACleanExitRestoresATaskbarThisRunHidAndLeavesOneItDidNot()
     {
-        using var files = new ConfigDir("general:hide_taskbar = true\n");
+        using var files = new ConfigDir("hide_taskbar = true\n");
         var hidden = new RecordingTaskbar();
         var host = Host(files, hidden);
         Assert.AreEqual("ok", host.Reload().Text);

@@ -10,7 +10,7 @@ public class SelectLayoutTests
     [DataRow("floating", "scrolling")]
     public void LayoutSelectsTheNamedLayout(string from, string to)
     {
-        var core = Configured($"general:layout = {from}\n");
+        var core = Configured($"layout = {from}\n");
         core.Handle(Appeared(1));
 
         var selected = core.Handle(new Dispatch("layout", to));
@@ -26,7 +26,7 @@ public class SelectLayoutTests
     [DataRow("scrolling dwindle")]
     public void ANameThatIsNoLayoutErrorsAndChangesNothing(string name)
     {
-        var core = Configured("general:layout = scrolling\n");
+        var core = Configured("layout = scrolling\n");
         core.Handle(Appeared(1));
 
         var refused = core.Handle(new Dispatch("layout", name));
@@ -179,7 +179,7 @@ public class SelectLayoutTests
 
     private static WindowManager ScrollingWithANarrowColumn()
     {
-        var core = Flat("general:layout = scrolling\n");
+        var core = Flat("layout = scrolling\n");
         core.Handle(Appeared(1));
         core.Handle(Appeared(2));
         core.Handle(new Dispatch("layoutmsg", "colresize 0.3"));

@@ -67,7 +67,7 @@ public class FullscreenFocusTests
     [TestMethod]
     public void AClientThatGoesFullscreenOrLeavesItByItselfIsPlacedWithoutAMotion()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0\nanimation = global, 1, 5, default\n"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0\nanimation = global, 1, 5, default\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
@@ -105,7 +105,7 @@ public class FullscreenFocusTests
 
     private static WindowManager Desk()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"));
+        var core = new WindowManager(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
         return core;

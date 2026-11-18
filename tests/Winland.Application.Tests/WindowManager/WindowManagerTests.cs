@@ -254,7 +254,7 @@ public class WindowManagerTests
     [TestMethod]
     public void ClassRuleFloatsTheWindowAndLeavesTheTilesAlone()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:kitty\n"));
+        var core = new WindowManager(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\nwindowrule = float, class:kitty\n"));
         var area = new Rectangle(0, 0, 1920, 1080);
         var bounds = new Rectangle(40, 50, 320, 200);
         core.Handle(new WindowAppeared(new WindowId(1), area));
@@ -388,7 +388,7 @@ public class WindowManagerTests
     [TestMethod]
     public void TileRuleAdoptsAWindowTheFilterWouldLeaveAlone()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = tile, class:toolwindow\n"));
+        var core = new WindowManager(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\nwindowrule = tile, class:toolwindow\n"));
         var area = new Rectangle(0, 0, 1920, 1080);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(7), area)
@@ -423,7 +423,7 @@ public class WindowManagerTests
     [TestMethod]
     public void TileRuleTilesADialog()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = tile, class:dialog\n"));
+        var core = new WindowManager(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\nwindowrule = tile, class:dialog\n"));
         var area = new Rectangle(0, 0, 1920, 1080);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), area)
@@ -500,7 +500,7 @@ public class WindowManagerTests
     public void LaterRuleWinsAndDifferentEffectsCombine()
     {
         var text =
-            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:kitty\n" +
+            "gaps_in = 0\ngaps_out = 0\nborder_size = 0\nwindowrule = float, class:kitty\n" +
             "windowrule = workspace 9, class:kitty\n" +
             "windowrule = tile, class:kitty\n";
         var core = new WindowManager(ConfigParser.Parse(text));
@@ -538,7 +538,7 @@ public class WindowManagerTests
     [TestMethod]
     public void XwaylandMatchIsNotApplied()
     {
-        var document = ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:kitty, xwayland:1\n");
+        var document = ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\nwindowrule = float, class:kitty, xwayland:1\n");
         var core = new WindowManager(document);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 100, 100))

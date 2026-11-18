@@ -25,16 +25,16 @@ Winland reads one config file and the files it `source`s, reloads them when one 
 Preconditions:
 
 - The baseline in [README.md](./README.md) holds, and `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Doctor` prints `doctor: ok`.
-- The driver's config adds `general:gaps_out = 0` to the baseline config.
+- The driver's config adds `gaps_out = 0` to the baseline config.
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature config`. It prints `== feature config: passed`.
-- **Check a clean file.** The driver writes `good.conf`, which sets `general:gaps_in = 3` and has `source = ./extra.conf`, and runs `winland check good.conf`. It exits 0 and prints nothing.
-- **Check a file with a typo.** The driver writes `bad.conf` with `general:gaps_inn = 4` on line 2 and runs `winland check bad.conf`. It exits 1, and standard error holds `bad.conf:2:` and `Did you mean 'general:gaps_in'?`.
+- **Check a clean file.** The driver writes `good.conf`, which sets `gaps_in = 3` and has `source = ./extra.conf`, and runs `winland check good.conf`. It exits 0 and prints nothing.
+- **Check a file with a typo.** The driver writes `bad.conf` with `gaps_inn = 4` on line 2 and runs `winland check bad.conf`. It exits 1, and standard error holds `bad.conf:2:` and `Did you mean 'gaps_in'?`.
 - **Invalid usage and a missing file.** `winland check good.conf bad.conf` exits 2. `winland check missing.conf` exits 1.
 - **Files and errors.** `winland -j get files` reports the run's config path as `config`. `winland get errors` replies `no config errors`.
 - **Open a window.** The driver opens `WinlandVerify 1`. It becomes a Client and fills the work area, because `gaps_out` is 0.
-- **Save the config.** The driver starts `winland events` and appends `general:gaps_out = 40` and `general:nosuchoption = 1` to the config. The Event stream holds `configreloaded`, and the window moves in 40 pixels from the left and right of the work area.
-- **List the warning.** Once `configreloaded` arrives, before the window moves, `winland get errors` names `general:nosuchoption`. `winland -j get errors` holds an entry whose `file` is the run's config path, whose `line` is above 0, and whose `message` names `general:nosuchoption`.
+- **Save the config.** The driver starts `winland events` and appends `gaps_out = 40` and `nosuchoption = 1` to the config. The Event stream holds `configreloaded`, and the window moves in from the left and right of the work area by 40 pixels times its Monitor's `scale` from `winland -j get monitors`.
+- **List the warning.** Once `configreloaded` arrives, before the window moves, `winland get errors` names `nosuchoption`. `winland -j get errors` holds an entry whose `file` is the run's config path, whose `line` is above 0, and whose `message` names `nosuchoption`.
 - **Reload by hand.** The driver runs `winland reload`. It replies `ok`.
 
 ## Gotchas

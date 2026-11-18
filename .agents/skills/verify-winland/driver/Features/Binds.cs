@@ -14,7 +14,7 @@ public class Binds
         bind = $hyper+F9, workspace 4
         bind = $hyper+F10, "Back to workspace 1", workspace 1
         bind = $hyper+MOUSE:X2, workspace 1
-        input:follow_mouse = true
+        focus_follows_mouse = true
 
         """;
 
@@ -47,6 +47,6 @@ public class Binds
             Desktop.MoveMouse(x + (step % 3) - 1, y + (step % 2));
 
         run.Say($"moved the pointer onto the right window at {x},{y}");
-        run.Until("follow_mouse focused the window under the pointer", () => run.Active() == VerifyRun.Address(right));
+        run.Until("focus_follows_mouse focused the window under the pointer", () => run.Active() == VerifyRun.Address(right));
     });
 }

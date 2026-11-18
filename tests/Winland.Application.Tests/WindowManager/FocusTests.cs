@@ -206,7 +206,7 @@ public class FocusTests
     [TestMethod]
     public void TheForegroundReportAfterAFocusDispatcherDoesNotScrollTheStripAgain()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:layout = scrolling\n"));
+        var core = new WindowManager(ConfigParser.Parse("layout = scrolling\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
         core.Handle(new WindowAppeared(new WindowId(3), Area));

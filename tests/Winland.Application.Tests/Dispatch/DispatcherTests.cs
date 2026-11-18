@@ -47,7 +47,7 @@ public class DispatcherTests
     [DataRow("dwindle")]
     public void FocusFromAFloatingClientLooksByAngle(string layout)
     {
-        var core = Floats("general:layout = " + layout + "\n");
+        var core = Floats("layout = " + layout + "\n");
         ShowFloat(core, 2, 400, 150);
         ShowFloat(core, 1, 100, 100);
 
@@ -302,9 +302,9 @@ public class DispatcherTests
     {
         var core = new WindowManager();
         var document = ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 0
             bind = Win+T, split
             """);
         core.Handle(new Configure(document));
@@ -364,7 +364,7 @@ public class DispatcherTests
         return core;
     }
 
-    private const string Gapless = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n";
+    private const string Gapless = "gaps_in = 0\ngaps_out = 0\nborder_size = 0\n";
 
     private static WindowManager Load(string text)
     {
