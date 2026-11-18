@@ -203,7 +203,7 @@ public sealed partial class WindowManager
         if (sourceId == target)
         {
             if (focus is WindowId requested && ClientOn(target, requested) is not null)
-                Give(requested, FocusedWorkspace());
+                Give(requested, ShownWorkspace());
 
             return View([], hide: concealed, consumed: consumed, focus: concealed.Length > 0 || focus is not null ? Kept() : null);
         }
@@ -279,7 +279,7 @@ public sealed partial class WindowManager
         var bounds = screen.Bounds;
         if (_focus.Focused is WindowId window)
         {
-            foreach (var placement in FocusedWorkspace().Layout.Visible())
+            foreach (var placement in ShownWorkspace().Layout.Visible())
             {
                 if (placement.Client.Value == window.Value)
                 {

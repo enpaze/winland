@@ -82,14 +82,14 @@ public sealed partial class WindowManager
     private Outcome KillActive()
     {
         var active = ActiveWindow();
-        var desk = CurrentWorkspace();
+        var desk = TopWorkspace();
         return Present(desk, desk.Covered(), [], close: active);
     }
 
     private Outcome ResizeActive(string arguments)
     {
         var active = ActiveWindow();
-        var desk = CurrentWorkspace();
+        var desk = TopWorkspace();
         var covered = desk.Covered();
         IReadOnlyList<Placement> placements = active is WindowId window ? desk.Layout.ResizeActive(window, arguments) : [];
         return Present(desk, covered, placements);
@@ -98,7 +98,7 @@ public sealed partial class WindowManager
     private Outcome LayoutMessage(string message)
     {
         var active = ActiveWindow();
-        var desk = CurrentWorkspace();
+        var desk = TopWorkspace();
         var layout = desk.Layout;
         var covered = desk.Covered();
         var placements = layout.LayoutMessage(active, message);

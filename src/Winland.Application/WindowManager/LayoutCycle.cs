@@ -10,7 +10,7 @@ public sealed partial class WindowManager
         if (LayoutFactory.Named(name) is not Layout created)
             return Rejected(DidYouMean.After($"error: unknown layout '{name}'", name, LayoutFactory.Names));
 
-        var desk = CurrentWorkspace();
+        var desk = TopWorkspace();
         return LayoutFactory.NameOf(created) == LayoutFactory.NameOf(desk.Layout)
             ? View([])
             : ChangeLayout(desk, created);
@@ -18,7 +18,7 @@ public sealed partial class WindowManager
 
     private Outcome CycleWorkspaceLayout(string arguments)
     {
-        var desk = CurrentWorkspace();
+        var desk = TopWorkspace();
         var next = NextLayout(LayoutFactory.NameOf(desk.Layout), GoesBack(arguments));
         return ChangeLayout(desk, LayoutFactory.Named(next)!);
     }

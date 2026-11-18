@@ -114,7 +114,7 @@ public sealed partial class WindowManager
     private void Give(WindowId? window, LiveWorkspace? desk, bool pointer = false)
     {
         _focus.Take(window, desk);
-        if (window is not WindowId given || desk is null || !_workspaces.Shown.IsShown(desk.Id) || !IsCurrent(desk))
+        if (window is not WindowId given || desk is null || !_workspaces.Shown.IsShown(desk.Id) || TopOn(desk.Monitor) != desk.Id)
             return;
 
         if (_monitors.Count > 0)
@@ -128,9 +128,6 @@ public sealed partial class WindowManager
         _focus.Confirm(given);
     }
 
-    private bool IsCurrent(LiveWorkspace desk) =>
-        (_workspaces.Shown.SpecialOn(desk.Monitor) ?? _workspaces.Shown.ActiveOn(desk.Monitor)) == desk.Id;
-
     private void Foreground(WindowId window, bool pointer = false)
     {
         if (_focus.Focused == window)
@@ -138,7 +135,7 @@ public sealed partial class WindowManager
 
         if (WorkspaceContaining(window) is { } owner && _workspaces.Shown.IsShown(owner.Id))
         {
-            if (IsCurrent(owner))
+            if (TopOn(owner.Monitor) == owner.Id)
                 Give(window, owner, pointer);
             else if (_monitors.Count > 0)
                 Focus(owner.Monitor);

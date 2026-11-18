@@ -2,16 +2,16 @@ namespace Winland.Application;
 
 public sealed partial class WindowManager
 {
-    private LiveWorkspace CurrentWorkspace()
+    private LiveWorkspace TopWorkspace()
     {
         var monitor = FocusedId();
         if (_workspaces.Shown.SpecialOn(monitor) is WorkspaceId special && _workspaces.Find(special) is LiveWorkspace desk)
             return desk;
 
-        return FocusedWorkspace();
+        return ShownWorkspace();
     }
 
-    private LiveWorkspace LayoutWorkspace(WindowId window) => WorkspaceContaining(window) ?? CurrentWorkspace();
+    private LiveWorkspace LayoutWorkspace(WindowId window) => WorkspaceContaining(window) ?? TopWorkspace();
 
     private Outcome ToggleSpecial(string arguments)
     {
@@ -127,7 +127,7 @@ public sealed partial class WindowManager
     private Outcome CloseSpecial(MonitorId monitor)
     {
         var hidden = ConcealSpecial(monitor);
-        var normal = FocusedWorkspace();
+        var normal = ShownWorkspace();
         return View(
             normal.Layout.Visible(),
             hide: hidden,

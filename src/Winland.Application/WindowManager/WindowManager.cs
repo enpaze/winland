@@ -256,11 +256,7 @@ public sealed partial class WindowManager
             MonitorsChanged changed => SetMonitors(changed.Monitors),
         };
 
-    private WorkspaceId LaunchWorkspace()
-    {
-        var monitor = FocusedId();
-        return _workspaces.Shown.SpecialOn(monitor) ?? _workspaces.Shown.ActiveOn(monitor);
-    }
+    private WorkspaceId LaunchWorkspace() => TopOn(FocusedId());
 
     internal Func<long> Clock { get; set; } = static () => Environment.TickCount64;
 

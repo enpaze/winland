@@ -83,7 +83,7 @@ public sealed partial class WindowManager
         if (_focus.Focused is not WindowId current || IsShownClient(current))
             return null;
 
-        var desk = CurrentWorkspace();
+        var desk = TopWorkspace();
         var next = _focus.Remembered(desk);
         Give(next, desk);
         return next;

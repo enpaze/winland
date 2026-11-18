@@ -278,7 +278,7 @@ public sealed partial class WindowManager
         return new State(clients)
         {
             Workspaces = workspaces,
-            ActiveWorkspace = ActiveId(),
+            ActiveWorkspace = ShownId(),
             SpecialWorkspace = _workspaces.Shown.SpecialOn(focused),
             ActiveMonitor = focused,
             Hidden = hidden,
@@ -349,7 +349,7 @@ public sealed partial class WindowManager
         var placements = new List<Placement>();
         if (_monitors.Count == 0)
         {
-            placements.AddRange(FocusedWorkspace().Layout.Visible());
+            placements.AddRange(ShownWorkspace().Layout.Visible());
             WorkspaceId? overlayId = null;
             if (_workspaces.Shown.SpecialOn(MonitorId.Primary) is WorkspaceId primary && _workspaces.Find(primary) is LiveWorkspace overlay)
             {
@@ -359,7 +359,7 @@ public sealed partial class WindowManager
 
             foreach (var desk in _workspaces)
             {
-                if (desk.Id != ActiveId() && desk.Id != overlayId)
+                if (desk.Id != ShownId() && desk.Id != overlayId)
                     AddPinnedPlacements(desk, placements);
             }
 

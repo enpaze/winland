@@ -9,7 +9,7 @@ public sealed partial class WindowManager
     private Outcome MoveFocusDirection(string arguments)
     {
         var active = ActiveWindow();
-        var desk = active is WindowId owned && WorkspaceContaining(owned) is LiveWorkspace own ? own : FocusedWorkspace();
+        var desk = active is WindowId owned && WorkspaceContaining(owned) is LiveWorkspace own ? own : ShownWorkspace();
         var covered = desk.Covered();
         if (!Sides.TryParse(FirstToken(arguments), out var direction))
             return View([]);
@@ -63,7 +63,7 @@ public sealed partial class WindowManager
         }
 
         var active = ActiveWindow();
-        var desk = active is WindowId owned && WorkspaceContaining(owned) is LiveWorkspace own ? own : FocusedWorkspace();
+        var desk = active is WindowId owned && WorkspaceContaining(owned) is LiveWorkspace own ? own : ShownWorkspace();
         var covered = desk.Covered();
         if (active is WindowId shown && Find(shown) is { Fullscreen: not FullscreenMode.None })
             return Rejected("error: can't move fullscreen window");
@@ -108,7 +108,7 @@ public sealed partial class WindowManager
         if (ResolveMonitor(arguments) is not LiveMonitor destination)
             return Rejected("error: monitor not found");
 
-        if (_workspaces.Find(ActiveId()) is not LiveWorkspace desk)
+        if (_workspaces.Find(ShownId()) is not LiveWorkspace desk)
             return Rejected("error: invalid workspace");
 
         return MoveWorkspaceTo(desk, destination);

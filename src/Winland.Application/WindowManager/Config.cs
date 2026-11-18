@@ -68,7 +68,7 @@ public sealed partial class WindowManager
         _loaded = document;
         ShowConfigErrors(document);
 
-        var active = FocusedWorkspace();
+        var active = ShownWorkspace();
         var covered = active.Covered();
         foreach (var desk in _workspaces)
         {
@@ -84,7 +84,7 @@ public sealed partial class WindowManager
             {
                 Stamp(desk);
                 var placed = desk.Layout.Apply(desk.Options);
-                if (desk.Id == ActiveId())
+                if (desk.Id == ShownId())
                     placements = placed;
             }
 

@@ -285,7 +285,7 @@ public sealed partial class WindowManager
         if (MonitorAt(pointer) is { } screen && (_workspaces.Shown.SpecialOn(screen.Id) ?? _workspaces.Shown.Shown(screen.Id)) is WorkspaceId shown && _workspaces.Find(shown) is LiveWorkspace desk)
             return desk;
 
-        return CurrentWorkspace();
+        return TopWorkspace();
     }
 
     private bool TryRingTarget(Point pointer, int reach, out WindowId window, out Rectangle bounds)
@@ -358,7 +358,7 @@ public sealed partial class WindowManager
 
     private LayoutOptions ActiveOptions()
     {
-        if (EnabledMonitor(FocusedWorkspace().Monitor) is { } screen)
+        if (EnabledMonitor(ShownWorkspace().Monitor) is { } screen)
             return _config.Layout.ScaledBy(screen.Arranged.Scale);
 
         return _config.Layout;

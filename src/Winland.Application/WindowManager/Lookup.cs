@@ -2,7 +2,9 @@ namespace Winland.Application;
 
 public sealed partial class WindowManager
 {
-    private WorkspaceId ActiveId() => _workspaces.Shown.ActiveOn(FocusedId());
+    private WorkspaceId ShownId() => _workspaces.Shown.ActiveOn(FocusedId());
+
+    private WorkspaceId TopOn(MonitorId monitor) => _workspaces.Shown.SpecialOn(monitor) ?? _workspaces.Shown.ActiveOn(monitor);
 
     [System.Diagnostics.Conditional("DEBUG")]
     private void CheckShownWorkspaces()
@@ -35,7 +37,7 @@ public sealed partial class WindowManager
         return null;
     }
 
-    private LiveWorkspace FocusedWorkspace() => WorkspaceFor(ActiveId(), FocusedId());
+    private LiveWorkspace ShownWorkspace() => WorkspaceFor(ShownId(), FocusedId());
 
     private LiveWorkspace? WorkspaceContaining(WindowId window)
     {
