@@ -30,7 +30,7 @@ sealed class WindowsDesktop : IWindowsDesktop
         }
         set
         {
-            if (!SetParameter(SetWindowArranging, 0, value ? 1 : 0, UpdateAndNotify))
+            if (!SetParameter(SetWindowArranging, value ? 1u : 0u, 0, UpdateAndNotify))
                 throw new InvalidOperationException("Could not change Snap windows.");
         }
     }
