@@ -23,7 +23,7 @@ Preconditions:
   - `gesture = 3, horizontal, workspace`
   - `gesture = 4, vertical, workspace`
   - `gesture = 3, diagonal, workspace`
-  - `gesture = 3, horizontal, workspace, mod:SUPER`
+  - `gesture = 3, horizontal, workspace, mod:Win`
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature touchpad-swipe`. It prints `== feature touchpad-swipe: passed`.
 - **Read the warnings.** The driver runs `winland get errors`. The reply has exactly two lines. One holds `winland.conf:10: Invalid direction: diagonal.` and the other holds `winland.conf:11: A gesture is <fingers>, horizontal or vertical, workspace.` The two valid lines give no warning.

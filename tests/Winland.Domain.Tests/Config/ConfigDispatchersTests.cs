@@ -6,9 +6,9 @@ public class ConfigDispatchersTests
     private static readonly string[] Known = ["close", "workspace"];
 
     private const string Binds = """
-        bind = SUPER, Q, close
-        bind = SUPER, W, closs
-        bind = SUPER, E, teleport
+        bind = Win+Q, close
+        bind = Win+W, closs
+        bind = Win+E, teleport
         """;
 
     [TestMethod]
@@ -28,7 +28,7 @@ public class ConfigDispatchersTests
     [TestMethod]
     public void ACaseThatDiffersStillMatches()
     {
-        var document = ConfigParser.Parse("bind = SUPER, Q, close", dispatchers: Known);
+        var document = ConfigParser.Parse("bind = Win+Q, close", dispatchers: Known);
 
         Assert.IsEmpty(document.Warnings);
         Assert.ContainsSingle(document.Binds);

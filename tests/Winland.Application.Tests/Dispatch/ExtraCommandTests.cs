@@ -32,14 +32,14 @@ public class ExtraCommandTests
         var core = new WindowManager();
         Assert.AreEqual("[]", core.Execute("j/get binds").Text);
 
-        core.Handle(new Configure(ConfigParser.Parse("bind = SUPER, Q, close\n")));
+        core.Handle(new Configure(ConfigParser.Parse("bind = Win+Q, close\n")));
         Assert.AreEqual(SuperKill, core.Execute("j/get binds").Text);
 
         core.Handle(new Configure(ConfigParser.Parse("""
-            bind = SUPER, Q, close
-            bind = SUPER SHIFT, E, close
-            bindd = SUPER, F, Close, close
-            bind = SUPER, code:42, close
+            bind = Win+Q, close
+            bind = Win+Shift+E, close
+            bind = Win+F, "Close", close
+            bind = Win+code:42, close
             """)));
         var binds = Json(core.Execute("j/get binds").Text);
         var second = binds[1];

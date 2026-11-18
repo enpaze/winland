@@ -23,27 +23,14 @@ public class ConfigSyntaxTests
     }
 
     [TestMethod]
-    [DataRow("SUPER SHFT")]
-    [DataRow("SUPERunknown")]
+    [DataRow("Win+Shft")]
+    [DataRow("Winunknown")]
     public void UnrecognisedLettersInModifiersDropTheBind(string modifiers)
     {
-        var document = ConfigParser.Parse($"bind = {modifiers}, Q, close\n");
+        var document = ConfigParser.Parse($"bind = {modifiers}+Q, close\n");
 
         Assert.ContainsSingle(document.Warnings);
         Assert.IsEmpty(document.Binds);
-    }
-
-    [TestMethod]
-    [DataRow("SUPER_SHIFT")]
-    [DataRow("SUPER+SHIFT")]
-    [DataRow("SUPER SHIFT")]
-    [DataRow("CONTROLALT")]
-    public void ModifierNamesStillAllowSeparatorsAndConcatenation(string modifiers)
-    {
-        var document = ConfigParser.Parse($"bind = {modifiers}, Q, close\n");
-
-        Assert.IsEmpty(document.Warnings);
-        Assert.ContainsSingle(document.Binds);
     }
 
     [TestMethod]
@@ -54,22 +41,24 @@ public class ConfigSyntaxTests
     [DataRow("c")]
     [DataRow("g")]
     [DataRow("u")]
-    public void UnsupportedBindFlagsSayTheyAreNotSupported(string flag)
+    [DataRow("d")]
+    [DataRow("m")]
+    public void ABindKeywordWithAFlagIsAnUnsupportedKeyword(string flag)
     {
-        var document = ConfigParser.Parse($"bind{flag} = SUPER, Q, close\n");
+        var document = ConfigParser.Parse($"bind{flag} = Win+Q, close\n");
 
-        Assert.Contains("not supported", Assert.ContainsSingle(document.Warnings).Message);
+        Assert.StartsWith($"Unsupported keyword 'bind{flag}'.", Assert.ContainsSingle(document.Warnings).Message, StringComparison.Ordinal);
         Assert.IsEmpty(document.Binds);
     }
 
     [TestMethod]
-    public void AnUnknownBindFlagWarnsAndTheBindBesideItStillApplies()
+    public void AnUnknownBindKeywordWarnsAndTheBindBesideItStillApplies()
     {
-        var document = ConfigParser.Parse("bindp = SUPER, Q, close\nbind = SUPER, L, resize, 10 0\n");
+        var document = ConfigParser.Parse("bindp = Win+Q, close\nbind = Win+L, resize 10 0\n");
 
         var warning = Assert.ContainsSingle(document.Warnings);
         Assert.AreEqual(1, warning.Line);
-        Assert.AreEqual("Bind flag 'p' is not supported.", warning.Message);
+        Assert.AreEqual("Unsupported keyword 'bindp'. Did you mean 'bind'?", warning.Message);
         Assert.AreEqual("L", Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds)).Key);
     }
 
@@ -250,7 +239,7 @@ public class ConfigSyntaxTests
     [TestMethod]
     public void SourceGlobInTheConfigFolderDoesNotReadTheConfigAgain()
     {
-        const string root = "bind = SUPER, Q, close\nsource = C:/cfg/*.conf\n";
+        const string root = "bind = Win+Q, close\nsource = C:/cfg/*.conf\n";
         var source = new MemorySource(new Dictionary<string, string>
         {
             [@"C:\cfg\colors.conf"] = "general:gaps_in = 1\n",
@@ -271,7 +260,7 @@ public class ConfigSyntaxTests
     [DataRow(@"C:\cfg\sub\..\winland.conf")]
     public void SourceNamingTheConfigItselfWarns(string named)
     {
-        var root = $"bind = SUPER, Q, close\nsource = {named}\n";
+        var root = $"bind = Win+Q, close\nsource = {named}\n";
         var source = new MemorySource(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.GetFullPath(Path.Combine(@"C:\cfg", named))] = root,

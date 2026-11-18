@@ -9,8 +9,8 @@ public class WorkspaceTests
     public void SwitchingShowsOnlyTheTargetWorkspacesClients()
     {
         var core = Load("""
-            bind = SUPER, 1, workspace, 1
-            bind = SUPER, 2, workspace, 2
+            bind = Win+1, workspace 1
+            bind = Win+2, workspace 2
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -36,8 +36,8 @@ public class WorkspaceTests
     public void SwitchingBackRestoresThatWorkspacesLayout()
     {
         var core = Load("""
-            bind = SUPER, 1, workspace, 1
-            bind = SUPER, 2, workspace, 2
+            bind = Win+1, workspace 1
+            bind = Win+2, workspace 2
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -62,7 +62,7 @@ public class WorkspaceTests
     [TestMethod]
     public void MoveToAWorkspaceSendsTheActiveClientAndFollows()
     {
-        var core = Load("bind = SUPER SHIFT, 2, move, 2");
+        var core = Load("bind = Win+Shift+2, move 2");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
@@ -82,7 +82,7 @@ public class WorkspaceTests
     [TestMethod]
     public void MoveToAWorkspaceAndStayKeepsTheCurrentWorkspace()
     {
-        var core = Load("bind = SUPER ALT, 2, move, 2 stay");
+        var core = Load("bind = Win+Alt+2, move 2 stay");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
@@ -102,7 +102,7 @@ public class WorkspaceTests
     public void NewWindowJoinsTheActiveWorkspace()
     {
         var core = Load("""
-            bind = SUPER, 2, workspace, 2
+            bind = Win+2, workspace 2
             """);
         Appear(core, 1);
         HoldSuper(core);
@@ -119,10 +119,10 @@ public class WorkspaceTests
     public void LastGoesBackToTheWorkspaceShownBefore()
     {
         var core = Load("""
-            bind = SUPER, 2, workspace, 2
-            bind = SUPER, 3, workspace, 3
-            bind = SUPER, P, workspace, last
-            bind = SUPER, 1, workspace, 1
+            bind = Win+2, workspace 2
+            bind = Win+3, workspace 3
+            bind = Win+P, workspace last
+            bind = Win+1, workspace 1
             """);
         Appear(core, 1);
         HoldSuper(core);
@@ -149,9 +149,9 @@ public class WorkspaceTests
     public void NextStepsOverEmptyNumbersToTheNextExistingWorkspace()
     {
         var core = Load("""
-            bind = SUPER SHIFT, 3, move, 3 stay
-            bind = SUPER, M, workspace, next
-            bind = SUPER, P, workspace, last
+            bind = Win+Shift+3, move 3 stay
+            bind = Win+M, workspace next
+            bind = Win+P, workspace last
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -172,7 +172,7 @@ public class WorkspaceTests
     [TestMethod]
     public void EmptyAddressOpensTheFirstEmptyWorkspace()
     {
-        var core = Load("bind = SUPER, E, workspace, empty");
+        var core = Load("bind = Win+E, workspace empty");
         Appear(core, 1);
         HoldSuper(core);
 
@@ -186,8 +186,8 @@ public class WorkspaceTests
     public void MinimizedClientStaysMinimizedAcrossASwitch()
     {
         var core = Load("""
-            bind = SUPER, 1, workspace, 1
-            bind = SUPER, 2, workspace, 2
+            bind = Win+1, workspace 1
+            bind = Win+2, workspace 2
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -256,7 +256,7 @@ public class WorkspaceTests
     [TestMethod]
     public void FocusStaysInsideTheActiveWorkspace()
     {
-        var core = Load("bind = SUPER, H, focus, l");
+        var core = Load("bind = Win+H, focus l");
         Appear(core, 1);
         Appear(core, 2);
         core.Handle(new Dispatch("workspace", "2"));
@@ -289,7 +289,7 @@ public class WorkspaceTests
     [TestMethod]
     public void FloatAfterSwitchingLeavesTheOtherWorkspaceTiled()
     {
-        var core = Load("bind = SUPER, Space, float");
+        var core = Load("bind = Win+Space, float");
         Appear(core, 1);
         Appear(core, 2);
         core.Handle(new Dispatch("workspace", "2"));
@@ -318,8 +318,8 @@ public class WorkspaceTests
     public void InvalidWorkspaceAddressDoesNotSwitch()
     {
         var core = Load("""
-            bind = SUPER, Z, workspace, 0
-            bind = SUPER, N, workspace, name:
+            bind = Win+Z, workspace 0
+            bind = Win+N, workspace name:
             """);
         Appear(core, 1);
         HoldSuper(core);

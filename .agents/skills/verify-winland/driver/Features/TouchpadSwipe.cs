@@ -12,7 +12,7 @@ public class TouchpadSwipe
         gesture = 3, horizontal, workspace
         gesture = 4, vertical, workspace
         gesture = 3, diagonal, workspace
-        gesture = 3, horizontal, workspace, mod:SUPER
+        gesture = 3, horizontal, workspace, mod:Win
 
         """;
 

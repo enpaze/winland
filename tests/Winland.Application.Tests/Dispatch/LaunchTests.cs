@@ -23,7 +23,7 @@ public class LaunchTests
     public void BoundExecLaunchesTheCommand()
     {
         var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = SUPER, E, exec, notepad")));
+        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = Win+E, exec notepad")));
         core.Handle(new KeyPressed("Super_L"));
 
         var plain = core.Handle(new KeyPressed("E"));

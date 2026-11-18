@@ -4,118 +4,70 @@ public static partial class ConfigParser
 {
     private sealed partial class Parser
     {
-        private void HandleBind(string lhs, string rhs, int lineNumber)
+        private void HandleBind(string rhs, int lineNumber)
         {
-            if (!TryParseFlags(lhs["bind".Length..], out var hasDescription, out var flagError))
+            var comma = rhs.IndexOf(',', StringComparison.Ordinal);
+            if (!Chord.TryParse(comma < 0 ? rhs : rhs[..comma], layout, out var modifiers, out var key, out var chordError))
             {
-                Warn(lineNumber, flagError);
+                Warn(lineNumber, chordError);
                 return;
             }
 
-            var minimum = 3 + (hasDescription ? 1 : 0);
-            var parts = SplitArgs(rhs, minimum + 1);
-            if (parts.Count < minimum)
-            {
-                Warn(lineNumber, "Bind has too few arguments.");
-                return;
-            }
-
-            if (parts[0].Contains('$', StringComparison.Ordinal))
-            {
-                Warn(lineNumber, $"Undefined variable in modifiers '{parts[0].Trim()}'.");
-                return;
-            }
-
-            if (!ModifierNames.TryParse(parts[0], out var modifiers, out var modifierError))
-            {
-                Warn(lineNumber, modifierError);
-                return;
-            }
-
-            var key = KeyNames.Resolve(parts[1], layout);
-            if (key.Length == 0)
-            {
-                Warn(lineNumber, "Bind is missing a key.");
-                return;
-            }
-
-            if (!KeyNames.Matchable(parts[1], layout))
-            {
-                Warn(lineNumber, $"Unknown key '{parts[1]}'.");
-                return;
-            }
-
+            var rest = comma < 0 ? "" : rhs[(comma + 1)..].Trim();
             string? description = null;
-            var index = 2;
-            if (hasDescription)
+            if (rest.StartsWith('"'))
             {
-                description = parts[2];
-                index = 3;
+                var close = rest.IndexOf('"', 1);
+                if (close < 0)
+                {
+                    Warn(lineNumber, "Bind description is missing its closing quote.");
+                    return;
+                }
+
+                description = rest[1..close];
+                rest = rest[(close + 1)..].TrimStart();
+                rest = rest.StartsWith(',') ? rest[1..].Trim() : "";
             }
 
-            var dispatcher = parts[index];
-            var arguments = parts.Count > index + 1 ? parts[index + 1] : "";
-            if (dispatcher.Length > 0 && dispatchers is not null && !dispatchers.Contains(dispatcher, StringComparer.OrdinalIgnoreCase))
+            if (rest.Length == 0)
             {
-                Warn(lineNumber, $"Unknown dispatcher '{dispatcher}'.{DidYouMean.For(dispatcher, dispatchers)}");
+                Warn(lineNumber, "Bind is missing an action.");
                 return;
             }
 
-            if (new BindDispatch(dispatcher, arguments).IsDrag && !key.StartsWith("mouse:", StringComparison.Ordinal))
+            var space = rest.IndexOfAny([' ', '\t']);
+            var action = space < 0 ? rest : rest[..space];
+            var arguments = space < 0 ? "" : rest[space..].Trim();
+            if (dispatchers is not null && !dispatchers.Contains(action, StringComparer.OrdinalIgnoreCase))
             {
-                Warn(lineNumber, $"{dispatcher} is a drag; bind it to a mouse button.");
+                Warn(lineNumber, $"Unknown dispatcher '{action}'.{DidYouMean.For(action, dispatchers)}");
                 return;
             }
 
-            _binds.Add(new Bind(modifiers, key, dispatcher, arguments, description));
+            if (new BindDispatch(action, arguments).IsDrag && !key.StartsWith("mouse:", StringComparison.Ordinal))
+            {
+                Warn(lineNumber, $"{action} is a drag; bind it to a mouse button.");
+                return;
+            }
+
+            _binds.Add(new Bind(modifiers, key, action, arguments, description));
         }
 
         private void HandleUnbind(string rhs, int lineNumber)
         {
-            var parts = SplitArgs(rhs, null);
-            if (parts.Count == 1 && parts[0] == "all")
+            if (rhs.Trim() == "all")
             {
                 _binds.Add(new UnbindAll());
                 return;
             }
 
-            if (parts.Count < 2 || parts[1].Length == 0)
+            if (!Chord.TryParse(rhs, layout, out var modifiers, out var key, out var chordError))
             {
-                Warn(lineNumber, "Unbind has too few arguments.");
+                Warn(lineNumber, chordError);
                 return;
             }
 
-            if (!ModifierNames.TryParse(parts[0], out var modifiers, out var modifierError))
-            {
-                Warn(lineNumber, modifierError);
-                return;
-            }
-
-            if (!KeyNames.Matchable(parts[1], layout))
-            {
-                Warn(lineNumber, $"Unknown key '{parts[1]}'.");
-                return;
-            }
-
-            _binds.Add(new Unbind(modifiers, KeyNames.Resolve(parts[1], layout)));
-        }
-
-        private static bool TryParseFlags(string flags, out bool hasDescription, out string error)
-        {
-            hasDescription = false;
-            foreach (var flag in flags)
-            {
-                if (flag != 'd')
-                {
-                    error = $"Bind flag '{flag}' is not supported.";
-                    return false;
-                }
-
-                hasDescription = true;
-            }
-
-            error = "";
-            return true;
+            _binds.Add(new Unbind(modifiers, key));
         }
     }
 }

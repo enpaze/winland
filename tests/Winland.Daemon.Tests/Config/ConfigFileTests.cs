@@ -11,7 +11,7 @@ public sealed class ConfigFileTests : IDisposable
     public void ABindForAnUnknownDispatcherWarnsWithItsLineAndTheNameItIsCloseTo()
     {
         var path = Path.Combine(_root, "winland.conf");
-        File.WriteAllText(path, "bind = SUPER, Q, close\nbind = SUPER, W, closs\n");
+        File.WriteAllText(path, "bind = Win+Q, close\nbind = Win+W, closs\n");
 
         var document = ConfigFile.Read(path);
 

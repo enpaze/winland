@@ -72,7 +72,7 @@ public class FullscreenTests
         Assert.IsNull(dispatched.Error);
         Assert.AreEqual(FullscreenMode.Maximized, Client(dispatched, 1).Fullscreen);
 
-        var document = ConfigParser.Parse("bind = SUPER, M, maximize\nbind = SUPER, F, fullscreen\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("bind = Win+M, maximize\nbind = Win+F, fullscreen\n", dispatchers: WindowManager.DispatcherNames);
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreSequenceEqual(["maximize", "fullscreen"], document.Binds.OfType<Bind>().Select(bind => bind.Dispatcher));

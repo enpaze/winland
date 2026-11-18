@@ -128,7 +128,7 @@ public class WorkspaceSelectorTests
         var cased = core.Execute("NoSuch");
         Assert.AreEqual("error: unknown command 'NoSuch'", cased.Text);
 
-        var loaded = core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = SUPER, Q, madeup\n", dispatchers: WindowManager.DispatcherNames)));
+        var loaded = core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = Win+Q, madeup\n", dispatchers: WindowManager.DispatcherNames)));
         var warned = Assert.ContainsSingle(loaded.Events.OfType<ConfigWarned>());
         Assert.AreEqual(1, warned.Line);
         Assert.AreEqual("Unknown dispatcher 'madeup'.", warned.Message);

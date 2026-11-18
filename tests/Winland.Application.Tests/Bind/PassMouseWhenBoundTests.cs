@@ -6,7 +6,7 @@ public class PassMouseWhenBoundTests
     [TestMethod]
     public void ABoundButtonIsSwallowedByDefault()
     {
-        var core = Loaded("bind = SUPER, mouse:middle, close\n");
+        var core = Loaded("bind = Win+mouse:middle, close\n");
         var session = new BindSession();
         core.Decide(new KeyPressed("Super_L"), session);
 

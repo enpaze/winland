@@ -30,7 +30,7 @@ public class GestureTests
     [DataRow("gesture = 3, swipe, workspace", "Invalid direction: swipe.")]
     [DataRow("gesture = 3, left, workspace", "Invalid direction: left.")]
     [DataRow("gesture = 3, d, workspace", "Invalid direction: d.")]
-    [DataRow("gesture = 3, horizontal, mod: SUPER, workspace", "A gesture is <fingers>, horizontal or vertical, workspace.")]
+    [DataRow("gesture = 3, horizontal, mod: Win, workspace", "A gesture is <fingers>, horizontal or vertical, workspace.")]
     [DataRow("gesture = 3, horizontal, scale: 2, workspace", "A gesture is <fingers>, horizontal or vertical, workspace.")]
     [DataRow("gesture = 3, horizontal, unset", "Invalid gesture: unset.")]
     [DataRow("gesturep = 3, horizontal, workspace", "Invalid gesture flag 'p'.")]

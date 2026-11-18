@@ -35,9 +35,9 @@ public class DispatcherTableTests
     public void AKeyBoundToAResizeDragWarnsAndIsSkipped()
     {
         var document = ConfigParser.Parse(
-            "bind = SUPER, R, resize\n"
-            + "bind = SUPER, mouse_up, resize\n"
-            + "bind = SUPER, mouse:right, resize\n");
+            "bind = Win+R, resize\n"
+            + "bind = Win+mouse_up, resize\n"
+            + "bind = Win+mouse:right, resize\n");
 
         Assert.AreSequenceEqual([1, 2], document.Warnings.Select(warning => warning.Line));
         Assert.IsTrue(document.Warnings.All(warning => warning.Message == "resize is a drag; bind it to a mouse button."));

@@ -64,8 +64,8 @@ public class AnimationTests
     public void ASwitchToAHigherWorkspaceSlidesTheOldOneOutToTheLeft()
     {
         var core = Load("""
-            bind = SUPER, 1, workspace, 1
-            bind = SUPER, 2, workspace, 2
+            bind = Win+1, workspace 1
+            bind = Win+2, workspace 2
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -90,8 +90,8 @@ public class AnimationTests
     {
         var core = Load("""
             general:border_size = 2
-            bind = SUPER, 1, workspace, 1
-            bind = SUPER, 2, workspace, 2
+            bind = Win+1, workspace 1
+            bind = Win+2, workspace 2
             """);
         Appear(core, 1);
         HoldSuper(core);
@@ -108,7 +108,7 @@ public class AnimationTests
         var core = Load("""
             general:border_size = 2
             animations:enabled = false
-            bind = SUPER, 2, workspace, 2
+            bind = Win+2, workspace 2
             """);
         Appear(core, 1);
         HoldSuper(core);
@@ -149,8 +149,8 @@ public class AnimationTests
     public void ASwitchBackSlidesInFromTheLeftAndKeepsTheLayoutRectangles()
     {
         var core = Load("""
-            bind = SUPER, 1, workspace, 1
-            bind = SUPER, 2, workspace, 2
+            bind = Win+1, workspace 1
+            bind = Win+2, workspace 2
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -179,7 +179,7 @@ public class AnimationTests
         var core = Load("""
             general:border_size = 2
             animations:enabled = false
-            bind = SUPER, 2, workspace, 2
+            bind = Win+2, workspace 2
             """);
         Assert.IsEmpty(Appear(core, 1).Motions);
         Assert.IsEmpty(Appear(core, 2).Motions);
@@ -241,7 +241,7 @@ public class AnimationTests
     [TestMethod]
     public void ADraggedWindowMovesAtOnce()
     {
-        var core = Load("bind = SUPER, mouse:left, move");
+        var core = Load("bind = Win+mouse:left, move");
         Appear(core, 1);
         var floated = core.Handle(new Dispatch("float"));
         var bounds = Assert.ContainsSingle(floated.Placements).Bounds;
@@ -258,7 +258,7 @@ public class AnimationTests
     [TestMethod]
     public void TheTileThatMakesRoomForALiftedTileAnimatesWhileTheLiftedOneFollowsThePointer()
     {
-        var core = Load("bind = SUPER, mouse:left, move");
+        var core = Load("bind = Win+mouse:left, move");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
@@ -277,7 +277,7 @@ public class AnimationTests
     [TestMethod]
     public void AMouseResizeOfATileMovesItsNeighborAtOnce()
     {
-        var core = Load("bind = SUPER, mouse:right, resize");
+        var core = Load("bind = Win+mouse:right, resize");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
@@ -293,8 +293,8 @@ public class AnimationTests
     public void AnInterruptedSwitchLandsOnTheFinalRectangles()
     {
         var core = Load("""
-            bind = SUPER, 1, workspace, 1
-            bind = SUPER, 2, workspace, 2
+            bind = Win+1, workspace 1
+            bind = Win+2, workspace 2
             """);
         Appear(core, 1);
         Appear(core, 2);

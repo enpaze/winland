@@ -81,8 +81,8 @@ public class DispatcherTests
     public void BoundFocusRequestsFocusAndLaterDispatchersUseIt()
     {
         var core = Load("""
-            bind = SUPER, H, focus, l
-            bind = SUPER, Q, close
+            bind = Win+H, focus l
+            bind = Win+Q, close
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -134,7 +134,7 @@ public class DispatcherTests
     [TestMethod]
     public void BoundMoveWindowRearrangesTheTree()
     {
-        var core = Load("bind = SUPER, L, move, l");
+        var core = Load("bind = Win+L, move l");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -213,7 +213,7 @@ public class DispatcherTests
     [TestMethod]
     public void BoundResizeChangesTheSplit()
     {
-        var core = Load("bind = SUPER, H, resize, 480 0");
+        var core = Load("bind = Win+H, resize 480 0");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -272,7 +272,7 @@ public class DispatcherTests
     [TestMethod]
     public void BoundFloatSwitchesTheActiveClient()
     {
-        var core = Load("bind = SUPER, Space, float");
+        var core = Load("bind = Win+Space, float");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -305,7 +305,7 @@ public class DispatcherTests
             general:gaps_in = 0
             general:gaps_out = 0
             general:border_size = 0
-            bind = SUPER, T, split
+            bind = Win+T, split
             """);
         core.Handle(new Configure(document));
         core.Handle(new ConfigLoaded(document));

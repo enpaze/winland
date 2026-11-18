@@ -169,9 +169,9 @@ public static partial class ConfigParser
                 return;
             }
 
-            if (lhs.StartsWith("bind", StringComparison.Ordinal) && !lhs.Contains(':'))
+            if (lhs == "bind")
             {
-                HandleBind(lhs, rhs, lineNumber);
+                HandleBind(rhs, lineNumber);
                 return;
             }
 
