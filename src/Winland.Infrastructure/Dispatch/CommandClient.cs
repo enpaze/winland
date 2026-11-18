@@ -36,12 +36,13 @@ public static class CommandClient
         return VerifyServer(pipe);
     }
 
-    public static string Transact(string command, string? pipeName = null, int timeoutMs = 2000, Action<NamedPipeClientStream>? connected = null, int replyTimeoutMs = 10_000)
+    public static string Transact(string command, string? pipeName = null, int timeoutMs = 2000, bool lendForeground = false, int replyTimeoutMs = 10_000)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
         using var pipe = new NamedPipeClientStream(".", pipeName ?? DefaultName, PipeDirection.InOut, PipeOptions.Asynchronous);
-        Connect(pipe, timeoutMs);
-        connected?.Invoke(pipe);
+        var server = Connect(pipe, timeoutMs);
+        if (lendForeground)
+            _ = PInvoke.AllowSetForegroundWindow((uint)server);
         using var timeout = new CancellationTokenSource(replyTimeoutMs);
         try
         {
