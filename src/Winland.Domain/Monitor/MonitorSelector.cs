@@ -88,15 +88,6 @@ internal static class MonitorSelector
         return closest;
     }
 
-    public static Point Focal(Rectangle box, Side direction) => direction switch
-    {
-        Side.Left => new Point(box.X - 1, box.Y + (box.Height / 2)),
-        Side.Right => new Point(box.X + box.Width + 1, box.Y + (box.Height / 2)),
-        Side.Up => new Point(box.X + (box.Width / 2), box.Y - 1),
-        Side.Down => new Point(box.X + (box.Width / 2), box.Y + box.Height + 1),
-        _ => new Point(box.X, box.Y),
-    };
-
     private static MonitorTarget? Relative(string text, IReadOnlyList<MonitorTarget> monitors, MonitorTarget? current)
     {
         if (monitors.Count == 1)

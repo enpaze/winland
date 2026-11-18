@@ -301,15 +301,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return node;
     }
 
-    private enum PendingSplit
-    {
-        None,
-        Left,
-        Right,
-        Up,
-        Down,
-    }
-
     private sealed class Node
     {
         public Node? Parent { get; set; }

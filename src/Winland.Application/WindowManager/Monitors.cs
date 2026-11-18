@@ -77,7 +77,7 @@ public sealed partial class WindowManager
         if (MonitorHolding(desk) is LiveMonitor origin
             && desk.Layout.TryBounds(window, out var box))
         {
-            var focal = MonitorSelector.Focal(Ideal(desk, window, box), direction);
+            var focal = Sides.Focal(Ideal(desk, window, box), direction);
             var hit = MonitorSelector.At(Targets(), focal);
             if (hit is MonitorTarget other && other.Id != origin.Id && MonitorOf(other) is LiveMonitor across)
                 return MoveActiveOnto(across, silent: false, focal);

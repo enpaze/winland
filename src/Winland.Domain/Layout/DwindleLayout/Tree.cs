@@ -2,7 +2,7 @@ namespace Winland.Domain;
 
 internal sealed partial class DwindleLayout
 {
-    private void Split(Node opening, Node node, Point? pointer, PendingSplit direction = PendingSplit.None)
+    private void Split(Node opening, Node node, Point? pointer, Side? direction = null)
     {
         var parent = new Node
         {
@@ -12,8 +12,8 @@ internal sealed partial class DwindleLayout
             SplitTop = SplitsTop(opening.Box),
         };
 
-        if (direction != PendingSplit.None)
-            AssignDirection(parent, opening, node, direction);
+        if (direction is Side side)
+            AssignDirection(parent, opening, node, side);
         else
             AssignByPointer(parent, opening, node, pointer);
 
@@ -23,10 +23,10 @@ internal sealed partial class DwindleLayout
         Refit();
     }
 
-    private static void AssignDirection(Node parent, Node opening, Node node, PendingSplit direction)
+    private static void AssignDirection(Node parent, Node opening, Node node, Side direction)
     {
-        parent.SplitTop = direction is PendingSplit.Up or PendingSplit.Down;
-        if (direction is PendingSplit.Up or PendingSplit.Left)
+        parent.SplitTop = direction is Side.Up or Side.Down;
+        if (direction is Side.Up or Side.Left)
         {
             parent.First = node;
             parent.Second = opening;
