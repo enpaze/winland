@@ -45,7 +45,6 @@ public sealed partial class WindowManager
                 borderless)
             {
                 Region = shape.Region,
-                Opacity = alpha,
                 Blur = _config.Decoration.Blur && !noBlur,
                 Ring = hidden.Contains(client.Window) ? null : ring,
             });

@@ -181,14 +181,14 @@ public sealed partial class WindowManager
                 if (!previous.TryGetValue(window, out var was) || _change.HiddenAfter.Contains(window) || _change.HiddenBefore.Contains(window) || !_change.Was.ContainsKey(window))
                     continue;
 
-                var alpha = alphaTiming is not null && was.Opacity != now.Opacity;
+                var alpha = alphaTiming is not null && was.Alpha != now.Alpha;
                 var border = borderTiming is not null && was.Border != now.Border && !was.Borderless && !now.Borderless;
                 if (!alpha && !border)
                     continue;
 
                 var motion = _motions.TryGetValue(window, out var planned) ? planned : new Motion(window, BoundsOf(window));
                 if (alpha)
-                    motion = motion with { AlphaFrom = was.Opacity, Alpha = alphaTiming };
+                    motion = motion with { AlphaFrom = was.Alpha, Alpha = alphaTiming };
                 if (border)
                     motion = motion with { BorderFrom = was.Border, Border = borderTiming };
                 _motions[window] = motion;

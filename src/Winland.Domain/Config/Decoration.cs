@@ -9,8 +9,6 @@ public readonly record struct Decoration(
 {
     public CornerRegion? Region { get; init; }
 
-    public byte Opacity { get; init; } = Alpha;
-
     public bool Blur { get; init; }
 
     public BorderRing? Ring { get; init; }
