@@ -65,7 +65,7 @@ static class MaintenanceCommand
                     : "Winland is uninstalled.");
                 return 0;
             case InstallCommand.Update update:
-                return UpdateInstalled(update.Channel);
+                return UpdateInstalled(executable, update.Channel);
             case InstallCommand.Tweaks tweaks:
                 RecordedTweaks().TurnOff(tweaks.Touchpad);
                 Console.WriteLine(tweaks.Touchpad
@@ -90,13 +90,11 @@ static class MaintenanceCommand
         (false, false) => installed + ".",
     };
 
-    private static int UpdateInstalled(UpdateChannel? requested)
+    private static int UpdateInstalled(string executable, UpdateChannel? requested)
     {
         var saved = new TextFile(UpdateChannelFile.PathFor(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
         var channel = UpdateChannelFile.Choose(requested, UserAccess.IsElevated ? null : saved.Read());
-        var executable = Environment.ProcessPath
-            ?? throw new InvalidOperationException("The executable path is not available.");
         var layout = Layout();
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
         var result = new ReleaseUpdate(
