@@ -5,7 +5,6 @@ on:
   merge_group:
   push:
     branches: [main]
-  workflow_dispatch:
   workflow_call:
     inputs:
       release:
