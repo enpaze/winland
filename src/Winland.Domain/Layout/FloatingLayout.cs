@@ -1,6 +1,6 @@
 namespace Winland.Domain;
 
-internal sealed class FloatingLayout : Layout, IDragOwner
+internal sealed class FloatingLayout : Layout
 {
     private readonly DwindleLayout _inner = new();
     private readonly HashSet<ClientId> _wasTiled = [];
@@ -10,7 +10,7 @@ internal sealed class FloatingLayout : Layout, IDragOwner
 
     public string? LayoutMessageError => _messageError;
 
-    MouseDrag IDragOwner.Drag => ((IDragOwner)_inner).Drag;
+    MouseDrag Layout.MouseDrag => ((Layout)_inner).MouseDrag;
 
     public IReadOnlyList<Placement> Apply(LayoutOptions options) => _inner.Apply(options);
 

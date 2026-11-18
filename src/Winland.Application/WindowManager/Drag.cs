@@ -149,12 +149,12 @@ public sealed partial class WindowManager
         }
 
         if (!settle)
-            HandDrag(source.Layout, target.Layout);
+            source.Layout.MouseDrag.HandTo(target.Layout.MouseDrag);
 
         if (!source.Take(window, out var taken))
         {
             if (!settle)
-                HandDrag(target.Layout, source.Layout);
+                target.Layout.MouseDrag.HandTo(source.Layout.MouseDrag);
 
             return null;
         }
@@ -187,12 +187,6 @@ public sealed partial class WindowManager
 
         Give(window, target);
         return true;
-    }
-
-    private static void HandDrag(Layout from, Layout to)
-    {
-        if (from is IDragOwner source && to is IDragOwner target)
-            source.Drag.HandTo(target.Drag);
     }
 
     private static string DragCursor(LiveWorkspace desk, WindowId window, bool resize, Point pointer)

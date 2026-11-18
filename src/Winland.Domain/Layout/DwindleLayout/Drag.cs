@@ -1,10 +1,10 @@
 namespace Winland.Domain;
 
-internal sealed partial class DwindleLayout : IMouseDragHost, IDragOwner
+internal sealed partial class DwindleLayout : IMouseDragHost
 {
     private readonly MouseDrag _drag = new();
 
-    MouseDrag IDragOwner.Drag => _drag;
+    MouseDrag Layout.MouseDrag => _drag;
 
     FloatingClients IMouseDragHost.Floating => _floating;
 
