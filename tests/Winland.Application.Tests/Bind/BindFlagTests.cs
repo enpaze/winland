@@ -70,11 +70,15 @@ public class BindFlagTests
     }
 
     [TestMethod]
-    public void AnUndefinedVariableInTheChordWarnsAndTheBindIsSkipped()
+    [DataRow("$mod+Shift+Q")]
+    [DataRow("$1+Q")]
+    [DataRow("$+$mod+Q")]
+    [DataRow("Win+$q")]
+    public void AnUndefinedVariableInTheChordWarnsAndTheBindIsSkipped(string chord)
     {
-        var parsed = ConfigParser.Parse("bind = $mod+Shift+Q, close" + Environment.NewLine);
+        var parsed = ConfigParser.Parse($"bind = {chord}, close" + Environment.NewLine);
 
-        Assert.AreEqual("Undefined variable in chord '$mod+Shift+Q'.", Assert.ContainsSingle(parsed.Warnings).Message);
+        Assert.AreEqual($"Undefined variable in chord '{chord}'.", Assert.ContainsSingle(parsed.Warnings).Message);
         Assert.IsEmpty(parsed.Binds);
     }
 

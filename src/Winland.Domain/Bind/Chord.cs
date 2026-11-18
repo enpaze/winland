@@ -29,13 +29,13 @@ internal static class Chord
         key = "";
         error = "";
         var chord = text.Trim();
-        if (NamesAVariable(chord))
+        var parts = chord.Split('+');
+        if (parts.Any(part => part.Contains('$', StringComparison.Ordinal) && part.Trim() != "$"))
         {
             error = $"Undefined variable in chord '{chord}'.";
             return false;
         }
 
-        var parts = chord.Split('+');
         var held = 0;
         while (held < parts.Length - 1 && ModifierNamed(parts[held].Trim()) is var modifier and not Modifier.None)
         {
@@ -60,12 +60,6 @@ internal static class Chord
 
         key = KeyNames.Resolve(keyName, layout);
         return true;
-    }
-
-    private static bool NamesAVariable(string chord)
-    {
-        var dollar = chord.IndexOf('$', StringComparison.Ordinal);
-        return dollar >= 0 && dollar + 1 < chord.Length && (char.IsLetter(chord[dollar + 1]) || chord[dollar + 1] == '_');
     }
 
     private static Modifier ModifierNamed(string name) =>
