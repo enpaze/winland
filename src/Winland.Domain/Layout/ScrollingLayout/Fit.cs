@@ -17,7 +17,7 @@ internal sealed partial class ScrollingLayout
         }
 
         AdjustOffset(-delta);
-        Recalculate();
+        Refit();
         var center = ColumnAtCenter();
         if (center is { Cells.Count: > 0 })
             Focus(center.Cells[0]);
@@ -69,7 +69,7 @@ internal sealed partial class ScrollingLayout
             FitVisible();
         }
 
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -190,7 +190,7 @@ internal sealed partial class ScrollingLayout
         }
 
         CenterColumn(cell.Column);
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -236,7 +236,7 @@ internal sealed partial class ScrollingLayout
         }
 
         FitColumn(cell.Column);
-        Recalculate();
+        Refit();
         return Placements();
     }
 }

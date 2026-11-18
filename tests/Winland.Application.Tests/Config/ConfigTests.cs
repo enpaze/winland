@@ -773,7 +773,6 @@ public class ConfigTests
         var document = ConfigParser.Parse("workspace = 1, monitor:DP-1, default:true\ngeneral:gaps_in = 2\n");
 
         Assert.Equal([new ConfigWarning(1, "Unsupported keyword 'workspace'.")], document.Warnings);
-        Assert.Equal(WorkspaceRule.None, document.WorkspaceRules);
         Assert.Equal(new Setting("general:gaps_in", "2"), Assert.Single(document.Settings));
     }
 }

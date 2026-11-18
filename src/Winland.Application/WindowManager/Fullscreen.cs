@@ -9,7 +9,7 @@ public sealed partial class WindowManager
             return View([]);
 
         if (ActiveWindow() is not WindowId window || WorkspaceContaining(window) is not LiveWorkspace desk || desk.ClientOf(window) is not Client client)
-            return MissingWindow();
+            return Rejected("error: window not found");
 
         if (!FullscreenCommands.Changed(client.Fullscreen, parsed.Mode, parsed.Action, out var next))
             return View([]);
@@ -21,17 +21,14 @@ public sealed partial class WindowManager
     {
         var desk = WorkspaceContaining(window);
         if (desk is null || desk.ClientOf(window) is not Client client)
-            return MissingWindow();
+            return Rejected("error: window not found");
 
         var covered = desk.Covered();
         if (SetFullscreen(desk, window, mode, layoutAware) is not { } set)
             return View([]);
 
         var placements = Restamp(desk, set);
-        if (!_workspaces.Shown.IsShown(desk.Id))
-            return View([]);
-
-        return Present(desk, covered, placements);
+        return PresentIfShown(desk, covered, placements);
     }
 
     private IReadOnlyList<Placement>? SetFullscreen(LiveWorkspace desk, WindowId window, FullscreenMode mode, bool layoutAware = true)
@@ -96,18 +93,12 @@ public sealed partial class WindowManager
         return null;
     }
 
-    private Outcome MissingWindow() =>
-        View([]) with { Error = "error: window not found" };
-
     private Rectangle CoveringBounds(LiveWorkspace desk)
     {
         var work = WorkArea(desk, _area);
-        var screen = MonitorById(desk.Monitor);
-        if (screen is not { Arranged: { Enabled: true } monitor })
-            return FullscreenGeometry.Cover(FullscreenMode.Fullscreen, work, default);
-
-        var bounds = new Rectangle(monitor.X, monitor.Y, monitor.Width, monitor.Height);
-        return bounds;
+        return EnabledMonitor(desk.Monitor) is { } screen
+            ? screen.Bounds
+            : FullscreenGeometry.Cover(FullscreenMode.Fullscreen, work, default);
     }
 
     private static IReadOnlyList<Placement> Cover(IReadOnlyList<Placement> placements, State snapshot)

@@ -7,15 +7,13 @@ internal sealed partial class DwindleLayout
 {
     public WindowId? MoveFocus(WindowId active, string arguments)
     {
-        if (!TryDirection(First(arguments), out var direction))
+        if (!Sides.TryParse(Tokens.First(arguments), out var direction))
             return null;
         if (!TryGeometry(active, out var origin, out var floating))
             return null;
 
         if (floating)
-            return ToSide(direction) is Side side
-                ? DirectionalNeighbor.FindByAngle(_clients, origin, side, active, (WindowId window, out Rectangle box) => TryGeometry(window, out box, out _))
-                : null;
+            return DirectionalNeighbor.FindByAngle(_clients, origin, direction, active, (WindowId window, out Rectangle box) => TryGeometry(window, out box, out _));
 
         return Neighbor(origin, direction, active, false)
             ?? Neighbor(origin, direction, active, true);
@@ -25,19 +23,8 @@ internal sealed partial class DwindleLayout
 
     public void RankFocus(Func<WindowId, int> recency) => _recency = recency;
 
-    private WindowId? Neighbor(Rectangle origin, PendingSplit direction, WindowId except, bool floating) =>
-        ToSide(direction) is Side side
-            ? DirectionalNeighbor.Find(_clients, origin, side, except, floating, (WindowId window, out Rectangle box) => TryGeometry(window, out box, out _), _recency)
-            : null;
-
-    private static Side? ToSide(PendingSplit direction) => direction switch
-    {
-        PendingSplit.Left => Side.Left,
-        PendingSplit.Right => Side.Right,
-        PendingSplit.Up => Side.Up,
-        PendingSplit.Down => Side.Down,
-        _ => null,
-    };
+    private WindowId? Neighbor(Rectangle origin, Side direction, WindowId except, bool floating) =>
+        DirectionalNeighbor.Find(_clients, origin, direction, except, floating, (WindowId window, out Rectangle box) => TryGeometry(window, out box, out _), _recency);
 
     public void NoteFocus(WindowId window)
     {
@@ -48,7 +35,7 @@ internal sealed partial class DwindleLayout
 
     public IReadOnlyList<Placement> MoveWindow(WindowId window, string arguments)
     {
-        if (!TryDirection(First(arguments), out var direction))
+        if (!Sides.TryParse(Tokens.First(arguments), out var direction))
             return [];
 
         var id = new ClientId(window.Value);
@@ -61,7 +48,7 @@ internal sealed partial class DwindleLayout
         if (!_nodes.TryGetValue(id, out var node) || node.Parent is null || !InTree(node))
             return [];
 
-        var focal = Focal(node.Box, direction);
+        var focal = Sides.Focal(node.Box, direction);
         if (LeafContaining(focal) is null)
             return [];
 
@@ -80,7 +67,7 @@ internal sealed partial class DwindleLayout
             return Placements();
         }
 
-        Split(opening, node, focal, towardSibling ? direction : PendingSplit.None);
+        Split(opening, node, focal, towardSibling ? direction : null);
         _splitTarget = id;
         return Placements();
     }
@@ -173,7 +160,7 @@ internal sealed partial class DwindleLayout
     public IReadOnlyList<Placement> LayoutMessage(WindowId? active, string arguments)
     {
         LayoutMessageError = null;
-        var tokens = Tokens(arguments);
+        var tokens = Tokens.Of(arguments);
         if (tokens.Length == 0)
         {
             LayoutMessageError = "error: bad layoutmsg";
@@ -224,8 +211,8 @@ internal sealed partial class DwindleLayout
         return FloatIfShort(id, node);
     }
 
-    private IReadOnlyList<Placement> MoveFloating(ClientId id, PendingSplit direction) =>
-        ToSide(direction) is Side side ? _floating.MoveToEdge(id, side, _area, _options.BorderFor(id)) : [];
+    private IReadOnlyList<Placement> MoveFloating(ClientId id, Side direction) =>
+        _floating.MoveToEdge(id, direction, _area, _options.BorderFor(id));
 
     private bool TryGeometry(WindowId window, out Rectangle box, out bool floating)
     {
@@ -262,7 +249,7 @@ internal sealed partial class DwindleLayout
     private bool Covers(ClientId id) =>
         _clients.Exists(client => client.Id == id && client.Fullscreen != FullscreenMode.None);
 
-    private static bool TowardLeafSibling(Node node, PendingSplit direction)
+    private static bool TowardLeafSibling(Node node, Side direction)
     {
         var parent = node.Parent;
         if (parent is null)
@@ -275,42 +262,11 @@ internal sealed partial class DwindleLayout
 
         return direction switch
         {
-            PendingSplit.Up => parent.SplitTop && !first,
-            PendingSplit.Down => parent.SplitTop && first,
-            PendingSplit.Left => !parent.SplitTop && !first,
-            PendingSplit.Right => !parent.SplitTop && first,
+            Side.Up => parent.SplitTop && !first,
+            Side.Down => parent.SplitTop && first,
+            Side.Left => !parent.SplitTop && !first,
+            Side.Right => !parent.SplitTop && first,
             _ => false,
         };
     }
-
-    private static Point Focal(Rectangle box, PendingSplit direction) => direction switch
-    {
-        PendingSplit.Left => new Point(box.X - 1, box.Y + (box.Height / 2)),
-        PendingSplit.Right => new Point(box.X + box.Width + 1, box.Y + (box.Height / 2)),
-        PendingSplit.Up => new Point(box.X + (box.Width / 2), box.Y - 1),
-        PendingSplit.Down => new Point(box.X + (box.Width / 2), box.Y + box.Height + 1),
-        _ => new Point(box.X, box.Y),
-    };
-
-    private static bool TryDirection(string text, out PendingSplit direction)
-    {
-        var parsed = Sides.TryParse(text, out var side);
-        direction = !parsed ? PendingSplit.None : side switch
-        {
-            Side.Left => PendingSplit.Left,
-            Side.Right => PendingSplit.Right,
-            Side.Up => PendingSplit.Up,
-            _ => PendingSplit.Down,
-        };
-        return parsed;
-    }
-
-    private static string First(string arguments)
-    {
-        var tokens = Tokens(arguments);
-        return tokens.Length == 0 ? "" : tokens[0];
-    }
-
-    private static string[] Tokens(string arguments) =>
-        arguments.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
 }

@@ -20,7 +20,6 @@ public class FullscreenTests
         Assert.Equal(MonitorBounds, BoundsOf(entered, 2));
         Assert.Equal(left, BoundsOf(entered, 1));
         Assert.Equal(FullscreenMode.Fullscreen, Client(entered, 2).Fullscreen);
-        Assert.Equal(FullscreenMode.Fullscreen, Client(entered, 2).FullscreenClient);
         Assert.Equal(FullscreenMode.None, Client(entered, 1).Fullscreen);
         Assert.Contains(entered.Events, static item => item is FullscreenChanged { Entered: true });
         Assert.True(DecorationOf(entered, 2).Borderless);
@@ -226,7 +225,6 @@ public class FullscreenTests
         var client = Client(moved, 2);
         Assert.Equal(new WorkspaceId("2"), client.Workspace);
         Assert.Equal(FullscreenMode.Maximized, client.Fullscreen);
-        Assert.Equal(FullscreenMode.Maximized, client.FullscreenClient);
         Assert.Equal(Work, Bounds(core, 2));
     }
 

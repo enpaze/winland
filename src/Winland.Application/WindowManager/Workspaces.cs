@@ -4,7 +4,7 @@ public sealed partial class WindowManager
 {
     private Taken OntoMonitor(Taken taken, MonitorId from, MonitorId to)
     {
-        if (!taken.Floating || from == to || MonitorById(from) is not { Arranged.Enabled: true } source || MonitorById(to) is not { Arranged.Enabled: true } destination)
+        if (!taken.Floating || from == to || EnabledMonitor(from) is not { } source || EnabledMonitor(to) is not { } destination)
             return taken;
 
         var bounds = taken.Bounds;
@@ -193,7 +193,7 @@ public sealed partial class WindowManager
             return away.Length == 0 ? followed : followed with { Hide = Combine(followed.Hide, away) };
         }
 
-        if (_workspaces.Find(target) is { } located && MonitorById(located.Monitor) is { Arranged.Enabled: true } home && home.Id != FocusedId())
+        if (_workspaces.Find(target) is { } located && EnabledMonitor(located.Monitor) is { } home && home.Id != FocusedId())
             Focus(home.Id);
 
         var monitor = FocusedId();
@@ -203,7 +203,7 @@ public sealed partial class WindowManager
         if (sourceId == target)
         {
             if (focus is WindowId requested && ClientOn(target, requested) is not null)
-                Give(requested, FocusedWorkspace());
+                Give(requested, ShownWorkspace());
 
             return View([], hide: concealed, consumed: consumed, focus: concealed.Length > 0 || focus is not null ? Kept() : null);
         }
@@ -244,8 +244,8 @@ public sealed partial class WindowManager
         if (desk is null)
             return null;
 
-        var owner = MonitorById(desk.Monitor);
-        if (owner is null || !owner.Arranged.Enabled || _workspaces.Shown.Shown(owner.Id) != target || owner.Id == FocusedId())
+        var owner = EnabledMonitor(desk.Monitor);
+        if (owner is null || _workspaces.Shown.Shown(owner.Id) != target || owner.Id == FocusedId())
             return null;
 
         return owner;
@@ -279,7 +279,7 @@ public sealed partial class WindowManager
         var bounds = screen.Bounds;
         if (_focus.Focused is WindowId window)
         {
-            foreach (var placement in FocusedWorkspace().Layout.Visible())
+            foreach (var placement in ShownWorkspace().Layout.Visible())
             {
                 if (placement.Client.Value == window.Value)
                 {
@@ -317,8 +317,6 @@ public sealed partial class WindowManager
     }
 
     private void DropIfEmpty(WorkspaceId id) => _workspaces.DropIfEmpty(id, _workspaces.Shown.IsShown(id));
-
-    private void Rebind(LiveWorkspace desk, WorkspaceId to) => Readdressed(_workspaces.Rebind(desk, to));
 
     private void Readdressed(WorkspaceRename? rename)
     {

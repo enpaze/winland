@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Security;
@@ -22,8 +21,6 @@ public static class ProcessLauncher
         }
     }
 
-    private static readonly Lazy<bool> Elevated = new(IsElevated);
-
     private static readonly Lazy<bool> Impersonating = new(() =>
     {
         EnablePrivilege("SeImpersonatePrivilege");
@@ -35,7 +32,7 @@ public static class ProcessLauncher
     public static int Launch(Launch launch)
     {
         ArgumentNullException.ThrowIfNull(launch);
-        if (!Elevated.Value)
+        if (!UserAccess.IsElevated)
             return Start(launch, token: null);
 
         return StartLimited(launch);
@@ -260,12 +257,6 @@ public static class ProcessLauncher
         return PInvoke.OpenProcessToken(self.SafeHandle, TOKEN_ACCESS_MASK.TOKEN_QUERY | TOKEN_ACCESS_MASK.TOKEN_DUPLICATE, out var token)
             ? token
             : null;
-    }
-
-    private static bool IsElevated()
-    {
-        using var identity = WindowsIdentity.GetCurrent();
-        return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
     }
 
     private static InvalidOperationException Fail() =>

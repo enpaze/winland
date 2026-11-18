@@ -33,7 +33,7 @@ public class AccentNoticeTests
         {
             var core = new WindowManager();
             core.Handle(new Configure(ConfigParser.Parse("")));
-            using var host = new WindowHost(core);
+            using var host = new SessionLoop(core);
 
             host.NoteAccent();
             host.NoteAccent();
@@ -55,7 +55,7 @@ public class AccentNoticeTests
         {
             var core = new WindowManager();
             core.Handle(new Configure(ConfigParser.Parse("general:col.active_border = rgba(aabbccff)\n")));
-            using var host = new WindowHost(core);
+            using var host = new SessionLoop(core);
 
             host.NoteAccent();
 

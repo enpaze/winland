@@ -2,7 +2,9 @@ namespace Winland.Application;
 
 public sealed partial class WindowManager
 {
-    private WorkspaceId ActiveId() => _workspaces.Shown.ActiveOn(FocusedId());
+    private WorkspaceId ShownId() => _workspaces.Shown.ActiveOn(FocusedId());
+
+    private WorkspaceId TopOn(MonitorId monitor) => _workspaces.Shown.SpecialOn(monitor) ?? _workspaces.Shown.ActiveOn(monitor);
 
     [System.Diagnostics.Conditional("DEBUG")]
     private void CheckShownWorkspaces()
@@ -15,27 +17,27 @@ public sealed partial class WindowManager
         }
     }
 
-    private MonitorId FocusedId()
+    private MonitorId FocusedId() =>
+        FocusedMonitor()?.Id ?? (_monitors.Count == 0 ? MonitorId.Primary : _monitors[0].Id);
+
+    private LiveMonitor? FocusedMonitor()
     {
         foreach (var screen in _monitors)
         {
             if (screen.Focused && screen.Arranged.Enabled)
-                return screen.Id;
+                return screen;
         }
-
-        if (_monitors.Count == 0)
-            return MonitorId.Primary;
 
         foreach (var screen in _monitors)
         {
             if (screen.Arranged.Enabled)
-                return screen.Id;
+                return screen;
         }
 
-        return _monitors[0].Id;
+        return null;
     }
 
-    private LiveWorkspace FocusedWorkspace() => WorkspaceFor(ActiveId(), FocusedId());
+    private LiveWorkspace ShownWorkspace() => WorkspaceFor(ShownId(), FocusedId());
 
     private LiveWorkspace? WorkspaceContaining(WindowId window)
     {
@@ -65,22 +67,8 @@ public sealed partial class WindowManager
         return desk is null ? null : desk.ClientOf(window);
     }
 
-    private Rectangle FocusedMonitorBounds()
-    {
-        if (_monitors.Count == 0 || MonitorById(FocusedId()) is not { Arranged.Enabled: true } monitor)
-            return default;
-
-        return monitor.Bounds;
-    }
-
-    private Rectangle WorkArea(LiveWorkspace desk, Rectangle fallback)
-    {
-        var screen = MonitorById(desk.Monitor);
-        if (screen is { Arranged.Enabled: true })
-            return screen.Arranged.WorkArea;
-
-        return fallback;
-    }
+    private Rectangle WorkArea(LiveWorkspace desk, Rectangle fallback) =>
+        EnabledMonitor(desk.Monitor)?.Arranged.WorkArea ?? fallback;
 
     private LiveMonitor? MonitorById(MonitorId id)
     {
@@ -92,4 +80,9 @@ public sealed partial class WindowManager
 
         return null;
     }
+
+    private LiveMonitor? EnabledMonitor(MonitorId id) =>
+        MonitorById(id) is { Arranged.Enabled: true } screen ? screen : null;
+
+    private double MonitorScale(MonitorId id) => EnabledMonitor(id)?.Arranged.Scale ?? 1;
 }

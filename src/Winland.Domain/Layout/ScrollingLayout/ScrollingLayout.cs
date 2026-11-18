@@ -11,10 +11,7 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
     private readonly Dictionary<ClientId, Suspension> _suspended = [];
     private readonly Dictionary<WindowId, double> _widths = [];
     private readonly List<Column> _columns = [];
-    private LayoutOptions _layoutOptions = LayoutOptions.Unconfigured;
-    private ScrollingOptions _scrolling = ScrollingOptions.Defaults;
-    private Rectangle _area;
-    private Rectangle _monitor;
+    private ScrollingOptions _scrolling = ScrollingOptions.Documented;
     private WindowId? _focus;
     private double _offset;
     private bool _inhibited;
@@ -33,29 +30,13 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
     {
         ArgumentNullException.ThrowIfNull(options);
         _scrolling = options;
-        Recalculate();
+        Refit();
     }
 
     public void NoteScrollingWidth(WindowId window, double width)
     {
         if (double.IsFinite(width) && width > 0)
             _widths[window] = width;
-    }
-
-    public IReadOnlyList<Placement> Apply(LayoutOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        _layoutOptions = options;
-        Recalculate();
-        return Placements();
-    }
-
-    public void Fit(Rectangle area, Rectangle monitor)
-    {
-        _area = area;
-        if (monitor.Width > 0 && monitor.Height > 0)
-            _monitor = monitor;
-        Recalculate();
     }
 
     public IReadOnlyList<Placement> Add(
@@ -98,7 +79,7 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
 
         InsertTiled(id, window);
         _focus = window;
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -126,19 +107,12 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
 
         _clients.RemoveAll(client => client.Id == id);
         RemoveCell(cell);
-        Recalculate();
+        Refit();
         return Placements();
     }
 
-    public IReadOnlyList<Placement> Minimize(WindowId window)
+    private protected override IReadOnlyList<Placement> MinimizeTiled(ClientId id)
     {
-        var id = new ClientId(window.Value);
-        if (_floating.Contains(id))
-        {
-            SetMinimized(id, true);
-            return [];
-        }
-
         if (!_cells.Remove(id, out var cell) || cell.Column is not Column column)
             return [];
 
@@ -147,23 +121,13 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
         SetMinimized(id, true);
         RemoveCell(cell);
         _suspended[id] = new Suspension(column, columnIndex, cellIndex);
-        Recalculate();
+        Refit();
         return Placements();
     }
 
-    public IReadOnlyList<Placement> Restore(WindowId window)
+    private protected override IReadOnlyList<Placement> RestoreTiled(WindowId window)
     {
         var id = new ClientId(window.Value);
-        if (_floating.TryGet(id, out var bounds))
-        {
-            var index = IndexOf(id);
-            if (index < 0 || !_clients[index].Minimized)
-                return [];
-
-            SetMinimized(id, false);
-            return [new Placement(id, bounds)];
-        }
-
         if (!_suspended.Remove(id, out var suspension))
             return [];
 
@@ -181,7 +145,7 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
         }
 
         _focus = window;
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -236,7 +200,7 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
             return;
 
         FitColumn(column);
-        Recalculate();
+        Refit();
         _moved = true;
     }
 
@@ -300,9 +264,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
 
     private static int Round(double value) =>
         (int)Math.Floor(value + 0.5);
-
-    private static string[] Tokens(string arguments) =>
-        arguments.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
 
     private static string At(string[] tokens, int index) =>
         index < tokens.Length ? tokens[index] : "";

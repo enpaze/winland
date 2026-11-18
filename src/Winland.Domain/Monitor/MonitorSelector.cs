@@ -74,7 +74,7 @@ internal static class MonitorSelector
         var best = long.MaxValue;
         foreach (var monitor in monitors)
         {
-            if (Contains(monitor, point))
+            if (new Rectangle(monitor.X, monitor.Y, monitor.Width, monitor.Height).Contains(point))
                 return monitor;
 
             var distance = DistanceSquared(monitor, point);
@@ -87,15 +87,6 @@ internal static class MonitorSelector
 
         return closest;
     }
-
-    public static Point Focal(Rectangle box, Side direction) => direction switch
-    {
-        Side.Left => new Point(box.X - 1, box.Y + (box.Height / 2)),
-        Side.Right => new Point(box.X + box.Width + 1, box.Y + (box.Height / 2)),
-        Side.Up => new Point(box.X + (box.Width / 2), box.Y - 1),
-        Side.Down => new Point(box.X + (box.Width / 2), box.Y + box.Height + 1),
-        _ => new Point(box.X, box.Y),
-    };
 
     private static MonitorTarget? Relative(string text, IReadOnlyList<MonitorTarget> monitors, MonitorTarget? current)
     {
@@ -154,12 +145,6 @@ internal static class MonitorSelector
     };
 
     private static bool Sticks(int edge, int other) => Math.Abs(edge - other) < 2;
-
-    private static bool Contains(MonitorTarget monitor, Point point) =>
-        point.X >= monitor.X
-        && point.Y >= monitor.Y
-        && point.X < monitor.X + monitor.Width
-        && point.Y < monitor.Y + monitor.Height;
 
     private static long DistanceSquared(MonitorTarget monitor, Point point)
     {

@@ -3,9 +3,8 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-public sealed class WindowHost : IDisposable
+public sealed class SessionLoop : IDisposable
 {
-    private const uint QuitMessage = 0x0012;
 
     private readonly WindowManager _core;
     private readonly WindowAdapter _windows;
@@ -40,9 +39,14 @@ public sealed class WindowHost : IDisposable
     private volatile bool _taskbarReleased;
     private bool _markerSeen;
     private bool _disposed;
-    private ITaskbarSession _taskbar = NullTaskbarSession.Instance;
+    private readonly ITaskbarSession _taskbar;
 
-    public WindowHost(WindowManager core, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null)
+    public SessionLoop(WindowManager core, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null, bool controlTaskbar = false)
+        : this(core, controlTaskbar ? LiveTaskbarSession.Instance : NullTaskbarSession.Instance, onRecovery, pipeName)
+    {
+    }
+
+    internal SessionLoop(WindowManager core, ITaskbarSession taskbar, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null)
     {
         ArgumentNullException.ThrowIfNull(core);
         _core = core;
@@ -60,17 +64,7 @@ public sealed class WindowHost : IDisposable
             if (_looping)
                 FollowTaskbar();
         });
-        _taskbar = TaskbarControl.Current;
-    }
-
-    internal ITaskbarSession TaskbarSession
-    {
-        get => _taskbar;
-        set
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            _taskbar = value;
-        }
+        _taskbar = taskbar;
     }
 
     public Action? SessionEnding { get; set; }
@@ -167,7 +161,7 @@ public sealed class WindowHost : IDisposable
             WindowAdapter.ForgetSettings);
         var shell = WaitForShell();
         var thread = PInvoke.GetCurrentThreadId();
-        SessionHalt.Stop = () => _ = PInvoke.PostThreadMessage(thread, QuitMessage, default, default);
+        SessionHalt.Stop = () => _ = PInvoke.PostThreadMessage(thread, PInvoke.WM_QUIT, default, default);
         _looping = true;
         _loop.Attach(thread);
         TrayHost.Start(
@@ -197,7 +191,7 @@ public sealed class WindowHost : IDisposable
         ConsoleCancelEventHandler onCancel = (_, e) =>
         {
             e.Cancel = true;
-            _ = PInvoke.PostThreadMessage(thread, QuitMessage, default, default);
+            _ = PInvoke.PostThreadMessage(thread, PInvoke.WM_QUIT, default, default);
         };
 
         Console.CancelKeyPress += onCancel;
@@ -213,7 +207,7 @@ public sealed class WindowHost : IDisposable
 
             OnSignal(shell);
 
-            WindowAdapter.Pump(message =>
+            MessageLoop.Run(message =>
             {
                 if (message.message == LoopInvoker.Message)
                 {
@@ -511,7 +505,7 @@ public sealed class WindowHost : IDisposable
     {
         while (PInvoke.PeekMessage(out var message, default, 0, 0, PEEK_MESSAGE_REMOVE_TYPE.PM_REMOVE))
         {
-            if (message.message == QuitMessage)
+            if (message.message == PInvoke.WM_QUIT)
             {
                 PInvoke.PostQuitMessage(0);
                 return;

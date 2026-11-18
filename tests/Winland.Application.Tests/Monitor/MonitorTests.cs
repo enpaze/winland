@@ -165,23 +165,4 @@ public class MonitorTests
         Assert.Equal(new Rectangle(1940, 20, 3800, 2120), BoundsOf(second, 2));
         Assert.Equal(new Rectangle(5775, 15, 1890, 1050), BoundsOf(third, 3));
     }
-
-    [Theory]
-    [InlineData(3840, 2, 1920)]
-    [InlineData(1920, 1.5, 1280)]
-    [InlineData(5, 2, 3)]
-    [InlineData(-5, 2, -3)]
-    [InlineData(100, 0, 100)]
-    public void LogicalPixelsDividePhysicalPixelsByTheMonitorScale(int physical, double scale, int logical)
-    {
-        Assert.Equal(logical, MonitorPixels.Logical(physical, scale));
-    }
-
-    [Fact]
-    public void APhysicalPositionIsTheLogicalPositionTimesTheMonitorScale()
-    {
-        Assert.Equal(3840, MonitorPixels.Physical(1920, 2));
-        Assert.Equal(1920, MonitorPixels.Physical(1280, 1.5));
-    }
-
 }

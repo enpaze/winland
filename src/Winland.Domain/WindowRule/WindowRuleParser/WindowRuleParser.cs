@@ -266,7 +266,7 @@ internal static partial class WindowRuleParser
     {
         var tokens = string.IsNullOrWhiteSpace(text)
             ? []
-            : text.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+            : Tokens.Of(text);
         var fractions = new float[tokens.Length];
         if (tokens.Length == 0)
         {

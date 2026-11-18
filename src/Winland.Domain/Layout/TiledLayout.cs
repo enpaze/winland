@@ -6,8 +6,64 @@ internal abstract class TiledLayout
     private protected readonly FloatingClients _floating = new();
     private protected readonly Dictionary<ClientId, Rectangle> _natural = [];
     private protected readonly Dictionary<ClientId, SizeLimits> _limits = [];
+    private protected readonly MouseDrag _drag = new();
+    private protected LayoutOptions _options = LayoutOptions.Unconfigured;
+    private protected Rectangle _area;
+    private protected Rectangle _monitor;
 
     public IReadOnlyList<Client> Clients => _clients;
+
+    public MouseDrag MouseDrag => _drag;
+
+    public IReadOnlyList<Placement> Apply(LayoutOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        _options = options;
+        Refit();
+        return Placed();
+    }
+
+    public void Fit(Rectangle area, Rectangle monitor)
+    {
+        _area = area;
+        if (monitor.Width > 0 && monitor.Height > 0)
+            _monitor = monitor;
+        Refit();
+    }
+
+    public IReadOnlyList<Placement> Minimize(WindowId window)
+    {
+        var id = new ClientId(window.Value);
+        if (_floating.Contains(id))
+        {
+            SetMinimized(id, true);
+            return [];
+        }
+
+        return MinimizeTiled(id);
+    }
+
+    public IReadOnlyList<Placement> Restore(WindowId window)
+    {
+        var id = new ClientId(window.Value);
+        if (_floating.TryGet(id, out var bounds))
+        {
+            var index = IndexOf(id);
+            if (index < 0 || !_clients[index].Minimized)
+                return [];
+
+            SetMinimized(id, false);
+            return [new Placement(id, bounds)];
+        }
+
+        return RestoreTiled(window);
+    }
+
+    public IReadOnlyList<Placement> PlaceFloating(WindowId window, Rectangle bounds)
+    {
+        var id = new ClientId(window.Value);
+        return _floating.Place(id, bounds, _options.FloatingOnScreen(_area), FloatingLimits(id)) ? WithFloating(id) : [];
+    }
 
     public void Retitle(WindowId window, string title)
     {
@@ -82,6 +138,21 @@ internal abstract class TiledLayout
     }
 
     private protected abstract void Rename(ClientId from, ClientId to);
+
+    private protected abstract void Refit();
+
+    private protected abstract IReadOnlyList<Placement> MinimizeTiled(ClientId id);
+
+    private protected abstract IReadOnlyList<Placement> RestoreTiled(WindowId window);
+
+    private protected IReadOnlyList<Placement> WithFloating(ClientId id)
+    {
+        var placements = new List<Placement>(Placed());
+        if (_floating.TryGet(id, out var box))
+            placements.Add(new Placement(id, box));
+
+        return placements;
+    }
 
     private Taken Describe(int index)
     {

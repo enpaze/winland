@@ -9,7 +9,6 @@ public sealed record ConfigDocument(
 
     public IReadOnlyList<WindowRule> WindowRules { get; init; } = [];
 
-    public IReadOnlyList<WorkspaceRule> WorkspaceRules { get; init; } = WorkspaceRule.None;
 
     public IReadOnlyList<string> Sources { get; init; } = [];
 

@@ -5,8 +5,7 @@ public sealed record InstallLayout(
     string UserDirectory,
     string CommonPrograms,
     string UserPrograms,
-    string ConfigDirectory,
-    string StateDirectory);
+    string ConfigDirectory);
 
 public sealed class AppInstall
 {
@@ -16,7 +15,7 @@ public sealed class AppInstall
     private readonly IRegistry registry;
     private readonly IStartMenu shortcuts;
     private readonly IDaemonSession session;
-    private readonly IDesktopRestore desktop;
+    private readonly ITweakRestore tweaks;
 
     public AppInstall(
         InstallLayout layout,
@@ -25,7 +24,7 @@ public sealed class AppInstall
         IRegistry registry,
         IStartMenu shortcuts,
         IDaemonSession session,
-        IDesktopRestore? desktop = null)
+        ITweakRestore? tweaks = null)
     {
         ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(tasks);
@@ -39,7 +38,7 @@ public sealed class AppInstall
         this.registry = registry;
         this.shortcuts = shortcuts;
         this.session = session;
-        this.desktop = desktop ?? NoDesktopRestore.Instance;
+        this.tweaks = tweaks ?? NoTweakRestore.Instance;
     }
 
     public bool MachinePresent() =>
@@ -54,13 +53,13 @@ public sealed class AppInstall
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
         var plan = Plan(executable, layout.MachineDirectory);
-        Require(plan.Files, LogonTaskDefinition.LauncherName, plan.SourceDirectory);
+        Require(plan.Files, InstallLocations.LauncherName, plan.SourceDirectory);
         ApplyStopped(plan, perUser: false);
         var installed = plan.InstalledExecutable;
         if (logon)
-            new LogonInstall(tasks).Install(installed, account);
+            InstallLogonTask(installed, account);
         else
-            new LogonInstall(tasks).Uninstall();
+            RemoveLogonTask();
         Place(installed, layout.CommonPrograms, arguments: "");
         RegisterUninstall(RegistryRoot.Machine, installed, layout.MachineDirectory, version);
         SetPath(RegistryRoot.Machine, InstallLocations.MachinePathKey, layout.MachineDirectory);
@@ -99,7 +98,7 @@ public sealed class AppInstall
 
         var plan = Plan(sourceExecutable, destination);
         if (!perUser)
-            Require(plan.Files, LogonTaskDefinition.LauncherName, plan.SourceDirectory);
+            Require(plan.Files, InstallLocations.LauncherName, plan.SourceDirectory);
 
         var running = ApplyStopped(plan, perUser);
         var installed = plan.InstalledExecutable;
@@ -121,29 +120,33 @@ public sealed class AppInstall
         Exception? unrestored = null;
         try
         {
-            desktop.Restore();
+            tweaks.Restore();
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
             unrestored = exception;
         }
 
-        RemoveUser();
+        RemoveUserInstall();
         if (purge)
-        {
             files.DeleteTree(layout.ConfigDirectory);
-            files.DeleteTree(layout.StateDirectory);
-        }
 
         if (unrestored is not null)
             throw new InvalidOperationException("Winland is uninstalled, but the Windows settings it turned off were not put back: " + unrestored.Message, unrestored);
     }
 
-    public void RemoveUserInstall() => RemoveUser();
-
-    private sealed class NoDesktopRestore : IDesktopRestore
+    public void RemoveUserInstall()
     {
-        public static readonly NoDesktopRestore Instance = new();
+        registry.DeleteValue(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue);
+        shortcuts.Remove(InstallLocations.Shortcut(layout.UserPrograms));
+        registry.DeleteKey(RegistryRoot.User, InstallLocations.UninstallKey);
+        ClearPath(RegistryRoot.User, InstallLocations.UserPathKey, layout.UserDirectory);
+        files.DeleteTree(layout.UserDirectory);
+    }
+
+    private sealed class NoTweakRestore : ITweakRestore
+    {
+        public static readonly NoTweakRestore Instance = new();
 
         public void Restore()
         {
@@ -168,7 +171,7 @@ public sealed class AppInstall
 
     private void Apply(CopyPlan plan)
     {
-        if (SameDirectory(plan.SourceDirectory, plan.Destination))
+        if (InstallLocations.SameFolder(plan.SourceDirectory, plan.Destination))
             return;
 
         files.PrepareDirectory(plan.Destination);
@@ -257,20 +260,26 @@ public sealed class AppInstall
 
     private void RemoveMachine()
     {
-        new LogonInstall(tasks).Uninstall();
+        RemoveLogonTask();
         shortcuts.Remove(InstallLocations.Shortcut(layout.CommonPrograms));
         registry.DeleteKey(RegistryRoot.Machine, InstallLocations.UninstallKey);
         ClearPath(RegistryRoot.Machine, InstallLocations.MachinePathKey, layout.MachineDirectory);
         files.DeleteTree(layout.MachineDirectory);
     }
 
-    private void RemoveUser()
+    private void InstallLogonTask(string executable, string user)
     {
-        registry.DeleteValue(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue);
-        shortcuts.Remove(InstallLocations.Shortcut(layout.UserPrograms));
-        registry.DeleteKey(RegistryRoot.User, InstallLocations.UninstallKey);
-        ClearPath(RegistryRoot.User, InstallLocations.UserPathKey, layout.UserDirectory);
-        files.DeleteTree(layout.UserDirectory);
+        var task = LogonTaskDefinition.Build(executable, user);
+        if (tasks.Contains(task.Name))
+            tasks.Replace(task);
+        else
+            tasks.Create(task);
+    }
+
+    private void RemoveLogonTask()
+    {
+        if (tasks.Contains(LogonTaskDefinition.TaskName))
+            tasks.Delete(LogonTaskDefinition.TaskName);
     }
 
     private void ClearPath(RegistryRoot root, string key, string folder)
@@ -279,10 +288,6 @@ public sealed class AppInstall
         if (PathList.Remove(current, folder) is string updated)
             registry.SetString(root, key, InstallLocations.PathValue, updated, expandable: true);
     }
-
-    private static bool SameDirectory(string left, string right) =>
-        Path.TrimEndingDirectorySeparator(Path.GetFullPath(left))
-            .Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)), StringComparison.OrdinalIgnoreCase);
 
     private static string Quote(string value)
     {

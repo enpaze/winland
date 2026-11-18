@@ -32,13 +32,19 @@ public static class InstallLocations
 
     public static string SettingsFile(string userProfile) => Path.Combine(Config(userProfile), SettingsFileName);
 
-    public static string State(string userProfile) => Config(userProfile);
-
     public const string ExecutableName = "winland.exe";
 
     public static string Executable(string directory) => Path.Combine(directory, ExecutableName);
 
+    public const string LauncherName = "winland-launcher.exe";
+
+    public static string Launcher(string executable) => Path.Combine(Path.GetDirectoryName(executable)!, LauncherName);
+
     public static string Shortcut(string programsDirectory) => Path.Combine(programsDirectory, ShortcutName);
+
+    public static bool SameFolder(string left, string right) =>
+        Path.TrimEndingDirectorySeparator(Path.GetFullPath(left))
+            .Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)), StringComparison.OrdinalIgnoreCase);
 
     public static bool IsPerUserInstall(string? executable, string userDirectory)
     {

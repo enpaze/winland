@@ -15,8 +15,6 @@ public sealed partial class WindowManager
 
     public bool FirstStart { get; set; }
 
-    private Outcome Load(ConfigLoaded loaded) => Apply(loaded.Config);
-
     private CommandReply ReloadCommand()
     {
         if (ReadConfig is null)
@@ -68,7 +66,7 @@ public sealed partial class WindowManager
         _loaded = document;
         ShowConfigErrors(document);
 
-        var active = FocusedWorkspace();
+        var active = ShownWorkspace();
         var covered = active.Covered();
         foreach (var desk in _workspaces)
         {
@@ -79,13 +77,12 @@ public sealed partial class WindowManager
         Outcome outcome;
         if (_monitors.Count == 0)
         {
-            EnsurePersistent();
             IReadOnlyList<Placement> placements = [];
             foreach (var desk in _workspaces)
             {
                 Stamp(desk);
                 var placed = desk.Layout.Apply(desk.Options);
-                if (desk.Id == ActiveId())
+                if (desk.Id == ShownId())
                     placements = placed;
             }
 
@@ -128,7 +125,7 @@ public sealed partial class WindowManager
 
     private void MatchLayout(LiveWorkspace desk)
     {
-        var created = LayoutFactory.Create(_config.Document, RuleFor(desk)?.Layout);
+        var created = LayoutFactory.Create(_config.Document);
         if (created.GetType() == desk.Layout.GetType() && LayoutFactory.NameOf(created) == LayoutFactory.NameOf(desk.Layout))
         {
             desk.Layout.Configure(_config.Scrolling);
@@ -160,13 +157,12 @@ public sealed partial class WindowManager
         desk.Replace(created);
         created.Configure(_config.Scrolling);
         Stamp(desk);
-        var screen = MonitorById(desk.Monitor);
+        var monitor = EnabledMonitor(desk.Monitor)?.Bounds ?? default;
         var area = WorkArea(desk, _area);
         created.Apply(desk.Options);
         if (area.Width > 0 && area.Height > 0)
-            created.Fit(area, screen is { Arranged.Enabled: true } ? screen.Bounds : default);
+            created.Fit(area, monitor);
 
-        var monitor = screen is { Arranged.Enabled: true } ? screen.Bounds : default;
         foreach (var (window, taken) in held)
             desk.Receive(window, taken, area, monitor);
 

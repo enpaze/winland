@@ -153,11 +153,6 @@ internal interface IMouseDragHost
     IReadOnlyList<Placement> EndInPlace();
 }
 
-internal interface IDragOwner
-{
-    MouseDrag Drag { get; }
-}
-
 internal readonly record struct PointerDrag(bool Resize, PointerDragPhase Phase, Point Pointer, bool KeepRatio = false);
 
 public enum PointerDragPhase

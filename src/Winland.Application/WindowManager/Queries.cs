@@ -80,22 +80,11 @@ public sealed partial class WindowManager
         else
             window = WindowSelector.Find(selector, ActiveWindow(), Snapshot().Clients);
 
-        if (window is not WindowId id)
+        if (window is not WindowId id || Find(id) is not Client found)
             return false;
 
-        foreach (var candidate in _workspaces)
-        {
-            foreach (var item in candidate.Layout.Clients.Concat(candidate.WaitingClients))
-            {
-                if (item.Window != id)
-                    continue;
-
-                client = item;
-                return true;
-            }
-        }
-
-        return false;
+        client = found;
+        return true;
     }
 
     private static bool TryAddress(string text, out WindowId window)

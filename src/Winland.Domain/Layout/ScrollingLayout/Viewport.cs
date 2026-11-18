@@ -140,7 +140,7 @@ internal sealed partial class ScrollingLayout
 
     private Rectangle Usable()
     {
-        var gaps = _layoutOptions.GapsOut;
+        var gaps = _options.GapsOut;
         var width = Math.Max(0, _area.Width - gaps.Left - gaps.Right);
         var height = Math.Max(0, _area.Height - gaps.Top - gaps.Bottom);
         return new Rectangle(_area.X + gaps.Left, _area.Y + gaps.Top, width, height);

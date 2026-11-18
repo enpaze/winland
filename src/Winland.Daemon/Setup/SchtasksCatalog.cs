@@ -8,7 +8,7 @@ namespace Winland.Daemon;
 sealed class SchtasksCatalog : ITaskCatalog
 {
     public bool Contains(string taskName) =>
-        Run(SchtasksArguments.Query(taskName)).ExitCode == 0;
+        Run(Arguments.Query(taskName)).ExitCode == 0;
 
     public void Create(LogonTask task) => Register(task, update: false);
 
@@ -28,7 +28,7 @@ sealed class SchtasksCatalog : ITaskCatalog
             return false;
         var xml = XDocument.Parse(result.Output);
         var command = xml.Descendants().Single(element => element.Name.LocalName == "Command");
-        var launcher = Path.Combine(Path.GetDirectoryName(executable)!, LogonTaskDefinition.LauncherName);
+        var launcher = InstallLocations.Launcher(executable);
         if (!command.Value.Equals(launcher, StringComparison.OrdinalIgnoreCase))
         {
             command.Value = launcher;
@@ -40,22 +40,21 @@ sealed class SchtasksCatalog : ITaskCatalog
 
     public void Delete(string taskName)
     {
-        var result = Run(SchtasksArguments.Delete(taskName));
+        var result = Run(Arguments.Delete(taskName));
         if (result.ExitCode != 0)
             throw Failed("Could not remove the logon task.", result);
     }
 
     private static void Register(LogonTask task, bool update)
     {
-        var windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
-        var folder = AdministratorFolder.CreateNew(windowsTemp, "winland-");
+        var folder = AdministratorFolder.CreateInWindowsTemp("winland-");
         var path = Path.Combine(folder, "task.xml");
         try
         {
             File.WriteAllText(path, task.Xml, Encoding.Unicode);
             var arguments = update
-                ? SchtasksArguments.Update(task.Name, path)
-                : SchtasksArguments.Create(task.Name, path);
+                ? Arguments.Update(task.Name, path)
+                : Arguments.Create(task.Name, path);
             var result = Run(arguments);
             if (result.ExitCode != 0)
                 throw Failed("Could not register the logon task.", result);
@@ -98,4 +97,17 @@ sealed class SchtasksCatalog : ITaskCatalog
     }
 
     private readonly record struct SchtasksResult(int ExitCode, string Output, string Error);
+
+    internal static class Arguments
+    {
+        public static IReadOnlyList<string> Query(string taskName) => ["/Query", "/TN", taskName];
+
+        public static IReadOnlyList<string> Create(string taskName, string xmlPath) =>
+            ["/Create", "/TN", taskName, "/XML", xmlPath];
+
+        public static IReadOnlyList<string> Update(string taskName, string xmlPath) =>
+            ["/Create", "/TN", taskName, "/XML", xmlPath, "/F"];
+
+        public static IReadOnlyList<string> Delete(string taskName) => ["/Delete", "/TN", taskName, "/F"];
+    }
 }

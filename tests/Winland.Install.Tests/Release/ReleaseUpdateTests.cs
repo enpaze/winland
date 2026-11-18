@@ -27,14 +27,14 @@ public class ReleaseUpdateTests
     public ReleaseUpdateTests()
     {
         install = new AppInstall(
-            new InstallLayout(Machine, User, @"C:\ProgramData\Microsoft\Windows\Start Menu\Programs", @"C:\Users\me\AppData\Roaming\Microsoft\Windows\Start Menu\Programs", Config, @"C:\Users\me\AppData\Local\Winland"),
+            new InstallLayout(Machine, User, @"C:\ProgramData\Microsoft\Windows\Start Menu\Programs", @"C:\Users\me\AppData\Roaming\Microsoft\Windows\Start Menu\Programs", Config),
             tasks,
             files,
             registry,
             new MemoryStartMenu(),
             session);
         files.Seed(Source, [1]);
-        files.Seed(Path.Combine(Path.GetDirectoryName(Source)!, LogonTaskDefinition.LauncherName), [3]);
+        files.Seed(InstallLocations.Launcher(Source), [3]);
         files.Seed(@"C:\Users\me\Downloads\Winland\winland\winland.dll", [2]);
         files.Seed(Path.Combine(Machine, "winland.exe"), [8]);
         files.Seed(Path.Combine(User, "winland.exe"), [7]);

@@ -28,7 +28,7 @@ public sealed partial class WindowManager
         if (silent)
             selector = selector[..space].Trim();
 
-        if (MonitorOf(MonitorSelector.Resolve(selector, Targets(), TargetOf(FocusedMonitor()))) is not LiveMonitor chosen)
+        if (ResolveMonitor(selector) is not LiveMonitor chosen)
             return opened;
 
         if (!silent && chosen.Id != FocusedId())
@@ -40,7 +40,7 @@ public sealed partial class WindowManager
     private Rectangle PlaceOnMap(WindowAppeared appeared, WindowDecision decision, LiveWorkspace desk, Rectangle area)
     {
         var placement = decision.Placement;
-        var monitor = MonitorById(desk.Monitor) is { Arranged.Enabled: true } screen ? screen.Bounds : area;
+        var monitor = EnabledMonitor(desk.Monitor)?.Bounds ?? area;
         var desired = appeared.Bounds;
         var sized = desired.Width > 2 && desired.Height > 2;
         var width = sized || !decision.Floating ? desired.Width : DefaultFloatWidth;
@@ -122,7 +122,7 @@ public sealed partial class WindowManager
 
         var covered = desk.Covered();
         var placements = desk.Layout.PlaceFloating(resized.Window, placed.Bounds);
-        return _workspaces.Shown.IsShown(desk.Id) ? Present(desk, covered, placements) : View([]);
+        return PresentIfShown(desk, covered, placements);
     }
 
     private static int Pixels(double value) =>

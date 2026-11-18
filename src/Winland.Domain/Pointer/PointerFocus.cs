@@ -55,6 +55,6 @@ internal static class PointerFocus
         if (bounds.Width <= 0 || bounds.Height <= 0)
             return false;
 
-        return point.X >= bounds.X && point.Y >= bounds.Y && point.X < bounds.X + bounds.Width && point.Y < bounds.Y + bounds.Height;
+        return bounds.Contains(point);
     }
 }

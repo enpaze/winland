@@ -64,7 +64,7 @@ public class ConfigWatcherTests : ConfigWatcherFacts
         {
             ReadConfig = () => new ConfigRead(ConfigParser.Parse("blur = on\n")),
         };
-        using var host = new WindowHost(core);
+        using var host = new SessionLoop(core);
 
         var reply = host.Reload();
 
@@ -86,7 +86,7 @@ public class ConfigWatcherTests : ConfigWatcherFacts
                 return new ConfigRead(ConfigParser.Parse(""));
             },
         };
-        using var host = new WindowHost(core);
+        using var host = new SessionLoop(core);
 
         host.PostReload();
 

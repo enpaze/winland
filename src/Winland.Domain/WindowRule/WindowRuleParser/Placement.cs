@@ -50,7 +50,7 @@ internal static partial class WindowRuleParser
     private static bool TryParsePoint(string text, out RulePoint point)
     {
         point = default;
-        var parts = text.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        var parts = Tokens.Of(text);
         if (parts.Length != 2 || !TryParseLength(parts[0], out var x) || !TryParseLength(parts[1], out var y))
             return false;
 

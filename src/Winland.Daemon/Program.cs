@@ -13,7 +13,7 @@ if (args.Length > 0 && args[0].Equals("check", StringComparison.OrdinalIgnoreCas
     return Program.Check(args[1..], ConfigPaths.Default(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)), Console.Error);
 
 if (ControlInvocation.TryCreate(args, out var line, out var events))
-    return ControlCommand.Run(line, events, PipeName());
+    return ControlCommand.Run(line, events, CommandClient.ConfiguredName());
 
 var log = new RollingLogWriter(Console.Error);
 Console.SetError(log);
@@ -31,7 +31,7 @@ var userInstall = InstallLocations.IsPerUserInstall(
     Environment.ProcessPath,
     InstallLocations.User(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)));
 switch (ManualStartElevation.Decide(
-    Elevation.IsElevated(),
+    UserAccess.IsElevated,
     Environment.GetEnvironmentVariable(ManualStartElevation.OptOutVariable),
     args,
     userInstall,
@@ -59,7 +59,7 @@ static bool IsStart(string[] arguments) =>
 
 static int Relaunch(IReadOnlyList<string> arguments)
 {
-    using (var probe = InstanceLock.TryTake(InstanceLock.NameFor(PipeName() ?? CommandProtocol.PipeName)))
+    using (var probe = InstanceLock.TryTake(InstanceLock.NameFor(CommandClient.ConfiguredName() ?? CommandProtocol.PipeName)))
     {
         if (probe is null)
         {
@@ -83,7 +83,7 @@ static void LaunchConfigured(WindowManager core, IEnumerable<Launch> launches)
 
 static int Run(string? path, RollingLogWriter log)
 {
-    using var instance = InstanceLock.TryTake(InstanceLock.NameFor(PipeName() ?? PipeServer.DefaultName));
+    using var instance = InstanceLock.TryTake(InstanceLock.NameFor(CommandClient.ConfiguredName() ?? CommandClient.DefaultName));
     if (instance is null)
     {
         Console.Error.WriteLine("Winland is already running in this session.");
@@ -110,7 +110,7 @@ static int Run(string? path, RollingLogWriter log)
     var current = ConfigFile.Read(configPath);
     ConfigFile.WriteWarnings(current.Warnings, configPath, Console.Error);
 
-    var core = new WindowManager { Cursor = new SystemCursor(), FirstStart = firstStart };
+    var core = new WindowManager { FirstStart = firstStart };
     core.ReadConfig = () => ConfigFile.TryRead(configPath);
     core.LogFile = () => log.FilePath;
     ConfigWatcher? watcher = null;
@@ -131,8 +131,7 @@ static int Run(string? path, RollingLogWriter log)
     if (prior is not null)
         SessionEffects.RestoreCursors();
     SessionEffects.InstallSystem();
-    TaskbarControl.InstallSystem();
-    using var host = new WindowHost(core, store.Save, PipeName());
+    using var host = new SessionLoop(core, store.Save, CommandClient.ConfiguredName(), controlTaskbar: true);
     var stopGate = new Lock();
     var stopped = false;
     void StopOnce()
@@ -204,7 +203,7 @@ static void Persist(RecoveryStore store, RecoverySnapshot snapshot)
     store.Save(WindowIdentity.Annotate(snapshot));
 }
 
-static void Stop(WindowHost host, RecoveryStore store, WindowManager core)
+static void Stop(SessionLoop host, RecoveryStore store, WindowManager core)
 {
     try
     {
@@ -223,7 +222,7 @@ static void Stop(WindowHost host, RecoveryStore store, WindowManager core)
     }
 }
 
-static void Salvage(WindowHost host)
+static void Salvage(SessionLoop host)
 {
     try
     {
@@ -247,10 +246,10 @@ static void Salvage(WindowHost host)
 static RecoveryStore StateStore()
 {
     var standard = Path.Combine(
-        InstallLocations.State(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
+        InstallLocations.Config(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
         "state.json");
     var variable = Environment.GetEnvironmentVariable(StateLocation.Variable);
-    if (!Elevation.IsElevated())
+    if (!UserAccess.IsElevated)
         return new RecoveryStore(StateLocation.Choose(variable, standard, elevated: false, _ => null).Path);
 
     string user;
@@ -280,12 +279,6 @@ static RecoveryStore StateStore()
     return new RecoveryStore(path, RefuseOpen);
 }
 
-static string? PipeName()
-{
-    var configured = Environment.GetEnvironmentVariable("WINLAND_PIPE");
-    return string.IsNullOrWhiteSpace(configured) ? null : configured;
-}
-
 static int Usage()
 {
     Console.Error.WriteLine("usage: winland");
@@ -313,7 +306,7 @@ static void CopyLog(RollingLogWriter log, DebugOptions options, string? file)
         if (file is null)
             return null;
 
-        if (Elevation.IsElevated())
+        if (UserAccess.IsElevated)
         {
             Console.Error.WriteLine("debug:disable_logs is false, but an elevated Winland writes no log file.");
             return null;

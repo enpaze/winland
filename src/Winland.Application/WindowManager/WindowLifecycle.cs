@@ -22,7 +22,7 @@ public sealed partial class WindowManager
         if (_focus.Focused is not WindowId active)
             return null;
 
-        if (ClientOn(ActiveId(), active) is not null)
+        if (ClientOn(ShownId(), active) is not null)
             return active;
 
         var desk = WorkspaceContaining(active);
@@ -42,8 +42,7 @@ public sealed partial class WindowManager
                 && TakesMapFocus(appeared)
                 && _restoring != appeared.Window
                 && !_awaitingMapFocus.Contains(appeared.Window):
-                var current = _workspaces.Shown.SpecialOn(appearedWorkspace.Monitor) ?? _workspaces.Shown.ActiveOn(appearedWorkspace.Monitor);
-                if (appearedWorkspace.Id == current)
+                if (appearedWorkspace.Id == TopOn(appearedWorkspace.Monitor))
                 {
                     if (_monitors.Count == 0 || appearedWorkspace.Monitor == FocusedId())
                         Give(appeared.Window, appearedWorkspace);
@@ -89,8 +88,7 @@ public sealed partial class WindowManager
             screen = RuleMonitor(decision.Placement.Monitor, screen);
 
         var monitor = RestoredMonitor(restored, screen);
-        var active = _workspaces.Shown.ActiveOn(monitor);
-        var current = _workspaces.Shown.SpecialOn(monitor) ?? active;
+        var current = TopOn(monitor);
         var rule = WorkspaceAddress.ParseRule(decision.Workspace, Context());
 
         if (restored is null && processId > 0)
@@ -293,12 +291,10 @@ public sealed partial class WindowManager
         var covered = desk.Covered();
         var wasActive = _focus.Focused == window;
         var placements = desk.Layout.Minimize(window);
-        return _workspaces.Shown.IsShown(desk.Id)
-            ? Present(desk, covered, placements, focusRevealed: wasActive)
-            : View([]);
+        return PresentIfShown(desk, covered, placements, focusRevealed: wasActive);
     }
 
-    private Outcome Restore(WindowRestored restored)
+    private Outcome Unminimize(WindowRestored restored)
     {
         var desk = WorkspaceContaining(restored.Window);
         if (desk is null)

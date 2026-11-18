@@ -56,17 +56,8 @@ public sealed class MouseHook : IDisposable
         if (_disposed)
             return;
 
-        var hook = PInvoke.SetWindowsHookEx(WINDOWS_HOOK_ID.WH_MOUSE_LL, _callback, default(HINSTANCE), 0);
-        if (hook.IsNull)
-        {
-            Console.Error.WriteLine($"The mouse hook was not reinstalled ({Marshal.GetLastPInvokeError()}).");
+        if (!LowLevelHook.Reinstall(ref _hook, WINDOWS_HOOK_ID.WH_MOUSE_LL, _callback, "mouse"))
             return;
-        }
-
-        var old = _hook;
-        _hook = hook;
-        if (!old.IsNull)
-            _ = PInvoke.UnhookWindowsHookEx(old);
 
         var position = PInvoke.GetCursorPos(out var point) ? new Point(point.X, point.Y) : _keys.Session.Pointer;
         EndDrags(position);

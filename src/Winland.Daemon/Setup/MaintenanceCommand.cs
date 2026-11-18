@@ -10,18 +10,18 @@ static class MaintenanceCommand
         var needsAdministrator = command is InstallCommand.Remove
             ? MachineInstalled()
             : command.RequiresAdministrator(machineInstallPresent: false);
-        if (needsAdministrator && !Elevation.IsElevated())
+        if (needsAdministrator && !UserAccess.IsElevated)
         {
             var relay = command is InstallCommand.Machine { Account: null } machine ? machine.Relay(CurrentUser()) : args;
             var result = Elevation.Relaunch(relay);
             if (result == 0)
             {
                 if (command is InstallCommand.Machine)
-                    Maintenance().RemoveUserInstall();
+                    NewAppInstall().RemoveUserInstall();
                 else if (command is InstallCommand.Remove remove)
                 {
                     TaskbarControl.RecoverHidden();
-                    Maintenance().Uninstall(remove.Purge, machine: false);
+                    NewAppInstall().Uninstall(remove.Purge, machine: false);
                 }
             }
 
@@ -35,10 +35,10 @@ static class MaintenanceCommand
     {
         var executable = Environment.ProcessPath
             ?? throw new InvalidOperationException("The executable path is not available.");
-        if (command.ElevatedRefusal is string refusal && Elevation.IsElevated())
+        if (command.ElevatedRefusal is string refusal && UserAccess.IsElevated)
             throw new InvalidOperationException(refusal);
 
-        var app = Maintenance();
+        var app = NewAppInstall();
         switch (command)
         {
             case InstallCommand.UserCleanup:
@@ -57,23 +57,23 @@ static class MaintenanceCommand
                 Console.WriteLine(Installed("Winland is installed for this user", user.Logon, user.Start));
                 return 0;
             case InstallCommand.Remove remove:
-                if (!Elevation.IsElevated())
+                if (!UserAccess.IsElevated)
                     TaskbarControl.RecoverHidden();
-                app.Uninstall(remove.Purge, machine: Elevation.IsElevated());
+                app.Uninstall(remove.Purge, machine: UserAccess.IsElevated);
                 Console.WriteLine(remove.Purge
                     ? "Winland is uninstalled, and its config, logs and state are removed."
                     : "Winland is uninstalled.");
                 return 0;
             case InstallCommand.Update update:
-                return UpdateInstalled(update.Channel);
+                return UpdateInstalled(executable, update.Channel);
             case InstallCommand.Tweaks tweaks:
-                RecordedSettings().TurnOff(tweaks.Touchpad);
+                RecordedTweaks().TurnOff(tweaks.Touchpad);
                 Console.WriteLine(tweaks.Touchpad
                     ? "Snap windows and the three- and four-finger touchpad swipes are off."
                     : "Snap windows is off.");
                 return 0;
             case InstallCommand.RestoreTweaks:
-                Console.WriteLine(RecordedSettings().Restore()
+                Console.WriteLine(RecordedTweaks().Restore()
                     ? "The Windows settings winland tweaks --off recorded are back as they were."
                     : "winland tweaks --off recorded no settings for this user. Nothing changed.");
                 return 0;
@@ -90,26 +90,24 @@ static class MaintenanceCommand
         (false, false) => installed + ".",
     };
 
-    private static int UpdateInstalled(UpdateChannel? requested)
+    private static int UpdateInstalled(string executable, UpdateChannel? requested)
     {
-        var saved = new FileSettingsText(UpdateChannelFile.PathFor(
+        var saved = new TextFile(UpdateChannelFile.PathFor(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
-        var channel = UpdateChannelFile.Choose(requested, Elevation.IsElevated() ? null : saved.Read());
-        var executable = Environment.ProcessPath
-            ?? throw new InvalidOperationException("The executable path is not available.");
+        var channel = UpdateChannelFile.Choose(requested, UserAccess.IsElevated ? null : saved.Read());
         var layout = Layout();
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
         var result = new ReleaseUpdate(
             new GitHubReleaseFeed(http),
             new ZipReleasePackage(),
-            Maintenance(),
-            StageDirectory,
+            NewAppInstall(),
+            () => AdministratorFolder.CreateTemp("winland-update-"),
             RemoveStage).Run(
                 BuildStamp.Version,
                 executable,
                 layout.MachineDirectory,
                 layout.UserDirectory,
-                Elevation.IsElevated(),
+                UserAccess.IsElevated,
                 channel,
                 BuildStamp.Commit);
 
@@ -123,7 +121,7 @@ static class MaintenanceCommand
                 Console.WriteLine("Winland is up to date.");
                 return 0;
             case UpdateResult.NeedsAdministrator:
-                var resultCode = Elevation.Relaunch(["update", "--channel", channel == UpdateChannel.Dev ? "dev" : "stable"]);
+                var resultCode = Elevation.Relaunch(["update", "--channel", UpdateChannels.Name(channel)]);
                 if (resultCode == 0)
                     Remember();
                 return resultCode;
@@ -131,7 +129,7 @@ static class MaintenanceCommand
                 Console.Error.WriteLine("Refusing the update: the SHA-256 of Winland-win-x64.zip does not match SHA256SUMS. The release may still be uploading. Try again in a minute.");
                 return 1;
             case UpdateResult.Updated updated:
-                if (Elevation.IsElevated())
+                if (UserAccess.IsElevated)
                     _ = SchtasksCatalog.UseLauncher(executable);
                 Remember();
                 Console.WriteLine("Winland is updated to " + updated.Version + ".");
@@ -142,22 +140,9 @@ static class MaintenanceCommand
 
         void Remember()
         {
-            if (!Elevation.IsElevated() && requested is UpdateChannel chosen)
+            if (!UserAccess.IsElevated && requested is UpdateChannel chosen)
                 saved.Write(UpdateChannelFile.Text(chosen));
         }
-    }
-
-    private static string StageDirectory()
-    {
-        if (Elevation.IsElevated())
-        {
-            var windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
-            return AdministratorFolder.CreateNew(windowsTemp, "winland-update-");
-        }
-
-        var folder = Path.Combine(Path.GetTempPath(), "winland-update-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(folder);
-        return folder;
     }
 
     private static void RemoveStage(string directory)
@@ -166,28 +151,27 @@ static class MaintenanceCommand
             Directory.Delete(directory, recursive: true);
     }
 
-    private static bool MachineInstalled() => Maintenance().MachinePresent();
+    private static bool MachineInstalled() => NewAppInstall().MachinePresent();
 
     private static InstallLayout Layout() => new(
         InstallLocations.Machine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)),
         InstallLocations.User(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)),
         Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms),
         Environment.GetFolderPath(Environment.SpecialFolder.Programs),
-        InstallLocations.Config(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
-        InstallLocations.State(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
+        InstallLocations.Config(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
 
-    private static AppInstall Maintenance() => new(
+    private static AppInstall NewAppInstall() => new(
         Layout(),
         new SchtasksCatalog(),
         new WindowsInstallFiles(),
         new WindowsInstallRegistry(),
         new ShellStartMenu(),
         new DaemonSession(),
-        RecordedSettings());
+        RecordedTweaks());
 
-    private static DesktopSettings RecordedSettings() => new(
-        new WindowsDesktop(),
-        new FileSettingsText(InstallLocations.SettingsFile(
+    private static TweakRecord RecordedTweaks() => new(
+        new WindowsTweaks(),
+        new TextFile(InstallLocations.SettingsFile(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))));
 
     private static string CurrentUser()

@@ -6,42 +6,14 @@ namespace Winland.Application;
 
 public static partial class CommandProtocol
 {
-    internal static string FormatClients(State state)
-    {
-        var indexed = Index(state);
-        var views = new List<ClientJson>(state.Clients.Count);
-
-        var stacked = new Dictionary<WindowId, int>(state.Stacking.Count);
-        for (var i = 0; i < state.Stacking.Count; i++)
-            stacked[state.Stacking[i]] = i;
-        var ordered = state.Clients.OrderBy(client => stacked.TryGetValue(client.Window, out var at) ? at : -1).ToList();
-        for (var i = 0; i < ordered.Count; i++)
-        {
-            var client = ordered[i];
-            if (client.Minimized)
-                continue;
-
-            views.Add(ClientOf(client, state, indexed));
-        }
-
-        return JsonSerializer.Serialize(views);
-    }
+    internal static string FormatClients(State state) =>
+        JsonSerializer.Serialize(ListedClients(state));
 
     internal static string FormatWorkspaces(State state) =>
         JsonSerializer.Serialize(Index(state).Workspaces);
 
-    internal static string FormatActiveWorkspace(State state)
-    {
-        var indexed = Index(state);
-        var active = indexed.ByWorkspace[state.ActiveWorkspace];
-        foreach (var entry in indexed.Workspaces)
-        {
-            if (entry.Address == active.Address && entry.Monitor == active.Monitor && entry.Id == active.Id)
-                return JsonSerializer.Serialize(entry);
-        }
-
-        return "{}";
-    }
+    internal static string FormatActiveWorkspace(State state) =>
+        ActiveWorkspaceEntries(state).FirstOrDefault() is { } entry ? JsonSerializer.Serialize(entry) : "{}";
 
     internal static string FormatMonitors(State state, bool includeDisabled = false)
     {
@@ -73,19 +45,34 @@ public static partial class CommandProtocol
         return JsonSerializer.Serialize(views);
     }
 
-    internal static string FormatActiveWindow(State state, WindowId? active)
-    {
-        if (active is not WindowId window)
-            return "{}";
+    internal static string FormatActiveWindow(State state, WindowId? active) =>
+        ActiveClient(state, active) is { } client ? JsonSerializer.Serialize(client) : "{}";
 
+    private static List<ClientJson> ListedClients(State state)
+    {
         var indexed = Index(state);
-        foreach (var client in state.Clients)
+        var stacked = new Dictionary<WindowId, int>(state.Stacking.Count);
+        for (var i = 0; i < state.Stacking.Count; i++)
+            stacked[state.Stacking[i]] = i;
+
+        var views = new List<ClientJson>(state.Clients.Count);
+        foreach (var client in state.Clients.OrderBy(client => stacked.TryGetValue(client.Window, out var at) ? at : -1))
         {
-            if (client.Window == window)
-                return JsonSerializer.Serialize(ClientOf(client, state, indexed));
+            if (!client.Minimized)
+                views.Add(ClientOf(client, state, indexed));
         }
 
-        return "{}";
+        return views;
+    }
+
+    private static ClientJson? ActiveClient(State state, WindowId? active) =>
+        active is WindowId window && state.ClientOf(window) is Client client ? ClientOf(client, state, Index(state)) : null;
+
+    private static IEnumerable<WorkspaceEntryJson> ActiveWorkspaceEntries(State state)
+    {
+        var indexed = Index(state);
+        var active = indexed.ByWorkspace[state.ActiveWorkspace];
+        return indexed.Workspaces.Where(entry => entry.Address == active.Address && entry.Monitor == active.Monitor && entry.Id == active.Id);
     }
 
     private static string[] GroupedOf(State state, WindowId window)
@@ -119,7 +106,7 @@ public static partial class CommandProtocol
             [client.Bounds.Width, client.Bounds.Height],
             indexed.ByWorkspace[client.Workspace],
             client.Floating,
-            MonitorOf(state, client.Workspace),
+            MonitorOf(state, client.Workspace).Value,
             client.Class,
             client.Title,
             client.InitialClass,
@@ -127,7 +114,7 @@ public static partial class CommandProtocol
             client.ProcessId,
             client.Pinned,
             (int)client.Fullscreen,
-            (int)client.FullscreenClient,
+            (int)client.Fullscreen,
             FullscreenHandlerOf(state, client),
             client.AllowedOverFullscreen,
             GroupedOf(state, client.Window),
@@ -215,10 +202,10 @@ public static partial class CommandProtocol
         return [FormattableString.Invariant($"{monitor.Width}x{monitor.Height}@{monitor.RefreshRate:0.00}Hz")];
     }
 
-    internal static long WorkspaceNumber(State state, WorkspaceId id)
+    internal static long WorkspaceNumber(State state, WorkspaceId id) => WorkspaceNumber(id, Index(state));
+
+    private static long WorkspaceNumber(WorkspaceId id, Indexed indexed)
     {
-        ArgumentNullException.ThrowIfNull(state);
-        var indexed = Index(state);
         if (indexed.ByWorkspace.TryGetValue(id, out var described))
             return described.Order;
 
@@ -228,19 +215,8 @@ public static partial class CommandProtocol
         return 0;
     }
 
-    private static string WorkspaceIdText(WorkspaceId id, Indexed indexed)
-    {
-        if (indexed.ByWorkspace.TryGetValue(id, out var described))
-            return described.Order.ToString(CultureInfo.InvariantCulture);
-
-        if (id.TryGetNumber(out var number))
-            return number.ToString(CultureInfo.InvariantCulture);
-
-        return "0";
-    }
-
-    private static string WorkspaceNameText(WorkspaceId id, Indexed indexed) =>
-        indexed.ByWorkspace.TryGetValue(id, out var described) ? described.Name : id.Name;
+    private static string WorkspaceIdText(WorkspaceId id, Indexed indexed) =>
+        WorkspaceNumber(id, indexed).ToString(CultureInfo.InvariantCulture);
 
     private static string Clean(string? text)
     {
@@ -323,32 +299,23 @@ public static partial class CommandProtocol
                 fullscreen.Add(client.Workspace);
         }
 
-        var lastWindows = new Dictionary<WorkspaceId, WindowId?>();
+        var workspaces = new Dictionary<WorkspaceId, Workspace>();
         foreach (var workspace in state.Workspaces)
-            lastWindows[workspace.Id] = workspace.LastWindow;
-
-        var names = new Dictionary<WorkspaceId, string>();
-        var persistent = new Dictionary<WorkspaceId, bool>();
-        var tiledLayouts = new Dictionary<WorkspaceId, string>();
-        foreach (var workspace in state.Workspaces)
-        {
-            names[workspace.Id] = workspace.Id.Name;
-            persistent[workspace.Id] = workspace.Persistent;
-            tiledLayouts[workspace.Id] = workspace.TiledLayout;
-        }
+            workspaces[workspace.Id] = workspace;
 
         var byWorkspace = new Dictionary<WorkspaceId, WorkspaceJson>(ids.Count);
         var counts = new List<WorkspaceEntryJson>(ids.Count);
         foreach (var id in ids)
         {
-            var json = Describe(id, namedIds, specialIds, names, MonitorName(state, id));
+            var json = Describe(id, namedIds, specialIds, MonitorName(state, id));
             byWorkspace[id] = json;
+            var known = workspaces.GetValueOrDefault(id);
             var lastAddress = "0x0";
             var lastTitle = "";
-            if (lastWindows.TryGetValue(id, out var last) && last is WindowId window)
+            if (known?.LastWindow is WindowId window)
             {
                 lastAddress = window.Address;
-                lastTitle = TitleOf(state, window);
+                lastTitle = state.ClientOf(window)?.Title ?? "";
             }
 
             counts.Add(new WorkspaceEntryJson(
@@ -357,13 +324,13 @@ public static partial class CommandProtocol
                 json.Type,
                 json.Name,
                 MonitorName(state, id),
-                MonitorOf(state, id),
+                MonitorOf(state, id).Value,
                 windows.GetValueOrDefault(id),
                 fullscreen.Contains(id),
                 lastAddress,
                 lastTitle,
-                persistent.GetValueOrDefault(id),
-                tiledLayouts.GetValueOrDefault(id, "dwindle")));
+                false,
+                known is null ? "dwindle" : known.TiledLayout));
         }
 
         var keys = new (long Order, int Monitor)[counts.Count];
@@ -385,7 +352,7 @@ public static partial class CommandProtocol
         if (client.LayoutFullscreen)
             return "scrolling";
 
-        if (client.Floating || client.Fullscreen != FullscreenMode.None || client.FullscreenClient != FullscreenMode.None)
+        if (client.Floating || client.Fullscreen != FullscreenMode.None)
             return "default";
 
         foreach (var workspace in state.Workspaces)
@@ -397,51 +364,27 @@ public static partial class CommandProtocol
         return "default";
     }
 
-    private static int MonitorOf(State state, WorkspaceId id)
+    private static MonitorId MonitorOf(State state, WorkspaceId id)
     {
         foreach (var workspace in state.Workspaces)
         {
             if (workspace.Id == id)
-                return workspace.Monitor.Value;
+                return workspace.Monitor;
         }
 
-        return state.ActiveMonitor.Value;
+        return state.ActiveMonitor;
     }
 
-    private static string MonitorName(State state, WorkspaceId id)
-    {
-        MonitorId monitor = state.ActiveMonitor;
-        var found = false;
-        foreach (var workspace in state.Workspaces)
-        {
-            if (workspace.Id != id)
-                continue;
-
-            monitor = workspace.Monitor;
-            found = true;
-            break;
-        }
-
-        if (!found)
-            monitor = state.ActiveMonitor;
-
-        foreach (var screen in state.Screens)
-        {
-            if (screen.Id == monitor)
-                return screen.Monitor.Name;
-        }
-
-        return "";
-    }
+    private static string MonitorName(State state, WorkspaceId id) =>
+        state.ScreenOf(MonitorOf(state, id))?.Monitor.Name ?? "";
 
     private static WorkspaceJson Describe(
         WorkspaceId id,
         Dictionary<string, int> namedIds,
         Dictionary<string, int> specialIds,
-        Dictionary<WorkspaceId, string> names,
         string monitor)
     {
-        var name = names.TryGetValue(id, out var display) ? display : id.Name;
+        var name = id.Name;
         if (id.IsSpecial)
             return new WorkspaceJson(id.Name, null, "special", name, monitor) { Order = specialIds[id.Name] };
 

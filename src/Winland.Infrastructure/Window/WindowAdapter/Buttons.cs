@@ -81,7 +81,7 @@ public sealed partial class WindowAdapter
         if (monitor.IsNull || !PInvoke.GetMonitorInfo(monitor, ref info))
             return;
 
-        var covers = visible == new Rectangle(info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right - info.rcMonitor.left, info.rcMonitor.bottom - info.rcMonitor.top);
+        var covers = visible == WindowRect.From(info.rcMonitor);
         if (covers == _ownFullscreen.ContainsKey(window))
             return;
 

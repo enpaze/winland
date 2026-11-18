@@ -49,7 +49,7 @@ internal sealed class TestDesktop
     internal TestDesktop(string extra = "")
     {
         _text = Config + "\n" + extra;
-        WindowManager = new WindowManager { Cursor = new PointerReader(this) };
+        WindowManager = new WindowManager();
         WindowManager.ReadConfig = () => new ConfigRead(ConfigParser.Parse(_text));
         WindowManager.DescribeWindow = window =>
             (window ?? UnderPointer) is WindowId read && _described.TryGetValue(read, out var described) ? described : null;
@@ -282,9 +282,4 @@ internal sealed class TestDesktop
 
     private static string Pair(JsonElement pair) =>
         $"{pair[0].GetInt32()},{pair[1].GetInt32()}";
-
-    private sealed class PointerReader(TestDesktop desk) : ICursorPosition
-    {
-        public Point Read() => desk.Pointer;
-    }
 }

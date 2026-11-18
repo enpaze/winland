@@ -60,15 +60,13 @@ public class TaskbarHostTests
         Assert.Equal(0, left.Restores);
     }
 
-    private static WindowHost Host(ConfigDir files, RecordingTaskbar bars)
+    private static SessionLoop Host(ConfigDir files, RecordingTaskbar bars)
     {
         var core = new WindowManager
         {
             ReadConfig = () => new ConfigRead(ConfigParser.Parse(File.ReadAllText(files.Path))),
         };
-        var host = new WindowHost(core);
-        host.TaskbarSession = bars;
-        return host;
+        return new SessionLoop(core, bars);
     }
 
     private sealed class ConfigDir : IDisposable

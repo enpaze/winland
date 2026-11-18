@@ -24,6 +24,28 @@ public sealed record State(IReadOnlyList<Client> Clients)
     public IReadOnlyList<IReadOnlyList<WindowId>> Groups { get; init; } = [];
 
     public IReadOnlyList<WindowId> Stacking { get; init; } = [];
+
+    internal Client? ClientOf(WindowId window)
+    {
+        foreach (var client in Clients)
+        {
+            if (client.Window == window)
+                return client;
+        }
+
+        return null;
+    }
+
+    internal MonitorSnapshot? ScreenOf(MonitorId id)
+    {
+        foreach (var screen in Screens)
+        {
+            if (screen.Id == id)
+                return screen;
+        }
+
+        return null;
+    }
 }
 
 public sealed record Outcome(

@@ -85,6 +85,8 @@ internal interface Layout
 
     IReadOnlyList<Placement> Drag(WindowId window, PointerDrag drag);
 
+    MouseDrag MouseDrag { get; }
+
     string? LayoutMessageError { get; }
 
     WindowId? LayoutMessageFocus => null;

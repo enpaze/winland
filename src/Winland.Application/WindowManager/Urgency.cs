@@ -12,5 +12,5 @@ public sealed partial class WindowManager
     }
 
     private void MarkUrgent(WindowId window) =>
-        (_extraEvents ??= []).Add(new ClientUrgent(window));
+        Raise(new ClientUrgent(window));
 }

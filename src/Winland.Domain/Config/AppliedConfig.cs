@@ -10,7 +10,6 @@ public sealed record AppliedConfig
 
     public bool TitleRules { get; init; }
 
-    public IReadOnlyList<WorkspaceRule> WorkspaceRules => Document?.WorkspaceRules ?? WorkspaceRule.None;
 
     public IReadOnlyList<TrackpadGesture> Gestures => Document?.Gestures ?? [];
 
@@ -18,7 +17,7 @@ public sealed record AppliedConfig
 
     public LayoutOptions Layout { get; init; } = LayoutOptions.Unconfigured;
 
-    public ScrollingOptions Scrolling { get; init; } = ScrollingOptions.Defaults;
+    public ScrollingOptions Scrolling { get; init; } = ScrollingOptions.Documented;
 
 
     public DecorationOptions Decoration { get; init; } = DecorationOptions.Documented;

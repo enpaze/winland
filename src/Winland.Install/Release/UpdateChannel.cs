@@ -6,6 +6,21 @@ public enum UpdateChannel
     Dev,
 }
 
+public static class UpdateChannels
+{
+    public static UpdateChannel? Parse(string word) =>
+        word.Equals("stable", StringComparison.OrdinalIgnoreCase) ? UpdateChannel.Stable
+        : word.Equals("dev", StringComparison.OrdinalIgnoreCase) ? UpdateChannel.Dev
+        : null;
+
+    public static string Name(UpdateChannel channel) => channel switch
+    {
+        UpdateChannel.Stable => "stable",
+        UpdateChannel.Dev => "dev",
+        _ => throw new ArgumentOutOfRangeException(nameof(channel)),
+    };
+}
+
 public static class UpdateChannelFile
 {
     public const string Name = "channel";
@@ -23,19 +38,10 @@ public static class UpdateChannelFile
         var word = text.Trim().TrimStart('\uFEFF').Trim();
         if (word.Length == 0)
             return UpdateChannel.Stable;
-        if (word.Equals("stable", StringComparison.OrdinalIgnoreCase))
-            return UpdateChannel.Stable;
 
-        if (word.Equals("dev", StringComparison.OrdinalIgnoreCase))
-            return UpdateChannel.Dev;
-
-        throw new InvalidOperationException("The saved update channel is not stable or dev.");
+        return UpdateChannels.Parse(word)
+            ?? throw new InvalidOperationException("The saved update channel is not stable or dev.");
     }
 
-    public static string Text(UpdateChannel channel) => channel switch
-    {
-        UpdateChannel.Stable => "stable\n",
-        UpdateChannel.Dev => "dev\n",
-        _ => throw new ArgumentOutOfRangeException(nameof(channel)),
-    };
+    public static string Text(UpdateChannel channel) => UpdateChannels.Name(channel) + "\n";
 }

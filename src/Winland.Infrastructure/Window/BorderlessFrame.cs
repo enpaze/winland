@@ -1,8 +1,3 @@
-using System.Runtime.InteropServices;
-using Windows.Win32;
-using Windows.Win32.Foundation;
-using Windows.Win32.UI.WindowsAndMessaging;
-
 namespace Winland.Infrastructure;
 
 internal interface IWindowFrame
@@ -126,45 +121,5 @@ internal sealed class BorderlessFrame
             else
                 Release(window);
         }
-    }
-}
-
-internal sealed class Win32WindowFrame : IWindowFrame
-{
-    public bool TryReadStyle(WindowId window, out uint style)
-    {
-        style = 0;
-        var hwnd = new HWND((nint)window.Value);
-        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
-            return false;
-
-        style = (uint)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE);
-        return true;
-    }
-
-    public bool TryWriteStyle(WindowId window, uint style)
-    {
-        var hwnd = new HWND((nint)window.Value);
-        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
-            return false;
-
-        Marshal.SetLastPInvokeError(0);
-        var previous = PInvoke.SetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE, (int)style);
-        if (previous == 0 && Marshal.GetLastPInvokeError() != 0)
-            return false;
-
-        _ = PInvoke.SetWindowPos(
-            hwnd,
-            HWND.Null,
-            0,
-            0,
-            0,
-            0,
-            SET_WINDOW_POS_FLAGS.SWP_NOMOVE
-            | SET_WINDOW_POS_FLAGS.SWP_NOSIZE
-            | SET_WINDOW_POS_FLAGS.SWP_NOZORDER
-            | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE
-            | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED);
-        return true;
     }
 }

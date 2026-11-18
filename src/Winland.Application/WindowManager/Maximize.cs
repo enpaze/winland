@@ -5,7 +5,7 @@ public sealed partial class WindowManager
     public bool Manages(WindowId window)
     {
         lock (_gate)
-            return WorkspaceContaining(window)?.ClientOf(window) is not null;
+            return Find(window) is not null;
     }
 
     private readonly HashSet<WindowId> _shownMaximized = [];
@@ -13,7 +13,7 @@ public sealed partial class WindowManager
     private Outcome AppearMaybeMaximized(WindowAppeared appeared)
     {
         var outcome = Appear(appeared);
-        if (appeared.ShownMaximized && WorkspaceContaining(appeared.Window)?.ClientOf(appeared.Window) is not null)
+        if (appeared.ShownMaximized && Find(appeared.Window) is not null)
             _shownMaximized.Add(appeared.Window);
 
         return outcome;
@@ -41,7 +41,7 @@ public sealed partial class WindowManager
 
     private Outcome FullscreenRequest(WindowFullscreenRequested requested)
     {
-        if (WorkspaceContaining(requested.Window)?.ClientOf(requested.Window) is not Client client)
+        if (Find(requested.Window) is not Client client)
             return View([]);
 
         if (requested.Fullscreen == (client.Fullscreen == FullscreenMode.Fullscreen))

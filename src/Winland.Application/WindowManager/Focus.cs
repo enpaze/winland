@@ -12,13 +12,11 @@ public sealed partial class WindowManager
         _stacking.Add(window);
     }
 
-    private List<StreamEvent>? _extraEvents;
-
     private Outcome Consider(WindowFocused focused)
     {
         var window = focused.Window;
         if (_awaitingMapFocus.Remove(window) && focused.Cause != FocusCause.Requested)
-            return Restore(Kept());
+            return Offering(View([]), Kept());
 
         if (focused.Cause == FocusCause.Requested)
         {
@@ -34,7 +32,7 @@ public sealed partial class WindowManager
         }
 
         if (HasNoFocus(window))
-            return Restore(Kept());
+            return Offering(View([]), Kept());
 
         var activated = focused.Cause == FocusCause.Activated;
         var afterInput = ActivatedAfterClick(focused);
@@ -44,7 +42,7 @@ public sealed partial class WindowManager
                 return View([]);
 
             MarkUrgent(window);
-            return Restore(Kept());
+            return Offering(View([]), Kept());
         }
 
         if (WorkspaceContaining(window) is { } home && (!_workspaces.Shown.IsShown(home.Id) || home.IsWaiting(window)))
@@ -65,7 +63,7 @@ public sealed partial class WindowManager
             var covered = owner.Covered();
             var target = FocusUnderFullscreen(owner, window, out var refit);
             if (target != window)
-                return Restore(target);
+                return Offering(View([]), target);
 
             if (refit is not null)
             {
@@ -116,7 +114,7 @@ public sealed partial class WindowManager
     private void Give(WindowId? window, LiveWorkspace? desk, bool pointer = false)
     {
         _focus.Take(window, desk);
-        if (window is not WindowId given || desk is null || !_workspaces.Shown.IsShown(desk.Id) || !IsCurrent(desk))
+        if (window is not WindowId given || desk is null || !_workspaces.Shown.IsShown(desk.Id) || TopOn(desk.Monitor) != desk.Id)
             return;
 
         if (_monitors.Count > 0)
@@ -130,9 +128,6 @@ public sealed partial class WindowManager
         _focus.Confirm(given);
     }
 
-    private bool IsCurrent(LiveWorkspace desk) =>
-        (_workspaces.Shown.SpecialOn(desk.Monitor) ?? _workspaces.Shown.ActiveOn(desk.Monitor)) == desk.Id;
-
     private void Foreground(WindowId window, bool pointer = false)
     {
         if (_focus.Focused == window)
@@ -140,7 +135,7 @@ public sealed partial class WindowManager
 
         if (WorkspaceContaining(window) is { } owner && _workspaces.Shown.IsShown(owner.Id))
         {
-            if (IsCurrent(owner))
+            if (TopOn(owner.Monitor) == owner.Id)
                 Give(window, owner, pointer);
             else if (_monitors.Count > 0)
                 Focus(owner.Monitor);
@@ -229,9 +224,6 @@ public sealed partial class WindowManager
 
     private WindowId? Kept() =>
         _focus.Focused is WindowId current && IsShownClient(current) ? current : null;
-
-    private Outcome Restore(WindowId? window) =>
-        window is WindowId target ? View([]) with { Focus = target } : View([]);
 
     private bool IsShownClient(WindowId window)
     {

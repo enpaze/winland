@@ -374,7 +374,6 @@ public class RecoveryTests
 
         var client = Assert.Single(back.State.Clients, candidate => candidate.Window == new WindowId(2));
         Assert.Equal(FullscreenMode.Maximized, client.Fullscreen);
-        Assert.Equal(FullscreenMode.Maximized, client.FullscreenClient);
         Assert.False(client.Floating);
         Assert.Equal(FullscreenMode.None, Assert.Single(back.State.Clients, candidate => candidate.Window == new WindowId(1)).Fullscreen);
     }

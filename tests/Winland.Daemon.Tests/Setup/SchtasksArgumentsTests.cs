@@ -1,4 +1,4 @@
-namespace Winland.Install.Tests;
+namespace Winland.Daemon.Tests;
 
 public class SchtasksArgumentsTests
 {
@@ -7,7 +7,7 @@ public class SchtasksArgumentsTests
     {
         Assert.Equal(
             ["/Create", "/TN", "Winland", "/XML", @"C:\temp\winland.xml"],
-            SchtasksArguments.Create("Winland", @"C:\temp\winland.xml"));
+            SchtasksCatalog.Arguments.Create("Winland", @"C:\temp\winland.xml"));
     }
 
     [Fact]
@@ -15,18 +15,18 @@ public class SchtasksArgumentsTests
     {
         Assert.Equal(
             ["/Create", "/TN", "Winland", "/XML", @"C:\temp\winland.xml", "/F"],
-            SchtasksArguments.Update("Winland", @"C:\temp\winland.xml"));
+            SchtasksCatalog.Arguments.Update("Winland", @"C:\temp\winland.xml"));
     }
 
     [Fact]
     public void DeleteRemovesTheTaskWithoutAPrompt()
     {
-        Assert.Equal(["/Delete", "/TN", "Winland", "/F"], SchtasksArguments.Delete("Winland"));
+        Assert.Equal(["/Delete", "/TN", "Winland", "/F"], SchtasksCatalog.Arguments.Delete("Winland"));
     }
 
     [Fact]
     public void QueryLooksUpTheTaskByName()
     {
-        Assert.Equal(["/Query", "/TN", "Winland"], SchtasksArguments.Query("Winland"));
+        Assert.Equal(["/Query", "/TN", "Winland"], SchtasksCatalog.Arguments.Query("Winland"));
     }
 }

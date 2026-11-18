@@ -12,9 +12,7 @@ public sealed partial class WindowAdapter : IDisposable
     private const int CaptionStyle = 0x00C00000;
     private const int SizingStyle = 0x00040000;
     private const int ToolStyle = 0x00000080;
-    private const int TopmostStyle = 0x00000008;
     private const int DialogStyle = 0x00000001;
-    private const int LayeredStyle = 0x00080000;
     private const int ClickThroughStyle = 0x00000020;
     private const int NoActivateStyle = 0x08000000;
 
@@ -53,7 +51,7 @@ public sealed partial class WindowAdapter : IDisposable
     private volatile bool _disposed;
 
     private readonly Dictionary<WindowId, Decoration?> _painted = [];
-    private readonly OpacityAdapter _opacity;
+    private readonly WindowOpacity _opacity;
     private readonly BorderlessFrame _borderless;
     private readonly DwmEffects _effects;
     private readonly Lock _paintGate = new();
@@ -88,7 +86,7 @@ public sealed partial class WindowAdapter : IDisposable
         _core = core;
         _desktop = desktop;
         _clock = clock ?? PresentClock.Now;
-        _opacity = new OpacityAdapter(desktop, desktop.Hung);
+        _opacity = new WindowOpacity(desktop, desktop.Hung);
         _borderless = new BorderlessFrame(desktop, desktop.Hung);
         _effects = new DwmEffects(desktop, desktop.Hung);
         _motions = new MotionPlayer(new MotionTarget(this), _clock, threaded);
@@ -160,24 +158,6 @@ public sealed partial class WindowAdapter : IDisposable
         {
             Release();
             throw new InvalidOperationException("Window events were not hooked.");
-        }
-    }
-
-    public void Run()
-    {
-        Start();
-        Pump(null);
-    }
-
-    internal static void Pump(Func<MSG, bool>? intercept)
-    {
-        while (PInvoke.GetMessage(out var message, default, 0, 0) > 0)
-        {
-            if (intercept is not null && intercept(message))
-                continue;
-
-            PInvoke.TranslateMessage(in message);
-            PInvoke.DispatchMessage(in message);
         }
     }
 
@@ -465,15 +445,15 @@ public sealed partial class WindowAdapter : IDisposable
         var identity = PackagedIdentity.Resolve(hwnd, className, ProcessFacts.Shared.For(owner).Exe);
         var topLevel = PInvoke.GetAncestor(hwnd, GET_ANCESTOR_FLAGS.GA_ROOT) == hwnd && (style & ChildStyle) == 0;
         Point? pointer = PInvoke.GetCursorPos(out var cursor) ? new Point(cursor.X, cursor.Y) : null;
-        var outer = PInvoke.GetWindowRect(hwnd, out var rect) ? From(rect) : default;
+        var outer = PInvoke.GetWindowRect(hwnd, out var rect) ? WindowRect.From(rect) : default;
         var bounds = TryVisible(window, out var visible) ? visible : outer;
-        var monitorRect = From(info.rcMonitor);
+        var monitorRect = WindowRect.From(info.rcMonitor);
         long processId = identity.ProcessId;
         var facts = ProcessFacts.Shared.For(identity.ProcessId);
         var (min, max) = inspecting ? default : LimitsOf(hwnd, window);
 
         var ownerWindow = PInvoke.GetWindow(hwnd, GET_WINDOW_CMD.GW_OWNER);
-        appeared = new WindowAppeared(window, From(info.rcWork))
+        appeared = new WindowAppeared(window, WindowRect.From(info.rcWork))
         {
             Foreground = PInvoke.GetForegroundWindow() == hwnd,
             Pointer = pointer,
@@ -502,7 +482,7 @@ public sealed partial class WindowAdapter : IDisposable
                 ExclusiveFullscreen: ExclusiveFullscreenWindow.Is((uint)style, outer, monitorRect),
                 Overlay: IsOverlay(extended),
                 Resizable: (style & SizingStyle) != 0,
-                Topmost: (extended & TopmostStyle) != 0,
+                Topmost: (extended & (int)WINDOW_EX_STYLE.WS_EX_TOPMOST) != 0,
                 Frameless: (style & CaptionStyle) != CaptionStyle && (style & SizingStyle) == 0),
         };
         return true;
@@ -511,7 +491,7 @@ public sealed partial class WindowAdapter : IDisposable
     private bool Dialogish(string className, int extended, HWND owner) =>
         className == "#32770"
         || (extended & DialogStyle) != 0
-        || (extended & TopmostStyle) != 0
+        || (extended & (int)WINDOW_EX_STYLE.WS_EX_TOPMOST) != 0
         || (!owner.IsNull && (PInvoke.IsWindowVisible(owner) || _concealed.ContainsKey(new WindowId((nint)owner))));
 
     private static string RuleClass(HWND hwnd)

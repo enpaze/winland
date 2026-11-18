@@ -6,7 +6,6 @@ namespace Winland.Infrastructure;
 
 internal sealed class InputThread : IDisposable
 {
-    private const uint QuitMessage = 0x0012;
     private static readonly TimeSpan StopWait = TimeSpan.FromSeconds(5);
 
     private readonly Action _start;
@@ -60,7 +59,7 @@ internal sealed class InputThread : IDisposable
         _disposed = true;
         if (_thread is not null)
         {
-            _ = PInvoke.PostThreadMessage(_id, QuitMessage, default, default);
+            _ = PInvoke.PostThreadMessage(_id, PInvoke.WM_QUIT, default, default);
             if (!_thread.Join(StopWait))
                 Console.Error.WriteLine("The input thread did not stop.");
         }
@@ -88,14 +87,7 @@ internal sealed class InputThread : IDisposable
         _started.Set();
         try
         {
-            while (PInvoke.GetMessage(out var message, default, 0, 0) > 0)
-            {
-                if (message.hwnd.IsNull && Service(message.message))
-                    continue;
-
-                PInvoke.TranslateMessage(in message);
-                PInvoke.DispatchMessage(in message);
-            }
+            MessageLoop.Run(message => message.hwnd.IsNull && Service(message.message));
         }
         finally
         {

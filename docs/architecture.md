@@ -9,7 +9,7 @@ Each project references only the layers above it in this list. A test in each la
 | Project | Holds |
 | --- | --- |
 | `src/Winland.Domain` | The model and the config language. No other project, no package, no Win32. |
-| `src/Winland.Application` | `WindowManager`, the command protocol and the event stream. `Ports/` holds the cursor position reader, which the Windows adapter implements and tests can supply. |
+| `src/Winland.Application` | `WindowManager`, the command protocol and the event stream. |
 | `src/Winland.Infrastructure` | Win32: hooks, window placement, monitors, the tray, the IPC pipe server and client. |
 | `src/Winland.Install` | Install, update and release files. |
 | `src/Winland.Daemon` | `winland.exe`: reads the config and wires the rest together in `Program.cs`. `ControlCommand` sends one command down the pipe. |
@@ -19,7 +19,7 @@ The Daemon also holds the Windows adapters for install, elevation and the state 
 ## How an input flows
 
 1. A hook in `Infrastructure/Input` sees a key or the mouse. `WindowManager.Decide` matches binds on the hook thread without the lock, so the hook can swallow the key at once.
-2. The decision, a window event from `Infrastructure/Window/WindowHost.cs`, or a pipe command from `Infrastructure/Dispatch/CommandServer.cs` goes to `WindowManager.Handle` or `WindowManager.Execute`. Each runs as one step under one lock, except a pipe query, which only reads under it. Inspection also reads fresh native Window facts.
+2. The decision, a window event from the WinEvent hooks that `WindowAdapter.Start` installs in `Infrastructure/Window/WindowAdapter`, or a pipe command from `Infrastructure/Dispatch/CommandServer.cs` goes to `WindowManager.Handle` or `WindowManager.Execute`. Each runs as one step under one lock, except a pipe query, which only reads under it. Inspection also reads fresh native Window facts.
 3. The step returns an `Outcome`: placements, focus, windows to show and hide, launches, events. `WindowAdapter.Apply` in `Infrastructure/Window/WindowAdapter` carries it out on the desktop through `IDesktop`, which `Win32Desktop` implements with the Win32 calls. A step that asks for nothing the last applied `Outcome` did not already ask for returns an empty one, and `Apply` skips it. The core queues each `Outcome` as it decides it, under its lock. Whichever thread applies next carries out every queued one in that order, so an older `Outcome` never lands after a newer one.
 
 Nothing in Domain or Application calls Win32. A test drives `WindowManager` with inputs and reads the `Outcome`.

@@ -14,8 +14,6 @@ public class AppInstallTests
 
     private static readonly string Config = InstallLocations.Config(@"C:\Users\me");
 
-    private static readonly string State = InstallLocations.State(@"C:\Users\me");
-
     private readonly MemoryFileTree files = new();
     private readonly MemoryTaskCatalog tasks = new();
     private readonly MemoryRegistry registry = new();
@@ -27,7 +25,7 @@ public class AppInstallTests
     {
         install = new AppInstall(Layout(), tasks, files, registry, shortcuts, session);
         files.Seed(Source, [1]);
-        files.Seed(Path.Combine(Path.GetDirectoryName(Source)!, LogonTaskDefinition.LauncherName), [3]);
+        files.Seed(InstallLocations.Launcher(Source), [3]);
         files.Seed(@"C:\Users\me\Downloads\Winland\winland\winland.dll", [2]);
         files.Seed(@"C:\Users\me\Downloads\Winland\winland\Winland.Domain.dll", [5]);
         files.Seed(Path.Combine(Config, "winland.conf"), [9]);
@@ -272,18 +270,18 @@ public class AppInstallTests
     [Fact]
     public void MachineUpdateWithoutTheLauncherLeavesTheRunningInstallAlone()
     {
-        files.DeleteFile(Path.Combine(Path.GetDirectoryName(Source)!, LogonTaskDefinition.LauncherName));
+        files.DeleteFile(InstallLocations.Launcher(Source));
         files.Seed(Path.Combine(Machine, "winland.exe"), [8]);
-        files.Seed(Path.Combine(Machine, LogonTaskDefinition.LauncherName), [9]);
+        files.Seed(Path.Combine(Machine, InstallLocations.LauncherName), [9]);
         registry.SetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion", "0.1.0", expandable: false);
 
         var error = Assert.Throws<InvalidOperationException>(() =>
             install.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0"));
 
-        Assert.Contains(LogonTaskDefinition.LauncherName, error.Message, StringComparison.Ordinal);
+        Assert.Contains(InstallLocations.LauncherName, error.Message, StringComparison.Ordinal);
         Assert.Empty(session.Operations);
         Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Machine, LogonTaskDefinition.LauncherName)));
+        Assert.Equal([9], files.Read(Path.Combine(Machine, InstallLocations.LauncherName)));
         Assert.Equal("0.1.0", Text(RegistryRoot.Machine, "DisplayVersion"));
     }
 
@@ -326,8 +324,8 @@ public class AppInstallTests
     public void UninstallRemovesTheInstallAndKeepsTheConfig()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
-        files.Seed(Path.Combine(State, "state.json"), [7]);
-        files.Seed(Path.Combine(State, "winland.log"), [8]);
+        files.Seed(Path.Combine(Config, "state.json"), [7]);
+        files.Seed(Path.Combine(Config, "winland.log"), [8]);
 
         install.Uninstall(purge: false, machine: true);
 
@@ -337,25 +335,24 @@ public class AppInstallTests
         Assert.Null(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayName"));
         Assert.Equal("", Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
         Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
-        Assert.Equal([7], files.Read(Path.Combine(State, "state.json")));
-        Assert.Equal([8], files.Read(Path.Combine(State, "winland.log")));
+        Assert.Equal([7], files.Read(Path.Combine(Config, "state.json")));
+        Assert.Equal([8], files.Read(Path.Combine(Config, "winland.log")));
     }
 
     [Fact]
     public void PurgeRemovesTheConfigTheLogsAndTheState()
     {
         install.InstallForUser(Source, "0.1.0");
-        files.Seed(Path.Combine(State, "state.json"), [7]);
-        files.Seed(Path.Combine(State, "winland.log"), [8]);
+        files.Seed(Path.Combine(Config, "state.json"), [7]);
+        files.Seed(Path.Combine(Config, "winland.log"), [8]);
 
         install.Uninstall(purge: true, machine: false);
 
         Assert.False(files.DirectoryExists(User));
         Assert.False(files.DirectoryExists(Config));
-        Assert.False(files.DirectoryExists(State));
         Assert.False(files.Exists(Path.Combine(Config, "winland.conf")));
-        Assert.False(files.Exists(Path.Combine(State, "state.json")));
-        Assert.False(files.Exists(Path.Combine(State, "winland.log")));
+        Assert.False(files.Exists(Path.Combine(Config, "state.json")));
+        Assert.False(files.Exists(Path.Combine(Config, "winland.log")));
         Assert.Null(registry.GetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue));
     }
 
@@ -421,7 +418,77 @@ public class AppInstallTests
         Assert.False(tasks.Contains("Winland"));
     }
 
-    private sealed class WatchingRestore(Action onRestore) : IDesktopRestore
+    [Fact]
+    public void MachineInstallCreatesTheLogonTaskWhenNoneExists()
+    {
+        install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
+
+        var task = tasks.Only();
+        Assert.Equal("Winland", task.Name);
+        Assert.Equal(Path.Combine(Machine, "winland.exe"), task.Executable);
+        Assert.Equal(@"DESKTOP\dante", task.User);
+        Assert.Equal("create", Assert.Single(tasks.Operations));
+    }
+
+    [Fact]
+    public void MachineInstallReplacesTheExistingTaskAndLeavesOne()
+    {
+        tasks.Seed(LogonTaskDefinition.Build(@"C:\old\winland.exe", @"DESKTOP\dante"));
+
+        install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
+
+        Assert.Equal(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
+        Assert.Equal("replace", Assert.Single(tasks.Operations));
+    }
+
+    [Fact]
+    public void MachineInstallTwiceLeavesOneTask()
+    {
+        install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
+        install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
+
+        Assert.Equal(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
+        Assert.Equal(["create", "replace"], tasks.Operations);
+    }
+
+    [Fact]
+    public void MachineInstallRejectsABlankExecutable()
+    {
+        var error = Assert.Throws<ArgumentException>(() => install.InstallMachine(" ", @"DESKTOP\dante", "0.1.0"));
+
+        Assert.Equal("executable", error.ParamName);
+        Assert.Empty(tasks.Operations);
+    }
+
+    [Fact]
+    public void MachineInstallRejectsABlankAccount()
+    {
+        var error = Assert.Throws<ArgumentException>(() => install.InstallMachine(Source, " ", "0.1.0"));
+
+        Assert.Equal("account", error.ParamName);
+        Assert.Empty(tasks.Operations);
+    }
+
+    [Fact]
+    public void MachineUninstallRemovesTheLogonTask()
+    {
+        tasks.Seed(LogonTaskDefinition.Build(Path.Combine(Machine, "winland.exe"), @"DESKTOP\dante"));
+
+        install.Uninstall(purge: false, machine: true);
+
+        Assert.False(tasks.Contains("Winland"));
+        Assert.Equal("delete", Assert.Single(tasks.Operations));
+    }
+
+    [Fact]
+    public void MachineUninstallWithoutTheTaskLeavesTheCatalogAlone()
+    {
+        install.Uninstall(purge: false, machine: true);
+
+        Assert.Empty(tasks.Operations);
+    }
+
+    private sealed class WatchingRestore(Action onRestore) : ITweakRestore
     {
         public void Restore() => onRestore();
     }
@@ -432,5 +499,5 @@ public class AppInstallTests
     private int Dword(RegistryRoot root, string name) =>
         registry.Values[(root, InstallLocations.UninstallKey, name)].Dword ?? throw new InvalidOperationException(name);
 
-    private static InstallLayout Layout() => new(Machine, User, CommonPrograms, UserPrograms, Config, State);
+    private static InstallLayout Layout() => new(Machine, User, CommonPrograms, UserPrograms, Config);
 }

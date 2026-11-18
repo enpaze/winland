@@ -45,7 +45,6 @@ public sealed partial class WindowManager
                 borderless)
             {
                 Region = shape.Region,
-                Opacity = alpha,
                 Blur = _config.Decoration.Blur && !noBlur,
                 Ring = hidden.Contains(client.Window) ? null : ring,
             });
@@ -249,7 +248,6 @@ public sealed partial class WindowManager
             workspaces.Add(new Workspace(desk.Id, desk.Monitor)
             {
                 LastWindow = desk.Focus,
-                Persistent = desk.Persistent,
                 TiledLayout = LayoutFactory.NameOf(desk.Layout),
             });
         }
@@ -280,7 +278,7 @@ public sealed partial class WindowManager
         return new State(clients)
         {
             Workspaces = workspaces,
-            ActiveWorkspace = ActiveId(),
+            ActiveWorkspace = ShownId(),
             SpecialWorkspace = _workspaces.Shown.SpecialOn(focused),
             ActiveMonitor = focused,
             Hidden = hidden,
@@ -336,12 +334,22 @@ public sealed partial class WindowManager
         return View(placements, showList, hideList, consumed, close, focus);
     }
 
+    private Outcome PresentIfShown(
+        LiveWorkspace desk,
+        HashSet<WindowId> covered,
+        IReadOnlyList<Placement> placements,
+        WindowId? focus = null,
+        bool focusRevealed = false) =>
+        _workspaces.Shown.IsShown(desk.Id)
+            ? Present(desk, covered, placements, focus: focus, focusRevealed: focusRevealed)
+            : View([]);
+
     private List<Placement> ShownPlacements()
     {
         var placements = new List<Placement>();
         if (_monitors.Count == 0)
         {
-            placements.AddRange(FocusedWorkspace().Layout.Visible());
+            placements.AddRange(ShownWorkspace().Layout.Visible());
             WorkspaceId? overlayId = null;
             if (_workspaces.Shown.SpecialOn(MonitorId.Primary) is WorkspaceId primary && _workspaces.Find(primary) is LiveWorkspace overlay)
             {
@@ -351,7 +359,7 @@ public sealed partial class WindowManager
 
             foreach (var desk in _workspaces)
             {
-                if (desk.Id != ActiveId() && desk.Id != overlayId)
+                if (desk.Id != ShownId() && desk.Id != overlayId)
                     AddPinnedPlacements(desk, placements);
             }
 
@@ -455,7 +463,7 @@ public sealed partial class WindowManager
         if (thickness <= 0)
             return null;
 
-        var scale = MonitorById(desk.Monitor) is { Arranged.Enabled: true } screen ? screen.Arranged.Scale : 1;
+        var scale = MonitorScale(desk.Monitor);
         var radius = CornerRadius(shape, scale);
         return new BorderRing(BorderOf(client.Window, active), thickness, radius, alpha);
     }
@@ -472,8 +480,7 @@ public sealed partial class WindowManager
     {
         var desk = _workspaces.Find(client.Workspace);
         var rounding = _props.Own(client.Window, WindowProp.Rounding) is { } set ? (int)Math.Min(set, int.MaxValue) : _config.Decoration.Rounding;
-        var screen = desk is null ? null : MonitorById(desk.Monitor);
-        var scale = screen is { Arranged.Enabled: true } ? screen.Arranged.Scale : 1;
+        var scale = desk is null ? 1 : MonitorScale(desk.Monitor);
         return CornerShape.For(rounding, scale);
     }
 }

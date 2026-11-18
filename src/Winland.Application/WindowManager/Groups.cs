@@ -27,19 +27,20 @@ public sealed partial class WindowManager
         if (focus is WindowId kept)
             desk.Layout.NoteFocus(kept);
 
-        (_extraEvents ??= []).Add(new GroupToggled(head, false));
+        Raise(new GroupToggled(head, false));
         return Present(desk, covered, desk.Layout.Visible());
     }
 
     private WindowGroup StartGroup(LiveWorkspace desk, WindowId window)
     {
         var group = desk.StartGroup(window);
-        (_extraEvents ??= []).Add(new GroupToggled(window, true));
+        Raise(new GroupToggled(window, true));
         return group;
     }
 
-    private Outcome ChangeGroupActive(string text)
+    private Outcome ChangeGroupActive(string arguments)
     {
+        var text = arguments.Trim();
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
             return Rejected("error: no window found");
 
@@ -53,7 +54,7 @@ public sealed partial class WindowManager
         if (int.TryParse(text, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var number))
             index = number <= 0 ? group.Count - 1 : Math.Min(number - 1, group.Count - 1);
         else
-            index = text is "b" or "prev" ? (group.Current + group.Count - 1) % group.Count : (group.Current + 1) % group.Count;
+            index = Cycled(group, forward: text is not ("b" or "prev"));
 
         return ShowMember(desk, group, index);
     }
@@ -66,9 +67,11 @@ public sealed partial class WindowManager
             return View([]);
         }
 
-        var index = scrolled.Forward ? (group.Current + 1) % group.Count : (group.Current + group.Count - 1) % group.Count;
-        return ShowMember(desk, group, index);
+        return ShowMember(desk, group, Cycled(group, scrolled.Forward));
     }
+
+    private static int Cycled(WindowGroup group, bool forward) =>
+        forward ? (group.Current + 1) % group.Count : (group.Current + group.Count - 1) % group.Count;
 
     private Outcome ShowMember(LiveWorkspace desk, WindowGroup group, int index)
     {
@@ -85,13 +88,12 @@ public sealed partial class WindowManager
             Give(group.Shown, desk);
         }
 
-        return _workspaces.Shown.IsShown(desk.Id)
-            ? Present(desk, covered, desk.Layout.Visible(), focus: focus)
-            : View([]);
+        return PresentIfShown(desk, covered, desk.Layout.Visible(), focus: focus);
     }
 
-    private Outcome MoveIntoGroup(string text)
+    private Outcome MoveIntoGroup(string arguments)
     {
+        var text = arguments.Trim();
         if (!TryGroupDirection(text, out var direction))
             return Rejected("error: unsupported direction: " + text);
 
@@ -126,14 +128,14 @@ public sealed partial class WindowManager
         desk.Join(target, window, taken, position);
         desk.Show(target, position);
         Give(window, desk);
-        (_extraEvents ??= []).Add(new ClientIntoGroup(window));
+        Raise(new ClientIntoGroup(window));
         return Present(desk, covered, desk.Layout.Visible(), focus: window);
     }
 
     private (WindowId Window, LiveWorkspace Desk)? NeighborAcross(LiveWorkspace desk, WindowId window, string direction)
     {
         if (!Sides.TryParse(direction, out var side)
-            || MonitorHolding(desk) is not LiveMonitor origin || TargetOf(origin) is not MonitorTarget from
+            || EnabledMonitor(desk.Monitor) is not LiveMonitor origin || TargetOf(origin) is not MonitorTarget from
             || MonitorSelector.InDirection(Targets(), from, side) is not MonitorTarget neighbor
             || MonitorOf(neighbor) is not LiveMonitor screen || _workspaces.Shown.Shown(screen.Id) is not WorkspaceId shown
             || _workspaces.Find(shown) is not LiveWorkspace there || !desk.Layout.TryBounds(window, out var box)
@@ -161,7 +163,7 @@ public sealed partial class WindowManager
         DropIfEmpty(desk.Id);
         Focus(there.Monitor);
         Give(window, there);
-        (_extraEvents ??= []).Add(new ClientIntoGroup(window));
+        Raise(new ClientIntoGroup(window));
         var outcome = Present(there, covered, there.Layout.Visible(), focus: window);
         if (_workspaces.Find(desk.Id) is not LiveWorkspace left || !_workspaces.Shown.IsShown(left.Id))
             return outcome;
@@ -187,9 +189,9 @@ public sealed partial class WindowManager
         return desk.Layout.TryTake(window, out taken);
     }
 
-    private Outcome MoveOutOfGroup(string text)
+    private Outcome MoveOutOfGroup(string arguments)
     {
-        if (text.Length > 0)
+        if (arguments.Trim().Length > 0)
             return Rejected("error: moveoutofgroup takes no argument");
 
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
@@ -212,10 +214,8 @@ public sealed partial class WindowManager
         }
 
         Give(window, desk);
-        (_extraEvents ??= []).Add(new ClientOutOfGroup(window));
-        return _workspaces.Shown.IsShown(desk.Id)
-            ? Present(desk, covered, desk.Layout.Visible(), focus: window)
-            : View([]);
+        Raise(new ClientOutOfGroup(window));
+        return PresentIfShown(desk, covered, desk.Layout.Visible(), focus: window);
     }
 
     private static bool TryGroupDirection(string text, out string direction)

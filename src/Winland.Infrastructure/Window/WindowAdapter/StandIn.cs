@@ -87,7 +87,7 @@ public sealed partial class WindowAdapter
         surface.Place(bounds);
 
         StandFrames.Set(standIn.Id, bounds, surface.Handle);
-        StandFrames.Follow(standIn.Id);
+        BorderHost.Follow(standIn.Id);
 
         var painted = surface.PictureSize();
 
@@ -129,7 +129,7 @@ public sealed partial class WindowAdapter
             Move(window, InsetsFor(window, _desktop.Dpi(window)).OuterFor(bounds));
 
         StandFrames.Remove(window);
-        StandFrames.Follow(window);
+        BorderHost.Follow(window);
         _opacity.Unveil(window);
         if (standIn.BorderOff)
             _desktop.SetAttribute(window, BorderColorAttribute, _dwmPainted.ContainsKey(window) ? NoneBorderColor : DefaultBorderColor);
@@ -152,7 +152,7 @@ public sealed partial class WindowAdapter
         standIn.Surface.Hide();
 
         StandFrames.Set(window, default, standIn.Surface.Handle);
-        StandFrames.Follow(window);
+        BorderHost.Follow(window);
     }
 
     private void EndStandIns()

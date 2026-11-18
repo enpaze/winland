@@ -20,7 +20,6 @@ public sealed partial class WindowManager
     private readonly FocusState _focus;
     private readonly ClientProps _props = new();
     private List<StreamEvent>? _configEvents;
-    private List<StreamEvent>? _noted;
     private readonly HashSet<WindowId> _concealedMinimized = [];
 
     private Outcome? _applied;
@@ -34,8 +33,6 @@ public sealed partial class WindowManager
     public Func<string?>? LogFile { get; set; }
 
     public bool HideTaskbar => _config.Session.HideTaskbar;
-
-    public ICursorPosition? Cursor { get; set; }
 
     public SessionPhase? SessionLock { get; set; }
 
@@ -52,7 +49,6 @@ public sealed partial class WindowManager
         _loaded = config;
         _workspaces.Shown.Show(MonitorId.Primary, WorkspaceId.Initial);
         WorkspaceFor(WorkspaceId.Initial);
-        EnsurePersistent();
         Remember(WorkspaceId.Initial, MonitorId.Primary);
     }
 
@@ -211,7 +207,6 @@ public sealed partial class WindowManager
         {
             _configEvents = null;
             _extraEvents = null;
-            _noted = null;
             _activated = null;
             _readdressed = null;
             _crossMonitorWarp = null;
@@ -224,7 +219,7 @@ public sealed partial class WindowManager
         input switch
         {
             WindowAppeared appeared => AppearMaybeMaximized(appeared),
-            ConfigLoaded loaded => Load(loaded),
+            ConfigLoaded loaded => Apply(loaded.Config),
             KeyPressed or KeyReleased => RunKey(input),
             PointerButtonPressed pressed => PressPointer(pressed),
             PointerButtonReleased released => ReleasePointer(released),
@@ -251,7 +246,7 @@ public sealed partial class WindowManager
             WindowEnabledChanged changed => ChangeEnabled(changed),
             WindowLimitsChanged limits => ChangeLimits(limits),
             WindowMinimized minimized => Minimize(minimized.Window),
-            WindowRestored restored => Restore(restored),
+            WindowRestored restored => Unminimize(restored),
             WindowResized resized => Reapply(resized),
             WindowTitleChanged retitled => Retitle(retitled),
             WindowClassChanged reclassed => Reclass(reclassed),
@@ -261,11 +256,7 @@ public sealed partial class WindowManager
             MonitorsChanged changed => SetMonitors(changed.Monitors),
         };
 
-    private WorkspaceId LaunchWorkspace()
-    {
-        var monitor = FocusedId();
-        return _workspaces.Shown.SpecialOn(monitor) ?? _workspaces.Shown.ActiveOn(monitor);
-    }
+    private WorkspaceId LaunchWorkspace() => TopOn(FocusedId());
 
     internal Func<long> Clock { get; set; } = static () => Environment.TickCount64;
 

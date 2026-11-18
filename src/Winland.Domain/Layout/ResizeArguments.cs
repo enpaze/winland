@@ -10,7 +10,7 @@ internal static class ResizeArguments
         x = 0;
         y = 0;
         exact = false;
-        var tokens = arguments.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        var tokens = Tokens.Of(arguments);
         var index = 0;
         if (tokens.Length > 0 && Is(tokens[0], "exact"))
         {

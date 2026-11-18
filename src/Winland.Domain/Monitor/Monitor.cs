@@ -15,8 +15,7 @@ public sealed record Monitor(
     string Serial = "",
     double RefreshRate = 0,
     int PhysicalWidth = 0,
-    int PhysicalHeight = 0,
-    DisplayOrientation? Orientation = null)
+    int PhysicalHeight = 0)
 {
     public string ColorPreset { get; init; } = "";
 
@@ -56,12 +55,4 @@ public sealed record Monitor(
 public readonly record struct MonitorId(int Value)
 {
     public static MonitorId Primary { get; } = new(0);
-}
-
-public enum DisplayOrientation
-{
-    Identity = 0,
-    Rotate90 = 1,
-    Rotate180 = 2,
-    Rotate270 = 3,
 }

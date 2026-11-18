@@ -6,18 +6,18 @@ internal sealed partial class ScrollingLayout
 {
     public WindowId? MoveFocus(WindowId active, string arguments)
     {
-        if (!Sides.TryParse(First(arguments), out _) || !FocusToward(active, arguments, out var next, wrap: false))
+        if (!Sides.TryParse(Tokens.First(arguments), out _) || !FocusToward(active, arguments, out var next, wrap: false))
             return null;
 
         return next;
     }
 
     public WindowId? Neighbor(WindowId active, string arguments) =>
-        Sides.TryParse(First(arguments), out _) && FocusToward(active, arguments, out var next, commit: false, wrap: false) ? next : null;
+        Sides.TryParse(Tokens.First(arguments), out _) && FocusToward(active, arguments, out var next, commit: false, wrap: false) ? next : null;
 
     public IReadOnlyList<Placement> MoveWindow(WindowId window, string arguments)
     {
-        if (!Sides.TryParse(First(arguments), out var side))
+        if (!Sides.TryParse(Tokens.First(arguments), out var side))
             return [];
 
         var id = new ClientId(window.Value);
@@ -25,7 +25,7 @@ internal sealed partial class ScrollingLayout
             return [];
 
         if (_floating.Contains(id))
-            return _floating.MoveToEdge(id, side, _area, _layoutOptions.BorderFor(id));
+            return _floating.MoveToEdge(id, side, _area, _options.BorderFor(id));
 
         if (CellFor(window) is not Cell cell || cell.Column is null)
             return [];
@@ -34,7 +34,7 @@ internal sealed partial class ScrollingLayout
             return [];
 
         _focus = window;
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -48,7 +48,7 @@ internal sealed partial class ScrollingLayout
             return [];
 
         if (_floating.Contains(id))
-            return _floating.Resize(id, x, y, exact, _layoutOptions.FloatingOnScreen(_area), FloatingLimits(id));
+            return _floating.Resize(id, x, y, exact, _options.FloatingOnScreen(_area), FloatingLimits(id));
 
         if (CellFor(window) is not Cell cell || cell.Column is null)
             return [];
@@ -96,7 +96,7 @@ internal sealed partial class ScrollingLayout
         }
 
         ResizeRow(cell, deltaY, corner);
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -115,10 +115,10 @@ internal sealed partial class ScrollingLayout
 
         var tile = cell.Logical.Width > 0 ? cell.Logical : cell.Box;
         RemoveCell(cell);
-        var floated = FloatingLimits(id).Clamp(_floating.Around(id, tile, _layoutOptions.FloatingOnScreen(_area)));
+        var floated = FloatingLimits(id).Clamp(_floating.Around(id, tile, _options.FloatingOnScreen(_area)));
         _floating.Set(id, floated);
         SetFloating(id, true);
-        Recalculate();
+        Refit();
         var placements = new List<Placement>(Placements()) { new(id, floated) };
         return placements;
     }
@@ -127,7 +127,7 @@ internal sealed partial class ScrollingLayout
     {
         LayoutMessageError = null;
         LayoutMessageFocus = null;
-        var tokens = Tokens(arguments);
+        var tokens = Tokens.Of(arguments);
         if (tokens.Length == 0)
         {
             Fail("bad layoutmsg");
@@ -205,11 +205,5 @@ internal sealed partial class ScrollingLayout
     {
         var index = column.Cells.IndexOf(cell);
         return index > 0 ? column.Cells[index - 1] : null;
-    }
-
-    private static string First(string arguments)
-    {
-        var tokens = Tokens(arguments);
-        return tokens.Length == 0 ? "" : tokens[0];
     }
 }

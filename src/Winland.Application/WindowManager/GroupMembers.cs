@@ -19,8 +19,6 @@ public sealed partial class WindowManager
         return true;
     }
 
-    private bool IsWaiting(WindowId window) => WorkspaceContaining(window)?.IsWaiting(window) == true;
-
     private Outcome? CloseGroupMember(WindowId window, LiveWorkspace desk, HashSet<WindowId> covered, FullscreenMode mode)
     {
         if (desk.GroupOf(window) is not WindowGroup group)

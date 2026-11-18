@@ -12,6 +12,10 @@ public sealed partial class WindowManager
 
     private List<WorkspaceId>? _activated;
 
+    private List<StreamEvent>? _extraEvents;
+
+    private void Raise(StreamEvent streamEvent) => (_extraEvents ??= []).Add(streamEvent);
+
     private void NoteWorkspaceActive(WorkspaceId workspace) => (_activated ??= []).Add(workspace);
 
     private Outcome WithEvents(Outcome outcome, Captured before, Input? input)
@@ -42,12 +46,6 @@ public sealed partial class WindowManager
         {
             events.AddRange(_extraEvents);
             _extraEvents = null;
-        }
-
-        if (_noted is not null)
-        {
-            events.AddRange(_noted);
-            _noted = null;
         }
 
         return events.Count == 0 ? outcome : outcome with { Events = events };
@@ -173,26 +171,43 @@ public sealed partial class WindowManager
         }
     }
 
-    private static string MonitorName(State state, MonitorId id)
+    private static string MonitorName(State state, MonitorId id) => state.ScreenOf(id)?.Monitor.Name ?? "";
+
+    private static WorkspaceId WorkspaceOn(State state, MonitorId id) => state.ScreenOf(id)?.ActiveWorkspace ?? state.ActiveWorkspace;
+
+    private static void AddSpecialEvents(List<StreamEvent> events, State before, State after)
     {
-        foreach (var screen in state.Screens)
+        if (before.Screens.Count == 0 && after.Screens.Count == 0)
         {
-            if (screen.Id == id)
-                return screen.Monitor.Name;
+            if (before.SpecialWorkspace != after.SpecialWorkspace)
+                events.Add(new ActiveSpecial(after.SpecialWorkspace, ""));
+
+            return;
         }
 
-        return "";
-    }
-
-    private static WorkspaceId WorkspaceOn(State state, MonitorId id)
-    {
-        foreach (var screen in state.Screens)
+        var ids = new List<MonitorId>();
+        foreach (var screen in before.Screens)
         {
-            if (screen.Id == id)
-                return screen.ActiveWorkspace;
+            if (!ids.Contains(screen.Id))
+                ids.Add(screen.Id);
         }
 
-        return state.ActiveWorkspace;
+        foreach (var screen in after.Screens)
+        {
+            if (!ids.Contains(screen.Id))
+                ids.Add(screen.Id);
+        }
+
+        foreach (var id in ids)
+        {
+            var previous = before.ScreenOf(id);
+            var next = after.ScreenOf(id);
+            if (previous?.SpecialWorkspace == next?.SpecialWorkspace)
+                continue;
+
+            var name = next?.Monitor.Name ?? previous?.Monitor.Name ?? "";
+            events.Add(new ActiveSpecial(next?.SpecialWorkspace, name));
+        }
     }
 
     private static void AddMonitorEvents(List<StreamEvent> events, State before, State after)

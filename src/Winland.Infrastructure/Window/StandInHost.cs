@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
@@ -9,11 +8,7 @@ internal static class StandInHost
 {
     private const string HostClass = "WinlandStandInHost";
     private const string StandInClass = "WinlandStandIn";
-    private const int ClassAlreadyExists = 1410;
     private const uint CreateMessage = 0x8000 + 0x48;
-    private const uint QuitMessage = 0x0012;
-    private const uint MouseActivateMessage = 0x0021;
-    private const int NoActivate = 3;
 
     private static readonly WNDPROC Proc = OnWindow;
     private static readonly Lock Gate = new();
@@ -61,7 +56,7 @@ internal static class StandInHost
             return;
 
         if (thread != 0)
-            _ = PInvoke.PostThreadMessage(thread, QuitMessage, default, default);
+            _ = PInvoke.PostThreadMessage(thread, PInvoke.WM_QUIT, default, default);
 
         _ = worker.Join(TimeSpan.FromSeconds(2));
     }
@@ -84,8 +79,8 @@ internal static class StandInHost
     {
         try
         {
-            Register(HostClass);
-            Register(StandInClass);
+            WindowClass.Register(HostClass, Proc, "stand-in");
+            WindowClass.Register(StandInClass, Proc, "stand-in");
             var host = CreateHost();
             if (host.IsNull)
                 return;
@@ -103,11 +98,7 @@ internal static class StandInHost
             ready.Set();
         }
 
-        while (PInvoke.GetMessage(out var message, default, 0, 0) > 0)
-        {
-            PInvoke.TranslateMessage(in message);
-            PInvoke.DispatchMessage(in message);
-        }
+        MessageLoop.Run();
     }
 
     private static LRESULT OnWindow(HWND hwnd, uint message, WPARAM wParam, LPARAM lParam)
@@ -115,8 +106,8 @@ internal static class StandInHost
         if (message == CreateMessage)
             return new LRESULT((nint)CreateStandIn());
 
-        if (message == MouseActivateMessage)
-            return new LRESULT(NoActivate);
+        if (message == PInvoke.WM_MOUSEACTIVATE)
+            return new LRESULT((nint)PInvoke.MA_NOACTIVATE);
 
         return PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
     }
@@ -138,26 +129,4 @@ internal static class StandInHost
             null,
             null,
             null);
-
-    private static unsafe void Register(string name)
-    {
-        var module = PInvoke.GetModuleHandle((string?)null);
-        var instance = (HINSTANCE)module.DangerousGetHandle();
-        module.SetHandleAsInvalid();
-        fixed (char* className = name)
-        {
-            var info = new WNDCLASSEXW
-            {
-                cbSize = (uint)Marshal.SizeOf<WNDCLASSEXW>(),
-                lpfnWndProc = Proc,
-                hInstance = instance,
-                lpszClassName = className,
-            };
-            if (PInvoke.RegisterClassEx(in info) != 0)
-                return;
-
-            if (Marshal.GetLastPInvokeError() != ClassAlreadyExists)
-                throw new InvalidOperationException($"The stand-in window class was not registered ({Marshal.GetLastPInvokeError()}).");
-        }
-    }
 }

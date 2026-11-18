@@ -19,6 +19,6 @@ internal static class MotionAlpha
             Levels.TryRemove(window, out _);
 
         if (changed)
-            StandFrames.Follow(window);
+            BorderHost.Follow(window);
     }
 }

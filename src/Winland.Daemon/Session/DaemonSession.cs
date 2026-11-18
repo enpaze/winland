@@ -19,8 +19,8 @@ sealed class DaemonSession : IDaemonSession
 
     private static bool StopCurrent()
     {
-        var pipe = Pipe();
-        if (PipeServer.ProcessId(pipe) is not int id)
+        var pipe = CommandClient.ConfiguredName();
+        if (CommandClient.ProcessId(pipe) is not int id)
             return false;
 
         Process daemon;
@@ -63,8 +63,8 @@ sealed class DaemonSession : IDaemonSession
 
         var start = new ProcessStartInfo
         {
-            FileName = Elevation.IsElevated()
-                ? Path.Combine(Path.GetDirectoryName(executable)!, LogonTaskDefinition.LauncherName)
+            FileName = UserAccess.IsElevated
+                ? InstallLocations.Launcher(executable)
                 : executable,
             WorkingDirectory = Path.GetDirectoryName(executable) ?? Environment.CurrentDirectory,
             UseShellExecute = true,
@@ -75,11 +75,5 @@ sealed class DaemonSession : IDaemonSession
 
         using var process = Process.Start(start)
             ?? throw new InvalidOperationException("Winland did not start.");
-    }
-
-    private static string? Pipe()
-    {
-        var configured = Environment.GetEnvironmentVariable("WINLAND_PIPE");
-        return string.IsNullOrWhiteSpace(configured) ? null : configured;
     }
 }

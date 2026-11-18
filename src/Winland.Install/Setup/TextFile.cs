@@ -1,10 +1,19 @@
 namespace Winland.Install;
 
-public sealed class FileSettingsText : ISettingsText
+public interface ITextFile
+{
+    string? Read();
+
+    void Write(string text);
+
+    void Delete();
+}
+
+public sealed class TextFile : ITextFile
 {
     private readonly string path;
 
-    public FileSettingsText(string path)
+    public TextFile(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         this.path = path;

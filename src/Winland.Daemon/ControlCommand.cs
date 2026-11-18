@@ -1,6 +1,4 @@
 using System.ComponentModel;
-using System.IO.Pipes;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Winland.Daemon;
@@ -15,7 +13,7 @@ static class ControlCommand
 
         try
         {
-            var reply = CommandClient.Transact(line, pipeName, connected: LendForeground);
+            var reply = CommandClient.Transact(line, pipeName, lendForeground: true);
             return WriteReply(line, reply);
         }
         catch (Exception exception) when (exception is InvalidOperationException or IOException or UnauthorizedAccessException or Win32Exception)
@@ -79,18 +77,4 @@ static class ControlCommand
         if (Console.IsErrorRedirected)
             Console.SetError(new StreamWriter(Console.OpenStandardError(), utf8) { AutoFlush = true });
     }
-
-    private static void LendForeground(NamedPipeClientStream pipe)
-    {
-        if (GetNamedPipeServerProcessId(pipe.SafePipeHandle.DangerousGetHandle(), out var server) && server != 0)
-            _ = AllowSetForegroundWindow(server);
-    }
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GetNamedPipeServerProcessId(nint pipe, out uint processId);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool AllowSetForegroundWindow(uint processId);
 }

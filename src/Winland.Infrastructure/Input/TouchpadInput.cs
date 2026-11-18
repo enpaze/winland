@@ -10,7 +10,6 @@ namespace Winland.Infrastructure;
 internal sealed class TouchpadInput : IDisposable
 {
     private const string ClassName = "WinlandTouchpad";
-    private const int ClassAlreadyExists = 1410;
     private const uint InputMessage = 0x00FF;
     private const uint DeviceChangeMessage = 0x00FE;
     private const nuint DeviceArrived = 1;
@@ -27,7 +26,6 @@ internal sealed class TouchpadInput : IDisposable
     private const ushort YUsage = 0x31;
     private const int HidSuccess = 0x00110000;
     private const uint HidType = 2;
-    private const uint ClassSize = 80;
 
     private static readonly WNDPROC Proc = OnWindow;
     private static TouchpadInput? Active;
@@ -55,7 +53,7 @@ internal sealed class TouchpadInput : IDisposable
         try
         {
             Active = this;
-            Register();
+            WindowClass.Register(ClassName, Proc, "touchpad");
             _hwnd = Create();
             Listen(_hwnd);
         }
@@ -178,28 +176,6 @@ internal sealed class TouchpadInput : IDisposable
         };
         if (!PInvoke.RegisterRawInputDevices(&device, 1, (uint)sizeof(RAWINPUTDEVICE)))
             throw new InvalidOperationException($"Touchpad input was not registered ({Marshal.GetLastPInvokeError()}).");
-    }
-
-    private static unsafe void Register()
-    {
-        var module = PInvoke.GetModuleHandle((string?)null);
-        var instance = (HINSTANCE)module.DangerousGetHandle();
-        module.SetHandleAsInvalid();
-        fixed (char* name = ClassName)
-        {
-            var info = new WNDCLASSEXW
-            {
-                cbSize = ClassSize,
-                lpfnWndProc = Proc,
-                hInstance = instance,
-                lpszClassName = name,
-            };
-            if (PInvoke.RegisterClassEx(in info) != 0)
-                return;
-
-            if (Marshal.GetLastPInvokeError() != ClassAlreadyExists)
-                throw new InvalidOperationException($"The touchpad window class was not registered ({Marshal.GetLastPInvokeError()}).");
-        }
     }
 
     private static unsafe HWND Create()

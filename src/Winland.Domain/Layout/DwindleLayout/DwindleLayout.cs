@@ -4,27 +4,8 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
 {
     private readonly Dictionary<ClientId, Node> _nodes = [];
     private readonly Dictionary<ClientId, Suspension> _suspended = [];
-    private LayoutOptions _options = LayoutOptions.Unconfigured;
     private Node? _root;
     private ClientId? _splitTarget;
-    private Rectangle _area;
-    private Rectangle _monitor;
-
-    public IReadOnlyList<Placement> Apply(LayoutOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        _options = options;
-        Refit();
-        return Placements();
-    }
-
-    public void Fit(Rectangle area, Rectangle monitor)
-    {
-        _area = area;
-        if (monitor.Width > 0 && monitor.Height > 0)
-            _monitor = monitor;
-        Refit();
-    }
 
     public IReadOnlyList<Placement> SetFullscreen(WindowId window, FullscreenMode mode)
     {
@@ -145,15 +126,8 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return Placements();
     }
 
-    public IReadOnlyList<Placement> Minimize(WindowId window)
+    private protected override IReadOnlyList<Placement> MinimizeTiled(ClientId id)
     {
-        var id = new ClientId(window.Value);
-        if (_floating.Contains(id))
-        {
-            SetMinimized(id, true);
-            return [];
-        }
-
         if (!_nodes.Remove(id, out var node))
             return [];
 
@@ -167,19 +141,9 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return Placements();
     }
 
-    public IReadOnlyList<Placement> Restore(WindowId window)
+    private protected override IReadOnlyList<Placement> RestoreTiled(WindowId window)
     {
         var id = new ClientId(window.Value);
-        if (_floating.TryGet(id, out var bounds))
-        {
-            var index = IndexOf(id);
-            if (index < 0 || !_clients[index].Minimized)
-                return [];
-
-            SetMinimized(id, false);
-            return [new Placement(id, bounds)];
-        }
-
         if (!_suspended.Remove(id, out var suspension))
             return [];
 
@@ -280,34 +244,12 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return new Rectangle(box.X + left, box.Y + top, width, height);
     }
 
-    private static bool Covers(Rectangle box, Point point) =>
-        point.X >= box.X
-        && point.Y >= box.Y
-        && point.X < box.X + box.Width
-        && point.Y < box.Y + box.Height;
-
-    private static double DistanceSquared(Rectangle box, Point point)
-    {
-        var dx = point.X < box.X ? box.X - point.X : point.X >= box.X + box.Width ? point.X - (box.X + box.Width) : 0;
-        var dy = point.Y < box.Y ? box.Y - point.Y : point.Y >= box.Y + box.Height ? point.Y - (box.Y + box.Height) : 0;
-        return (dx * (double)dx) + (dy * (double)dy);
-    }
-
     private static Node Leaf(Node node)
     {
         while (node.Id is null)
             node = node.First!;
 
         return node;
-    }
-
-    private enum PendingSplit
-    {
-        None,
-        Left,
-        Right,
-        Up,
-        Down,
     }
 
     private sealed class Node

@@ -8,21 +8,21 @@ public static partial class CommandProtocol
 
     private static readonly Verb[] VerbList =
     [
-        new("dispatch", "<name> [args]", (rest, _) => Dispatch(rest)),
-        new("clients", "", (rest, flags) => Bare(rest, new ClientsRequest())),
-        new("workspaces", "", (rest, _) => Bare(rest, new WorkspacesRequest())),
-        new("monitors", "[all]", (rest, _) => rest.Length == 0 ? new MonitorsRequest()
+        new("dispatch", "<name> [args]", rest => Dispatch(rest)),
+        new("clients", "", rest => Bare(rest, new ClientsRequest())),
+        new("workspaces", "", rest => Bare(rest, new WorkspacesRequest())),
+        new("monitors", "[all]", rest => rest.Length == 0 ? new MonitorsRequest()
             : rest.Equals("all", StringComparison.OrdinalIgnoreCase) ? new MonitorsRequest(All: true)
             : null),
-        new("activeworkspace", "", (rest, _) => Bare(rest, new ActiveWorkspaceRequest())),
-        new("activewindow", "", (rest, _) => Bare(rest, new ActiveWindowRequest())),
-        new("inspect", "[selector]", (rest, _) => new InspectRequest(rest)),
-        new("reload", "", (rest, _) => Bare(rest, new ReloadRequest())),
-        new("events", "", (rest, _) => Bare(rest, new EventsRequest())),
-        new("binds", "", (rest, _) => Bare(rest, new BindsRequest())),
-        new("version", "", (rest, _) => Bare(rest, new VersionRequest())),
-        new("configerrors", "", (rest, _) => Bare(rest, new ConfigErrorsRequest())),
-        new("files", "", (rest, _) => Bare(rest, new FilesRequest())),
+        new("activeworkspace", "", rest => Bare(rest, new ActiveWorkspaceRequest())),
+        new("activewindow", "", rest => Bare(rest, new ActiveWindowRequest())),
+        new("inspect", "[selector]", rest => new InspectRequest(rest)),
+        new("reload", "", rest => Bare(rest, new ReloadRequest())),
+        new("events", "", rest => Bare(rest, new EventsRequest())),
+        new("binds", "", rest => Bare(rest, new BindsRequest())),
+        new("version", "", rest => Bare(rest, new VersionRequest())),
+        new("configerrors", "", rest => Bare(rest, new ConfigErrorsRequest())),
+        new("files", "", rest => Bare(rest, new FilesRequest())),
     ];
 
     private static readonly Dictionary<string, Verb> Verbs =
@@ -45,14 +45,14 @@ public static partial class CommandProtocol
         if (!Verbs.TryGetValue(name, out var verb))
             return new CommandRejected(Unknown);
 
-        return verb.Read(rest, flags) is CommandRequest request
+        return verb.Read(rest) is CommandRequest request
             ? new CommandParsed(request with { Flags = flags })
             : new CommandRejected(rest.Length == 0 && name.Equals("dispatch", StringComparison.OrdinalIgnoreCase)
                 ? "error: missing dispatcher"
                 : Unknown);
     }
 
-    private sealed record Verb(string Name, string Arguments, Func<string, CommandFlags, CommandRequest?> Read);
+    private sealed record Verb(string Name, string Arguments, Func<string, CommandRequest?> Read);
 
     private static DispatchRequest? Dispatch(string rest)
     {

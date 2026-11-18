@@ -1,40 +1,24 @@
 using System.Globalization;
-using System.Text.Json;
 
 namespace Winland.Domain;
 
 internal static class OptionValue
 {
-    internal static OptionValue<bool> Bool { get; } = new(
-        "bool",
-        (string text, out bool value) => ConfigValueSyntax.TryParseBool(text.Trim(), out value),
-        value => value ? "true" : "false");
+    internal static OptionValue<bool> Bool { get; } =
+        (string text, out bool value) => ConfigValueSyntax.TryParseBool(text.Trim(), out value);
 
-    internal static OptionValue<string> Text { get; } = new(
-        "str",
-        (string text, out string value) =>
-        {
-            value = Unset(text.Trim());
-            return true;
-        },
-        Quote);
+    internal static OptionValue<string> Text { get; } = (string text, out string value) =>
+    {
+        value = Unset(text.Trim());
+        return true;
+    };
 
-    internal static OptionValue<BorderColor> Color { get; } = new(
-        "str",
-        (string text, out BorderColor value) => BorderColor.TryParse(text.Trim(), out value),
-        value => Quote(Hex(value)));
+    internal static OptionValue<BorderColor> Color { get; } =
+        (string text, out BorderColor value) => BorderColor.TryParse(text.Trim(), out value);
 
-    internal static OptionValue<BorderColor[]> Colors { get; } = new(
-        "gradient",
-        (string text, out BorderColor[] value) => ConfigValueSyntax.TryParseColors(text, out value) && value.Length > 0,
-        value => Quote(string.Join(' ', value.Select(Hex))));
+    internal static OptionValue<EdgeInsets> Gaps { get; } = TryGaps;
 
-    internal static OptionValue<EdgeInsets> Gaps { get; } = new("css", TryGaps, value => Quote(string.Create(
-        CultureInfo.InvariantCulture,
-        $"{value.Top} {value.Right} {value.Bottom} {value.Left}")));
-
-    internal static OptionValue<int> Int(int min = int.MinValue, int max = int.MaxValue, IReadOnlyDictionary<string, int>? names = null) => new(
-        "int",
+    internal static OptionValue<int> Int(int min = int.MinValue, int max = int.MaxValue, IReadOnlyDictionary<string, int>? names = null) =>
         (string text, out int value) =>
         {
             text = text.Trim();
@@ -46,11 +30,9 @@ internal static class OptionValue
 
             value = Math.Clamp(value, min, max);
             return true;
-        },
-        value => value.ToString(CultureInfo.InvariantCulture));
+        };
 
-    internal static OptionValue<double> Number(double min = double.MinValue, double max = double.MaxValue) => new(
-        "float",
+    internal static OptionValue<double> Number(double min = double.MinValue, double max = double.MaxValue) =>
         (string text, out double value) =>
         {
             if (!TryDouble(text, out value))
@@ -58,11 +40,9 @@ internal static class OptionValue
 
             value = Math.Clamp(value, min, max);
             return true;
-        },
-        value => JsonSerializer.Serialize(value));
+        };
 
-    internal static OptionValue<float> Single(float min, float max) => new(
-        "float",
+    internal static OptionValue<float> Single(float min, float max) =>
         (string text, out float value) =>
         {
             value = 0;
@@ -71,45 +51,17 @@ internal static class OptionValue
 
             value = Math.Clamp((float)parsed, min, max);
             return true;
-        },
-        value => JsonSerializer.Serialize(value));
+        };
 
-    internal static OptionValue<Vec2> Pair(double min, double max) => new(
-        "vec2",
-        (string text, out Vec2 value) =>
-        {
-            if (!ConfigValueSyntax.TryParseVec2(text.Trim(), out value))
-                return false;
-
-            value = new Vec2(Math.Clamp(value.X, min, max), Math.Clamp(value.Y, min, max));
-            return true;
-        },
-        value => JsonSerializer.Serialize(new[] { value.X, value.Y }));
-
-    internal static OptionValue<T> Named<T>(IReadOnlyDictionary<string, T> names)
-        where T : struct => new(
-        "str",
-        (string text, out T value) => names.TryGetValue(text.Trim(), out value),
-        value => Quote(names.First(pair => EqualityComparer<T>.Default.Equals(pair.Value, value)).Key));
-
-    internal static OptionValue<string> OneOf(params string[] choices) => new(
-        "str",
+    internal static OptionValue<string> OneOf(params string[] choices) =>
         (string text, out string value) =>
         {
             var trimmed = text.Trim();
             value = choices.FirstOrDefault(choice => choice.Equals(trimmed, StringComparison.OrdinalIgnoreCase)) ?? "";
             return value.Length > 0;
-        },
-        Quote);
-
-    internal static OptionValue<T> Of<T>(string kind, OptionReader<T> read, Func<T, string> json) => new(kind, read, json);
-
-    internal static string Quote(string text) => JsonSerializer.Serialize(text);
+        };
 
     private static string Unset(string text) => text == "[[EMPTY]]" ? "" : text;
-
-    private static string Hex(BorderColor color) =>
-        string.Create(CultureInfo.InvariantCulture, $"0x{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}");
 
     private static bool TryDouble(string text, out double value) =>
         double.TryParse(text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out value) && double.IsFinite(value);
@@ -117,7 +69,7 @@ internal static class OptionValue
     private static bool TryGaps(string text, out EdgeInsets gaps)
     {
         gaps = EdgeInsets.Zero;
-        var parts = text.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        var parts = Tokens.Of(text);
         if (parts.Length is 0 or > 4)
             return false;
 
@@ -142,6 +94,4 @@ internal static class OptionValue
     }
 }
 
-internal sealed record OptionValue<T>(string Kind, OptionReader<T> Read, Func<T, string> Json);
-
-internal delegate bool OptionReader<T>(string text, out T value);
+internal delegate bool OptionValue<T>(string text, out T value);

@@ -14,17 +14,11 @@ static class Elevation
 
     private static NamedPipeClientStream[]? s_output;
 
-    public static bool IsElevated()
-    {
-        using var identity = WindowsIdentity.GetCurrent();
-        return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
-    }
-
     public static int Relaunch(IReadOnlyList<string> args)
     {
         var path = Environment.ProcessPath
             ?? throw new InvalidOperationException("The executable path is not available.");
-        var launcher = Path.Combine(Path.GetDirectoryName(path)!, LogonTaskDefinition.LauncherName);
+        var launcher = InstallLocations.Launcher(path);
         if (File.Exists(launcher))
             path = launcher;
         var name = "winland-output-" + Guid.NewGuid().ToString("N");
@@ -37,8 +31,8 @@ static class Elevation
                 Environment.CurrentDirectory,
                 RuntimeEnvironment.GetRuntimeDirectory(),
                 Environment.GetEnvironmentVariable("DOTNET_ROOT"),
-                Environment.GetEnvironmentVariable("WINLAND_PIPE"),
-                Environment.GetEnvironmentVariable("WINLAND_STATE"));
+                Environment.GetEnvironmentVariable(CommandClient.PipeVariable),
+                Environment.GetEnvironmentVariable(StateLocation.Variable));
         }
         catch (ArgumentException ex)
         {

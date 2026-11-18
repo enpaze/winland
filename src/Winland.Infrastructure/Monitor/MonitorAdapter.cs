@@ -47,7 +47,7 @@ public static class MonitorAdapter
         var dpi = PInvoke.GetDpiForMonitor(monitor, MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI, out var dpiX, out _);
         var scale = dpi.Succeeded && dpiX > 0 ? dpiX / 96.0 : 1;
         var paneled = panels.TryGetValue(name, out var panel);
-        var bounds = From(info.monitorInfo.rcMonitor);
+        var bounds = WindowRect.From(info.monitorInfo.rcMonitor);
         described = new Winland.Domain.Monitor(
             name,
             panel.Description ?? "",
@@ -57,7 +57,7 @@ public static class MonitorAdapter
             bounds.Height,
             scale,
             true,
-            From(info.monitorInfo.rcWork),
+            WindowRect.From(info.monitorInfo.rcWork),
             Make: panel.Make ?? "",
             Model: panel.Model ?? "",
             Serial: panel.Serial ?? "",
@@ -206,7 +206,4 @@ public static class MonitorAdapter
 
         return text.Trim();
     }
-
-    private static Rectangle From(RECT rect) =>
-        new(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 }

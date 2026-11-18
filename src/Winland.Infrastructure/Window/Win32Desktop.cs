@@ -1,6 +1,8 @@
+using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
+using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
@@ -15,32 +17,191 @@ internal sealed class Win32Desktop : IDesktop
 
     private const long SlowMilliseconds = 250;
     private const long SlowForMilliseconds = 3000;
+    private const uint ColorKeyFlag = 0x1;
+    private const DWMWINDOWATTRIBUTE BackdropAttribute = (DWMWINDOWATTRIBUTE)38;
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<WindowId, long> _slowUntil = new();
 
-    private readonly Win32WindowStyles _styles = new();
-    private readonly Win32WindowFrame _frames = new();
-    private readonly Win32DwmSurface _surface = new();
+    public bool TryRead(WindowId window, out WindowChrome chrome)
+    {
+        chrome = default;
+        var hwnd = Handle(window);
+        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
+            return false;
 
-    public bool TryRead(WindowId window, out WindowChrome chrome) => _styles.TryRead(window, out chrome);
+        var exStyle = (uint)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+        var colorKey = false;
+        byte alpha = 255;
+        if ((exStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED) != 0)
+            _ = TryReadLayered(hwnd, out colorKey, out alpha);
 
-    public bool TryWriteExStyle(WindowId window, uint exStyle) => _styles.TryWriteExStyle(window, exStyle);
+        chrome = new WindowChrome(exStyle, colorKey, alpha);
+        return true;
+    }
 
-    public bool TrySetAlpha(WindowId window, byte alpha) => _styles.TrySetAlpha(window, alpha);
+    public bool TryWriteExStyle(WindowId window, uint exStyle)
+    {
+        var hwnd = Handle(window);
+        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
+            return false;
 
-    public bool TryReadStyle(WindowId window, out uint style) => _frames.TryReadStyle(window, out style);
+        Marshal.SetLastPInvokeError(0);
+        var previous = PInvoke.SetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)exStyle);
+        if (previous == 0 && Marshal.GetLastPInvokeError() != 0)
+            return false;
 
-    public bool TryWriteStyle(WindowId window, uint style) => _frames.TryWriteStyle(window, style);
+        if ((exStyle & ~(uint)previous) == (uint)WINDOW_EX_STYLE.WS_EX_LAYERED)
+            return true;
 
-    public bool TryReadBackdrop(WindowId window, out uint backdrop) => _surface.TryReadBackdrop(window, out backdrop);
+        _ = PInvoke.SetWindowPos(
+            hwnd,
+            HWND.Null,
+            0,
+            0,
+            0,
+            0,
+            SET_WINDOW_POS_FLAGS.SWP_NOMOVE
+            | SET_WINDOW_POS_FLAGS.SWP_NOSIZE
+            | SET_WINDOW_POS_FLAGS.SWP_NOZORDER
+            | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE
+            | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED);
+        return true;
+    }
 
-    public bool TrySetBackdrop(WindowId window, uint backdrop) => _surface.TrySetBackdrop(window, backdrop);
+    public bool TrySetAlpha(WindowId window, byte alpha)
+    {
+        var hwnd = Handle(window);
+        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
+            return false;
 
-    public bool HasRegion(WindowId window) => _surface.HasRegion(window);
+        return PInvoke.SetLayeredWindowAttributes(hwnd, default, alpha, LAYERED_WINDOW_ATTRIBUTES_FLAGS.LWA_ALPHA);
+    }
 
-    public bool TryFrame(WindowId window, out Rectangle outer, out Rectangle visible) => _surface.TryFrame(window, out outer, out visible);
+    private static unsafe bool TryReadLayered(HWND hwnd, out bool colorKey, out byte alpha)
+    {
+        colorKey = false;
+        alpha = 255;
+        Span<byte> value = stackalloc byte[1];
+        if (!PInvoke.GetLayeredWindowAttributes(hwnd, out _, value, out var flags))
+            return false;
 
-    public bool TrySetRegion(WindowId window, IReadOnlyList<Point> outline) => _surface.TrySetRegion(window, outline);
+        colorKey = ((uint)flags & ColorKeyFlag) != 0;
+        alpha = value[0];
+        return true;
+    }
+
+    public bool TryReadStyle(WindowId window, out uint style)
+    {
+        style = 0;
+        var hwnd = Handle(window);
+        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
+            return false;
+
+        style = (uint)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE);
+        return true;
+    }
+
+    public bool TryWriteStyle(WindowId window, uint style)
+    {
+        var hwnd = Handle(window);
+        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
+            return false;
+
+        Marshal.SetLastPInvokeError(0);
+        var previous = PInvoke.SetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE, (int)style);
+        if (previous == 0 && Marshal.GetLastPInvokeError() != 0)
+            return false;
+
+        _ = PInvoke.SetWindowPos(
+            hwnd,
+            HWND.Null,
+            0,
+            0,
+            0,
+            0,
+            SET_WINDOW_POS_FLAGS.SWP_NOMOVE
+            | SET_WINDOW_POS_FLAGS.SWP_NOSIZE
+            | SET_WINDOW_POS_FLAGS.SWP_NOZORDER
+            | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE
+            | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED);
+        return true;
+    }
+
+    public unsafe bool TryReadBackdrop(WindowId window, out uint backdrop)
+    {
+        backdrop = 0;
+        if (!TryWindow(window, out var hwnd))
+            return false;
+
+        Span<byte> value = stackalloc byte[sizeof(uint)];
+        if (PInvoke.DwmGetWindowAttribute(hwnd, BackdropAttribute, value).Failed)
+            return false;
+
+        backdrop = MemoryMarshal.Read<uint>(value);
+        return true;
+    }
+
+    public bool TrySetBackdrop(WindowId window, uint backdrop) => TrySet(window, BackdropAttribute, backdrop);
+
+    public bool HasRegion(WindowId window)
+    {
+        if (!TryWindow(window, out var hwnd))
+            return false;
+
+        var probe = PInvoke.CreateRectRgn(0, 0, 0, 0);
+        if (probe.IsNull)
+            return false;
+
+        try
+        {
+            return PInvoke.GetWindowRgn(hwnd, probe) != GDI_REGION_TYPE.RGN_ERROR;
+        }
+        finally
+        {
+            PInvoke.DeleteObject(probe);
+        }
+    }
+
+    public bool TryFrame(WindowId window, out Rectangle outer, out Rectangle visible)
+    {
+        outer = default;
+        visible = default;
+        if (!TryWindow(window, out var hwnd) || PInvoke.IsIconic(hwnd) || !PInvoke.GetWindowRect(hwnd, out var rect))
+            return false;
+
+        outer = WindowRect.From(rect);
+        visible = WindowRect.TryFrameBounds(hwnd, out var bounds) ? bounds : outer;
+        return true;
+    }
+
+    public bool TrySetRegion(WindowId window, IReadOnlyList<Point> outline)
+    {
+        if (!TryWindow(window, out var hwnd) || PInvoke.IsHungAppWindow(hwnd))
+            return false;
+
+        if (outline.Count == 0)
+            return PInvoke.SetWindowRgn(hwnd, HRGN.Null, true) != 0;
+
+        var points = new System.Drawing.Point[outline.Count];
+        for (var i = 0; i < outline.Count; i++)
+            points[i] = new System.Drawing.Point(outline[i].X, outline[i].Y);
+
+        using var region = PInvoke.CreatePolygonRgn(points, CREATE_POLYGON_RGN_MODE.WINDING);
+        if (region.IsInvalid || PInvoke.SetWindowRgn(hwnd, (HRGN)region.DangerousGetHandle(), true) == 0)
+            return false;
+
+        region.SetHandleAsInvalid();
+        return true;
+    }
+
+    private static unsafe bool TrySet(WindowId window, DWMWINDOWATTRIBUTE attribute, uint value) =>
+        TryWindow(window, out var hwnd) && PInvoke.DwmSetWindowAttribute(hwnd, attribute, &value, sizeof(uint)).Succeeded;
+
+    private static bool TryWindow(WindowId window, out HWND hwnd)
+    {
+        hwnd = Handle(window);
+        return !hwnd.IsNull && PInvoke.IsWindow(hwnd);
+    }
 
     public bool Exists(WindowId window) => PInvoke.IsWindow(Handle(window));
 
@@ -90,21 +251,11 @@ internal sealed class Win32Desktop : IDesktop
         if (!PInvoke.GetWindowRect(Handle(window), out var rect))
             return false;
 
-        outer = From(rect);
+        outer = WindowRect.From(rect);
         return true;
     }
 
-    public unsafe bool TryVisible(WindowId window, out Rectangle visible)
-    {
-        visible = default;
-        Span<byte> value = stackalloc byte[sizeof(RECT)];
-        var result = PInvoke.DwmGetWindowAttribute(Handle(window), DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, value);
-        if (result.Failed)
-            return false;
-
-        visible = From(System.Runtime.InteropServices.MemoryMarshal.Read<RECT>(value));
-        return true;
-    }
+    public bool TryVisible(WindowId window, out Rectangle visible) => WindowRect.TryFrameBounds(Handle(window), out visible);
 
     public unsafe void SetAttribute(WindowId window, int attribute, uint value) =>
         _ = PInvoke.DwmSetWindowAttribute(Handle(window), (DWMWINDOWATTRIBUTE)attribute, &value, sizeof(uint));
@@ -217,9 +368,6 @@ internal sealed class Win32Desktop : IDesktop
     };
 
     private static HWND Handle(WindowId window) => new((nint)window.Value);
-
-    private static Rectangle From(RECT rect) =>
-        new(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 }
 
 internal sealed class Win32StandInSurface(HWND window, HWND overlay, nint picture) : IStandInSurface

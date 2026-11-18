@@ -149,18 +149,18 @@ public sealed partial class WindowManager
         }
 
         if (!settle)
-            HandDrag(source.Layout, target.Layout);
+            source.Layout.MouseDrag.HandTo(target.Layout.MouseDrag);
 
         if (!source.Take(window, out var taken))
         {
             if (!settle)
-                HandDrag(target.Layout, source.Layout);
+                target.Layout.MouseDrag.HandTo(source.Layout.MouseDrag);
 
             return null;
         }
 
         var tileBack = settle && wasTiled;
-        var monitor = MonitorById(target.Monitor) is { Arranged.Enabled: true } destination ? destination.Bounds : default;
+        var monitor = EnabledMonitor(target.Monitor)?.Bounds ?? default;
         target.Receive(window, taken with { Floating = !tileBack, Bounds = box }, WorkArea(target, _area), monitor, pointer: tileBack ? pointer : null);
         CarryGroup(source, target, window);
         FocusState.Remember(target, window);
@@ -187,12 +187,6 @@ public sealed partial class WindowManager
 
         Give(window, target);
         return true;
-    }
-
-    private static void HandDrag(Layout from, Layout to)
-    {
-        if (from is IDragOwner source && to is IDragOwner target)
-            source.Drag.HandTo(target.Drag);
     }
 
     private static string DragCursor(LiveWorkspace desk, WindowId window, bool resize, Point pointer)
@@ -281,7 +275,7 @@ public sealed partial class WindowManager
 
         Restamp(there, []);
         Give(dragged, there);
-        (_extraEvents ??= []).Add(new ClientIntoGroup(dragged));
+        Raise(new ClientIntoGroup(dragged));
         var outcome = Present(there, covered, there.Layout.Visible(), focus: dragged) with { Consumed = consumed };
         return from != there && _workspaces.Find(from.Id) is LiveWorkspace left && _workspaces.Shown.IsShown(left.Id)
             ? outcome with { Placements = [.. left.Layout.Placed(), .. outcome.Placements] }
@@ -292,7 +286,7 @@ public sealed partial class WindowManager
     {
         foreach (var special in new[] { true, false })
         {
-            var targets = Targets(point, special);
+            var targets = FocusTargets(point, special);
             targets.RemoveAll(target => target.Window == except);
             if (PointerFocus.At(targets, point) is WindowId found)
                 return found;
@@ -343,7 +337,7 @@ public sealed partial class WindowManager
         foreach (var special in new[] { true, false })
         {
             var grown = new List<PointerFocus.Target>();
-            foreach (var target in Targets(at, special))
+            foreach (var target in FocusTargets(at, special))
             {
                 var border = WorkspaceContaining(target.Window)?.Options.BorderFor(new ClientId(target.Window.Value)) ?? 0;
                 var bounds = target.Bounds;

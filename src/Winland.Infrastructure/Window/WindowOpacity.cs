@@ -1,26 +1,10 @@
 using System.Globalization;
-using System.Runtime.InteropServices;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-internal readonly record struct WindowChrome(uint ExStyle, bool ColorKey, byte Alpha);
-
-internal interface IWindowStyles
+internal sealed class WindowOpacity
 {
-    bool TryRead(WindowId window, out WindowChrome chrome);
-
-    bool TryWriteExStyle(WindowId window, uint exStyle);
-
-    bool TrySetAlpha(WindowId window, byte alpha);
-}
-
-internal sealed class OpacityAdapter
-{
-    internal const uint LayeredStyle = 0x00080000;
-
     private readonly IWindowStyles _styles;
     private readonly Func<WindowId, bool> _hung;
     private readonly Dictionary<WindowId, Original> _owned = [];
@@ -31,7 +15,7 @@ internal sealed class OpacityAdapter
     private readonly Lock _gate = new();
     private bool _closed;
 
-    internal OpacityAdapter(IWindowStyles styles, Func<WindowId, bool>? hung = null)
+    internal WindowOpacity(IWindowStyles styles, Func<WindowId, bool>? hung = null)
     {
         ArgumentNullException.ThrowIfNull(styles);
         _styles = styles;
@@ -132,7 +116,7 @@ internal sealed class OpacityAdapter
             return false;
         }
 
-        if ((chrome.ExStyle & LayeredStyle) != 0)
+        if ((chrome.ExStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED) != 0)
         {
             _leftAlone.Add(window);
             Report(window, "was already layered and was left alone.");
@@ -145,7 +129,7 @@ internal sealed class OpacityAdapter
         if (_hung(window))
             return false;
 
-        var updated = chrome.ExStyle | LayeredStyle;
+        var updated = chrome.ExStyle | (uint)WINDOW_EX_STYLE.WS_EX_LAYERED;
         _owned[window] = new Original(chrome.ExStyle, chrome.Alpha);
         if (!_styles.TryWriteExStyle(window, updated))
         {
@@ -245,10 +229,10 @@ internal sealed class OpacityAdapter
             _failed.Remove(window);
             _leftAlone.Remove(window);
 
-            if (!_styles.TryRead(window, out var chrome) || (chrome.ExStyle & LayeredStyle) == 0)
+            if (!_styles.TryRead(window, out var chrome) || (chrome.ExStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED) == 0)
                 return;
 
-            _owned[window] = new Original(chrome.ExStyle & ~LayeredStyle, 255);
+            _owned[window] = new Original(chrome.ExStyle & ~(uint)WINDOW_EX_STYLE.WS_EX_LAYERED, 255);
             Reset(window);
         }
     }
@@ -256,8 +240,8 @@ internal sealed class OpacityAdapter
     private void Restore(WindowId window, Original original)
     {
         if (_styles.TryRead(window, out var now))
-            _styles.TryWriteExStyle(window, (now.ExStyle & ~LayeredStyle) | (original.ExStyle & LayeredStyle));
-        if ((original.ExStyle & LayeredStyle) != 0)
+            _styles.TryWriteExStyle(window, (now.ExStyle & ~(uint)WINDOW_EX_STYLE.WS_EX_LAYERED) | (original.ExStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED));
+        if ((original.ExStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED) != 0)
             _styles.TrySetAlpha(window, original.Alpha);
     }
 
@@ -275,77 +259,4 @@ internal sealed class OpacityAdapter
     }
 
     private readonly record struct Original(uint ExStyle, byte Alpha);
-}
-
-internal sealed class Win32WindowStyles : IWindowStyles
-{
-    private const uint ColorKeyFlag = 0x1;
-
-    public bool TryRead(WindowId window, out WindowChrome chrome)
-    {
-        chrome = default;
-        var hwnd = new HWND((nint)window.Value);
-        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
-            return false;
-
-        var exStyle = (uint)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-        var colorKey = false;
-        byte alpha = 255;
-        if ((exStyle & OpacityAdapter.LayeredStyle) != 0)
-            _ = TryReadLayered(hwnd, out colorKey, out alpha);
-
-        chrome = new WindowChrome(exStyle, colorKey, alpha);
-        return true;
-    }
-
-    public bool TryWriteExStyle(WindowId window, uint exStyle)
-    {
-        var hwnd = new HWND((nint)window.Value);
-        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
-            return false;
-
-        Marshal.SetLastPInvokeError(0);
-        var previous = PInvoke.SetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)exStyle);
-        if (previous == 0 && Marshal.GetLastPInvokeError() != 0)
-            return false;
-
-        if ((exStyle & ~(uint)previous) == OpacityAdapter.LayeredStyle)
-            return true;
-
-        _ = PInvoke.SetWindowPos(
-            hwnd,
-            HWND.Null,
-            0,
-            0,
-            0,
-            0,
-            SET_WINDOW_POS_FLAGS.SWP_NOMOVE
-            | SET_WINDOW_POS_FLAGS.SWP_NOSIZE
-            | SET_WINDOW_POS_FLAGS.SWP_NOZORDER
-            | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE
-            | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED);
-        return true;
-    }
-
-    public bool TrySetAlpha(WindowId window, byte alpha)
-    {
-        var hwnd = new HWND((nint)window.Value);
-        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
-            return false;
-
-        return PInvoke.SetLayeredWindowAttributes(hwnd, default, alpha, LAYERED_WINDOW_ATTRIBUTES_FLAGS.LWA_ALPHA);
-    }
-
-    private static unsafe bool TryReadLayered(HWND hwnd, out bool colorKey, out byte alpha)
-    {
-        colorKey = false;
-        alpha = 255;
-        Span<byte> value = stackalloc byte[1];
-        if (!PInvoke.GetLayeredWindowAttributes(hwnd, out _, value, out var flags))
-            return false;
-
-        colorKey = ((uint)flags & ColorKeyFlag) != 0;
-        alpha = value[0];
-        return true;
-    }
 }

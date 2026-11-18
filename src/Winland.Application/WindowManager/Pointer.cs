@@ -207,11 +207,11 @@ public sealed partial class WindowManager
         if (point is not Point at)
             return null;
 
-        return PointerFocus.At(Targets(at, special: true), at)
-            ?? PointerFocus.At(Targets(at, special: false), at);
+        return PointerFocus.At(FocusTargets(at, special: true), at)
+            ?? PointerFocus.At(FocusTargets(at, special: false), at);
     }
 
-    private List<PointerFocus.Target> Targets(Point point, bool special)
+    private List<PointerFocus.Target> FocusTargets(Point point, bool special)
     {
         LiveMonitor? screen = null;
         if (_monitors.Count > 0)
@@ -269,9 +269,6 @@ public sealed partial class WindowManager
         return scale is > 0 and < 1000 && double.IsFinite(scale) ? scale : 1;
     }
 
-    private bool Floats(WindowId? window) =>
-        window is WindowId id && Find(id) is { Floating: true };
-
     private long When(long? time) => time ?? Clock();
 
     private static double Distance(Point from, Point to)
@@ -288,7 +285,7 @@ public sealed partial class WindowManager
         if (MonitorAt(pointer) is { } screen && (_workspaces.Shown.SpecialOn(screen.Id) ?? _workspaces.Shown.Shown(screen.Id)) is WorkspaceId shown && _workspaces.Find(shown) is LiveWorkspace desk)
             return desk;
 
-        return CurrentWorkspace();
+        return TopWorkspace();
     }
 
     private bool TryRingTarget(Point pointer, int reach, out WindowId window, out Rectangle bounds)
@@ -361,8 +358,7 @@ public sealed partial class WindowManager
 
     private LayoutOptions ActiveOptions()
     {
-        var screen = MonitorById(FocusedWorkspace().Monitor);
-        if (screen is { Arranged.Enabled: true })
+        if (EnabledMonitor(ShownWorkspace().Monitor) is { } screen)
             return _config.Layout.ScaledBy(screen.Arranged.Scale);
 
         return _config.Layout;

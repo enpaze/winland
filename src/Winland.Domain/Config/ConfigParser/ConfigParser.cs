@@ -52,7 +52,6 @@ public static partial class ConfigParser
             return new ConfigDocument([.. _settings], [.. _binds], [.. _warnings])
             {
                 WindowRules = [.. _windowRules],
-                WorkspaceRules = WorkspaceRule.None,
                 Sources = [.. _sources],
                 Gestures = [.. _gestures],
                 Path = path,

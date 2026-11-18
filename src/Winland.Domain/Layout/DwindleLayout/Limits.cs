@@ -71,7 +71,12 @@ internal sealed partial class DwindleLayout
                 : tile with { Width = tile.Width / 2 };
         }
 
-        return FloatedLimits.Centered(limits, tile, _area);
+        var size = limits.Clamp(new Rectangle(0, 0, tile.Width, tile.Height));
+        return new Rectangle(
+            _area.X + ((_area.Width - size.Width) / 2),
+            _area.Y + ((_area.Height - size.Height) / 2),
+            size.Width,
+            size.Height);
     }
 
     private Rectangle PredictedTile()

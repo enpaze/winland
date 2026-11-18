@@ -21,12 +21,9 @@ public class InstallLocationChoiceTests
     }
 
     [Fact]
-    public void ConfigAndStateShareTheDotWinlandFolder()
+    public void TheConfigIsTheDotWinlandFolder()
     {
-        var profile = @"C:\Users\me";
-
-        Assert.Equal(@"C:\Users\me\.winland", InstallLocations.Config(profile));
-        Assert.Equal(InstallLocations.Config(profile), InstallLocations.State(profile));
+        Assert.Equal(@"C:\Users\me\.winland", InstallLocations.Config(@"C:\Users\me"));
     }
 
     [Fact]

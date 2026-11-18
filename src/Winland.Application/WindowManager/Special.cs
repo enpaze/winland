@@ -2,16 +2,16 @@ namespace Winland.Application;
 
 public sealed partial class WindowManager
 {
-    private LiveWorkspace CurrentWorkspace()
+    private LiveWorkspace TopWorkspace()
     {
         var monitor = FocusedId();
         if (_workspaces.Shown.SpecialOn(monitor) is WorkspaceId special && _workspaces.Find(special) is LiveWorkspace desk)
             return desk;
 
-        return FocusedWorkspace();
+        return ShownWorkspace();
     }
 
-    private LiveWorkspace LayoutWorkspace(WindowId window) => WorkspaceContaining(window) ?? CurrentWorkspace();
+    private LiveWorkspace LayoutWorkspace(WindowId window) => WorkspaceContaining(window) ?? TopWorkspace();
 
     private Outcome ToggleSpecial(string arguments)
     {
@@ -34,7 +34,7 @@ public sealed partial class WindowManager
 
     private void BringFloatingOnto(LiveWorkspace desk, MonitorId monitor)
     {
-        if (MonitorById(monitor) is not { Arranged.Enabled: true } screen)
+        if (EnabledMonitor(monitor) is not { } screen)
             return;
 
         var here = screen.Bounds;
@@ -127,7 +127,7 @@ public sealed partial class WindowManager
     private Outcome CloseSpecial(MonitorId monitor)
     {
         var hidden = ConcealSpecial(monitor);
-        var normal = FocusedWorkspace();
+        var normal = ShownWorkspace();
         return View(
             normal.Layout.Visible(),
             hide: hidden,
@@ -234,56 +234,5 @@ public sealed partial class WindowManager
             if (shown)
                 _workspaces.Shown.ShowSpecial(home.Id, desk.Id);
         }
-    }
-
-    private static void AddSpecialEvents(List<StreamEvent> events, State before, State after)
-    {
-        if (before.Screens.Count == 0 && after.Screens.Count == 0)
-        {
-            if (before.SpecialWorkspace != after.SpecialWorkspace)
-                EmitSpecial(events, after.SpecialWorkspace, "");
-
-            return;
-        }
-
-        var ids = new List<MonitorId>();
-        foreach (var screen in before.Screens)
-        {
-            if (!ids.Contains(screen.Id))
-                ids.Add(screen.Id);
-        }
-
-        foreach (var screen in after.Screens)
-        {
-            if (!ids.Contains(screen.Id))
-                ids.Add(screen.Id);
-        }
-
-        foreach (var id in ids)
-        {
-            var previous = FindMonitorSnapshot(before, id);
-            var next = FindMonitorSnapshot(after, id);
-            if (previous?.SpecialWorkspace == next?.SpecialWorkspace)
-                continue;
-
-            var name = next?.Monitor.Name ?? previous?.Monitor.Name ?? "";
-            EmitSpecial(events, next?.SpecialWorkspace, name);
-        }
-    }
-
-    private static void EmitSpecial(List<StreamEvent> events, WorkspaceId? workspace, string monitor)
-    {
-        events.Add(new ActiveSpecial(workspace, monitor));
-    }
-
-    private static MonitorSnapshot? FindMonitorSnapshot(State state, MonitorId id)
-    {
-        foreach (var screen in state.Screens)
-        {
-            if (screen.Id == id)
-                return screen;
-        }
-
-        return null;
     }
 }

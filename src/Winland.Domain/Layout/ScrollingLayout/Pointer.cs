@@ -1,11 +1,7 @@
 namespace Winland.Domain;
 
-internal sealed partial class ScrollingLayout : IMouseDragHost, IDragOwner
+internal sealed partial class ScrollingLayout : IMouseDragHost
 {
-    private readonly MouseDrag _drag = new();
-
-    MouseDrag IDragOwner.Drag => _drag;
-
     FloatingClients IMouseDragHost.Floating => _floating;
 
     public IReadOnlyList<Placement> Drag(WindowId window, PointerDrag drag)
@@ -14,12 +10,6 @@ internal sealed partial class ScrollingLayout : IMouseDragHost, IDragOwner
             _dragging = false;
 
         return _drag.Step(this, window, drag);
-    }
-
-    public IReadOnlyList<Placement> PlaceFloating(WindowId window, Rectangle bounds)
-    {
-        var id = new ClientId(window.Value);
-        return _floating.Place(id, bounds, _layoutOptions.FloatingOnScreen(_area), FloatingLimits(id)) ? WithFloating(id) : [];
     }
 
     bool IMouseDragHost.LiftTile(ClientId id, out Rectangle box)
@@ -32,7 +22,7 @@ internal sealed partial class ScrollingLayout : IMouseDragHost, IDragOwner
         RemoveCell(cell);
         SetFloating(id, true);
         _floating.Set(id, box);
-        Recalculate();
+        Refit();
         return true;
     }
 
@@ -52,7 +42,7 @@ internal sealed partial class ScrollingLayout : IMouseDragHost, IDragOwner
 
     IReadOnlyList<Placement> IMouseDragHost.EndInPlace()
     {
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -84,7 +74,7 @@ internal sealed partial class ScrollingLayout : IMouseDragHost, IDragOwner
         }
 
         _focus = window;
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -104,9 +94,7 @@ internal sealed partial class ScrollingLayout : IMouseDragHost, IDragOwner
                     return column;
             }
 
-            var dx = pointer.X < box.X ? box.X - pointer.X : pointer.X >= box.X + box.Width ? pointer.X - (box.X + box.Width) : 0;
-            var dy = pointer.Y < box.Y ? box.Y - pointer.Y : pointer.Y >= box.Y + box.Height ? pointer.Y - (box.Y + box.Height) : 0;
-            var distance = (dx * (double)dx) + (dy * (double)dy);
+            var distance = box.DistanceSquared(pointer);
             if (distance < best)
             {
                 best = distance;
@@ -152,13 +140,5 @@ internal sealed partial class ScrollingLayout : IMouseDragHost, IDragOwner
         }
 
         return false;
-    }
-
-    private IReadOnlyList<Placement> WithFloating(ClientId id)
-    {
-        var placements = new List<Placement>(Placements());
-        if (_floating.TryGet(id, out var box))
-            placements.Add(new Placement(id, box));
-        return placements;
     }
 }

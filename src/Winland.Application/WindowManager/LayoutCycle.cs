@@ -8,9 +8,9 @@ public sealed partial class WindowManager
     {
         var name = arguments.Trim();
         if (LayoutFactory.Named(name) is not Layout created)
-            return View([]) with { Error = DidYouMean.After($"error: unknown layout '{name}'", name, LayoutFactory.Names) };
+            return Rejected(DidYouMean.After($"error: unknown layout '{name}'", name, LayoutFactory.Names));
 
-        var desk = CurrentWorkspace();
+        var desk = TopWorkspace();
         return LayoutFactory.NameOf(created) == LayoutFactory.NameOf(desk.Layout)
             ? View([])
             : ChangeLayout(desk, created);
@@ -18,8 +18,8 @@ public sealed partial class WindowManager
 
     private Outcome CycleWorkspaceLayout(string arguments)
     {
-        var desk = CurrentWorkspace();
-        var next = NextLayout(LayoutFactory.NameOf(desk.Layout), GoesBack(arguments));
+        var desk = TopWorkspace();
+        var next = NextLayout(LayoutFactory.NameOf(desk.Layout), Is(FirstToken(arguments), "back"));
         return ChangeLayout(desk, LayoutFactory.Named(next)!);
     }
 
@@ -28,19 +28,7 @@ public sealed partial class WindowManager
         var covered = desk.Covered();
         AdoptLayout(desk, created);
         Refit(desk);
-        return _workspaces.Shown.IsShown(desk.Id)
-            ? Present(desk, covered, desk.Layout.Visible())
-            : View([]);
-    }
-
-    private static bool GoesBack(string arguments)
-    {
-        var word = arguments.Trim();
-        var space = word.IndexOf(' ', StringComparison.Ordinal);
-        if (space >= 0)
-            word = word[..space];
-
-        return Is(word, "back");
+        return PresentIfShown(desk, covered, desk.Layout.Visible());
     }
 
     private static string NextLayout(string current, bool back)
