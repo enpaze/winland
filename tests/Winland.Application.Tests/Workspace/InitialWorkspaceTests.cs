@@ -74,6 +74,20 @@ public class InitialWorkspaceTests
         Assert.AreEqual(new WorkspaceId("4"), WorkspaceOf(opened, 1));
     }
 
+    [TestMethod]
+    public void AnExecOnceWorkspaceBlockOpensTheFirstWindowThereWithoutSwitching()
+    {
+        var core = Loaded("");
+        core.NoteLaunched(500, Assert.ContainsSingle(core.StartupLaunches(ConfigParser.Parse("exec-once = [workspace 3] app\n"))));
+
+        var first = Open(core, window: 1, pid: 500);
+        var second = Open(core, window: 2, pid: 500);
+
+        Assert.AreEqual(new WorkspaceId("3"), WorkspaceOf(first, 1));
+        Assert.AreEqual(new WorkspaceId("1"), WorkspaceOf(second, 2));
+        Assert.AreEqual(new WorkspaceId("1"), second.State.ActiveWorkspace);
+    }
+
     private static WindowManager Loaded(string config)
     {
         var core = new WindowManager();

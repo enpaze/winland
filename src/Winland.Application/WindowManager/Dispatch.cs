@@ -75,7 +75,7 @@ public sealed partial class WindowManager
 
         var launched = View([]);
         return parsed.Launch is Launch launch
-            ? launched with { Launches = [.. launched.Launches, launch with { InitialWorkspace = LaunchWorkspace() }] }
+            ? launched with { Launches = [.. launched.Launches, launch with { InitialWorkspace = parsed.Workspace is long number ? NumberedWorkspace(number) : LaunchWorkspace() }] }
             : launched;
     }
 

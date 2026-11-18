@@ -38,14 +38,34 @@ public class LaunchTests
     }
 
     [TestMethod]
-    public void ARuleBlockWarnsAndDoesNotLaunch()
+    public void AWorkspaceBlockHoldsTheWindowOnThatWorkspace()
     {
-        var dispatched = new WindowManager().Handle(new Dispatch("exec", "[float; size 800 600] kitty"));
-        Assert.IsNull(dispatched.Launch);
-        Assert.AreSequenceEqual([new ConfigWarned(0, "Unsupported rule block.", null)], dispatched.Events.OfType<ConfigWarned>());
+        var dispatched = new WindowManager().Handle(new Dispatch("exec", "[workspace 3] kitty --hold"));
+        Assert.AreEqual(new Launch("kitty --hold", null) { InitialWorkspace = new WorkspaceId("3") }, dispatched.Launch);
 
-        var document = ConfigParser.Parse("exec-once = [float; size 800 600] app\nexec-once = notepad\n");
-        Assert.AreSequenceEqual([new ConfigWarning(1, "Unsupported rule block.")], document.Warnings);
+        var document = ConfigParser.Parse("exec-once = [ workspace  3 ]app\nexec-once = notepad\n");
+        Assert.IsEmpty(document.Warnings);
+        Assert.AreSequenceEqual(
+            [new Launch("app", null) { InitialWorkspace = new WorkspaceId("3") }, new Launch("notepad", null)],
+            new WindowManager().StartupLaunches(document));
+    }
+
+    [TestMethod]
+    [DataRow("[float; size 800 600] kitty")]
+    [DataRow("[workspace 3; float] kitty")]
+    [DataRow("[workspace 3 silent] kitty")]
+    [DataRow("[workspace special:scratch] kitty")]
+    [DataRow("[workspace 0] kitty")]
+    [DataRow("[workspace 3 kitty")]
+    public void AnyOtherRuleBlockWarnsAndDoesNotLaunch(string line)
+    {
+        const string Warning = "Unsupported rule block. Only [workspace N] is supported.";
+        var dispatched = new WindowManager().Handle(new Dispatch("exec", line));
+        Assert.IsNull(dispatched.Launch);
+        Assert.AreSequenceEqual([new ConfigWarned(0, Warning, null)], dispatched.Events.OfType<ConfigWarned>());
+
+        var document = ConfigParser.Parse($"exec-once = {line}\nexec-once = notepad\n");
+        Assert.AreSequenceEqual([new ConfigWarning(1, Warning)], document.Warnings);
         Assert.AreEqual("notepad", Assert.ContainsSingle(new WindowManager().StartupLaunches(document)).CommandLine);
     }
 }
