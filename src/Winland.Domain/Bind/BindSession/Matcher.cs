@@ -172,7 +172,7 @@ public sealed partial class BindSession
         foreach (var bind in binds)
         {
             if (bind.Dispatcher.Length > 0)
-                dispatches.Add(new BindDispatch(bind.Dispatcher, bind.Arguments) { Drag = bind.Flags.HasFlag(BindFlag.Mouse) });
+                dispatches.Add(new BindDispatch(bind.Dispatcher, bind.Arguments));
         }
 
         if (dispatches.Count == 0)

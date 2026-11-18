@@ -4,41 +4,7 @@ public sealed partial class WindowManager
 {
     private string? _resizeCursor;
 
-    private Outcome RunKey(Input input)
-    {
-        var match = _keyState.Decide(_config.Binds, input);
-
-        if (input is KeyPressed pressed && _interaction is null && KeyDrag(match) is { } drag && DragTarget(_pointer) is WindowId window)
-        {
-            var begun = BeginGesture(window, drag, pressed.Key, _pointer!.Value);
-            var ran = RunBind(match) with { Focus = window };
-            return begun.Count == 0 ? ran : ran with { Placements = begun };
-        }
-
-        if (input is KeyPressed && _interaction is null && KeyDrag(match) is not null && OnlyDrag(match))
-            return RunBind(match) with { Consumed = false };
-
-        if (input is KeyReleased released && _interaction is Gesture gesture && gesture.Button.Equals(released.Key, StringComparison.OrdinalIgnoreCase))
-        {
-            var ended = EndGesture(gesture, _pointer ?? gesture.Origin);
-            NoteDragCursor();
-            var after = RunBind(match);
-            return ended.Then(after) with { Consumed = true };
-        }
-
-        return RunBind(match);
-    }
-
-    private static BindDispatch? KeyDrag(BindDecision match)
-    {
-        foreach (var dispatch in DispatchesOf(match))
-        {
-            if (dispatch.Drag && IsDragDispatcher(dispatch))
-                return dispatch;
-        }
-
-        return null;
-    }
+    private Outcome RunKey(Input input) => RunBind(_keyState.Decide(_config.Binds, input));
 
     private Outcome PressPointer(PointerButtonPressed pressed)
     {

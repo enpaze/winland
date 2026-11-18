@@ -224,7 +224,7 @@ public class ConfigTests
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Alt, "Q", "killactive", "", BindFlag.None, null),
+            new Bind(Modifier.Alt, "Q", "killactive", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
@@ -540,8 +540,8 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "Q", "", "", BindFlag.None, null),
-                new Bind(Modifier.None, "Super_L", "", "", BindFlag.None, "Menu"),
+                new Bind(Modifier.Super, "Q", "", "", null),
+                new Bind(Modifier.None, "Super_L", "", "", "Menu"),
             },
             document.Binds);
     }
@@ -557,17 +557,17 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "Q", "killactive", "", BindFlag.None, null),
-                new Bind(Modifier.Super | Modifier.Shift, "code:28", "exec", "notepad --title hello", BindFlag.None, null),
+                new Bind(Modifier.Super, "Q", "killactive", "", null),
+                new Bind(Modifier.Super | Modifier.Shift, "code:28", "exec", "notepad --title hello", null),
             },
             document.Binds);
     }
 
     [TestMethod]
-    public void TheMouseFlagAndADescriptionAreParsed()
+    public void AMouseKeyBindAndADescriptionAreParsed()
     {
         var text =
-            "bindm = SUPER, mouse:272, movewindow\n" +
+            "bind = SUPER, mouse:272, movewindow\n" +
             "bindd = SUPER, Return, Open a terminal, exec, kitty\n";
 
         var document = ConfigParser.Parse(text);
@@ -576,8 +576,8 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "mouse:272", "movewindow", "", BindFlag.Mouse, null),
-                new Bind(Modifier.Super, "Return", "exec", "kitty", BindFlag.None, "Open a terminal"),
+                new Bind(Modifier.Super, "mouse:272", "movewindow", "", null),
+                new Bind(Modifier.Super, "Return", "exec", "kitty", "Open a terminal"),
             },
             document.Binds);
     }
@@ -605,7 +605,7 @@ public class ConfigTests
         var document = ConfigParser.Parse($"bind = {name}, Q, killactive\n");
 
         Assert.AreEqual(
-            new Bind(expected, "Q", "killactive", "", BindFlag.None, null),
+            new Bind(expected, "Q", "killactive", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
@@ -616,7 +616,7 @@ public class ConfigTests
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Super | Modifier.Shift, "Q", "killactive", "", BindFlag.None, null),
+            new Bind(Modifier.Super | Modifier.Shift, "Q", "killactive", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
@@ -664,7 +664,6 @@ public class ConfigTests
             "bind = SUPER, Q\n" +
             "bindzz = SUPER, Q, killactive\n" +
             "bind = FOO, Q, killactive\n" +
-            "bindm = SUPER, mouse:272, movewindow, extra\n" +
             "bind = SUPER, Q, killactive\n";
 
         var document = ConfigParser.Parse(text);
@@ -676,11 +675,10 @@ public class ConfigTests
                 new ConfigWarning(2, "Bind has too few arguments."),
                 new ConfigWarning(3, "Bind flag 'z' is not supported."),
                 new ConfigWarning(4, "Invalid modifier 'FOO'."),
-                new ConfigWarning(5, "Bind has too many arguments."),
             },
             document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Super, "Q", "killactive", "", BindFlag.None, null),
+            new Bind(Modifier.Super, "Q", "killactive", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
@@ -699,9 +697,9 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "Q", "killactive", "", BindFlag.None, null),
+                new Bind(Modifier.Super, "Q", "killactive", "", null),
                 new Unbind(Modifier.Super, "Q"),
-                new Bind(Modifier.Super, "R", "killactive", "", BindFlag.None, null),
+                new Bind(Modifier.Super, "R", "killactive", "", null),
                 new UnbindAll(),
             },
             document.Binds);

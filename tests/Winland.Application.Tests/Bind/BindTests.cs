@@ -211,7 +211,7 @@ public class BindTests
     [TestMethod]
     public void MouseBindFiresOnTheButtonAndNotOnAKey()
     {
-        var core = Load("bindm = SUPER, mouse:272, movewindow\nbind = SUPER, Q, killactive\n");
+        var core = Load("bind = SUPER, mouse:272, movewindow\nbind = SUPER, Q, killactive\n");
         Appear(core, 1);
         Press(core, "Super_L");
 

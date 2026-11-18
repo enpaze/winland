@@ -7,7 +7,4 @@ public readonly record struct BindDecision(bool Consumed, string? Dispatcher, st
     public bool Mask { get; init; }
 }
 
-public readonly record struct BindDispatch(string Dispatcher, string Arguments)
-{
-    public bool Drag { get; init; }
-}
+public readonly record struct BindDispatch(string Dispatcher, string Arguments);

@@ -259,17 +259,6 @@ public sealed partial class KeyboardHook : IDisposable
 
     private Point CursorPoint() => PInvoke.GetCursorPos(out var point) ? new Point(point.X, point.Y) : _session.Pointer;
 
-    private static BindDispatch? KeyDrag(BindDecision decision)
-    {
-        foreach (var dispatch in decision.Dispatches)
-        {
-            if (dispatch.Drag && MouseHook.IsDrag(dispatch.Dispatcher, dispatch.Arguments))
-                return dispatch;
-        }
-
-        return null;
-    }
-
     private bool IsDown(string key)
     {
         if (key.StartsWith("mouse:", StringComparison.Ordinal))

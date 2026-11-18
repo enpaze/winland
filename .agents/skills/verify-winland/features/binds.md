@@ -37,6 +37,6 @@ Preconditions:
 
 - A move after the pointer has been still for half a second does not move focus yet. One pointer move may not focus the Client under it.
 - A context menu or other unmanaged window over a Client keeps focus where it is.
-- A modifier list that names no modifier, or keeps letters after the names are removed, warns `Invalid modifier` and the bind is skipped. A bind flag other than `m` or `d` is skipped too. Check `winland configerrors` when a chord does nothing.
+- A modifier list that names no modifier, or keeps letters after the names are removed, warns `Invalid modifier` and the bind is skipped. A bind flag other than `d` is skipped too. Check `winland configerrors` when a chord does nothing.
 - A key remapper with its own low-level hook, such as PowerToys Keyboard Manager, can change which key Winland sees and which binds run.
 - The driver does not reach `cursor:no_warps`, `cursor:hide_on_key_press`, wheel notches, `input:follow_mouse = false`, keyboard layout switches, or held keys after a desktop switch.
