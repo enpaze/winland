@@ -19,7 +19,7 @@ public class OpacityProbeTests
         var original = ExStyle(probe.Handle);
         Assert.Equal(0u, original & Layered);
 
-        var adapter = new OpacityAdapter(new Win32WindowStyles());
+        var adapter = new OpacityAdapter(new Win32Desktop());
         var window = new WindowId(probe.Handle);
         adapter.Apply(window, 128);
 
@@ -43,7 +43,7 @@ public class OpacityProbeTests
         _ = SetWindowLongPtr(probe.Handle, ExStyleIndex, (nint)withLayer);
         Assert.True(SetLayeredWindowAttributes(probe.Handle, 0, 200, 2));
 
-        var adapter = new OpacityAdapter(new Win32WindowStyles());
+        var adapter = new OpacityAdapter(new Win32Desktop());
         adapter.Apply(new WindowId(probe.Handle), 100);
 
         Assert.Equal(200, LayeredAlpha(probe.Handle));

@@ -1,8 +1,4 @@
 using System.Globalization;
-using System.Runtime.InteropServices;
-using Windows.Win32;
-using Windows.Win32.Foundation;
-using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
@@ -275,77 +271,4 @@ internal sealed class OpacityAdapter
     }
 
     private readonly record struct Original(uint ExStyle, byte Alpha);
-}
-
-internal sealed class Win32WindowStyles : IWindowStyles
-{
-    private const uint ColorKeyFlag = 0x1;
-
-    public bool TryRead(WindowId window, out WindowChrome chrome)
-    {
-        chrome = default;
-        var hwnd = new HWND((nint)window.Value);
-        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
-            return false;
-
-        var exStyle = (uint)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-        var colorKey = false;
-        byte alpha = 255;
-        if ((exStyle & OpacityAdapter.LayeredStyle) != 0)
-            _ = TryReadLayered(hwnd, out colorKey, out alpha);
-
-        chrome = new WindowChrome(exStyle, colorKey, alpha);
-        return true;
-    }
-
-    public bool TryWriteExStyle(WindowId window, uint exStyle)
-    {
-        var hwnd = new HWND((nint)window.Value);
-        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
-            return false;
-
-        Marshal.SetLastPInvokeError(0);
-        var previous = PInvoke.SetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)exStyle);
-        if (previous == 0 && Marshal.GetLastPInvokeError() != 0)
-            return false;
-
-        if ((exStyle & ~(uint)previous) == OpacityAdapter.LayeredStyle)
-            return true;
-
-        _ = PInvoke.SetWindowPos(
-            hwnd,
-            HWND.Null,
-            0,
-            0,
-            0,
-            0,
-            SET_WINDOW_POS_FLAGS.SWP_NOMOVE
-            | SET_WINDOW_POS_FLAGS.SWP_NOSIZE
-            | SET_WINDOW_POS_FLAGS.SWP_NOZORDER
-            | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE
-            | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED);
-        return true;
-    }
-
-    public bool TrySetAlpha(WindowId window, byte alpha)
-    {
-        var hwnd = new HWND((nint)window.Value);
-        if (hwnd.IsNull || !PInvoke.IsWindow(hwnd))
-            return false;
-
-        return PInvoke.SetLayeredWindowAttributes(hwnd, default, alpha, LAYERED_WINDOW_ATTRIBUTES_FLAGS.LWA_ALPHA);
-    }
-
-    private static unsafe bool TryReadLayered(HWND hwnd, out bool colorKey, out byte alpha)
-    {
-        colorKey = false;
-        alpha = 255;
-        Span<byte> value = stackalloc byte[1];
-        if (!PInvoke.GetLayeredWindowAttributes(hwnd, out _, value, out var flags))
-            return false;
-
-        colorKey = ((uint)flags & ColorKeyFlag) != 0;
-        alpha = value[0];
-        return true;
-    }
 }
