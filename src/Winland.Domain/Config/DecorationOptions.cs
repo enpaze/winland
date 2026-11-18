@@ -31,19 +31,16 @@ public sealed record DecorationOptions
 
     internal static OptionSet<DecorationOptions> Options { get; } = new(
     [
-        Of("general:col.active_border", OptionValue.Color, (o, v) => o with { ActiveBorder = v, ActiveBorderSet = true }),
-        Of("general:col.inactive_border", OptionValue.Color, (o, v) => o with { InactiveBorder = v }),
-        Of("decoration:rounding", Radius, (o, v) => o with { Rounding = v }),
-        Of("decoration:blur:enabled", OptionValue.Bool, (o, v) => o with { Blur = v }),
-        Of("decoration:active_opacity", OptionValue.Single(0f, 1f), (o, v) => o with { ActiveOpacity = v }),
-        Of("decoration:inactive_opacity", OptionValue.Single(0f, 1f), (o, v) => o with { InactiveOpacity = v }),
+        Option<DecorationOptions>.Of("general:col.active_border", OptionValue.Color, (o, v) => o with { ActiveBorder = v, ActiveBorderSet = true }),
+        Option<DecorationOptions>.Of("general:col.inactive_border", OptionValue.Color, (o, v) => o with { InactiveBorder = v }),
+        Option<DecorationOptions>.Of("decoration:rounding", Radius, (o, v) => o with { Rounding = v }),
+        Option<DecorationOptions>.Of("decoration:blur:enabled", OptionValue.Bool, (o, v) => o with { Blur = v }),
+        Option<DecorationOptions>.Of("decoration:active_opacity", OptionValue.Single(0f, 1f), (o, v) => o with { ActiveOpacity = v }),
+        Option<DecorationOptions>.Of("decoration:inactive_opacity", OptionValue.Single(0f, 1f), (o, v) => o with { InactiveOpacity = v }),
     ]);
 
     public static DecorationOptions From(ConfigDocument document, HighContrast? contrast = null) =>
         Options.From(
             contrast is HighContrast colors ? Documented with { ActiveBorder = colors.Highlight, InactiveBorder = colors.GrayText } : Documented,
             document);
-
-    private static Option<DecorationOptions> Of<T>(string name, OptionValue<T> value, Func<DecorationOptions, T, DecorationOptions> set) =>
-        Option<DecorationOptions>.Of(name, value, set);
 }

@@ -12,12 +12,9 @@ public sealed record CursorOptions
 
     internal static OptionSet<CursorOptions> Options { get; } = new(
     [
-        Of("cursor:no_warps", OptionValue.Bool, (o, v) => o with { NoWarps = v }),
-        Of("cursor:hide_on_key_press", OptionValue.Bool, (o, v) => o with { HideOnKeyPress = v }),
+        Option<CursorOptions>.Of("cursor:no_warps", OptionValue.Bool, (o, v) => o with { NoWarps = v }),
+        Option<CursorOptions>.Of("cursor:hide_on_key_press", OptionValue.Bool, (o, v) => o with { HideOnKeyPress = v }),
     ]);
 
     public static CursorOptions From(ConfigDocument document) => Options.From(Documented, document);
-
-    private static Option<CursorOptions> Of<T>(string name, OptionValue<T> value, Func<CursorOptions, T, CursorOptions> set) =>
-        Option<CursorOptions>.Of(name, value, set);
 }

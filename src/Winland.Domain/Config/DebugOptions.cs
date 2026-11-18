@@ -8,11 +8,8 @@ public sealed record DebugOptions
 
     internal static OptionSet<DebugOptions> Options { get; } = new(
     [
-        Of("debug:disable_logs", OptionValue.Bool, (o, v) => o with { DisableLogs = v }),
+        Option<DebugOptions>.Of("debug:disable_logs", OptionValue.Bool, (o, v) => o with { DisableLogs = v }),
     ]);
 
     public static DebugOptions From(ConfigDocument document) => Options.From(Documented, document);
-
-    private static Option<DebugOptions> Of<T>(string name, OptionValue<T> value, Func<DebugOptions, T, DebugOptions> set) =>
-        Option<DebugOptions>.Of(name, value, set);
 }
