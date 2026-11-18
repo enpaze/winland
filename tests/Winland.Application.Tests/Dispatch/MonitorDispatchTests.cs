@@ -4,11 +4,11 @@ namespace Winland.Application.Tests;
 public class MonitorDispatchTests
 {
     [TestMethod]
-    public void MoveFocusCrossesOntoTheNeighbouringMonitor()
+    public void FocusCrossesOntoTheNeighbouringMonitor()
     {
         var core = TwoMonitors();
 
-        var outcome = core.Handle(new Dispatch("movefocus", "r"));
+        var outcome = core.Handle(new Dispatch("focus", "r"));
 
         Assert.AreEqual(new WindowId(2), outcome.Focus);
         Assert.AreEqual(new MonitorId(1), outcome.State.ActiveMonitor);
@@ -27,7 +27,7 @@ public class MonitorDispatchTests
     {
         var core = TwoMonitors();
 
-        var outcome = core.Handle(new Dispatch("movewindow", "r"));
+        var outcome = core.Handle(new Dispatch("move", "r"));
 
         Assert.AreEqual(new WindowId(1), outcome.Focus);
         Assert.AreEqual(new MonitorId(1), outcome.State.ActiveMonitor);
@@ -45,18 +45,18 @@ public class MonitorDispatchTests
     }
 
     [TestMethod]
-    public void MoveFocusStillCrossesWhenOuterGapsKeepTheClientInset()
+    public void FocusStillCrossesWhenOuterGapsKeepTheClientInset()
     {
         var core = Gapped();
 
-        var outcome = core.Handle(new Dispatch("movefocus", "r"));
+        var outcome = core.Handle(new Dispatch("focus", "r"));
 
         Assert.AreEqual(new WindowId(2), outcome.Focus);
         Assert.AreEqual(new MonitorId(1), outcome.State.ActiveMonitor);
     }
 
     [TestMethod]
-    public void MoveFocusCrossesToTheTileThatSharesTheEdgeWithDefaultGaps()
+    public void FocusCrossesToTheTileThatSharesTheEdgeWithDefaultGaps()
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 5\ngeneral:gaps_out = 20\ngeneral:border_size = 2\n")));
@@ -68,9 +68,9 @@ public class MonitorDispatchTests
         core.Handle(new WindowAppeared(new WindowId(3), right.WorkArea));
         var opened = core.Handle(new WindowAppeared(new WindowId(4), right.WorkArea));
         Assert.IsTrue(Client(opened, 3).Bounds.Y < Client(opened, 4).Bounds.Y);
-        Assert.AreEqual(new WindowId(1), core.Handle(new Dispatch("focuswindow", "address:0x1")).Focus);
+        Assert.AreEqual(new WindowId(1), core.Handle(new Dispatch("focus", "address:0x1")).Focus);
 
-        var outcome = core.Handle(new Dispatch("movefocus", "r"));
+        var outcome = core.Handle(new Dispatch("focus", "r"));
 
         Assert.AreEqual(new WindowId(3), outcome.Focus);
     }
@@ -78,7 +78,7 @@ public class MonitorDispatchTests
     [TestMethod]
     [DataRow(1, (long)4)]
     [DataRow(2, (long)2)]
-    public void MoveFocusCrossesToAClientWithinAOnePixelGapButNotTwo(int gap, long expected)
+    public void FocusCrossesToAClientWithinAOnePixelGapButNotTwo(int gap, long expected)
     {
         var core = TwoMonitors();
         var left = Display(@"\\.\DISPLAY1", "Dell", Left);
@@ -91,13 +91,13 @@ public class MonitorDispatchTests
         Focus(core, 2);
         Focus(core, 3);
 
-        var outcome = core.Handle(new Dispatch("movefocus", "r"));
+        var outcome = core.Handle(new Dispatch("focus", "r"));
 
         Assert.AreEqual(new WindowId(expected), outcome.Focus);
     }
 
     [TestMethod]
-    public void MoveFocusCrossesToTheMostRecentNeighbor()
+    public void FocusCrossesToTheMostRecentNeighbor()
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n")));
@@ -112,13 +112,13 @@ public class MonitorDispatchTests
         Focus(core, 2);
         Focus(core, 1);
 
-        var outcome = core.Handle(new Dispatch("movefocus", "r"));
+        var outcome = core.Handle(new Dispatch("focus", "r"));
 
         Assert.AreEqual(new WindowId(2), outcome.Focus);
     }
 
     [TestMethod]
-    public void MoveFocusFromAFloatingClientCrossesToAFloatingClientBeforeATile()
+    public void FocusFromAFloatingClientCrossesToAFloatingClientBeforeATile()
     {
         var core = TwoMonitors();
         var left = Display(@"\\.\DISPLAY1", "Dell", Left);
@@ -131,21 +131,21 @@ public class MonitorDispatchTests
         Focus(core, 2);
         Focus(core, 3);
 
-        var outcome = core.Handle(new Dispatch("movefocus", "r"));
+        var outcome = core.Handle(new Dispatch("focus", "r"));
 
         Assert.AreEqual(new WindowId(4), outcome.Focus);
     }
 
     private static void Focus(WindowManager core, long window)
     {
-        core.Handle(new Dispatch("focuswindow", $"address:0x{window:x}"));
+        core.Handle(new Dispatch("focus", $"address:0x{window:x}"));
         core.Handle(new WindowFocused(new WindowId(window)));
     }
 
     private static void Float(WindowManager core, long window, Rectangle bounds)
     {
         Focus(core, window);
-        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new Dispatch("float"));
         var moved = Place(core, window, bounds);
         Assert.AreEqual(bounds, Client(moved, window).Bounds);
     }
@@ -155,7 +155,7 @@ public class MonitorDispatchTests
     {
         var core = Gapped();
 
-        var outcome = core.Handle(new Dispatch("movewindow", "r"));
+        var outcome = core.Handle(new Dispatch("move", "r"));
 
         Assert.AreEqual(WorkspaceId.FromNumber(1, new MonitorId(1)), Client(outcome, 1).Workspace);
         Assert.AreEqual(new MonitorId(1), outcome.State.ActiveMonitor);
@@ -171,7 +171,7 @@ public class MonitorDispatchTests
             general:border_size = 0
             """);
 
-        var outcome = core.Handle(new Dispatch("movewindow", "r"));
+        var outcome = core.Handle(new Dispatch("move", "r"));
 
         Assert.AreEqual(WorkspaceId.FromNumber(1, new MonitorId(1)), Client(outcome, 1).Workspace);
         Assert.AreEqual(new MonitorId(1), outcome.State.ActiveMonitor);
@@ -183,7 +183,7 @@ public class MonitorDispatchTests
     {
         var core = TwoMonitors();
 
-        var right = core.Handle(new Dispatch("focusmonitor", "r"));
+        var right = core.Handle(new Dispatch("focus-monitor", "r"));
         Assert.AreEqual(new WindowId(2), right.Focus);
         Assert.AreEqual(new MonitorId(1), right.State.ActiveMonitor);
         Assert.AreSequenceEqual(
@@ -192,36 +192,42 @@ public class MonitorDispatchTests
             ],
             Lines(right));
 
-        var same = core.Handle(new Dispatch("focusmonitor", "current"));
+        var same = core.Handle(new Dispatch("focus-monitor", "1"));
         Assert.IsNull(same.Error);
         Assert.AreEqual(new MonitorId(1), same.State.ActiveMonitor);
         Assert.IsEmpty(same.Events);
 
-        var left = core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY1"));
+        var left = core.Handle(new Dispatch("focus-monitor", @"\\.\DISPLAY1"));
         Assert.AreEqual(new WindowId(1), left.Focus);
         Assert.AreEqual(new MonitorId(0), left.State.ActiveMonitor);
 
-        var byId = core.Handle(new Dispatch("focusmonitor", "1"));
+        var byId = core.Handle(new Dispatch("focus-monitor", "1"));
         Assert.AreEqual(new MonitorId(1), byId.State.ActiveMonitor);
         Assert.AreEqual(new WindowId(2), byId.Focus);
 
-        var described = core.Handle(new Dispatch("focusmonitor", "desc:Dell"));
+        var described = core.Handle(new Dispatch("focus-monitor", "desc:Dell"));
         Assert.AreEqual(new MonitorId(0), described.State.ActiveMonitor);
 
-        var relative = core.Handle(new Dispatch("focusmonitor", "+1"));
+        var relative = core.Handle(new Dispatch("focus-monitor", "next"));
         Assert.AreEqual(new MonitorId(1), relative.State.ActiveMonitor);
 
-        var missing = core.Handle(new Dispatch("focusmonitor", "missing"));
+        var back = core.Handle(new Dispatch("focus-monitor", "prev"));
+        Assert.AreEqual(new MonitorId(0), back.State.ActiveMonitor);
+
+        var removed = core.Handle(new Dispatch("focus-monitor", "current"));
+        Assert.AreEqual("error: monitor not found", removed.Error);
+
+        var missing = core.Handle(new Dispatch("focus-monitor", "missing"));
         Assert.AreEqual("error: monitor not found", missing.Error);
-        Assert.AreEqual(new MonitorId(1), missing.State.ActiveMonitor);
+        Assert.AreEqual(new MonitorId(0), missing.State.ActiveMonitor);
     }
 
     [TestMethod]
-    public void MoveCurrentWorkspaceFollowsOntoTheOtherMonitor()
+    public void MoveWorkspaceFollowsOntoTheOtherMonitor()
     {
         var core = TwoMonitors();
 
-        var outcome = core.Handle(new Dispatch("movecurrentworkspacetomonitor", "right"));
+        var outcome = core.Handle(new Dispatch("move-workspace", "right"));
 
         Assert.AreEqual(new WindowId(1), outcome.Focus);
         Assert.AreEqual(new MonitorId(1), outcome.State.ActiveMonitor);
@@ -257,7 +263,7 @@ public class MonitorDispatchTests
         core.Handle(new WindowAppeared(new WindowId(4), Left) { Traits = WindowTraits.Normal with { Class = "stick" } });
         core.Handle(new Dispatch("pin"));
 
-        var outcome = core.Handle(new Dispatch("movecurrentworkspacetomonitor", "right"));
+        var outcome = core.Handle(new Dispatch("move-workspace", "right"));
 
         var pinned = Client(outcome, 4);
         Assert.IsTrue(pinned.Pinned);
@@ -273,7 +279,7 @@ public class MonitorDispatchTests
     {
         var core = TwoMonitors();
 
-        var outcome = core.Handle(new Dispatch("movewindow", @"mon:\\.\DISPLAY2"));
+        var outcome = core.Handle(new Dispatch("move", @"mon:\\.\DISPLAY2"));
 
         Assert.AreEqual(new WindowId(1), outcome.Focus);
         Assert.AreEqual(WorkspaceId.FromNumber(1, new MonitorId(1)), Client(outcome, 1).Workspace);
@@ -285,29 +291,29 @@ public class MonitorDispatchTests
     private static readonly Rectangle Right = new(1920, 0, 1920, 1080);
 
     [TestMethod]
-    public void MoveFocusOntoAnotherMonitorMovesTheCursorToTheWindowsMiddle()
+    public void FocusOntoAnotherMonitorMovesTheCursorToTheWindowsMiddle()
     {
         var core = TwoMonitors();
 
-        var moved = core.Handle(new Dispatch("movefocus", "r"));
+        var moved = core.Handle(new Dispatch("focus", "r"));
 
         var target = Client(moved, 2).Bounds;
         Assert.AreEqual(new WarpTo(new Point(target.X + (target.Width / 2), target.Y + (target.Height / 2))), moved.Warp);
     }
 
     [TestMethod]
-    public void NoWarpsKeepsTheCursorWhereItIsOnMoveFocus()
+    public void NoWarpsKeepsTheCursorWhereItIsOnFocus()
     {
         var core = TwoMonitors("cursor:no_warps = true\n");
 
-        var moved = core.Handle(new Dispatch("movefocus", "r"));
+        var moved = core.Handle(new Dispatch("focus", "r"));
 
         Assert.IsNull(moved.Warp);
     }
 
     [TestMethod]
-    [DataRow("bind = SUPER, K, exec, notepad\nbind = SUPER, K, movefocus, r\n")]
-    [DataRow("bind = SUPER, K, movefocus, r\nbind = SUPER, K, exec, notepad\n")]
+    [DataRow("bind = SUPER, K, exec, notepad\nbind = SUPER, K, focus, r\n")]
+    [DataRow("bind = SUPER, K, focus, r\nbind = SUPER, K, exec, notepad\n")]
     public void ABindThatMovesFocusMovesTheCursorWhateverOtherDispatchersItRuns(string config)
     {
         var core = TwoMonitors(config);
@@ -320,11 +326,11 @@ public class MonitorDispatchTests
     }
 
     [TestMethod]
-    public void MoveFocusAnswersNoErrorWhenNothingTakesTheFocus()
+    public void FocusAnswersNoErrorWhenNothingTakesTheFocus()
     {
         var core = TwoMonitors();
 
-        var moved = core.Handle(new Dispatch("movefocus", "l"));
+        var moved = core.Handle(new Dispatch("focus", "l"));
 
         Assert.IsNull(moved.Error);
     }

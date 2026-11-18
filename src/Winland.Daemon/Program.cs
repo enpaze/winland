@@ -136,7 +136,7 @@ static int Run(string? path, RollingLogWriter log)
     core.LogFile = () => log.FilePath;
     ConfigWatcher? watcher = null;
     string? logFile = null;
-    core.AfterReload = document =>
+    core.Reloaded += document =>
     {
         current = document;
         CopyLog(log, core.Debug, logFile);

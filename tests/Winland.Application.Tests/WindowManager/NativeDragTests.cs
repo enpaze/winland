@@ -9,7 +9,7 @@ public class NativeDragTests
         var desk = new TestDesktop();
         var client = desk.Spawn("xdg-interactive");
         var pid = desk.Client("xdg-interactive").GetProperty("pid").GetInt64();
-        desk.Ok("focuswindow", $"pid:{pid}");
+        desk.Ok("focus", $"pid:{pid}");
 
         SetClientGeometry(desk, pid, new Rectangle(300, 300, 500, 400));
 
@@ -65,12 +65,12 @@ public class NativeDragTests
 
     private static void SetClientGeometry(TestDesktop desk, long pid, Rectangle geometry)
     {
-        desk.Ok("focuswindow", $"pid:{pid}");
+        desk.Ok("focus", $"pid:{pid}");
         if (!TestDesktop.Floating(desk.ActiveWindow()))
-            desk.Ok("togglefloating");
+            desk.Ok("float");
 
         desk.Place(desk.ActiveId(), geometry.X, geometry.Y, geometry.Width, geometry.Height);
-        desk.Ok("focuswindow", $"pid:{pid}");
+        desk.Ok("focus", $"pid:{pid}");
         Assert.AreEqual(geometry, ActiveGeometry(desk));
     }
 

@@ -42,7 +42,7 @@ public class StuckModifierTests
     [TestMethod]
     public void EveryHeldModifierReleasePasses()
     {
-        var (core, session) = Load("bind = SUPER CTRL ALT SHIFT, T, killactive");
+        var (core, session) = Load("bind = SUPER CTRL ALT SHIFT, T, close");
         foreach (var key in new[] { "Super_L", "Control_L", "Alt_L", "Shift_L" })
             Assert.IsFalse(core.Decide(new KeyPressed(key), session).Consumed);
 
@@ -60,7 +60,7 @@ public class StuckModifierTests
     [DataRow("SHIFT", "Shift_R")]
     public void ChordWithoutSuperOrAltIsNotMasked(string modifier, string key)
     {
-        var (core, session) = Load($"bind = {modifier}, T, killactive");
+        var (core, session) = Load($"bind = {modifier}, T, close");
         core.Decide(new KeyPressed(key), session);
 
         var t = core.Decide(new KeyPressed("T"), session);
@@ -73,7 +73,7 @@ public class StuckModifierTests
     [TestMethod]
     public void AltChordIsMasked()
     {
-        var (core, session) = Load("bind = ALT, T, killactive");
+        var (core, session) = Load("bind = ALT, T, close");
         core.Decide(new KeyPressed("Alt_R"), session);
 
         Assert.IsTrue(core.Decide(new KeyPressed("T"), session).Mask);
@@ -83,7 +83,7 @@ public class StuckModifierTests
     [TestMethod]
     public void SuperIsMaskedOncePerHold()
     {
-        var (core, session) = Load("bind = SUPER, T, killactive");
+        var (core, session) = Load("bind = SUPER, T, close");
         core.Decide(new KeyPressed("Super_L"), session);
 
         var first = core.Decide(new KeyPressed("T"), session);
@@ -102,7 +102,7 @@ public class StuckModifierTests
     [TestMethod]
     public void SuperAloneIsNotMasked()
     {
-        var (core, session) = Load("bind = SUPER, T, killactive");
+        var (core, session) = Load("bind = SUPER, T, close");
 
         var down = core.Decide(new KeyPressed("Super_L"), session);
         var up = core.Decide(new KeyReleased("Super_L"), session);
@@ -115,7 +115,7 @@ public class StuckModifierTests
     [TestMethod]
     public void MouseChordWithSuperMasksSuperAndPassesItsRelease()
     {
-        var (core, session) = Load("bind = SUPER, mouse:left, movewindow");
+        var (core, session) = Load("bind = SUPER, mouse:left, move");
         core.Decide(new KeyPressed("Super_L"), session);
 
         var down = core.Decide(new PointerButtonPressed("mouse:left") { Position = new Point(0, 0) }, session);
@@ -132,7 +132,7 @@ public class StuckModifierTests
     [TestMethod]
     public void WheelChordWithSuperMasksSuper()
     {
-        var (core, session) = Load("bind = SUPER, mouse_down, workspace, m+1");
+        var (core, session) = Load("bind = SUPER, mouse_down, workspace, next");
         core.Decide(new KeyPressed("Super_L"), session);
 
         var wheel = core.Decide(new WheelTurned("mouse_down", 1000), session);
@@ -145,7 +145,7 @@ public class StuckModifierTests
     [TestMethod]
     public void InhibitedSessionPassesTheModifierRelease()
     {
-        var (core, session) = Load("bind = SUPER, T, killactive");
+        var (core, session) = Load("bind = SUPER, T, close");
         core.Decide(new KeyPressed("Super_L"), session);
         core.Decide(new KeyPressed("T"), session);
         session.Inhibit(true);
@@ -158,7 +158,7 @@ public class StuckModifierTests
     [TestMethod]
     public void ForgetDropsKeysThatAreNoLongerDown()
     {
-        var (core, session) = Load("bind = SUPER, T, killactive");
+        var (core, session) = Load("bind = SUPER, T, close");
         core.Decide(new KeyPressed("Super_L"), session);
         core.Decide(new KeyPressed("T"), session);
 
@@ -171,7 +171,7 @@ public class StuckModifierTests
     [TestMethod]
     public void ForgetKeepsKeysThatAreStillDown()
     {
-        var (core, session) = Load("bind = SUPER, T, killactive");
+        var (core, session) = Load("bind = SUPER, T, close");
         core.Decide(new KeyPressed("Super_L"), session);
 
         session.Forget(key => key == "Super_L");
@@ -182,7 +182,7 @@ public class StuckModifierTests
     [TestMethod]
     public void SuperMouseChordAfterASuperKeyChordIsNotMaskedTwice()
     {
-        var (core, session) = Load("bind = SUPER, F23, killactive\nbind = SUPER, mouse:left, movewindow\n");
+        var (core, session) = Load("bind = SUPER, F23, close\nbind = SUPER, mouse:left, move\n");
         core.Decide(new KeyPressed("Super_L"), session);
 
         var key = core.Decide(new KeyPressed("F23"), session);
@@ -199,7 +199,7 @@ public class StuckModifierTests
     [TestMethod]
     public void ModifierOnlyBindSwallowsBothEdgesAndTheChordsUnderIt()
     {
-        var (core, session) = Load("bind = , Super_L, exec, menu\nbind = SUPER, F23, killactive\n");
+        var (core, session) = Load("bind = , Super_L, exec, menu\nbind = SUPER, F23, close\n");
 
         var down = core.Decide(new KeyPressed("Super_L"), session);
         var chord = core.Decide(new KeyPressed("F23"), session);

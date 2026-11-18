@@ -41,7 +41,7 @@ public class TrayIconTests
         var core = new WindowManager();
         core.Execute("workspace 4");
 
-        var opened = core.Execute("togglespecialworkspace scratch").Effect;
+        var opened = core.Execute("scratchpad scratch").Effect;
 
         Assert.AreEqual(new WorkspaceId("4"), opened.State.ActiveWorkspace);
         Assert.IsNotNull(opened.State.SpecialWorkspace);
@@ -53,9 +53,9 @@ public class TrayIconTests
     {
         var core = TwoMonitors();
         Assert.AreEqual(new WorkspaceId("1"), core.Execute("workspace 1").Effect.State.ActiveWorkspace);
-        Assert.AreEqual("1", core.Execute("focusmonitor LEFT").Effect.Tray!.Number);
+        Assert.AreEqual("1", core.Execute("focus-monitor LEFT").Effect.Tray!.Number);
 
-        var right = core.Execute("focusmonitor RIGHT").Effect;
+        var right = core.Execute("focus-monitor RIGHT").Effect;
 
         Assert.AreEqual(WorkspaceId.FromNumber(1, new MonitorId(1)), right.State.ActiveWorkspace);
         Assert.AreEqual("1", right.Tray!.Number);
@@ -103,7 +103,7 @@ public class TrayIconTests
             new Monitor("LEFT", "Left", 0, 0, 1920, 1080, 1, true, new Rectangle(0, 0, 1920, 1080)),
             new Monitor("RIGHT", "Right", 1920, 0, 1920, 1080, 1, true, new Rectangle(1920, 0, 1920, 1080)),
         ]));
-        core.Execute("focusmonitor LEFT");
+        core.Execute("focus-monitor LEFT");
         return core;
     }
 }

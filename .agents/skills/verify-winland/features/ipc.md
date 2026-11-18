@@ -4,7 +4,7 @@ The `winland` CLI talks to the running Daemon over the IPC pipe. A user runs a D
 
 ## Sub-features
 
-- `action-command` runs a Dispatcher named by the first word with the rest as its arguments and replies `ok`, or `error:` for `resizewindow`, which only a mouse drag runs.
+- `action-command` runs a Dispatcher named by the first word with the rest as its arguments and replies `ok`, or `error:` for `resize` with no argument, which only a mouse drag runs.
 - `unknown-command` prints the usage to standard error and exits 2 for a first word that is no Dispatcher and no other command.
 - `request:get windows` lists the windows Winland manages, or replies `no open windows`.
 - `request:get workspaces` lists the Workspaces.
@@ -36,13 +36,13 @@ Preconditions:
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature ipc`. It prints `== feature ipc: passed`.
 - **Empty replies.** With no window open, `winland get windows` replies `no open windows`, `winland get window` prints nothing and exits 0, and `winland -j get window` replies `null`.
 - **Open a window.** The driver starts `winland -j events` and opens `WinlandVerify 1`. It becomes a Client, and the Event stream holds an `openwindow` JSON object with the window's `address`, with `0x`, and `workspace` id `1`. The new window takes focus, so the stream also holds a `focus` JSON object whose `window` has the window's `address`, `title` `WinlandVerify 1` and `class` `WinlandVerifyWindow`.
-- **Queries.** The driver focuses the window with `winland focuswindow address:<hwnd>`. `winland get windows` names `WinlandVerify 1`, `winland -j get window` reports title `WinlandVerify 1`, `winland -j get workspace` reports `windows` `1` and id `1`, and `winland -j get workspaces` lists id `1`. `winland get window -j` answers as `winland -j get window` does. The window's `monitor` is the Workspace's `monitor` name, and the two replies have exactly the camelCase keys in [IPC pipe](../../../../docs/behavior.md#ipc-pipe).
+- **Queries.** The driver focuses the window with `winland focus address:<hwnd>`. `winland get windows` names `WinlandVerify 1`, `winland -j get window` reports title `WinlandVerify 1`, `winland -j get workspace` reports `windows` `1` and id `1`, and `winland -j get workspaces` lists id `1`. `winland get window -j` answers as `winland -j get window` does. The window's `monitor` is the Workspace's `monitor` name, and the two replies have exactly the camelCase keys in [IPC pipe](../../../../docs/behavior.md#ipc-pipe).
 - **Inspect a Client.** The driver runs `winland -j inspect address:<hwnd>`. It reports `status` `found`, `target` `selector`, `managed` `true` and `class` `WinlandVerifyWindow`.
 - **Inspect by pattern.** The driver runs `winland -j inspect winlandverify*`, a class pattern in lower case, and `winland -j inspect exe:<EXE>`, the driver process's file name in upper case. Each reports the window's address.
 - **Inspect a missing Client.** The driver runs `winland -j inspect title:NoSuchWindow`. It exits 0 and reports `status` `not_found` and `reason` `no_client`.
 - **Malformed selector.** The driver runs `winland inspect pid:abc`. It exits 1, and standard error starts with `error: invalid selector`.
 - **Unknown command.** The driver runs `winland nosuchcommand`, `winland dispatch workspace 2` and `winland clients`. Each exits 2, prints nothing to standard output, and writes the usage, starting `usage: winland`, to standard error.
-- **Drag outside a drag.** The driver runs `winland resizewindow`. It exits 1, and standard error is `error: resizewindow is a drag; bind it to a mouse button`.
+- **Drag outside a drag.** The driver runs `winland resize`. It exits 1, and standard error is `error: resize is a drag; bind it to a mouse button`.
 - **Help.** The driver runs `winland help`, `winland --help` and `winland help -j`. Each exits 0, writes nothing to standard error, and prints an `actions:` line that names `workspace` and `reload`.
 - **Version without a Daemon.** The driver stops Winland. `winland get windows` now exits 1, `winland version` exits 0 with one line, `winland <version> (<commit>)`, and `winland -j version` exits 0 with JSON whose `version` is the same and whose keys are `version`, `commit` and `dirty`.
 

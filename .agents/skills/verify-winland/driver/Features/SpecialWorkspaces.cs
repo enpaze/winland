@@ -14,17 +14,17 @@ public class SpecialWorkspaces
         var (left, right) = run.OpenPair();
 
         run.Focus(right);
-        run.Dispatch("movetoworkspacesilent special");
-        run.Until("movetoworkspacesilent special hides the window on the special workspace", () =>
+        run.Dispatch("move special stay");
+        run.Until("move special stay hides the window on the special workspace", () =>
             !VerifyRun.Visible(right) && run.ClientOf(right).GetProperty("workspace").GetProperty("name").GetString() == "special:special");
 
-        run.Dispatch("togglespecialworkspace");
-        run.Until("togglespecialworkspace shows the special workspace over workspace 1", () => VerifyRun.Visible(right) && VerifyRun.Visible(left));
+        run.Dispatch("scratchpad");
+        run.Until("scratchpad shows the special workspace over workspace 1", () => VerifyRun.Visible(right) && VerifyRun.Visible(left));
         run.UntilEvent("activespecial", "-99,special:special,");
         Assert.AreEqual(1, run.ActiveWorkspace());
 
-        run.Dispatch("togglespecialworkspace");
-        run.Until("togglespecialworkspace again hides it", () => !VerifyRun.Visible(right) && VerifyRun.Visible(left));
+        run.Dispatch("scratchpad");
+        run.Until("scratchpad again hides it", () => !VerifyRun.Visible(right) && VerifyRun.Visible(left));
         run.UntilEvent("activespecial", ">>,,");
     });
 }

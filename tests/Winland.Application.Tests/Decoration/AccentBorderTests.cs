@@ -65,13 +65,13 @@ public class AccentBorderTests
         var core = Configured("");
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
-        core.Execute("togglegroup");
+        core.Execute("group");
 
         var contrasted = core.Handle(new AccentChanged(Accent) { Contrast = Contrast });
         var borders = new[] { Border(contrasted, 1), Border(contrasted, 2) };
         Assert.Contains(Contrast.Highlight, borders);
         Assert.Contains(Contrast.GrayText, borders);
-        var style = Assert.ContainsSingle(core.Execute("resizewindow").Effect.GroupBars).Style;
+        var style = Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style;
         Assert.AreEqual((Contrast.Text, Contrast.Highlight, Contrast.GrayText), (style.TextColor, style.Active, style.Inactive));
 
         var ended = core.Handle(new AccentChanged(Accent));
@@ -84,12 +84,12 @@ public class AccentBorderTests
         var core = Configured("general:col.inactive_border = rgba(aabbccff)\ngroup:groupbar:text_color = rgba(aabbccff)\n");
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
-        core.Execute("togglegroup");
+        core.Execute("group");
 
         var contrasted = core.Handle(new AccentChanged(Accent) { Contrast = Contrast });
 
         Assert.Contains(Chosen, new[] { Border(contrasted, 1), Border(contrasted, 2) });
-        Assert.AreEqual(Chosen, Assert.ContainsSingle(core.Execute("resizewindow").Effect.GroupBars).Style.TextColor);
+        Assert.AreEqual(Chosen, Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style.TextColor);
     }
 
     [TestMethod]
@@ -97,11 +97,11 @@ public class AccentBorderTests
     {
         var core = Configured("");
         core.Handle(Appeared(1, Area));
-        core.Execute("togglegroup");
-        var plain = Assert.ContainsSingle(core.Execute("resizewindow").Effect.GroupBars).Style;
+        core.Execute("group");
+        var plain = Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style;
 
         core.Handle(new AccentChanged(Accent) { TextScale = 1.5 });
-        var larger = Assert.ContainsSingle(core.Execute("resizewindow").Effect.GroupBars).Style;
+        var larger = Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style;
 
         Assert.AreEqual((12, 21), (larger.FontSize, larger.Height));
         Assert.AreEqual(plain.IndicatorHeight, larger.IndicatorHeight);

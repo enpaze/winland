@@ -5,7 +5,7 @@ public class WindowDragTests
 {
     private const string DragOnLeftButton = """
         unbind = SUPER, mouse:left
-        bind = , mouse:left, movewindow
+        bind = , mouse:left, move
         """;
 
     [TestMethod]
@@ -14,7 +14,7 @@ public class WindowDragTests
         var desk = new TestDesktop(DragOnLeftButton);
         desk.Spawn("kitty");
         Assert.ContainsSingle(desk.Clients());
-        desk.Ok("focuswindow", "class:kitty");
+        desk.Ok("focus", "class:kitty");
 
         var (grabX, grabY) = Grab(desk);
         MoveCursor(desk, grabX, grabY);
@@ -34,10 +34,10 @@ public class WindowDragTests
         var desk = new TestDesktop(DragOnLeftButton);
         desk.Spawn("kitty");
         Assert.ContainsSingle(desk.Clients());
-        desk.Ok("focuswindow", "class:kitty");
-        desk.Ok("togglefloating");
+        desk.Ok("focus", "class:kitty");
+        desk.Ok("float");
         desk.Place("kitty", 100, 100, 600, 400);
-        desk.Ok("fullscreen", "0 set");
+        desk.Ok("fullscreen", "on");
 
         var (grabX, grabY) = Grab(desk);
         MoveCursor(desk, grabX, grabY);

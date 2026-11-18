@@ -83,7 +83,7 @@ public class RetitleTests
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "one" } });
-        core.Execute("togglegroup");
+        core.Execute("group");
         core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Title = "two" } });
 
         var retitled = core.Handle(new WindowTitleChanged(new WindowId(1), "renamed"));

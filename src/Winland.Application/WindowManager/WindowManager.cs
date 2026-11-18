@@ -36,7 +36,7 @@ public sealed partial class WindowManager
 
     public SessionPhase? SessionLock { get; set; }
 
-    public Action<ConfigDocument>? AfterReload { get; set; }
+    public event Action<ConfigDocument>? Reloaded;
 
     public WindowManager(ConfigDocument? config = null)
     {
@@ -200,7 +200,7 @@ public sealed partial class WindowManager
 
             try
             {
-                AfterReload?.Invoke(reloaded);
+                Reloaded?.Invoke(reloaded);
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {

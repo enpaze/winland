@@ -84,15 +84,15 @@ public class MonitorIdentityTests
         core.Handle(new WindowAppeared(new WindowId(1), dell.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(2), samsung.WorkArea));
 
-        var focused = core.Handle(new Dispatch("focusmonitor", "desc:SAM S27 XYZ"));
+        var focused = core.Handle(new Dispatch("focus-monitor", "desc:SAM S27 XYZ"));
         Assert.AreEqual(new MonitorId(1), focused.State.ActiveMonitor);
 
-        var numbered = core.Handle(new Dispatch("focusmonitor", "desc:friendly"));
+        var numbered = core.Handle(new Dispatch("focus-monitor", "desc:friendly"));
         Assert.AreEqual("error: monitor not found", numbered.Error);
 
         var duplicate = Panel(@"\\.\DISPLAY3", "SAM", "S27", "XYZ", 3840);
         var both = core.Handle(new MonitorsChanged([dell, samsung, duplicate]));
-        var byNumber = core.Handle(new Dispatch("focusmonitor", "desc:SAM S27 XYZ #2"));
+        var byNumber = core.Handle(new Dispatch("focus-monitor", "desc:SAM S27 XYZ #2"));
         Assert.AreEqual(
             Assert.ContainsSingle(screen => screen.Monitor.Name == @"\\.\DISPLAY3", both.State.Screens).Id,
             byNumber.State.ActiveMonitor);

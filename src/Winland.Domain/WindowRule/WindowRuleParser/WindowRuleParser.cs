@@ -185,15 +185,9 @@ internal static partial class WindowRuleParser
                 effect = WindowRuleEffect.Pin;
                 break;
             case "workspace":
-                if (argument is null)
+                if (!WorkspaceAddress.TryParseRule(argument, out _, out _))
                 {
                     error = "Malformed window rule.";
-                    return false;
-                }
-
-                if (WorkspaceAddress.IsNamed(argument))
-                {
-                    error = "Named workspaces are not supported.";
                     return false;
                 }
 

@@ -208,9 +208,9 @@ public class PlacementRuleTests
     }
 
     [TestMethod]
-    public void SilentMonitorOpensTheWindowThereWithoutFocusingIt()
+    public void MonitorRuleWithStayOpensTheWindowThereWithoutFocusingIt()
     {
-        var core = Monitors("windowrule = monitor desc:Samsung silent, class:box\n");
+        var core = Monitors("windowrule = monitor desc:Samsung stay, class:box\n");
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), Left) { Traits = WindowTraits.Normal with { Class = "box" } });
 

@@ -64,9 +64,9 @@ public class Ipc
             Assert.StartsWith("usage: winland", unknown.Error, StringComparison.Ordinal);
         }
 
-        var drag = run.Cli("resizewindow");
+        var drag = run.Cli("resize");
         Assert.AreEqual(1, drag.ExitCode);
-        Assert.AreEqual("error: resizewindow is a drag; bind it to a mouse button", drag.Error.Trim());
+        Assert.AreEqual("error: resize is a drag; bind it to a mouse button", drag.Error.Trim());
         foreach (var help in new[] { run.Cli("help"), run.Cli("--help"), run.Cli("help", "-j") })
         {
             Assert.AreEqual(0, help.ExitCode);

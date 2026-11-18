@@ -105,7 +105,7 @@ public class NativeResizeTests
     {
         var core = Flat("");
         Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new Dispatch("float"));
 
         var started = core.Handle(new WindowSizeStarted(new WindowId(1), new Point(900, 700)));
         var ended = core.Handle(new WindowSizeEnded(new WindowId(1), new Point(950, 750)));

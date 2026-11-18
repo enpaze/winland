@@ -42,7 +42,7 @@ public sealed partial class WindowManager
         if (!dispatcher.AllowsComma && arguments.Contains(',', StringComparison.Ordinal))
             return Rejected("error: " + name + " does not take a comma");
 
-        return dispatcher.Run(this, name, arguments) with { Traits = dispatcher.Traits };
+        return dispatcher.Run(this, arguments);
     }
 
     private Outcome Rejected(string error) =>
@@ -50,8 +50,11 @@ public sealed partial class WindowManager
 
     private Outcome WorkspaceDispatch(string arguments)
     {
-        if (!WorkspaceAddress.TryResolve(arguments, Context(), out var target))
-            return View([]) with { Error = WorkspaceAddress.IsNamed(arguments) ? "error: no such workspace" : null };
+        if (!WorkspaceAddress.TryParse(arguments, out var address))
+            return Rejected("error: no such workspace");
+
+        if (address.Resolve(Context()) is not WorkspaceId target)
+            return View([]);
 
         if (target.IsSpecial)
             return OpenSpecial(target, null);
@@ -79,7 +82,7 @@ public sealed partial class WindowManager
             : launched;
     }
 
-    private Outcome KillActive()
+    private Outcome CloseActive()
     {
         var active = ActiveWindow();
         var desk = TopWorkspace();
@@ -95,13 +98,20 @@ public sealed partial class WindowManager
         return Present(desk, covered, placements);
     }
 
-    private Outcome LayoutMessage(string message)
+    private Outcome LayoutMessage(string message) =>
+        LayoutChange(layout => layout.LayoutMessage(ActiveWindow(), message));
+
+    private Outcome Split() =>
+        TopWorkspace().Layout is DwindleLayout dwindle
+            ? LayoutChange(_ => dwindle.ToggleSplit(ActiveWindow()))
+            : Rejected("error: split works in the dwindle layout");
+
+    private Outcome LayoutChange(Func<Layout, IReadOnlyList<Placement>> change)
     {
-        var active = ActiveWindow();
         var desk = TopWorkspace();
         var layout = desk.Layout;
         var covered = desk.Covered();
-        var placements = layout.LayoutMessage(active, message);
+        var placements = change(layout);
         if (layout.LayoutMessageError is string layoutError)
             return View(placements) with { Error = layoutError };
 
@@ -113,8 +123,5 @@ public sealed partial class WindowManager
 
         return Present(desk, covered, placements, focus: focus, focusRevealed: focus is null);
     }
-
-    private static string Join(string name, string arguments) =>
-        arguments.Length == 0 ? name : string.Concat(name, " ", arguments);
 
 }

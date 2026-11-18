@@ -6,7 +6,7 @@ public class PassMouseWhenBoundTests
     [TestMethod]
     public void ABoundButtonIsSwallowedByDefault()
     {
-        var core = Loaded("bind = SUPER, mouse:middle, killactive\n");
+        var core = Loaded("bind = SUPER, mouse:middle, close\n");
         var session = new BindSession();
         core.Decide(new KeyPressed("Super_L"), session);
 
@@ -14,7 +14,7 @@ public class PassMouseWhenBoundTests
         var released = core.Decide(new PointerButtonReleased("mouse:middle"), session);
 
         Assert.IsTrue(pressed.Consumed);
-        Assert.AreEqual("killactive", pressed.Dispatcher);
+        Assert.AreEqual("close", pressed.Dispatcher);
         Assert.IsTrue(released.Consumed);
     }
 

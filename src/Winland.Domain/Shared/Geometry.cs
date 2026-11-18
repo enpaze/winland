@@ -38,12 +38,8 @@ internal static class Sides
         ("right", Side.Right),
         ("u", Side.Up),
         ("up", Side.Up),
-        ("t", Side.Up),
-        ("top", Side.Up),
         ("d", Side.Down),
         ("down", Side.Down),
-        ("b", Side.Down),
-        ("bottom", Side.Down),
     ];
 
     public static bool TryParse(string text, out Side side)

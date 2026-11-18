@@ -27,7 +27,7 @@ public class ConfigSyntaxTests
     [DataRow("SUPERunknown")]
     public void UnrecognisedLettersInModifiersDropTheBind(string modifiers)
     {
-        var document = ConfigParser.Parse($"bind = {modifiers}, Q, killactive\n");
+        var document = ConfigParser.Parse($"bind = {modifiers}, Q, close\n");
 
         Assert.ContainsSingle(document.Warnings);
         Assert.IsEmpty(document.Binds);
@@ -40,7 +40,7 @@ public class ConfigSyntaxTests
     [DataRow("CONTROLALT")]
     public void ModifierNamesStillAllowSeparatorsAndConcatenation(string modifiers)
     {
-        var document = ConfigParser.Parse($"bind = {modifiers}, Q, killactive\n");
+        var document = ConfigParser.Parse($"bind = {modifiers}, Q, close\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.ContainsSingle(document.Binds);
@@ -56,7 +56,7 @@ public class ConfigSyntaxTests
     [DataRow("u")]
     public void UnsupportedBindFlagsSayTheyAreNotSupported(string flag)
     {
-        var document = ConfigParser.Parse($"bind{flag} = SUPER, Q, killactive\n");
+        var document = ConfigParser.Parse($"bind{flag} = SUPER, Q, close\n");
 
         Assert.Contains("not supported", Assert.ContainsSingle(document.Warnings).Message);
         Assert.IsEmpty(document.Binds);
@@ -65,7 +65,7 @@ public class ConfigSyntaxTests
     [TestMethod]
     public void AnUnknownBindFlagWarnsAndTheBindBesideItStillApplies()
     {
-        var document = ConfigParser.Parse("bindp = SUPER, Q, killactive\nbind = SUPER, L, resizeactive, 10 0\n");
+        var document = ConfigParser.Parse("bindp = SUPER, Q, close\nbind = SUPER, L, resize, 10 0\n");
 
         var warning = Assert.ContainsSingle(document.Warnings);
         Assert.AreEqual(1, warning.Line);
@@ -250,7 +250,7 @@ public class ConfigSyntaxTests
     [TestMethod]
     public void SourceGlobInTheConfigFolderDoesNotReadTheConfigAgain()
     {
-        const string root = "bind = SUPER, Q, killactive\nsource = C:/cfg/*.conf\n";
+        const string root = "bind = SUPER, Q, close\nsource = C:/cfg/*.conf\n";
         var source = new MemorySource(new Dictionary<string, string>
         {
             [@"C:\cfg\colors.conf"] = "general:gaps_in = 1\n",
@@ -271,7 +271,7 @@ public class ConfigSyntaxTests
     [DataRow(@"C:\cfg\sub\..\winland.conf")]
     public void SourceNamingTheConfigItselfWarns(string named)
     {
-        var root = $"bind = SUPER, Q, killactive\nsource = {named}\n";
+        var root = $"bind = SUPER, Q, close\nsource = {named}\n";
         var source = new MemorySource(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.GetFullPath(Path.Combine(@"C:\cfg", named))] = root,

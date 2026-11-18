@@ -90,7 +90,7 @@ public sealed partial class WindowManager
         var begin = swipe.Begin;
 
         if (SwipeRank(right) <= SwipeRank(begin))
-            right = Resolve("r+1", swipe.Monitor);
+            right = NumberAfter(swipe.Monitor);
 
         _workspaceSwipe = null;
         if (SwipeOvertaken(swipe))
@@ -113,11 +113,17 @@ public sealed partial class WindowManager
 
     private (WorkspaceId? Left, WorkspaceId? Right) Neighbours(MonitorId monitor)
     {
-        return (Resolve("m-1", monitor), Resolve("m+1", monitor));
+        var context = Context(monitor);
+        return (new WorkspaceAddress(WorkspaceStep.Prev).Resolve(context), new WorkspaceAddress(WorkspaceStep.Next).Resolve(context));
     }
 
-    private WorkspaceId? Resolve(string address, MonitorId monitor) =>
-        WorkspaceAddress.TryResolve(address, Context(monitor), out var id) ? id : null;
+    private WorkspaceId? NumberAfter(MonitorId monitor)
+    {
+        var active = Context(monitor).Active;
+        return active.TryGetNumber(out var number) && number < WorkspaceId.MaxNumber
+            ? WorkspaceId.FromNumber(number + 1L, new MonitorId(active.Monitor))
+            : null;
+    }
 
     private long SwipeRank(WorkspaceId? id)
     {

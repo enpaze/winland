@@ -176,7 +176,7 @@ public class DecorationTests
             general:col.inactive_border = rgba(0000ffff)
             decoration:rounding = 0
             """));
-        core.AfterReload = _ => notified = true;
+        core.Reloaded += _ => notified = true;
 
         var reply = core.Execute("reload");
 
@@ -220,7 +220,7 @@ public class DecorationTests
         Assert.AreEqual(Active, For(placed, 1).Border);
         Assert.AreEqual(Inactive, For(placed, 2).Border);
 
-        var moved = core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY2"));
+        var moved = core.Handle(new Dispatch("focus-monitor", @"\\.\DISPLAY2"));
 
         Assert.AreEqual(Inactive, For(moved, 1).Border);
         Assert.AreEqual(Active, For(moved, 2).Border);

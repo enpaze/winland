@@ -13,14 +13,14 @@ public class BindLayoutTests
     [DataRow("1", "ampersand", 10)]
     public void BindsAlsoMatchThePhysicalKeyInTheConfigLayout(string bound, string activeName, int code)
     {
-        var table = BindTable.From(ConfigParser.Parse($"bind = SUPER, {bound}, killactive\n", layout: ConfigLayout));
+        var table = BindTable.From(ConfigParser.Parse($"bind = SUPER, {bound}, close\n", layout: ConfigLayout));
         var session = new BindSession();
         session.Decide(table, new KeyPressed("Super_L"));
 
         var pressed = session.Decide(table, new KeyPressed(activeName) { ScanCode = code });
         var released = session.Decide(table, new KeyReleased(activeName) { ScanCode = code });
 
-        Assert.AreEqual("killactive", pressed.Dispatcher);
+        Assert.AreEqual("close", pressed.Dispatcher);
         Assert.IsTrue(pressed.Consumed);
         Assert.IsTrue(released.Consumed);
     }

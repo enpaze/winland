@@ -280,8 +280,7 @@ public sealed class MouseHook : IDisposable
     }
 
     internal static bool IsDrag(string dispatcher, string arguments) =>
-        (dispatcher.Equals("movewindow", StringComparison.OrdinalIgnoreCase) && arguments.Length == 0)
-        || dispatcher.Equals("resizewindow", StringComparison.OrdinalIgnoreCase);
+        new BindDispatch(dispatcher, arguments).IsDrag;
 
     internal static bool TryButton(uint message, uint mouseData, out string button, out bool up)
     {

@@ -54,7 +54,7 @@ public class FloatingLayerTests
         core.Handle(new WindowFocused(new WindowId(1)));
 
         Assert.IsEmpty(core.Handle(new WindowFocused(new WindowId(1))).ZOrder);
-        Assert.IsEmpty(core.Execute("resizewindow").Effect.ZOrder);
+        Assert.IsEmpty(core.Execute("resize").Effect.ZOrder);
     }
 
     [TestMethod]
@@ -65,8 +65,8 @@ public class FloatingLayerTests
         Open(core, 2, "float a");
         Open(core, 3, "float b");
         Open(core, 4, "float c");
-        core.Execute("focuswindow address:0x4");
-        core.Execute("movetoworkspacesilent 2");
+        core.Execute("focus address:0x4");
+        core.Execute("move 2 stay");
 
         Assert.AreSequenceEqual([new WindowId(2), new WindowId(3)], core.FloatingAbove(new WindowId(1)));
         Assert.IsEmpty(core.FloatingAbove(new WindowId(2)));
@@ -78,8 +78,8 @@ public class FloatingLayerTests
     {
         var core = Desk();
         Open(core, 2, "float a");
-        core.Execute("focuswindow address:0x2");
-        core.Execute("movetoworkspacesilent 2");
+        core.Execute("focus address:0x2");
+        core.Execute("move 2 stay");
         Open(core, 1, "tile");
         core.Handle(new WindowFocused(new WindowId(2)));
 

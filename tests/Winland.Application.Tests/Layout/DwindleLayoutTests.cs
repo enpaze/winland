@@ -10,14 +10,14 @@ public class DwindleLayoutTests
         foreach (var name in new[] { "a", "b", "c" })
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:c");
-        desk.Ok("focuswindow", "class:c");
-        desk.Ok("togglefloating");
+        desk.Ok("focus", "class:c");
+        desk.Ok("focus", "class:c");
+        desk.Ok("float");
         desk.Place("c", 360, 90, 1200, 900);
-        desk.Ok("focuswindow", "class:c");
-        desk.Ok("togglefloating");
-        desk.Ok("focuswindow", "class:c");
-        desk.Ok("togglefloating");
+        desk.Ok("focus", "class:c");
+        desk.Ok("float");
+        desk.Ok("focus", "class:c");
+        desk.Ok("float");
 
         Assert.AreEqual("1200,900", desk.PlaceOf("c").Size);
     }
@@ -30,12 +30,12 @@ public class DwindleLayoutTests
         var desk = new TestDesktop();
         desk.Spawn("a");
         desk.Spawn("b");
-        desk.Ok("focuswindow", "class:a");
-        desk.Ok("togglefloating");
+        desk.Ok("focus", "class:a");
+        desk.Ok("float");
         desk.MovePointer(x, 540);
 
-        desk.Ok("focuswindow", "class:a");
-        desk.Ok("togglefloating");
+        desk.Ok("focus", "class:a");
+        desk.Ok("float");
 
         Assert.AreEqual(left, desk.Placed("a").X < desk.Placed("b").X);
     }
@@ -45,30 +45,30 @@ public class DwindleLayoutTests
     [DataRow("a", "100 0", 100, 0)]
     [DataRow("b", "-100 0", -100, 0)]
     [DataRow("b", "100 0", 100, 0)]
-    public void DwindleResizeActiveChangesTheActiveTilesOwnSize(string active, string delta, int width, int height)
+    public void DwindleResizeChangesTheActiveTilesOwnSize(string active, string delta, int width, int height)
     {
         var desk = new TestDesktop();
         desk.Spawn("a");
         desk.Spawn("b");
-        desk.Ok("focuswindow", $"class:{active}");
+        desk.Ok("focus", $"class:{active}");
         var before = desk.Placed(active);
 
-        desk.Ok("resizeactive", delta);
+        desk.Ok("resize", delta);
 
         var after = desk.Placed(active);
         Assert.AreEqual((width, height), (after.Width - before.Width, after.Height - before.Height));
     }
 
     [TestMethod]
-    public void DwindleResizeActiveExactGivesASecondTileThatSize()
+    public void DwindleResizeExactGivesASecondTileThatSize()
     {
         var desk = new TestDesktop();
         desk.Spawn("a");
         desk.Spawn("b");
-        desk.Ok("focuswindow", "class:b");
+        desk.Ok("focus", "class:b");
         var height = desk.Placed("b").Height;
 
-        desk.Ok("resizeactive", "exact 600 " + height);
+        desk.Ok("resize", "exact 600 " + height);
 
         Assert.AreEqual(600, desk.Placed("b").Width);
     }
@@ -80,13 +80,13 @@ public class DwindleLayoutTests
         foreach (var name in new[] { "a", "b", "c" })
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:c");
+        desk.Ok("focus", "class:c");
         desk.ExpectActive("967,547", "931,511");
 
-        desk.Ok("movewindow", "l");
+        desk.Ok("move", "l");
         desk.ExpectActive("22,547", "931,511");
 
-        desk.Ok("movewindow", "r");
+        desk.Ok("move", "r");
         desk.ExpectActive("967,547", "931,511");
     }
 
@@ -96,13 +96,13 @@ public class DwindleLayoutTests
         var desk = new TestDesktop();
         desk.Spawn("a");
 
-        Assert.AreNotEqual("ok", desk.Dispatch("layoutmsg", "togglesplit"));
+        Assert.AreNotEqual("ok", desk.Dispatch("split"));
 
         desk.Spawn("b");
-        desk.Ok("focuswindow", "class:a");
+        desk.Ok("focus", "class:a");
         desk.ExpectActive("22,22", "931,1036");
 
-        desk.Ok("layoutmsg", "togglesplit");
+        desk.Ok("split");
         desk.ExpectActive("22,22", "1876,511");
     }
 
@@ -115,8 +115,8 @@ public class DwindleLayoutTests
         desk.Spawn("c");
         var before = new[] { desk.Placed("a"), desk.Placed("b"), desk.Placed("c") };
 
-        desk.Ok("focuswindow", "class:a");
-        desk.Dispatch("movewindow", "l");
+        desk.Ok("focus", "class:a");
+        desk.Dispatch("move", "l");
 
         Assert.AreSequenceEqual(before, new[] { desk.Placed("a"), desk.Placed("b"), desk.Placed("c") });
     }
@@ -127,11 +127,11 @@ public class DwindleLayoutTests
         var desk = new TestDesktop();
         desk.Spawn("a");
         desk.Spawn("b");
-        desk.Ok("layoutmsg", "togglesplit");
+        desk.Ok("split");
 
         var b = desk.ActivePlace();
-        desk.Ok("focuswindow", "class:a");
-        desk.Ok("movewindow", "d");
+        desk.Ok("focus", "class:a");
+        desk.Ok("move", "d");
 
         Assert.AreEqual(b, desk.ActivePlace());
     }
@@ -144,17 +144,17 @@ public class DwindleLayoutTests
         desk.Spawn("kitty_A");
         desk.Spawn("kitty_B");
 
-        desk.Ok("focuswindow", "class:kitty_A");
-        desk.Ok("fullscreen", "0 set");
+        desk.Ok("focus", "class:kitty_A");
+        desk.Ok("fullscreen", "on");
         ExpectFullscreen(desk, 2);
 
-        desk.Ok("fullscreen", "0 unset");
+        desk.Ok("fullscreen", "off");
         ExpectFullscreen(desk, 0);
 
-        desk.Ok("fullscreen", "1 toggle");
+        desk.Ok("maximize");
         ExpectFullscreen(desk, 1);
 
-        desk.Ok("fullscreen", "1 toggle");
+        desk.Ok("maximize");
         ExpectFullscreen(desk, 0);
     }
 
@@ -165,8 +165,8 @@ public class DwindleLayoutTests
         foreach (var name in new[] { "one", "two", "three" })
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:one");
-        desk.Ok("fullscreen", "1");
+        desk.Ok("focus", "class:one");
+        desk.Ok("maximize");
         desk.ExpectActive("22,22", "1876,1036");
         Assert.AreEqual("one", desk.ActiveClass());
 
@@ -180,7 +180,7 @@ public class DwindleLayoutTests
     {
         var desk = new TestDesktop();
         desk.Spawn("kitty_A");
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
         ExpectFullscreen(desk, 2);
         Assert.AreEqual("kitty_A", desk.ActiveClass());
 
@@ -196,7 +196,7 @@ public class DwindleLayoutTests
         desk.Spawn("kitty_A");
         desk.Spawn("kitty_B");
 
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
         ExpectFullscreen(desk, 2);
 
         desk.CloseActive();
@@ -211,11 +211,11 @@ public class DwindleLayoutTests
         foreach (var name in names)
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:red");
+        desk.Ok("focus", "class:red");
         ExpectUnmovedByMaximize(desk, names);
 
-        desk.Ok("focuswindow", "class:red");
-        desk.Ok("togglefloating");
+        desk.Ok("focus", "class:red");
+        desk.Ok("float");
         ExpectUnmovedByMaximize(desk, names);
     }
 
@@ -227,12 +227,12 @@ public class DwindleLayoutTests
         desk.Spawn("fs");
         desk.Spawn("normal2");
 
-        desk.Ok("focuswindow", "class:fs");
-        desk.Ok("fullscreen", "0 set");
+        desk.Ok("focus", "class:fs");
+        desk.Ok("fullscreen", "on");
 
         foreach (var direction in new[] { "r", "l", "u", "d" })
         {
-            desk.Ok("movefocus", direction);
+            desk.Ok("focus", direction);
             Assert.AreEqual("fs", desk.ActiveClass());
             ExpectFullscreen(desk, 2);
         }
@@ -241,16 +241,16 @@ public class DwindleLayoutTests
     [TestMethod]
     public void DwindleFloatingOntopFullscreenWorkspaceFocusRetention()
     {
-        foreach (var mode in new[] { "0", "1" })
+        foreach (var mode in new[] { "fullscreen", "maximize" })
         {
             var desk = new TestDesktop("windowrule = float, class:kitty_floated\n");
             desk.Ok("workspace", "1");
             desk.Spawn("kitty_tiled");
 
-            desk.Ok("fullscreen", mode + " set");
+            desk.Ok(mode, "on");
             Assert.AreEqual("kitty_tiled", desk.ActiveClass());
             Assert.IsFalse(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, mode == "0" ? 2 : 1);
+            ExpectFullscreen(desk, mode == "fullscreen" ? 2 : 1);
 
             desk.Spawn("kitty_floated");
             Assert.AreEqual("kitty_floated", desk.ActiveClass());
@@ -278,9 +278,9 @@ public class DwindleLayoutTests
     private static void ExpectUnmovedByMaximize(TestDesktop desk, string[] names)
     {
         var before = names.ToDictionary(name => name, desk.PlaceOf);
-        desk.Ok("focuswindow", "class:red");
-        desk.Ok("fullscreen", "1");
-        desk.Ok("fullscreen", "1");
+        desk.Ok("focus", "class:red");
+        desk.Ok("maximize");
+        desk.Ok("maximize");
         foreach (var name in names)
             Assert.AreEqual(before[name], desk.PlaceOf(name));
     }

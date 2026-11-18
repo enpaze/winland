@@ -2,16 +2,15 @@ namespace Winland.Application;
 
 public sealed partial class WindowManager
 {
-    private Outcome FullscreenDispatcher(string arguments)
+    private Outcome FullscreenDispatcher(FullscreenMode mode, string arguments)
     {
-        var parsed = FullscreenCommands.Parse(arguments);
-        if (parsed.Ignored)
-            return View([]);
+        if (FullscreenCommands.Parse(arguments) is not FullscreenParse parsed)
+            return Rejected("error: " + (mode == FullscreenMode.Maximized ? "maximize" : "fullscreen") + " takes on, off or default");
 
         if (ActiveWindow() is not WindowId window || WorkspaceContaining(window) is not LiveWorkspace desk || desk.ClientOf(window) is not Client client)
             return Rejected("error: window not found");
 
-        if (!FullscreenCommands.Changed(client.Fullscreen, parsed.Mode, parsed.Action, out var next))
+        if (!FullscreenCommands.Changed(client.Fullscreen, mode, parsed.Action, out var next))
             return View([]);
 
         return CommitFullscreen(window, next, parsed.LayoutAware);

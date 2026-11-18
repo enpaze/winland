@@ -11,14 +11,14 @@ internal static class MonitorSelector
             return null;
 
         text = text.Trim();
-        if (text.Equals("current", StringComparison.OrdinalIgnoreCase))
-            return current;
-
         if (Sides.TryParse(text, out var direction))
             return current is MonitorTarget origin ? InDirection(monitors, origin, direction) : null;
 
-        if (text[0] is '+' or '-')
-            return Relative(text, monitors, current);
+        if (text.Equals("next", StringComparison.OrdinalIgnoreCase))
+            return Step(monitors, current, 1);
+
+        if (text.Equals("prev", StringComparison.OrdinalIgnoreCase))
+            return Step(monitors, current, -1);
 
         if (int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id))
             return ById(monitors, id);
@@ -88,40 +88,19 @@ internal static class MonitorSelector
         return closest;
     }
 
-    private static MonitorTarget? Relative(string text, IReadOnlyList<MonitorTarget> monitors, MonitorTarget? current)
+    private static MonitorTarget Step(IReadOnlyList<MonitorTarget> monitors, MonitorTarget? current, int step)
     {
-        if (monitors.Count == 1)
-            return monitors[0];
-
-        var offsetText = text[0] == '-' ? text : text[1..];
-        if (!int.TryParse(offsetText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var offset))
-            return null;
-
-        var size = monitors.Count;
-        offset = offset < 0 ? -((-offset) % size) : offset % size;
         var place = 0;
-        if (current is MonitorTarget origin)
+        for (var i = 0; i < monitors.Count; i++)
         {
-            for (var i = 0; i < monitors.Count; i++)
+            if (current is MonitorTarget origin && monitors[i].Id == origin.Id)
             {
-                if (monitors[i].Id == origin.Id)
-                {
-                    place = i;
-                    break;
-                }
+                place = i;
+                break;
             }
         }
 
-        place += offset;
-        if (place < 0)
-            place += size;
-        else
-            place %= size;
-
-        if (place < 0 || place >= size)
-            place = Math.Clamp(place, 0, size - 1);
-
-        return monitors[place];
+        return monitors[(place + step + monitors.Count) % monitors.Count];
     }
 
     private static MonitorTarget? ById(IReadOnlyList<MonitorTarget> monitors, int id)

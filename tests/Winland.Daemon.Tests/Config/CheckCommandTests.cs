@@ -13,7 +13,7 @@ public sealed class CheckCommandTests : IDisposable
     public void AConfigAndItsSourcesWithNoWarningsPass()
     {
         var path = Write("winland.conf", "source = binds.conf\ngeneral:gaps_in = 4\n");
-        Write("binds.conf", "bind = SUPER, Q, killactive\n");
+        Write("binds.conf", "bind = SUPER, Q, close\n");
 
         var (exit, error) = Check(path);
 
@@ -31,13 +31,13 @@ public sealed class CheckCommandTests : IDisposable
             ghostkeyword = 1
             exec-once = cmd.exe /c type nul > "{marker}"
             """);
-        var binds = Write("binds.conf", "bind = SUPER, Q, killactiv\nbind = SUPER, W, killactive\n");
+        var binds = Write("binds.conf", "bind = SUPER, Q, closs\nbind = SUPER, W, close\n");
 
         var (exit, error) = Check(path);
 
         Assert.AreEqual(1, exit);
         Assert.AreEqual(
-            $"{binds}:1: Unknown dispatcher 'killactiv'. Did you mean 'killactive'?\n{path}:3: Unsupported keyword 'ghostkeyword'.\n",
+            $"{binds}:1: Unknown dispatcher 'closs'. Did you mean 'close'?\n{path}:3: Unsupported keyword 'ghostkeyword'.\n",
             error);
         Assert.IsFalse(File.Exists(marker));
     }
@@ -57,7 +57,7 @@ public sealed class CheckCommandTests : IDisposable
     public void ASourceWindowsCannotNameWarnsOnItsLineAndTheRestIsStillRead()
     {
         Directory.CreateDirectory(Path.Combine(_root, "conf"));
-        var binds = Write(Path.Combine("conf", "binds.conf"), "bind = SUPER, Q, killactiv\n");
+        var binds = Write(Path.Combine("conf", "binds.conf"), "bind = SUPER, Q, closs\n");
         var path = Write("winland.conf", $"""
             source = bad{'\0'}name.conf
             source = bad{'\0'}folder/*.conf
@@ -75,7 +75,7 @@ public sealed class CheckCommandTests : IDisposable
             {path}:1: Could not read source '{_root}\bad{'\0'}name.conf'.
             {path}:2: Could not read source '{_root}\bad{'\0'}folder/*.conf'.
             {path}:3: Could not read source '{_root}\conf/*{'\0'}.conf'.
-            {binds}:1: Unknown dispatcher 'killactiv'. Did you mean 'killactive'?
+            {binds}:1: Unknown dispatcher 'closs'. Did you mean 'close'?
             {path}:5: Unsupported keyword 'ghostkeyword'.
 
             """.ReplaceLineEndings("\n"),

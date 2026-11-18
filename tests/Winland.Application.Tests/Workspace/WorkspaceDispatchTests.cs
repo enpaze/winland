@@ -18,7 +18,7 @@ public class WorkspaceDispatchTests
         desk.Spawn("b");
         desk.Ok("workspace", "1");
 
-        desk.Ok("workspace", "+1");
+        desk.Ok("workspace", "2");
         Assert.AreEqual("2 (2)", ActiveLabel(desk));
         Assert.Contains("3 (3)", Labels(desk));
         Assert.Contains("1 (1)", Labels(desk));
@@ -26,26 +26,20 @@ public class WorkspaceDispatchTests
         desk.Ok("workspace", "1");
         Assert.DoesNotContain("2 (2)", Labels(desk));
 
-        desk.Ok("workspace", "m+1");
+        desk.Ok("workspace", "next");
         Assert.AreEqual("3 (3)", ActiveLabel(desk));
 
-        desk.Ok("workspace", "-1");
-        Assert.AreEqual("2 (2)", ActiveLabel(desk));
-
-        desk.Ok("workspace", "1");
-        desk.Ok("workspace", "r+1");
-        Assert.AreEqual("2 (2)", ActiveLabel(desk));
-
-        desk.Ok("workspace", "r+1");
-        Assert.AreEqual("3 (3)", ActiveLabel(desk));
-
-        desk.Ok("workspace", "r~1");
+        desk.Ok("workspace", "prev");
         Assert.AreEqual("1 (1)", ActiveLabel(desk));
 
+        desk.Ok("workspace", "prev");
+        Assert.AreEqual("3 (3)", ActiveLabel(desk));
+
+        desk.Ok("workspace", "1");
         desk.Ok("workspace", "empty");
         Assert.AreEqual("2 (2)", ActiveLabel(desk));
 
-        desk.Ok("workspace", "previous");
+        desk.Ok("workspace", "last");
         Assert.AreEqual("1 (1)", ActiveLabel(desk));
 
         desk.Ok("workspace", "1");
@@ -55,17 +49,13 @@ public class WorkspaceDispatchTests
         Assert.AreEqual(2, monitors.Count(monitor => ShownOn(monitor) == "1 (1)"));
         Assert.Contains("HEADLESS-3", monitors.Select(NameOf));
 
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         Assert.AreEqual("1 (1)", ActiveLabel(desk));
 
-        desk.Ok("workspace", "r+1");
+        desk.Ok("workspace", "2");
         Assert.AreEqual("2 (2)", ActiveLabel(desk));
 
-        desk.Ok("workspace", "1");
-        desk.Ok("workspace", "r~2");
-        Assert.AreEqual("2 (2)", ActiveLabel(desk));
-
-        desk.Ok("workspace", "m+1");
+        desk.Ok("workspace", "next");
         Assert.AreEqual("3 (3)", ActiveLabel(desk));
 
         desk.Dispatch("workspace", "1");
@@ -84,24 +74,24 @@ public class WorkspaceDispatchTests
         desk.Spawn("kitty_B");
         desk.Spawn("kitty_C");
 
-        desk.Ok("focuswindow", "class:kitty_B");
-        desk.Ok("resizeactive", "20 20");
+        desk.Ok("focus", "class:kitty_B");
+        desk.Ok("resize", "20 20");
 
-        desk.Ok("focuswindow", "class:kitty_C");
-        desk.Ok("focuswindow", "class:kitty_A");
-        desk.Ok("movefocus", "r");
+        desk.Ok("focus", "class:kitty_C");
+        desk.Ok("focus", "class:kitty_A");
+        desk.Ok("focus", "r");
         Assert.AreEqual("kitty_C", desk.ActiveClass());
 
-        desk.Ok("focuswindow", "class:kitty_A");
-        desk.Ok("focusmonitor", "HEADLESS-3");
+        desk.Ok("focus", "class:kitty_A");
+        desk.Ok("focus-monitor", "HEADLESS-3");
         desk.Spawn("kitty_D");
         Assert.AreEqual("kitty_D", desk.ActiveClass());
 
-        desk.Ok("focusmonitor", "l");
+        desk.Ok("focus-monitor", "l");
         Assert.AreEqual("kitty_A", desk.ActiveClass());
 
-        desk.Ok("fullscreen", "0");
-        desk.Ok("movefocus", "r");
+        desk.Ok("fullscreen");
+        desk.Ok("focus", "r");
         Assert.AreEqual("kitty_D", desk.ActiveClass());
 
         desk.CloseAll();
@@ -131,7 +121,7 @@ public class WorkspaceDispatchTests
             desk.Ok("workspace", "2");
             Assert.AreEqual("", desk.Send("get window"));
 
-            desk.Ok("workspace", "previous");
+            desk.Ok("workspace", "last");
             Assert.AreEqual(before, desk.Send("get window"));
         }
     }
@@ -139,39 +129,39 @@ public class WorkspaceDispatchTests
     private static void MultimonFocus(TestDesktop desk)
     {
         desk.Set("input:follow_mouse", "0");
-        desk.Ok("focusmonitor", "HEADLESS-3");
+        desk.Ok("focus-monitor", "HEADLESS-3");
         desk.Ok("workspace", "8");
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         desk.Ok("workspace", "7");
 
         desk.Spawn("a");
         desk.Spawn("b");
 
-        desk.Ok("focuswindow", "class:a");
-        desk.Ok("movefocus", "r");
+        desk.Ok("focus", "class:a");
+        desk.Ok("focus", "r");
         Assert.AreEqual("7 (7)", ActiveLabel(desk));
         Assert.AreEqual("b", desk.ActiveClass());
 
-        desk.Ok("movefocus", "r");
+        desk.Ok("focus", "r");
         Assert.AreEqual("8 (8)", ActiveLabel(desk));
 
         desk.Spawn("c");
         Assert.AreEqual("c", desk.ActiveClass());
         Assert.AreEqual("8 (8)", ActiveLabel(desk));
 
-        desk.Ok("movefocus", "l");
+        desk.Ok("focus", "l");
         Assert.AreEqual("b", desk.ActiveClass());
         Assert.AreEqual("7 (7)", ActiveLabel(desk));
 
-        desk.Ok("movewindow", "r");
+        desk.Ok("move", "r");
         Assert.AreEqual("b", desk.ActiveClass());
         Assert.AreEqual("8 (8)", ActiveLabel(desk));
 
-        desk.Ok("movefocus", "r");
+        desk.Ok("focus", "r");
         Assert.AreEqual("c", desk.ActiveClass());
         Assert.AreEqual("8 (8)", ActiveLabel(desk));
 
-        desk.Ok("movefocus", "l");
+        desk.Ok("focus", "l");
 
         Assert.AreEqual("ok", desk.Send("reload"));
         desk.CloseAll();
@@ -179,21 +169,21 @@ public class WorkspaceDispatchTests
 
     private static void WorkspaceHistoryMultiMon(TestDesktop desk)
     {
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         desk.Ok("workspace", "10");
         desk.Spawn("a");
         desk.Ok("workspace", "11");
         desk.Spawn("a");
 
-        desk.Ok("focusmonitor", "HEADLESS-3");
+        desk.Ok("focus-monitor", "HEADLESS-3");
         desk.Ok("workspace", "12");
         desk.Spawn("a");
 
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         Assert.AreEqual("11 (11)", ActiveLabel(desk));
 
-        desk.Ok("workspace", "previous_per_monitor");
-        Assert.AreEqual("10 (10)", ActiveLabel(desk));
+        desk.Ok("workspace", "last");
+        Assert.AreEqual("12 (12)", ActiveLabel(desk));
 
         desk.CloseAll();
     }
@@ -208,24 +198,24 @@ public class WorkspaceDispatchTests
         Assert.AreEqual("kitty_special", desk.ActiveClass());
         Assert.AreEqual("special:test_fs_special", WorkspaceNameOf(desk.ActiveWindow()));
 
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
         Assert.AreEqual(2, TestDesktop.Fullscreen(desk.ActiveWindow()));
         Assert.Contains("special:test_fs_special", Monitors(desk).Select(SpecialOn));
 
-        desk.Ok("togglespecialworkspace", "test_fs_special");
+        desk.Ok("scratchpad", "test_fs_special");
         desk.Dispatch("workspace", "1");
         desk.Spawn("kitty_regular");
 
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
         Assert.AreEqual("kitty_regular", desk.ActiveClass());
         Assert.AreEqual(2, TestDesktop.Fullscreen(desk.ActiveWindow()));
 
-        desk.Ok("togglespecialworkspace", "test_fs_special");
-        desk.Ok("focuswindow", "class:kitty_special");
+        desk.Ok("scratchpad", "test_fs_special");
+        desk.Ok("focus", "class:kitty_special");
         Assert.AreEqual("kitty_special", desk.ActiveClass());
 
-        desk.Ok("togglespecialworkspace", "test_fs_special");
-        desk.Ok("focuswindow", "class:kitty_regular");
+        desk.Ok("scratchpad", "test_fs_special");
+        desk.Ok("focus", "class:kitty_regular");
         Assert.AreEqual("kitty_regular", desk.ActiveClass());
         Assert.AreEqual(2, TestDesktop.Fullscreen(desk.ActiveWindow()));
         Assert.Contains("", Monitors(desk).Select(SpecialOn));

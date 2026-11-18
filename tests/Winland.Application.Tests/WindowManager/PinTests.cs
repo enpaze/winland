@@ -51,7 +51,7 @@ public class PinTests
 
         var pinned = core.Execute("pin");
         var again = core.Execute("pin on");
-        var cleared = core.Execute("pin disable");
+        var cleared = core.Execute("pin off");
 
         Assert.AreSequenceEqual(["pin>>1,1"], Lines(pinned));
         Assert.IsEmpty(again.Effect.Events);
@@ -122,12 +122,12 @@ public class PinTests
     }
 
     [TestMethod]
-    public void SilentPinnedClientIsShownOnTheCurrentWorkspace()
+    public void StayingPinnedClientIsShownOnTheCurrentWorkspace()
     {
         var core = new WindowManager(ConfigParser.Parse("""
             windowrule = float, class:stick
             windowrule = pin, class:stick
-            windowrule = workspace 2 silent, class:stick
+            windowrule = workspace 2 stay, class:stick
             """));
 
         var opened = core.Handle(new WindowAppeared(Window, Area)
@@ -174,7 +174,7 @@ public class PinTests
         var core = Floating();
         core.Execute("pin");
 
-        var tiled = core.Execute("togglefloating");
+        var tiled = core.Execute("float");
 
         Assert.DoesNotContain(stream => stream is ClientPinned, tiled.Effect.Events);
         Assert.IsFalse(ClientOf(tiled.Effect, Window).Pinned);
@@ -187,7 +187,7 @@ public class PinTests
         var core = Floating();
         core.Execute("pin");
 
-        var opened = core.Execute("movetoworkspace special:scratch");
+        var opened = core.Execute("move special:scratch");
 
         var client = ClientOf(opened.Effect, Window);
         Assert.IsTrue(client.Pinned);
@@ -197,13 +197,13 @@ public class PinTests
     }
 
     [TestMethod]
-    [DataRow("movetoworkspacesilent")]
-    public void APinnedClientIsNotMovedOntoASpecialWorkspace(string dispatcher)
+    [DataRow(" stay")]
+    public void APinnedClientIsNotMovedOntoASpecialWorkspace(string stay)
     {
         var core = Floating();
         core.Execute("pin");
 
-        var refused = core.Execute($"{dispatcher} special:scratch");
+        var refused = core.Execute($"move special:scratch{stay}");
 
         var client = ClientOf(refused.Effect, Window);
         Assert.IsTrue(client.Pinned);
@@ -212,7 +212,7 @@ public class PinTests
         Assert.DoesNotContain(workspace => workspace.Id.IsSpecial, refused.Effect.State.Workspaces);
         Assert.IsEmpty(refused.Effect.Hide);
 
-        var normal = core.Execute($"{dispatcher} 3");
+        var normal = core.Execute($"move 3{stay}");
 
         Assert.AreEqual(new WorkspaceId("3"), ClientOf(normal.Effect, Window).Workspace);
     }
@@ -223,7 +223,7 @@ public class PinTests
         var core = Floating();
         core.Execute("pin");
 
-        var fullscreen = core.Execute("fullscreen 1");
+        var fullscreen = core.Execute("maximize");
 
         var client = ClientOf(fullscreen.Effect, Window);
         Assert.AreEqual(FullscreenMode.None, client.Fullscreen);

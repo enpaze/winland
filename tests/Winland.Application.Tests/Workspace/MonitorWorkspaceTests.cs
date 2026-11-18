@@ -140,9 +140,9 @@ public class MonitorWorkspaceTests
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
-        core.Handle(new Dispatch("togglegroup"));
+        core.Handle(new Dispatch("group"));
         core.Handle(new WindowAppeared(new WindowId(3), right.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(4), right.WorkArea) { Traits = WindowTraits.Normal with { Class = "box" } });
         core.Handle(new Dispatch("pin"));
@@ -178,7 +178,7 @@ public class MonitorWorkspaceTests
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
 
         var gone = core.Handle(new MonitorsChanged([left]));
@@ -199,7 +199,7 @@ public class MonitorWorkspaceTests
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new Dispatch("workspace", "5"));
         core.Handle(new WindowAppeared(new WindowId(5), right.WorkArea));
         core.Handle(new Dispatch("workspace", "2"));
@@ -224,10 +224,10 @@ public class MonitorWorkspaceTests
         var left = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 1920, 1080, 1);
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
-        core.Handle(new Dispatch("togglespecialworkspace", "notes"));
+        core.Handle(new Dispatch("scratchpad", "notes"));
         core.Handle(new WindowAppeared(new WindowId(4), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
-        core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
+        core.Handle(new Dispatch("scratchpad", "scratch"));
         core.Handle(new WindowAppeared(new WindowId(5), right.WorkArea));
 
         var gone = core.Handle(new MonitorsChanged([left]));
@@ -245,13 +245,13 @@ public class MonitorWorkspaceTests
         var left = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 1920, 1080, 1);
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new WindowAppeared(new WindowId(1), right.WorkArea));
-        core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        core.Handle(new Dispatch("scratchpad", "scratch"));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", left.Name));
+        core.Handle(new Dispatch("focus-monitor", left.Name));
 
-        var back = core.Handle(new Dispatch("focusmonitor", right.Name));
+        var back = core.Handle(new Dispatch("focus-monitor", right.Name));
 
         Assert.AreEqual(new WindowId(2), back.Focus);
     }
@@ -264,10 +264,10 @@ public class MonitorWorkspaceTests
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
         core.Handle(new Dispatch("fullscreen"));
-        core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        core.Handle(new Dispatch("scratchpad", "scratch"));
         core.Handle(new WindowAppeared(new WindowId(5), right.WorkArea));
 
         var gone = core.Handle(new MonitorsChanged([left]));
@@ -301,7 +301,7 @@ public class MonitorWorkspaceTests
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(3), right.WorkArea));
         core.Handle(new WindowFocused(new WindowId(3), FocusCause.User));
-        core.Handle(new Dispatch("movetoworkspacesilent", "2"));
+        core.Handle(new Dispatch("move", "2 stay"));
         core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));
 
         var outcome = core.Handle(new Dispatch("workspace", "2"));
@@ -342,7 +342,7 @@ public class MonitorWorkspaceTests
     }
 
     [TestMethod]
-    public void MoveToWorkspaceUsesTheFocusedMonitorsNumber()
+    public void MoveToAWorkspaceUsesTheFocusedMonitorsNumber()
     {
         var core = new WindowManager();
         var left = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 1920, 1080, 1);
@@ -351,7 +351,7 @@ public class MonitorWorkspaceTests
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
 
-        var outcome = core.Handle(new Dispatch("movetoworkspace", "2"));
+        var outcome = core.Handle(new Dispatch("move", "2"));
 
         Assert.AreEqual(new WindowId(1), outcome.Focus);
         Assert.AreEqual(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
@@ -371,7 +371,7 @@ public class MonitorWorkspaceTests
     }
 
     [TestMethod]
-    public void MoveToWorkspaceSilentStaysOnTheFocusedMonitor()
+    public void MoveToAWorkspaceAndStayStaysOnTheFocusedMonitor()
     {
         var core = new WindowManager();
         var left = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 1920, 1080, 1);
@@ -380,7 +380,7 @@ public class MonitorWorkspaceTests
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
 
-        var outcome = core.Handle(new Dispatch("movetoworkspacesilent", "2"));
+        var outcome = core.Handle(new Dispatch("move", "2 stay"));
 
         Assert.IsNull(outcome.Focus);
         Assert.AreEqual(new WorkspaceId("1"), outcome.State.ActiveWorkspace);

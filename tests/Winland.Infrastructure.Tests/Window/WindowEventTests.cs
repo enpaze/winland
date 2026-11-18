@@ -27,8 +27,8 @@ public class WindowEventTests
         using var windows = new TestWindows(reducedMotion: true);
         var floating = windows.Open(0x7021);
         var tiled = windows.Open(0x7022);
-        windows.Dispatch("focuswindow", "address:0x7021");
-        windows.Dispatch("togglefloating");
+        windows.Dispatch("focus", "address:0x7021");
+        windows.Dispatch("float");
         var tile = windows.Desktop[tiled.Value].Visible;
         windows.Advance(5000);
         windows.Desktop[tiled.Value].Visible = new Rectangle(50, 60, 1000, 700);
@@ -41,7 +41,7 @@ public class WindowEventTests
             windows.Adapter.Notice(Events.EVENT_OBJECT_LOCATIONCHANGE, (nint)tiled.Value);
         };
 
-        windows.Dispatch("resizeactive", "10 10");
+        windows.Dispatch("resize", "10 10");
 
         Assert.IsNull(windows.Desktop.OnSetBounds);
         Assert.AreEqual(tile, windows.Desktop[tiled.Value].Visible);
