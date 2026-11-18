@@ -186,18 +186,26 @@ public sealed partial class WindowManager
         return reloaded;
     }
 
+    private readonly Lock _notifying = new();
+
     private void NotifyReloaded(ConfigDocument? reloaded)
     {
         if (reloaded is null)
             return;
 
-        try
+        lock (_notifying)
         {
-            AfterReload?.Invoke(reloaded);
-        }
-        catch (Exception exception) when (exception is not OutOfMemoryException)
-        {
-            Console.Error.WriteLine(exception);
+            if (!ReferenceEquals(reloaded, Volatile.Read(ref _loaded)))
+                return;
+
+            try
+            {
+                AfterReload?.Invoke(reloaded);
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                Console.Error.WriteLine(exception);
+            }
         }
     }
 

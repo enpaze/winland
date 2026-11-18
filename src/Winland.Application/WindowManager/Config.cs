@@ -39,8 +39,9 @@ public sealed partial class WindowManager
                 : "error: " + warning.Message);
         }
 
+        var applied = Apply(document);
         _reloaded = document;
-        return Apply(document);
+        return applied;
     }
 
     private Outcome NoteAccent(AccentChanged changed)

@@ -134,6 +134,11 @@ public class ExtraCommandTests
         Assert.IsTrue(ControlInvocation.TryCreate(["exec", "wsl", "--", "ls"], out line, out events));
         Assert.AreEqual("exec wsl -- ls", line);
 
+        Assert.IsTrue(ControlInvocation.TryCreate(["exec", "notepad", "-j"], out line, out events));
+        Assert.AreEqual("exec notepad -j", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["-j", "exec", "notepad"], out line, out events));
+        Assert.AreEqual("j/exec notepad", line);
+
         Assert.IsTrue(ControlInvocation.TryCreate(["EXEC", "wt", "-p", "pwsh"], out line, out events));
         Assert.AreEqual("EXEC wt -p pwsh", line);
 

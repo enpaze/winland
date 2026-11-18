@@ -11,7 +11,7 @@ public class ConfigFileOnlyTests
     [DataRow("setprop address:0x1 border_size 9")]
     [DataRow("getprop address:0x1 border_size")]
     [DataRow("[[BATCH]]keyword general:gaps_out 0 ; keyword general:border_size 9")]
-    [DataRow("[[BATCH]]j/clients")]
+    [DataRow("[[BATCH]]j/get windows")]
     [DataRow("[[BATCH]]/reload")]
     public void NoRequestReadsOrChangesASetting(string line)
     {

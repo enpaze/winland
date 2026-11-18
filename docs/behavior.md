@@ -339,9 +339,7 @@ A client has 5 seconds after it connects to send its request line. One that send
 
 The pipe refuses clients on other machines. When another process already holds the pipe name, the Daemon fails to start and says so, instead of sharing the name with it.
 
-A request is one line: `[j/]<action> [args]`, `[j/]get <thing>`, `[j/]inspect [selector]` or `[j/]events`. An action is a Dispatcher name, `reload` and `exit` among them. `get` takes `windows`, `window`, `workspaces`, `workspace`, `monitors`, `monitors all`, `binds`, `errors` or `files`. `j/` asks for JSON. The CLI takes the same words as its arguments, with `-j` before or after them for `j/`.
-
-A request is one line: `[j/]<action> [args]`, `[j/]get <thing>`, `[j/]inspect [selector]` or `[j/]events`. An action is a Dispatcher name, `reload` and `exit` among them. `get` takes `windows`, `window`, `workspaces`, `workspace`, `monitors`, `monitors all`, `binds`, `errors` or `files`. `j/` asks for JSON. The CLI takes the same words as its arguments, with `-j` before or after them for `j/`.
+A request is one line: `[j/]<action> [args]`, `[j/]get <thing>`, `[j/]inspect [selector]` or `[j/]events`. An action is a Dispatcher name, `reload` and `exit` among them. `get` takes `windows`, `window`, `workspaces`, `workspace`, `monitors`, `monitors all`, `binds`, `errors` or `files`. `j/` asks for JSON. The CLI takes the same words as its arguments, with `-j` before or after them for `j/`, except after `exec`, where every word belongs to the command line.
 
 Command failures start with `error:`. The CLI writes a failed reply to standard error and exits with code 1.
 
