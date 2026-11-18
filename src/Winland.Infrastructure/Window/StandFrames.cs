@@ -23,9 +23,4 @@ internal static class StandFrames
     internal static void Set(WindowId window, Rectangle frame, nint overlay) => Shown[window] = (frame, new HWND(overlay));
 
     internal static void Remove(WindowId window) => Shown.TryRemove(window, out _);
-
-    internal static void Follow(WindowId window)
-    {
-        BorderHost.Follow(window);
-    }
 }
