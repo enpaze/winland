@@ -28,10 +28,7 @@ public sealed partial class WindowManager
             return View([]);
 
         var placements = Restamp(desk, set);
-        if (!_workspaces.Shown.IsShown(desk.Id))
-            return View([]);
-
-        return Present(desk, covered, placements);
+        return PresentIfShown(desk, covered, placements);
     }
 
     private IReadOnlyList<Placement>? SetFullscreen(LiveWorkspace desk, WindowId window, FullscreenMode mode, bool layoutAware = true)

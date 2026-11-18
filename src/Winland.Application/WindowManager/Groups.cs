@@ -85,9 +85,7 @@ public sealed partial class WindowManager
             Give(group.Shown, desk);
         }
 
-        return _workspaces.Shown.IsShown(desk.Id)
-            ? Present(desk, covered, desk.Layout.Visible(), focus: focus)
-            : View([]);
+        return PresentIfShown(desk, covered, desk.Layout.Visible(), focus: focus);
     }
 
     private Outcome MoveIntoGroup(string text)
@@ -213,9 +211,7 @@ public sealed partial class WindowManager
 
         Give(window, desk);
         (_extraEvents ??= []).Add(new ClientOutOfGroup(window));
-        return _workspaces.Shown.IsShown(desk.Id)
-            ? Present(desk, covered, desk.Layout.Visible(), focus: window)
-            : View([]);
+        return PresentIfShown(desk, covered, desk.Layout.Visible(), focus: window);
     }
 
     private static bool TryGroupDirection(string text, out string direction)

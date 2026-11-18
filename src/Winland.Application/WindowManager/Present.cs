@@ -334,6 +334,16 @@ public sealed partial class WindowManager
         return View(placements, showList, hideList, consumed, close, focus);
     }
 
+    private Outcome PresentIfShown(
+        LiveWorkspace desk,
+        HashSet<WindowId> covered,
+        IReadOnlyList<Placement> placements,
+        WindowId? focus = null,
+        bool focusRevealed = false) =>
+        _workspaces.Shown.IsShown(desk.Id)
+            ? Present(desk, covered, placements, focus: focus, focusRevealed: focusRevealed)
+            : View([]);
+
     private List<Placement> ShownPlacements()
     {
         var placements = new List<Placement>();

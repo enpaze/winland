@@ -58,9 +58,7 @@ public sealed partial class WindowManager
         if (!client.Floating)
             _cover.SetFlag(id, true);
 
-        return _workspaces.Shown.IsShown(desk.Id)
-            ? Present(desk, covered, placements)
-            : View([]);
+        return PresentIfShown(desk, covered, placements);
     }
 
     private Outcome SwapWindow(string arguments)

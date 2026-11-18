@@ -293,9 +293,7 @@ public sealed partial class WindowManager
         var covered = desk.Covered();
         var wasActive = _focus.Focused == window;
         var placements = desk.Layout.Minimize(window);
-        return _workspaces.Shown.IsShown(desk.Id)
-            ? Present(desk, covered, placements, focusRevealed: wasActive)
-            : View([]);
+        return PresentIfShown(desk, covered, placements, focusRevealed: wasActive);
     }
 
     private Outcome Unminimize(WindowRestored restored)

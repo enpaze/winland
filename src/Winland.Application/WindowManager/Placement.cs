@@ -122,7 +122,7 @@ public sealed partial class WindowManager
 
         var covered = desk.Covered();
         var placements = desk.Layout.PlaceFloating(resized.Window, placed.Bounds);
-        return _workspaces.Shown.IsShown(desk.Id) ? Present(desk, covered, placements) : View([]);
+        return PresentIfShown(desk, covered, placements);
     }
 
     private static int Pixels(double value) =>

@@ -28,9 +28,7 @@ public sealed partial class WindowManager
         var covered = desk.Covered();
         AdoptLayout(desk, created);
         Refit(desk);
-        return _workspaces.Shown.IsShown(desk.Id)
-            ? Present(desk, covered, desk.Layout.Visible())
-            : View([]);
+        return PresentIfShown(desk, covered, desk.Layout.Visible());
     }
 
     private static bool GoesBack(string arguments)
