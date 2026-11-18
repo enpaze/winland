@@ -122,33 +122,30 @@ public class CommandServerTests
             Traits = WindowTraits.Normal with { Class = "app", Title = "title" },
         });
         Assert.AreSequenceEqual(
-            ["openwindow>>7,1,,app,title", "activewindow>>app,title", "activewindowv2>>7"],
-            Take(first, 3));
+            ["openwindow>>7,1,1,,app,title", "focus>>,1,1,7,title"],
+            Take(first, 2));
         Assert.AreSequenceEqual(
-            ["openwindow>>7,1,,app,title", "activewindow>>app,title", "activewindowv2>>7"],
-            Take(second, 3));
+            [
+                """{"event":"openwindow","address":"0x7","workspace":{"id":1,"name":"1"},"monitor":"","class":"app","title":"title"}""",
+                """{"event":"focus","monitor":"","workspace":{"id":1,"name":"1"},"window":{"address":"0x7","title":"title","class":"app","exe":""}}""",
+            ],
+            Take(second, 2));
 
         Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 2", name));
         Assert.AreSequenceEqual(
             [
-                "createworkspace>>2,",
-                "createworkspacev2>>2,2,",
-                "workspace>>2,",
-                "workspacev2>>2,2,",
-                "activewindow>>,",
-                "activewindowv2>>",
+                "createworkspace>>2,2,",
+                "workspace>>2,2,",
+                "focus>>,2,2,,",
             ],
-            Take(first, 6));
+            Take(first, 3));
         Assert.AreSequenceEqual(
             [
-                "createworkspace>>2,",
-                "createworkspacev2>>2,2,",
-                "workspace>>2,",
-                "workspacev2>>2,2,",
-                "activewindow>>,",
-                "activewindowv2>>",
+                """{"event":"createworkspace","workspace":{"id":2,"name":"2"},"monitor":""}""",
+                """{"event":"workspace","workspace":{"id":2,"name":"2"},"monitor":""}""",
+                """{"event":"focus","monitor":"","workspace":{"id":2,"name":"2"},"window":null}""",
             ],
-            Take(second, 6));
+            Take(second, 3));
 
         core.Handle(new WindowClosed(new WindowId(7)));
         Assert.AreSequenceEqual(["closewindow>>7"], Take(first, 1));
@@ -171,7 +168,7 @@ public class CommandServerTests
         var expected = warnings.Select(warning => $"warning>>{warning.Line},,bad config").Append("configreloaded>>").ToArray();
         Assert.AreSequenceEqual(expected, Take(listener, expected.Length));
         Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 2", name));
-        Assert.Contains("workspacev2>>2,2,", Take(listener, 6));
+        Assert.Contains("workspace>>2,2,", Take(listener, 3));
     }
 
     [TestMethod]
@@ -211,7 +208,7 @@ public class CommandServerTests
         WaitUntilSubscribed(core, listener);
         Sync(core, listener);
         core.Handle(new WindowAppeared(new WindowId(3), new Rectangle(0, 0, 10, 10)));
-        Assert.AreSequenceEqual(["openwindow>>3,1,,,", "activewindow>>,", "activewindowv2>>3"], Take(listener, 3));
+        Assert.AreSequenceEqual(["openwindow>>3,1,1,,,", "focus>>,1,1,3,"], Take(listener, 2));
         Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 1", name));
     }
 
@@ -328,9 +325,21 @@ public class CommandServerTests
             while (!seen)
             {
                 Assert.IsTrue(listener.TryTake(TimeSpan.FromSeconds(10), out var line), "The marker window was never reported.");
-                seen = line == "activewindowv2>>270f";
+                seen = line == "focus>>,1,1,270f," || IsJsonFocusOn(line, "0x270f");
             }
         }
+    }
+
+    private static bool IsJsonFocusOn(string line, string address)
+    {
+        if (!line.StartsWith('{'))
+            return false;
+
+        using var parsed = JsonDocument.Parse(line);
+        var root = parsed.RootElement;
+        return root.GetProperty("event").GetString() == "focus"
+            && root.GetProperty("window") is { ValueKind: JsonValueKind.Object } window
+            && window.GetProperty("address").GetString() == address;
     }
 
     private static List<string> Take(Listener listener, int count)

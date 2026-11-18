@@ -8,7 +8,7 @@ Winland uses the Monitors Windows reports, with the size, position, scale and wo
 - `dispatcher:movecurrentworkspacetomonitor` moves the focused Monitor's Shown workspace onto another Monitor.
 - `request:monitors` lists the enabled Monitors, and with `all` the disabled ones too.
 - `unknown-monitor` answers `error: monitor not found` to a selector that matches no Monitor.
-- `monitor-events` reports `focusedmon` when the focused Monitor changes and `moveworkspace` when a Workspace moves.
+- `monitor-events` reports `focus` when the focused Monitor changes and `moveworkspace` when a Workspace moves.
 
 ## How to get to it (user POV)
 
@@ -29,7 +29,7 @@ Preconditions:
 - **Focus the focused Monitor.** The driver runs `winland dispatch focusmonitor <name>` with the name of the Monitor that reports `focused: true`, then `winland dispatch focusmonitor current`. Both reply `ok`, and `winland -j activeworkspace` reports that Monitor.
 - **Unknown Monitor.** The driver runs `winland dispatch focusmonitor NoSuchMonitor`. It exits 1 and writes `error: monitor not found` to standard error.
 - **One Monitor.** With one Monitor, the driver runs `winland dispatch movecurrentworkspacetomonitor current`, which replies `ok`, prints `only one monitor: focusmonitor and movecurrentworkspacetomonitor answered on it, and moving between monitors was not driven`, and ends.
-- **Focus another Monitor.** With two or more, the driver follows `winland events`, opens `WinlandVerify 1`, and runs `winland dispatch focusmonitor <other>`. `winland -j activeworkspace` reports the other Monitor, and the Event stream holds a `focusedmon` line naming it.
+- **Focus another Monitor.** With two or more, the driver follows `winland events`, opens `WinlandVerify 1`, and runs `winland dispatch focusmonitor <other>`. `winland -j activeworkspace` reports the other Monitor, and the Event stream holds a `focus` line naming it.
 - **Move the Workspace.** The driver runs `winland dispatch focusmonitor <name>` to go back, focuses the window with `winland dispatch focuswindow address:<hwnd>`, and runs `winland dispatch movecurrentworkspacetomonitor <other>`. The window's Client reports its Workspace on the other Monitor, and the Event stream holds a `moveworkspace` line.
 - **Move it back.** The driver runs `winland dispatch movecurrentworkspacetomonitor <name>`. The window's Client reports its Workspace on the first Monitor again.
 
@@ -38,7 +38,7 @@ Preconditions:
 - On one Monitor, as on CI, the driver does not reach moving focus and a Workspace to another Monitor, and it does not reach plugging or unplugging a Monitor. A pass on one Monitor proves only the listing, the error reply, and that `focusmonitor` and `movecurrentworkspacetomonitor current` answer `ok` on that Monitor.
 - `monitors` lists only the enabled Monitors. Use `monitors all` to see the disabled ones.
 - A failed `winland dispatch` exits 1 and writes its `error:` reply to standard error, not standard output.
-- Focusing a Monitor that already shows its Workspace emits `focusedmon` and not `workspace`.
+- Focusing another Monitor emits `focus` and not `workspace`, because that Monitor already shows its Workspace. Focusing the Monitor that already has focus emits nothing.
 - Moving a Workspace leaves its pinned Clients on the source Monitor, on the Workspace that Monitor shows next.
 - Monitor configuration belongs in Windows Settings, not in the Winland config.
 - The keys in the first list come from the starter config. The driver's config has no binds, so it drives these Dispatchers through `winland dispatch`. [Binds](./binds.md) proves the key path.

@@ -17,11 +17,11 @@ public class RetitleTests
         var outcome = core.Handle(new WindowTitleChanged(new WindowId(0x2a), "new"));
 
         Assert.AreEqual("new", Assert.ContainsSingle(client => client.Window == new WindowId(0x2a), outcome.State.Clients).Title);
-        Assert.AreSequenceEqual(["windowtitle>>2a", "windowtitlev2>>2a,new"], CommandProtocol.FormatStream(outcome.Events, outcome.State));
+        Assert.AreSequenceEqual(["windowtitle>>2a,new"], CommandProtocol.FormatStream(outcome.Events, outcome.State));
     }
 
     [TestMethod]
-    public void TheFocusedWindowsNewTitleIsToldAsTheActiveWindowToo()
+    public void TheFocusedWindowsNewTitleIsToldOnceAndLeavesFocusAlone()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(0x2a), Area) { Traits = WindowTraits.Normal with { Class = "kitty", Title = "old" } });
@@ -29,7 +29,7 @@ public class RetitleTests
         var outcome = core.Handle(new WindowTitleChanged(new WindowId(0x2a), "new"));
 
         Assert.AreSequenceEqual(
-            ["windowtitle>>2a", "windowtitlev2>>2a,new", "activewindow>>kitty,new", "activewindowv2>>2a"],
+            ["windowtitle>>2a,new"],
             CommandProtocol.FormatStream(outcome.Events, outcome.State));
     }
 

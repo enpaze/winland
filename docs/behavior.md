@@ -196,7 +196,7 @@ When a special workspace opens on a Monitor, a floating Client on it whose middl
 
 The special workspace closes when its last Client leaves. The Monitor's special workspace hides when its normal Workspace changes. Focusing a Client on the normal Workspace closes the special workspace. The pointer reaches the Clients of an open special workspace, tiled or floating, before the Clients of the normal Workspace under it. Where the special workspace has no Client, a pointer hit is not taken away from a window underneath it, so a click there still focuses that window and closes the special workspace.
 
-Opening a special workspace emits `activespecial` and `activespecialv2` as `name,monitor` and `id,name,monitor`. Closing one emits them with an empty name. In events and text replies the unnamed special workspace is id -99, another special workspace -98, then -97, in name order. The JSON replies write a Workspace as its `address`, an `id` only when it is numbered, its `type`, `normal` or `special`, its `name`, and `monitor`, the Windows name of the Monitor it is on. The `specialWorkspace` of a Monitor with none open has empty strings and no `id`. A special workspace belongs to no Monitor. It opens on the focused one, and when the Monitor showing it is unplugged it is shown on the focused Monitor that remains, in place of any special workspace shown there. It is not a Guest, so it stays on that Monitor when the other comes back.
+Opening a special workspace emits `activespecial` as `id,name,monitor`. Closing one emits it with an empty id and name. In events and text replies the unnamed special workspace is id -99, another special workspace -98, then -97, in name order. The JSON replies write a Workspace as its `address`, an `id` only when it is numbered, its `type`, `normal` or `special`, its `name`, and `monitor`, the Windows name of the Monitor it is on. The `specialWorkspace` of a Monitor with none open has empty strings and no `id`. A special workspace belongs to no Monitor. It opens on the focused one, and when the Monitor showing it is unplugged it is shown on the focused Monitor that remains, in place of any special workspace shown there. It is not a Guest, so it stays on that Monitor when the other comes back.
 
 A `workspace` line warns `Unsupported keyword 'workspace'.` and is skipped. The rest of the file applies.
 
@@ -252,7 +252,7 @@ A Workspace with a fullscreen or maximized Client offers no window to `movefocus
 
 Workspace history keeps visits to removed Workspaces until it is read for a previous Workspace. That read drops those visits, except the newest one of each Monitor before that Monitor is seen again further down.
 
-`focusmonitor` and `movecurrentworkspacetomonitor` address a Monitor by its name, a `desc:` prefix of its identity, a direction, `current`, a relative `+N` or `-N`, or its id. Changing the focused Monitor emits `focusedmon`. `focusmonitor`, and `movefocus` onto another Monitor, put the pointer in the middle of a Monitor with nothing to focus, unless `cursor:no_warps` is set. A Monitor with a special Workspace open gives the focus to that Workspace's window. Moving a Workspace onto another Monitor emits `moveworkspace`. `workspace` and `workspacev2` are emitted when a Monitor's shown Workspace changes and the focus may follow that change. Focusing a Monitor that already shows its Workspace emits `focusedmon` and not `workspace`. A Monitor coming or going emits neither.
+`focusmonitor` and `movecurrentworkspacetomonitor` address a Monitor by its name, a `desc:` prefix of its identity, a direction, `current`, a relative `+N` or `-N`, or its id. Changing the focused Monitor emits `focus`. `focusmonitor`, and `movefocus` onto another Monitor, put the pointer in the middle of a Monitor with nothing to focus, unless `cursor:no_warps` is set. A Monitor with a special Workspace open gives the focus to that Workspace's window. Moving a Workspace onto another Monitor emits `moveworkspace`. `workspace` is emitted when a Monitor's shown Workspace changes and the focus may follow that change. Focusing another Monitor emits `focus` and not `workspace`, because that Monitor already shows its Workspace. A Monitor coming or going emits no `workspace`. It emits `focus` only when the focused Monitor, Workspace or Window changes, as when the focused Monitor is unplugged or the first Monitor is reported.
 
 Moving the Workspace a Monitor shows onto another Monitor leaves its pinned Clients on the source Monitor, on the Workspace that Monitor shows next. The Workspace keeps its number when that number is free on the destination, and otherwise takes the first free positive number, so a hole can be filled. The move clears a Guest. A window moved onto a Monitor lands on the Workspace that Monitor is showing. Moving a normal Workspace does not move the special workspace shown on that Monitor. The cursor is not forced to the center of the destination Monitor. Warps follow the cursor settings.
 
@@ -341,7 +341,7 @@ The pipe refuses clients on other machines. When another process already holds t
 
 Command failures start with `error:`. The CLI writes a failed reply to standard error and exits with code 1.
 
-An event that names a Workspace also names its Monitor, in the field just after the Workspace name or id. `openwindow` is `address,workspace,monitor,class,title`. `movewindow` is `address,workspace,monitor` and `movewindowv2` is `address,id,name,monitor`. `workspace` is `name,monitor` and `workspacev2` is `id,name,monitor`. `createworkspace` and `destroyworkspace` follow `workspace`, and their v2 forms follow `workspacev2`. `destroyworkspace` carries the id, the name and the Monitor from before the Workspace was removed. `focusedmon`, `activespecial` and `moveworkspace` already name the Monitor and are not given another. Before any Monitor is reported the Monitor name is empty. A JSON Workspace is `address`, `id` when it is numbered, `type`, `name` and `monitor`, the Windows name. A list entry keeps `monitorID` as well. Two Workspaces can both be `3`, and `monitor` tells them apart. The text reply for a Client names the Monitor its Workspace is on. A crash-recovery snapshot records a Client's Monitor by that Monitor's identity, the same string a returning Monitor is recognized by, and the Workspace by the number it is showing. A Guest is recorded on the Monitor showing it, under the number it is showing there, not under its home. A special workspace is recorded by its name. An older snapshot that stored the Monitor as a number is not read.
+A JSON Workspace is `address`, `id` when it is numbered, `type`, `name` and `monitor`, the Windows name. A list entry keeps `monitorID` as well. Two Workspaces can both be `3`, and `monitor` tells them apart. The text reply for a Client names the Monitor its Workspace is on. A crash-recovery snapshot records a Client's Monitor by that Monitor's identity, the same string a returning Monitor is recognized by, and the Workspace by the number it is showing. A Guest is recorded on the Monitor showing it, under the number it is showing there, not under its home. A special workspace is recorded by its name. An older snapshot that stored the Monitor as a number is not read.
 
 The config file is the only way to configure Winland. No request on the pipe changes an Option, adds a rule or a bind, or changes what a window's rules give it. `reload` reads the file again.
 
@@ -355,7 +355,36 @@ A config that is read or reloaded with warnings shows one notification: `Winland
 
 With no window, `clients` replies `no open windows` and `activewindow` replies with nothing, so `winland activewindow` prints nothing and exits 0. With `j/` they reply `[]` and `null`.
 
-`winland events` and `winland -j events` stream the same `name>>data` lines, and the pipe takes `events` and `j/events` alike.
+### Events
+
+`winland events`, or `events` on the pipe, writes one `name>>data` line per event, with the fields of `data` in the order below, separated by commas. Text fields are not escaped, so a comma inside a class, title, Workspace name, Monitor description or message reads as a field break. A program that must split every field reads the JSON form. `winland -j events`, or `j/events`, writes each event as one JSON object per line instead: `{"event":"<name>", ...}` with the fields below as keys. An address is bare hex in text and starts with `0x` in JSON. A flag is `1` or `0` in text and `true` or `false` in JSON. A `workspace` is `id,name` in text and `{"id":N,"name":"..."}` in JSON. A `monitor` is the Monitor's Windows name, empty before any Monitor is reported.
+
+| Event | Fields | Emitted when |
+| --- | --- | --- |
+| `openwindow` | `address`, `workspace`, `monitor`, `class`, `title` | A Client opens |
+| `closewindow` | `address` | A Client closes |
+| `focus` | `monitor`, `workspace`, `window` | The focused Monitor, Workspace or Window changes |
+| `windowtitle` | `address`, `title` | A Client's title changes |
+| `movewindow` | `address`, `workspace`, `monitor` | A Client moves to another Workspace |
+| `changefloatingmode` | `address`, `floating` | A Client starts or stops floating |
+| `minimized` | `address`, `minimized` | A Client is minimized or restored |
+| `pin` | `address`, `pinned` | A Client is pinned or unpinned |
+| `fullscreen` | `fullscreen` | A Client enters or leaves fullscreen |
+| `urgent` | `address` | A Client asks for attention |
+| `togglegroup` | `created`, `address` | A Group is made or ended |
+| `moveintogroup` | `address` | A Client joins a Group |
+| `moveoutofgroup` | `address` | A Client leaves a Group |
+| `workspace` | `workspace`, `monitor` | A Monitor shows another Workspace |
+| `createworkspace` | `workspace`, `monitor` | A Workspace is made |
+| `destroyworkspace` | `workspace`, `monitor` | A Workspace is removed, with its id, name and Monitor from before |
+| `moveworkspace` | `workspace`, `monitor` | A Workspace moves to another Monitor |
+| `activespecial` | `workspace`, `monitor` | A special workspace opens, or closes with an empty `workspace` |
+| `monitoradded` | `id`, `name`, `description` | A Monitor is connected |
+| `monitorremoved` | `id`, `name`, `description` | A Monitor is unplugged |
+| `warning` | `line`, `file`, `message` | The config is read with a warning |
+| `configreloaded` | none | The config is read |
+
+`focus` is emitted once for each change of the focused Monitor, Workspace or Window, after the other events of that change. Its `workspace` is the Shown workspace of the focused Monitor, also while a window of a special workspace has focus. Its `window` is `address,title` in text and, in JSON, an object with `address`, `title`, `class` and `exe`. With no focused window, the text address and title are empty and the JSON `window` is `null`. A new title or class on the focused window emits no `focus`; `windowtitle` reports the title. An empty `activespecial` workspace is `,` in text and `null` in JSON, and a `warning` with no file has an empty `file` in text and `null` in JSON.
 
 ### Window inspection
 

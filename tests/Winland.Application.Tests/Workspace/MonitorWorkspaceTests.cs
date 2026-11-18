@@ -187,7 +187,7 @@ public class MonitorWorkspaceTests
         Assert.AreEqual(new WindowId(1), gone.Focus);
         Assert.AreEqual("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
         Assert.DoesNotContain(
-            line => line.StartsWith("workspace>>", StringComparison.Ordinal) || line.StartsWith("workspacev2>>", StringComparison.Ordinal),
+            line => line.StartsWith("workspace>>", StringComparison.Ordinal),
             Lines(gone));
     }
 
@@ -334,12 +334,9 @@ public class MonitorWorkspaceTests
         Assert.DoesNotContain(window => window == new WindowId(2), outcome.Hide);
         Assert.AreSequenceEqual(
             [
-                @"createworkspace>>2,\\.\DISPLAY1",
-                @"createworkspacev2>>2,2,\\.\DISPLAY1",
-                @"workspace>>2,\\.\DISPLAY1",
-                @"workspacev2>>2,2,\\.\DISPLAY1",
-                "activewindow>>,",
-                "activewindowv2>>",
+                @"createworkspace>>2,2,\\.\DISPLAY1",
+                @"workspace>>2,2,\\.\DISPLAY1",
+                @"focus>>\\.\DISPLAY1,2,2,,",
             ],
             Lines(outcome));
     }
@@ -364,14 +361,11 @@ public class MonitorWorkspaceTests
         Assert.AreEqual(left.WorkArea, BoundsOf(outcome, 1));
         Assert.AreSequenceEqual(
             [
-                @"createworkspace>>2,\\.\DISPLAY1",
-                @"createworkspacev2>>2,2,\\.\DISPLAY1",
-                @"destroyworkspace>>1,\\.\DISPLAY1",
-                @"destroyworkspacev2>>1,1,\\.\DISPLAY1",
-                @"movewindow>>1,2,\\.\DISPLAY1",
-                @"movewindowv2>>1,2,2,\\.\DISPLAY1",
-                @"workspace>>2,\\.\DISPLAY1",
-                @"workspacev2>>2,2,\\.\DISPLAY1",
+                @"createworkspace>>2,2,\\.\DISPLAY1",
+                @"destroyworkspace>>1,1,\\.\DISPLAY1",
+                @"movewindow>>1,2,2,\\.\DISPLAY1",
+                @"workspace>>2,2,\\.\DISPLAY1",
+                @"focus>>\\.\DISPLAY1,2,2,1,",
             ],
             Lines(outcome));
     }
@@ -399,12 +393,9 @@ public class MonitorWorkspaceTests
         Assert.AreEqual(new WorkspaceId("1", 1), Assert.ContainsSingle(screen => screen.Monitor.Name == right.Name, outcome.State.Screens).ActiveWorkspace);
         Assert.AreSequenceEqual(
             [
-                @"createworkspace>>2,\\.\DISPLAY1",
-                @"createworkspacev2>>2,2,\\.\DISPLAY1",
-                @"movewindow>>1,2,\\.\DISPLAY1",
-                @"movewindowv2>>1,2,2,\\.\DISPLAY1",
-                "activewindow>>,",
-                "activewindowv2>>",
+                @"createworkspace>>2,2,\\.\DISPLAY1",
+                @"movewindow>>1,2,2,\\.\DISPLAY1",
+                @"focus>>\\.\DISPLAY1,1,1,,",
             ],
             Lines(outcome));
     }

@@ -35,7 +35,7 @@ public sealed partial class WindowManager
             _activated = null;
         }
 
-        var events = Diff(before.State, outcome.State, before.Active, ActiveWindow(), activated);
+        var events = Diff(before.State, outcome.State, activated);
         if (_configEvents is not null)
         {
             events.AddRange(_configEvents);
@@ -47,6 +47,10 @@ public sealed partial class WindowManager
             events.AddRange(_extraEvents);
             _extraEvents = null;
         }
+
+        var focus = Focus(outcome.State, ActiveWindow());
+        if (focus != Focus(before.State, before.Active))
+            events.Add(focus);
 
         return events.Count == 0 ? outcome : outcome with { Events = events };
     }
@@ -70,7 +74,10 @@ public sealed partial class WindowManager
         };
     }
 
-    private static List<StreamEvent> Diff(State before, State after, WindowId? activeBefore, WindowId? activeAfter, IReadOnlyList<WorkspaceId>? activated)
+    private static FocusChanged Focus(State state, WindowId? window) =>
+        new(MonitorName(state, state.ActiveMonitor), state.ActiveWorkspace, window);
+
+    private static List<StreamEvent> Diff(State before, State after, IReadOnlyList<WorkspaceId>? activated)
     {
         var events = new List<StreamEvent>();
         AddWorkspaceEvents(events, before, after);
@@ -93,10 +100,7 @@ public sealed partial class WindowManager
                 events.Add(new ClientMoved(pair.Key, pair.Value.Workspace));
 
             if (prior.Title != pair.Value.Title)
-                events.Add(new ClientRetitled(pair.Key, pair.Value.Title, pair.Key == activeAfter));
-
-            if (prior.Class != pair.Value.Class)
-                events.Add(new ClientReclassed(pair.Key, pair.Value.Class, pair.Key == activeAfter));
+                events.Add(new ClientRetitled(pair.Key, pair.Value.Title));
 
             if (prior.Floating != pair.Value.Floating)
                 events.Add(new FloatingChanged(pair.Key, pair.Value.Floating));
@@ -109,21 +113,11 @@ public sealed partial class WindowManager
 
         }
 
-        if (after.ActiveMonitor != before.ActiveMonitor)
-        {
-            var name = MonitorName(after, after.ActiveMonitor);
-            if (name.Length > 0)
-                events.Add(new MonitorFocused(name, WorkspaceOn(after, after.ActiveMonitor)));
-        }
-
         if (activated is not null)
         {
             foreach (var workspace in activated)
                 events.Add(new WorkspaceActivated(workspace));
         }
-
-        if (activeAfter != activeBefore)
-            events.Add(new FocusChanged(activeAfter));
 
         AddSpecialEvents(events, before, after);
         AddMonitorEvents(events, before, after);
@@ -172,8 +166,6 @@ public sealed partial class WindowManager
     }
 
     private static string MonitorName(State state, MonitorId id) => state.ScreenOf(id)?.Monitor.Name ?? "";
-
-    private static WorkspaceId WorkspaceOn(State state, MonitorId id) => state.ScreenOf(id)?.ActiveWorkspace ?? state.ActiveWorkspace;
 
     private static void AddSpecialEvents(List<StreamEvent> events, State before, State after)
     {
@@ -246,8 +238,7 @@ public sealed partial class WindowManager
             if (nextNames.Contains(screen.Monitor.Name))
                 continue;
 
-            events.Add(new MonitorRemoved(screen.Monitor.Name));
-            events.Add(new MonitorRemovedV2(screen.Id.Value, screen.Monitor.Name, screen.Monitor.Description));
+            events.Add(new MonitorRemoved(screen.Id.Value, screen.Monitor.Name, screen.Monitor.Description));
         }
 
         var previous = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -259,8 +250,7 @@ public sealed partial class WindowManager
             if (previous.Contains(screen.Monitor.Name))
                 continue;
 
-            events.Add(new MonitorAdded(screen.Monitor.Name));
-            events.Add(new MonitorAddedV2(screen.Id.Value, screen.Monitor.Name, screen.Monitor.Description));
+            events.Add(new MonitorAdded(screen.Id.Value, screen.Monitor.Name, screen.Monitor.Description));
         }
     }
 

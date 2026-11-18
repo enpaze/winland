@@ -99,7 +99,7 @@ public class GroupDragTests
         Assert.IsTrue(Client(moved, 1).Floating);
         Assert.AreEqual(new MonitorId(0), moved.State.ActiveMonitor);
         Assert.AreSequenceEqual([new WindowId(2)], Assert.ContainsSingle(moved.State.Groups));
-        Assert.AreSequenceEqual([@"movewindow>>1,1,\\.\DISPLAY2", @"movewindowv2>>1,1,1,\\.\DISPLAY2"], MoveLines(moved));
+        Assert.AreSequenceEqual([@"movewindow>>1,1,1,\\.\DISPLAY2"], MoveLines(moved));
         Assert.AreSequenceEqual([new WindowId(2), new WindowId(1)], Assert.ContainsSingle(dropped.State.Groups));
         Assert.AreEqual(new WindowId(1), dropped.Focus);
         Assert.AreEqual(new MonitorId(1), dropped.State.ActiveMonitor);
@@ -238,7 +238,7 @@ public class GroupDragTests
 
     private static IReadOnlyList<string> MoveLines(Outcome outcome) =>
         [.. CommandProtocol.FormatStream(outcome.Events, outcome.State).Where(line =>
-            line.StartsWith("movewindow>>", StringComparison.Ordinal) || line.StartsWith("movewindowv2>>", StringComparison.Ordinal))];
+            line.StartsWith("movewindow>>", StringComparison.Ordinal))];
 
     private static Point Middle(Rectangle box) => new(box.X + (box.Width / 2), box.Y + (box.Height / 2));
 }

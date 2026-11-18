@@ -8,7 +8,7 @@ public class ReclassTests
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
     [TestMethod]
-    public void ANewClassIsKeptAndTellsNoClassEvent()
+    public void ANewClassIsKeptAndTellsNoEvent()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(0x2a), Area) { Traits = WindowTraits.Normal with { Class = "kitty", Title = "old" } });
@@ -17,24 +17,19 @@ public class ReclassTests
         var outcome = core.Handle(new WindowClassChanged(new WindowId(0x2a), "new"));
 
         Assert.AreEqual("new", Assert.ContainsSingle(client => client.Window == new WindowId(0x2a), outcome.State.Clients).Class);
-        var reclassed = Assert.ContainsSingle(outcome.Events.OfType<ClientReclassed>());
-        Assert.AreEqual(new WindowId(0x2a), reclassed.Window);
-        Assert.AreEqual("new", reclassed.Class);
-        Assert.IsFalse(reclassed.Active);
-        Assert.IsEmpty(CommandProtocol.FormatStream(outcome.Events, outcome.State));
+        Assert.IsEmpty(outcome.Events);
     }
 
     [TestMethod]
-    public void TheFocusedWindowsNewClassIsToldAsTheActiveWindow()
+    public void TheFocusedWindowsNewClassTellsNoFocusEvent()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(0x2a), Area) { Traits = WindowTraits.Normal with { Class = "kitty", Title = "old" } });
 
         var outcome = core.Handle(new WindowClassChanged(new WindowId(0x2a), "new"));
 
-        Assert.AreSequenceEqual(
-            ["activewindow>>new,old", "activewindowv2>>2a"],
-            CommandProtocol.FormatStream(outcome.Events, outcome.State));
+        Assert.AreEqual("new", Assert.ContainsSingle(outcome.State.Clients).Class);
+        Assert.IsEmpty(outcome.Events);
     }
 
     [TestMethod]

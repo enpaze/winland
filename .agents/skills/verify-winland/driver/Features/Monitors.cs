@@ -43,7 +43,7 @@ public class Monitors
         var other = monitors.First(monitor => !monitor.GetProperty("focused").GetBoolean()).GetProperty("name").GetString()!;
         run.Dispatch($"focusmonitor {other}");
         run.Until($"focusmonitor {other} focuses that monitor", () => run.Json("activeworkspace").GetProperty("monitor").GetString() == other);
-        run.UntilEvent("focusedmon", other);
+        run.UntilEvent("focus", other + ",");
 
         run.Dispatch($"focusmonitor {name}");
         run.Focus(window);

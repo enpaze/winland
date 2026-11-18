@@ -33,5 +33,5 @@ Preconditions:
 
 - The driver reaches only the owned window that opens on a hidden Workspace. It does not make a Client flash for attention or take the foreground, the other two ways a Client becomes urgent.
 - The baseline config manages only windows titled `WinlandVerify *`. The dialog is titled `WinlandDialog`, so the driver adds a `float` rule to make it a Client.
-- Addresses on the Event stream have no `0x` prefix, while `winland -j clients` writes them with it. Match the hex digits, not the whole string.
+- Addresses in text events have no `0x` prefix, while `winland -j events` and `winland -j clients` write them with it. Match the hex digits, not the whole string.
 - The focused Client flashing is not urgent, so a check by hand must flash a Client that does not have the focus.
