@@ -203,17 +203,8 @@ public sealed partial class KeyboardHook : IDisposable
         if (_disposed)
             return;
 
-        var hook = PInvoke.SetWindowsHookEx(WINDOWS_HOOK_ID.WH_KEYBOARD_LL, _callback, default(HINSTANCE), 0);
-        if (hook.IsNull)
-        {
-            Console.Error.WriteLine($"The keyboard hook was not reinstalled ({Marshal.GetLastPInvokeError()}).");
+        if (!LowLevelHook.Reinstall(ref _hook, WINDOWS_HOOK_ID.WH_KEYBOARD_LL, _callback, "keyboard"))
             return;
-        }
-
-        var old = _hook;
-        _hook = hook;
-        if (!old.IsNull)
-            _ = PInvoke.UnhookWindowsHookEx(old);
 
         Console.Error.WriteLine("The keyboard hook was reinstalled.");
         Saw();
