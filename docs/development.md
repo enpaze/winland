@@ -31,8 +31,7 @@ $devConfig = Join-Path $env:TEMP "winland-dev-$devId.conf"
 @'
 animations:enabled = false
 windowrule = ignore, class:*
-windowrule = tile, class:WinlandDevWindow, title:WinlandDev *
-windowrule = workspace 1, class:WinlandDevWindow, title:WinlandDev *
+windowrule = tile; workspace 1, class:WinlandDevWindow, title:WinlandDev *
 '@ | Set-Content -LiteralPath $devConfig
 pwsh -NoProfile -File scripts/run.ps1 -Config $devConfig
 ```
