@@ -89,7 +89,7 @@ public class CommandServerTests
         var client = Assert.ContainsSingle(clients.EnumerateArray());
         Assert.AreEqual("0x2a", client.GetProperty("address").GetString());
         Assert.AreEqual("ok", CommandClient.Transact("exec", name));
-        Assert.AreEqual("error: unknown command 'nope'", CommandClient.Transact("nope", name));
+        Assert.AreEqual("error: unknown command 'nonsense'", CommandClient.Transact("nonsense", name));
     }
 
     [TestMethod]

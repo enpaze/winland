@@ -10,13 +10,13 @@ public class LayoutChangeTests
 
         desk.AddMonitor("HEADLESS-5", TestDesktop.Second);
 
-        desk.Ok("focusmonitor", "HEADLESS-5");
+        desk.Ok("focus-monitor", "HEADLESS-5");
         desk.Ok("workspace", "30");
         desk.Spawn("layout_teardown_a");
         desk.Ok("workspace", "31");
         desk.Spawn("layout_teardown_b");
 
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         desk.Ok("workspace", "1");
 
         desk.Set("general:layout", "scrolling");
@@ -30,28 +30,28 @@ public class LayoutChangeTests
         var desk = new TestDesktop();
         desk.Spawn("kitty");
 
-        desk.Ok("focuswindow", "class:kitty");
-        desk.Ok("togglefloating");
+        desk.Ok("focus", "class:kitty");
+        desk.Ok("float");
         desk.Place("kitty", 420, 420, 1337, 69);
         desk.ExpectActive("420,420", "1337,69");
 
-        desk.Ok("fullscreen", "0");
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
+        desk.Ok("fullscreen");
         Assert.AreEqual("1337,69", desk.ActivePlace().Size);
 
-        desk.Ok("movewindow", "r");
+        desk.Ok("move", "r");
         desk.ExpectActive("581,420", "1337,69");
 
-        desk.Ok("fullscreen", "0");
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
+        desk.Ok("fullscreen");
         desk.ExpectActive("581,420", "1337,69");
 
         desk.Ok("workspace", "1");
-        desk.Ok("focuswindow", "class:kitty");
-        desk.Ok("pin", "enable");
+        desk.Ok("focus", "class:kitty");
+        desk.Ok("pin", "on");
         desk.Ok("workspace", "2");
-        desk.Ok("fullscreen", "0");
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
+        desk.Ok("fullscreen");
         desk.ExpectActive("581,420", "1337,69");
     }
 
@@ -64,7 +64,7 @@ public class LayoutChangeTests
         desk.Spawn("kitty_C");
         desk.Spawn("kitty_D");
 
-        desk.Ok("focuswindow", "class:kitty_C");
+        desk.Ok("focus", "class:kitty_C");
         desk.Set("general:layout", "scrolling");
 
         Assert.AreEqual("kitty_C", desk.ActiveClass());

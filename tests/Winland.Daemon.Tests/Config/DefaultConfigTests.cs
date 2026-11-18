@@ -4,32 +4,32 @@ namespace Winland.Daemon.Tests;
 public class DefaultConfigTests
 {
     private const string Binds = """
-        SUPER|W|killactive|
-        SUPER|Q|killactive|
-        SUPER|J|togglesplit|
-        SUPER|T|togglefloating|
+        SUPER|W|close|
+        SUPER|Q|close|
+        SUPER|J|split|
+        SUPER|T|float|
         SUPER|F|fullscreen|
-        SUPER ALT|F|fullscreen|1
-        SUPER|O|togglefloating|
+        SUPER ALT|F|maximize|
+        SUPER|O|float|
         SUPER|O|pin|
-        SUPER|K|cyclelayout|
-        SUPER ALT|K|cyclelayout|back
-        SUPER|Left|movefocus|l
-        SUPER|Right|movefocus|r
-        SUPER|Up|movefocus|u
-        SUPER|Down|movefocus|d
-        SUPER SHIFT|Left|swapwindow|l
-        SUPER SHIFT|Right|swapwindow|r
-        SUPER SHIFT|Up|swapwindow|u
-        SUPER SHIFT|Down|swapwindow|d
-        SUPER CTRL SHIFT|Left|movewindow|mon:l
-        SUPER CTRL SHIFT|Right|movewindow|mon:r
-        SUPER CTRL SHIFT|Up|movewindow|mon:u
-        SUPER CTRL SHIFT|Down|movewindow|mon:d
-        SUPER ALT SHIFT|Left|movecurrentworkspacetomonitor|l
-        SUPER ALT SHIFT|Right|movecurrentworkspacetomonitor|r
-        SUPER ALT SHIFT|Up|movecurrentworkspacetomonitor|u
-        SUPER ALT SHIFT|Down|movecurrentworkspacetomonitor|d
+        SUPER|K|layout|next
+        SUPER ALT|K|layout|prev
+        SUPER|Left|focus|left
+        SUPER|Right|focus|right
+        SUPER|Up|focus|up
+        SUPER|Down|focus|down
+        SUPER SHIFT|Left|swap|left
+        SUPER SHIFT|Right|swap|right
+        SUPER SHIFT|Up|swap|up
+        SUPER SHIFT|Down|swap|down
+        SUPER CTRL SHIFT|Left|move|mon:left
+        SUPER CTRL SHIFT|Right|move|mon:right
+        SUPER CTRL SHIFT|Up|move|mon:up
+        SUPER CTRL SHIFT|Down|move|mon:down
+        SUPER ALT SHIFT|Left|move-workspace|left
+        SUPER ALT SHIFT|Right|move-workspace|right
+        SUPER ALT SHIFT|Up|move-workspace|up
+        SUPER ALT SHIFT|Down|move-workspace|down
         SUPER|1|workspace|1
         SUPER|2|workspace|2
         SUPER|3|workspace|3
@@ -40,65 +40,65 @@ public class DefaultConfigTests
         SUPER|8|workspace|8
         SUPER|9|workspace|9
         SUPER|0|workspace|10
-        SUPER SHIFT|1|movetoworkspace|1
-        SUPER SHIFT|2|movetoworkspace|2
-        SUPER SHIFT|3|movetoworkspace|3
-        SUPER SHIFT|4|movetoworkspace|4
-        SUPER SHIFT|5|movetoworkspace|5
-        SUPER SHIFT|6|movetoworkspace|6
-        SUPER SHIFT|7|movetoworkspace|7
-        SUPER SHIFT|8|movetoworkspace|8
-        SUPER SHIFT|9|movetoworkspace|9
-        SUPER SHIFT|0|movetoworkspace|10
-        SUPER ALT SHIFT|1|movetoworkspacesilent|1
-        SUPER ALT SHIFT|2|movetoworkspacesilent|2
-        SUPER ALT SHIFT|3|movetoworkspacesilent|3
-        SUPER ALT SHIFT|4|movetoworkspacesilent|4
-        SUPER ALT SHIFT|5|movetoworkspacesilent|5
-        SUPER ALT SHIFT|6|movetoworkspacesilent|6
-        SUPER ALT SHIFT|7|movetoworkspacesilent|7
-        SUPER ALT SHIFT|8|movetoworkspacesilent|8
-        SUPER ALT SHIFT|9|movetoworkspacesilent|9
-        SUPER ALT SHIFT|0|movetoworkspacesilent|10
-        SUPER|S|togglespecialworkspace|scratchpad
-        SUPER|grave|togglespecialworkspace|scratchpad
-        SUPER ALT|S|movetoworkspacesilent|special:scratchpad
-        SUPER SHIFT|grave|movetoworkspacesilent|special:scratchpad
-        SUPER|Tab|workspace|m+1
-        SUPER SHIFT|Tab|workspace|m-1
-        SUPER CTRL|Tab|workspace|previous_per_monitor
-        ALT CTRL SHIFT|Tab|focusmonitor|-1
-        SUPER SHIFT|minus|resizeactive|0 -100
-        SUPER SHIFT|equal|resizeactive|0 100
-        SUPER ALT|minus|resizeactive|-25 0
-        SUPER ALT|equal|resizeactive|25 0
-        SUPER CTRL|minus|resizeactive|-300 0
-        SUPER CTRL|equal|resizeactive|300 0
-        SUPER ALT SHIFT|minus|resizeactive|0 -25
-        SUPER ALT SHIFT|equal|resizeactive|0 25
-        SUPER CTRL SHIFT|minus|resizeactive|0 -300
-        SUPER CTRL SHIFT|equal|resizeactive|0 300
-        SUPER|mouse_down|workspace|m+1
-        SUPER|mouse_up|workspace|m-1
-        SUPER|mouse:left|movewindow|
-        SUPER|mouse:right|resizewindow|
-        SUPER|G|togglegroup|
-        SUPER ALT|G|moveoutofgroup|
-        SUPER ALT|Left|moveintogroup|l
-        SUPER ALT|Right|moveintogroup|r
-        SUPER ALT|Up|moveintogroup|u
-        SUPER ALT|Down|moveintogroup|d
-        SUPER ALT|Tab|changegroupactive|f
-        SUPER ALT SHIFT|Tab|changegroupactive|b
-        SUPER CTRL|Left|changegroupactive|b
-        SUPER CTRL|Right|changegroupactive|f
-        SUPER ALT|mouse_down|changegroupactive|f
-        SUPER ALT|mouse_up|changegroupactive|b
-        SUPER ALT|1|changegroupactive|1
-        SUPER ALT|2|changegroupactive|2
-        SUPER ALT|3|changegroupactive|3
-        SUPER ALT|4|changegroupactive|4
-        SUPER ALT|5|changegroupactive|5
+        SUPER SHIFT|1|move|1
+        SUPER SHIFT|2|move|2
+        SUPER SHIFT|3|move|3
+        SUPER SHIFT|4|move|4
+        SUPER SHIFT|5|move|5
+        SUPER SHIFT|6|move|6
+        SUPER SHIFT|7|move|7
+        SUPER SHIFT|8|move|8
+        SUPER SHIFT|9|move|9
+        SUPER SHIFT|0|move|10
+        SUPER ALT SHIFT|1|move|1 stay
+        SUPER ALT SHIFT|2|move|2 stay
+        SUPER ALT SHIFT|3|move|3 stay
+        SUPER ALT SHIFT|4|move|4 stay
+        SUPER ALT SHIFT|5|move|5 stay
+        SUPER ALT SHIFT|6|move|6 stay
+        SUPER ALT SHIFT|7|move|7 stay
+        SUPER ALT SHIFT|8|move|8 stay
+        SUPER ALT SHIFT|9|move|9 stay
+        SUPER ALT SHIFT|0|move|10 stay
+        SUPER|S|scratchpad|
+        SUPER|grave|scratchpad|
+        SUPER ALT|S|move|special stay
+        SUPER SHIFT|grave|move|special stay
+        SUPER|Tab|workspace|next
+        SUPER SHIFT|Tab|workspace|prev
+        SUPER CTRL|Tab|workspace|last
+        ALT CTRL SHIFT|Tab|focus-monitor|prev
+        SUPER SHIFT|minus|resize|0 -100
+        SUPER SHIFT|equal|resize|0 100
+        SUPER ALT|minus|resize|-25 0
+        SUPER ALT|equal|resize|25 0
+        SUPER CTRL|minus|resize|-300 0
+        SUPER CTRL|equal|resize|300 0
+        SUPER ALT SHIFT|minus|resize|0 -25
+        SUPER ALT SHIFT|equal|resize|0 25
+        SUPER CTRL SHIFT|minus|resize|0 -300
+        SUPER CTRL SHIFT|equal|resize|0 300
+        SUPER|mouse_down|workspace|next
+        SUPER|mouse_up|workspace|prev
+        SUPER|mouse:left|move|
+        SUPER|mouse:right|resize|
+        SUPER|G|group|
+        SUPER ALT|G|leave-group|
+        SUPER ALT|Left|join|left
+        SUPER ALT|Right|join|right
+        SUPER ALT|Up|join|up
+        SUPER ALT|Down|join|down
+        SUPER ALT|Tab|tab|next
+        SUPER ALT SHIFT|Tab|tab|prev
+        SUPER CTRL|Left|tab|prev
+        SUPER CTRL|Right|tab|next
+        SUPER ALT|mouse_down|tab|next
+        SUPER ALT|mouse_up|tab|prev
+        SUPER ALT|1|tab|1
+        SUPER ALT|2|tab|2
+        SUPER ALT|3|tab|3
+        SUPER ALT|4|tab|4
+        SUPER ALT|5|tab|5
         SUPER|Return|exec|wt
         SUPER SHIFT|Return|exec|start https://
         SUPER SHIFT|B|exec|start https://
@@ -164,7 +164,7 @@ public class DefaultConfigTests
             .Where(chord => chord.Count() > 1)
             .Select(chord => $"{chord.Key.Modifiers}|{chord.Key.Key}|{string.Join(' ', chord.Select(bind => bind.Dispatcher))}");
 
-        Assert.AreSequenceEqual(["Super|O|togglefloating pin"], shared);
+        Assert.AreSequenceEqual(["Super|O|float pin"], shared);
     }
 
     [TestMethod]
@@ -210,9 +210,9 @@ public class DefaultConfigTests
             Assert.IsTrue(DefaultConfig.WriteIfMissing(path));
             Assert.AreEqual(DefaultConfig.Text, File.ReadAllText(path));
 
-            File.WriteAllText(path, "bind = SUPER, Q, killactive\n");
+            File.WriteAllText(path, "bind = SUPER, Q, close\n");
             Assert.IsFalse(DefaultConfig.WriteIfMissing(path));
-            Assert.AreEqual("bind = SUPER, Q, killactive\n", File.ReadAllText(path));
+            Assert.AreEqual("bind = SUPER, Q, close\n", File.ReadAllText(path));
         }
         finally
         {

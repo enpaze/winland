@@ -51,14 +51,14 @@ public class CommandTests
     }
 
     [TestMethod]
-    public void DispatchKillactiveAsksToCloseTheActiveClientAndLeavesItInPlace()
+    public void CloseAsksTheActiveClientToCloseAndLeavesItInPlace()
     {
         var core = new WindowManager();
         var area = new Rectangle(0, 0, 1920, 1080);
         core.Handle(new WindowAppeared(new WindowId(1), area));
         core.Handle(new WindowAppeared(new WindowId(2), area));
 
-        var reply = core.Execute("killactive");
+        var reply = core.Execute("close");
 
         Assert.AreEqual("ok", reply.Text);
         Assert.AreEqual(new WindowId(2), reply.Effect.Close);
@@ -67,7 +67,7 @@ public class CommandTests
     }
 
     [TestMethod]
-    [DataRow("killactiv", "error: unknown command 'killactiv'. Did you mean 'killactive'?")]
+    [DataRow("closs", "error: unknown command 'closs'. Did you mean 'close'?")]
     [DataRow("gte windows", "error: unknown command 'gte'. Did you mean 'get'?")]
     [DataRow("notadispatcher", "error: unknown command 'notadispatcher'")]
     public void AnUnknownNameSuggestsTheOneNameItIsCloseTo(string line, string error)
@@ -83,7 +83,7 @@ public class CommandTests
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 100, 100)));
 
-        var reply = core.Execute("dispatch killactive");
+        var reply = core.Execute("dispatch close");
 
         Assert.AreEqual("error: unknown command 'dispatch'", reply.Text);
         Assert.IsNull(reply.Effect.Close);
@@ -165,7 +165,7 @@ public class CommandTests
     [TestMethod]
     public void ClientWorkspaceFollowsTheStoredWorkspace()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:kitty\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 stay, class:kitty\n"));
         core.Handle(new WindowAppeared(new WindowId(9), new Rectangle(0, 0, 100, 100))
         {
             Traits = WindowTraits.Normal with { Class = "kitty" },
@@ -317,17 +317,17 @@ public class CommandTests
         core.Handle(new WindowAppeared(new WindowId(1), area));
         core.Handle(new WindowAppeared(new WindowId(2), area));
 
-        var focus = core.Execute("movefocus l");
+        var focus = core.Execute("focus l");
 
         Assert.AreEqual("ok", focus.Text);
         Assert.AreEqual(new WindowId(1), focus.Effect.Focus);
 
-        var floating = core.Execute("togglefloating");
+        var floating = core.Execute("float");
 
         Assert.IsTrue(Client(floating.Effect, 1).Floating);
         Assert.IsFalse(Client(floating.Effect, 2).Floating);
 
-        var moved = core.Execute("movetoworkspace 3");
+        var moved = core.Execute("move 3");
 
         Assert.AreEqual(new WorkspaceId("3"), moved.Effect.State.ActiveWorkspace);
         Assert.AreEqual(new WorkspaceId("3"), Client(moved.Effect, 1).Workspace);

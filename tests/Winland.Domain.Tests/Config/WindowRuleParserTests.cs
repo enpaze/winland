@@ -181,6 +181,36 @@ public class WindowRuleParserTests
     }
 
     [TestMethod]
+    [DataRow("workspace 9 garbage")]
+    [DataRow("workspace 2 silent")]
+    [DataRow("workspace name:dev")]
+    [DataRow("workspace dev")]
+    [DataRow("workspace +1")]
+    [DataRow("workspace 2 stay now")]
+    public void AWorkspaceEffectThatDoesNotReadWarnsWhenTheConfigIsRead(string effect)
+    {
+        var document = ConfigParser.Parse($"windowrule = float; {effect}, class:kitty\n");
+
+        var decision = WindowRuleParser.Decide(WindowTraits.Normal with { Class = "kitty" }, document.WindowRules);
+
+        Assert.AreEqual("Malformed window rule.", Assert.ContainsSingle(document.Warnings).Message);
+        Assert.IsTrue(decision.Floating);
+        Assert.IsNull(decision.Workspace);
+    }
+
+    [TestMethod]
+    [DataRow("workspace 2 stay", "2 stay")]
+    [DataRow("workspace special:notes", "special:notes")]
+    [DataRow("workspace empty", "empty")]
+    public void AWorkspaceEffectTakesAnAddressAndStay(string effect, string workspace)
+    {
+        var document = ConfigParser.Parse($"windowrule = {effect}, class:kitty\n");
+
+        Assert.IsEmpty(document.Warnings);
+        Assert.AreEqual(workspace, WindowRuleParser.Decide(WindowTraits.Normal with { Class = "kitty" }, document.WindowRules).Workspace);
+    }
+
+    [TestMethod]
     public void EveryEffectInAChainAppliesToTheMatchedWindow()
     {
         var document = ConfigParser.Parse("windowrule = float; size 900 600; workspace 9, exe:Spotify.exe\n");

@@ -57,6 +57,6 @@ public class OffWindowAxisTests
     private static void Float(WindowManager core, long window)
     {
         core.Handle(new WindowAppeared(new WindowId(window), Wide));
-        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new Dispatch("float"));
     }
 }

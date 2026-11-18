@@ -25,9 +25,9 @@ Preconditions:
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature decoration`. It prints `== feature decoration: passed`.
 - **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`. Both become Clients and tile side by side across the work area.
-- **Focus the left window.** The driver runs `winland focuswindow address:<hwnd>` for the left window, and `winland -j get window` reports it. The right window's alpha is between 120 and 135 of 255, and the left window is opaque.
+- **Focus the left window.** The driver runs `winland focus address:<hwnd>` for the left window, and `winland -j get window` reports it. The right window's alpha is between 120 and 135 of 255, and the left window is opaque.
 - **Border on the focused window.** At least four visible `WinlandBorder` windows of the Winland process lie within 16 pixels of the left window's frame and reach at least 4 pixels past it on every side.
-- **Focus the right window.** The driver runs `winland focuswindow address:<hwnd>` for the right window. The left window's alpha drops to between 120 and 135, the right window turns opaque, and the `WinlandBorder` windows surround the right window the same way.
+- **Focus the right window.** The driver runs `winland focus address:<hwnd>` for the right window. The left window's alpha drops to between 120 and 135, the right window turns opaque, and the `WinlandBorder` windows surround the right window the same way.
 
 ## Gotchas
 

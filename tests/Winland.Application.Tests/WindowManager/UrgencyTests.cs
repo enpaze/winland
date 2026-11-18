@@ -40,8 +40,8 @@ public class UrgencyTests
     public void AClientOnAHiddenWorkspaceTheUserFocusesBringsItsWorkspace()
     {
         var core = TwoClients();
-        core.Handle(new Dispatch("focuswindow", "address:0x1"));
-        core.Handle(new Dispatch("movetoworkspacesilent", "2"));
+        core.Handle(new Dispatch("focus", "address:0x1"));
+        core.Handle(new Dispatch("move", "2 stay"));
 
         var outcome = core.Handle(new WindowFocused(new WindowId(1), FocusCause.User));
 

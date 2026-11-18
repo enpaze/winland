@@ -14,7 +14,7 @@ public sealed partial class WindowManager
     private Outcome PinWindow(string arguments)
     {
         if (PinRequest(arguments) is not PinAction action)
-            return Rejected("error: pin takes toggle, enable or disable");
+            return Rejected("error: pin takes on or off");
 
         if (ActiveWindow() is not WindowId id || Find(id) is not Client client || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
@@ -138,11 +138,11 @@ public sealed partial class WindowManager
     private bool StaysVisible(LiveWorkspace desk, WindowId window, bool minimized) =>
         _pins.StaysVisible(window, minimized, _workspaces.Shown.ShowsAWorkspace(desk.Monitor));
 
-    private static PinAction? PinRequest(string arguments) => arguments.Trim() switch
+    private static PinAction? PinRequest(string arguments) => arguments.Trim().ToLowerInvariant() switch
     {
-        "" or "toggle" => PinAction.Toggle,
-        "enable" or "on" => PinAction.Enable,
-        "disable" or "off" => PinAction.Disable,
+        "" => PinAction.Toggle,
+        "on" => PinAction.Enable,
+        "off" => PinAction.Disable,
         _ => null,
     };
 }

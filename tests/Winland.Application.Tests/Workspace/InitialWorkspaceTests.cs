@@ -61,7 +61,7 @@ public class InitialWorkspaceTests
     [TestMethod]
     public void AWorkspaceRuleWinsOverTheToken()
     {
-        var core = Loaded("windowrule = workspace 4 silent, class:ruled\n");
+        var core = Loaded("windowrule = workspace 4 stay, class:ruled\n");
         Start(core, pid: 500);
         core.Execute("workspace 2");
 

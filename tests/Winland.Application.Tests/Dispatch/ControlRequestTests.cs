@@ -19,7 +19,7 @@ public class ControlRequestTests
 
         var names = actions["actions: ".Length..].Split(", ");
         Assert.AreSequenceEqual(names.Order(StringComparer.Ordinal), names);
-        Assert.Contains("killactive", names);
+        Assert.Contains("close", names);
         Assert.Contains("reload", names);
         var core = new WindowManager();
         foreach (var name in names)
@@ -27,7 +27,7 @@ public class ControlRequestTests
     }
 
     [TestMethod]
-    [DataRow("killactive")]
+    [DataRow("close")]
     [DataRow("get windows")]
     public void ANamedRequestStillGoesToTheRunningWinland(string request)
     {

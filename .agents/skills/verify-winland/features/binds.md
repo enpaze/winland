@@ -32,7 +32,7 @@ Preconditions:
 - **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`. Both become Clients and tile side by side across the work area.
 - **Press a bind.** The driver sends real `Ctrl+Alt+Shift+F9` key input. `winland -j get workspace` reports `4`, and the left window hides.
 - **Press the other bind.** The driver sends `Ctrl+Alt+Shift+F10`. `winland -j get workspace` reports `1`, and the left window shows again.
-- **Follow the mouse.** The driver focuses the left window with `winland focuswindow address:<hwnd>`, then moves the real pointer to the middle of the right window 15 times, a pixel apart. `winland -j get window` reports the right window's address.
+- **Follow the mouse.** The driver focuses the left window with `winland focus address:<hwnd>`, then moves the real pointer to the middle of the right window 15 times, a pixel apart. `winland -j get window` reports the right window's address.
 
 ## Gotchas
 

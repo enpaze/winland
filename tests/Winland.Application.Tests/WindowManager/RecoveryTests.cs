@@ -36,7 +36,7 @@ public class RecoveryTests
             Assert.AreEqual(new WorkspaceId("1"), client.Workspace);
             Assert.AreEqual(before[client.Window], client.Bounds);
         }
-        Assert.AreEqual(new WindowId(3), core.Handle(new Dispatch("killactive")).Close);
+        Assert.AreEqual(new WindowId(3), core.Handle(new Dispatch("close")).Close);
     }
 
     [TestMethod]
@@ -365,7 +365,7 @@ public class RecoveryTests
         var prior = new WindowManager();
         prior.Handle(new WindowAppeared(new WindowId(1), Area));
         prior.Handle(new WindowAppeared(new WindowId(2), Area));
-        prior.Handle(new Dispatch("fullscreen", "1"));
+        prior.Handle(new Dispatch("maximize"));
         Assert.IsTrue(RecoverySnapshot.TryParse(prior.Recovery().ToJson(), out var snapshot));
 
         var core = new WindowManager();

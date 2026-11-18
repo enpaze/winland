@@ -60,9 +60,9 @@ public class EventTests
     }
 
     [TestMethod]
-    public void SilentWorkspaceOpenDoesNotChangeFocus()
+    public void AWorkspaceRuleWithStayDoesNotChangeFocus()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:kitty\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 stay, class:kitty\n"));
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
@@ -143,12 +143,12 @@ public class EventTests
     }
 
     [TestMethod]
-    public void KillActiveWaitsForTheWindowToClose()
+    public void CloseWaitsForTheWindowToClose()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
-        var killed = core.Execute("killactive");
+        var killed = core.Execute("close");
         var closed = core.Handle(new WindowClosed(new WindowId(1)));
 
         Assert.IsEmpty(killed.Effect.Events);
@@ -162,7 +162,7 @@ public class EventTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
-        var outcome = core.Handle(new Dispatch("movefocus", "l"));
+        var outcome = core.Handle(new Dispatch("focus", "l"));
 
         Assert.AreEqual(new WindowId(1), outcome.Focus);
         Assert.AreSequenceEqual(["focus>>,1,1,1,"], Lines(outcome));
@@ -237,13 +237,13 @@ public class EventTests
     }
 
     [TestMethod]
-    public void SilentMoveEmitsTheDestinationThenTheReplacementFocus()
+    public void AMoveThatStaysEmitsTheDestinationThenTheReplacementFocus()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
-        var outcome = core.Execute("movetoworkspacesilent 3");
+        var outcome = core.Execute("move 3 stay");
 
         Assert.AreSequenceEqual(
             [
@@ -261,7 +261,7 @@ public class EventTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
-        var outcome = core.Execute("movetoworkspace 4");
+        var outcome = core.Execute("move 4");
 
         Assert.AreSequenceEqual(
             [
@@ -293,10 +293,10 @@ public class EventTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(0xFF), Area));
 
-        core.Execute("focuswindow address:0x1");
-        var lifted = core.Execute("togglefloating");
-        core.Execute("focuswindow address:0x1");
-        var dropped = core.Execute("togglefloating");
+        core.Execute("focus address:0x1");
+        var lifted = core.Execute("float");
+        core.Execute("focus address:0x1");
+        var dropped = core.Execute("float");
 
         Assert.AreSequenceEqual(["changefloatingmode>>1,1"], Lines(lifted));
         Assert.AreSequenceEqual(["changefloatingmode>>1,0"], Lines(dropped));
@@ -419,7 +419,7 @@ public class EventTests
             Traits = WindowTraits.Normal with { Class = "right", Title = "two" },
         });
 
-        var outcome = core.Execute(@"focusmonitor \\.\DISPLAY2");
+        var outcome = core.Execute(@"focus-monitor \\.\DISPLAY2");
 
         Assert.AreSequenceEqual(
             [
@@ -497,9 +497,9 @@ public class EventTests
     {
         var core = new WindowManager();
         core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "Dell", 0, 0, 1920, 1080, 1, true, Area)]));
-        core.Execute("togglespecialworkspace");
+        core.Execute("scratchpad");
 
-        var closed = core.Execute("togglespecialworkspace");
+        var closed = core.Execute("scratchpad");
 
         Assert.AreSequenceEqual(
             [

@@ -53,7 +53,7 @@ public class LaunchTests
     [TestMethod]
     [DataRow("[float; size 800 600] kitty")]
     [DataRow("[workspace 3; float] kitty")]
-    [DataRow("[workspace 3 silent] kitty")]
+    [DataRow("[workspace 3 stay] kitty")]
     [DataRow("[workspace special:scratch] kitty")]
     [DataRow("[workspace 0] kitty")]
     [DataRow("[workspace 3 kitty")]

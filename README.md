@@ -141,7 +141,7 @@ These talk to the running Winland.
 | `winland <action> [args]` | Run a Dispatcher, such as `winland workspace 2` |
 | `winland reload` | Read the config again |
 | `winland layout <dwindle\|scrolling\|floating>` | Select the Shown workspace's Layout |
-| `winland moveintogroup <l\|r\|u\|d>` | Join the Group of the Client in that direction |
+| `winland join <l\|r\|u\|d>` | Join the Group of the Client in that direction |
 | `winland get windows` | List the windows Winland manages |
 | `winland get window` | Show the focused window |
 | `winland [-j] inspect [selector]` | Explain the Window under the pointer or a selected Client and offer a draft rule |

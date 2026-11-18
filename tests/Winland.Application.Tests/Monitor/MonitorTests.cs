@@ -45,7 +45,7 @@ public class MonitorTests
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY2"));
+        core.Handle(new Dispatch("focus-monitor", @"\\.\DISPLAY2"));
 
         var opened = core.Handle(new WindowAppeared(new WindowId(2), left.WorkArea) { Bounds = new Rectangle(100, 100, 800, 600), Opened = true });
 
@@ -61,7 +61,7 @@ public class MonitorTests
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY2"));
+        core.Handle(new Dispatch("focus-monitor", @"\\.\DISPLAY2"));
         var flyout = new Rectangle(1480, 340, 440, 700);
 
         var opened = core.Handle(new WindowAppeared(new WindowId(3), left.WorkArea)
@@ -87,7 +87,7 @@ public class MonitorTests
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), right.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY1"));
+        core.Handle(new Dispatch("focus-monitor", @"\\.\DISPLAY1"));
 
         var opened = core.Handle(new WindowAppeared(new WindowId(2), left.WorkArea) { Owner = new WindowId(1), Opened = true });
 

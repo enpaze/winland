@@ -9,7 +9,7 @@ public class ExtraCommandTests
 
     private const string SuperKill =
         """
-        [{"mouse":false,"hasDescription":false,"modMask":64,"key":"Q","keyCode":0,"description":"","dispatcher":"killactive","arg":""}]
+        [{"mouse":false,"hasDescription":false,"modMask":64,"key":"Q","keyCode":0,"description":"","dispatcher":"close","arg":""}]
         """;
 
     [TestMethod]
@@ -32,14 +32,14 @@ public class ExtraCommandTests
         var core = new WindowManager();
         Assert.AreEqual("[]", core.Execute("j/get binds").Text);
 
-        core.Handle(new Configure(ConfigParser.Parse("bind = SUPER, Q, killactive\n")));
+        core.Handle(new Configure(ConfigParser.Parse("bind = SUPER, Q, close\n")));
         Assert.AreEqual(SuperKill, core.Execute("j/get binds").Text);
 
         core.Handle(new Configure(ConfigParser.Parse("""
-            bind = SUPER, Q, killactive
-            bind = SUPER SHIFT, E, killactive
-            bindd = SUPER, F, Close, killactive
-            bind = SUPER, code:42, killactive
+            bind = SUPER, Q, close
+            bind = SUPER SHIFT, E, close
+            bindd = SUPER, F, Close, close
+            bind = SUPER, code:42, close
             """)));
         var binds = Json(core.Execute("j/get binds").Text);
         var second = binds[1];
@@ -116,8 +116,8 @@ public class ExtraCommandTests
         Assert.IsTrue(ControlInvocation.TryCreate(["reload"], out line, out events));
         Assert.AreEqual("reload", line);
 
-        Assert.IsTrue(ControlInvocation.TryCreate(["resizeactive", "-20", "0"], out line, out events));
-        Assert.AreEqual("resizeactive -20 0", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["resize", "-20", "0"], out line, out events));
+        Assert.AreEqual("resize -20 0", line);
 
         Assert.IsTrue(ControlInvocation.TryCreate(["exec", "wt", "-p", "pwsh"], out line, out events));
         Assert.AreEqual("exec wt -p pwsh", line);
@@ -150,7 +150,7 @@ public class ExtraCommandTests
         Assert.IsTrue(events);
         Assert.AreEqual("j/events", line);
         Assert.IsFalse(ControlInvocation.TryCreate(["nope"], out _, out _));
-        Assert.IsFalse(ControlInvocation.TryCreate(["dispatch", "killactive"], out _, out _));
+        Assert.IsFalse(ControlInvocation.TryCreate(["dispatch", "close"], out _, out _));
         Assert.IsFalse(ControlInvocation.TryCreate(["clients"], out _, out _));
         Assert.IsFalse(ControlInvocation.TryCreate(["get", "clients"], out _, out _));
         Assert.IsFalse(ControlInvocation.TryCreate(["get"], out _, out _));
@@ -176,9 +176,9 @@ public class ExtraCommandTests
     }
 
     [TestMethod]
-    [DataRow(new[] { "resizeactive", "-0.1", "0" }, "resizeactive -0.1 0")]
-    [DataRow(new[] { "resizeactive", "-1.5", "-2.25" }, "resizeactive -1.5 -2.25")]
-    [DataRow(new[] { "-j", "resizeactive", "-12", "0" }, "j/resizeactive -12 0")]
+    [DataRow(new[] { "resize", "-0.1", "0" }, "resize -0.1 0")]
+    [DataRow(new[] { "resize", "-1.5", "-2.25" }, "resize -1.5 -2.25")]
+    [DataRow(new[] { "-j", "resize", "-12", "0" }, "j/resize -12 0")]
     public void ControlToolPassesNegativeNumbersThrough(string[] args, string expected)
     {
         Assert.IsTrue(ControlInvocation.TryCreate(args, out var line, out _));
@@ -193,7 +193,7 @@ public class ExtraCommandTests
     [DataRow("-50,")]
     public void ControlToolRefusesAFlagThatIsNotANumber(string arg)
     {
-        Assert.IsFalse(ControlInvocation.TryCreate(["resizeactive", arg], out _, out _));
+        Assert.IsFalse(ControlInvocation.TryCreate(["resize", arg], out _, out _));
     }
 
     private static Rectangle PlacedAt(Outcome outcome, long window)

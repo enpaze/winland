@@ -475,9 +475,9 @@ public class WindowManagerTests
     }
 
     [TestMethod]
-    public void SilentWorkspaceRuleDoesNotSwitch()
+    public void WorkspaceRuleWithStayDoesNotSwitch()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:kitty\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 stay, class:kitty\n"));
         var area = new Rectangle(0, 0, 640, 480);
         core.Handle(new WindowAppeared(new WindowId(1), area));
 

@@ -3,11 +3,11 @@ namespace Winland.Domain.Tests;
 [TestClass]
 public class ConfigDispatchersTests
 {
-    private static readonly string[] Known = ["killactive", "workspace"];
+    private static readonly string[] Known = ["close", "workspace"];
 
     private const string Binds = """
-        bind = SUPER, Q, killactive
-        bind = SUPER, W, killactiv
+        bind = SUPER, Q, close
+        bind = SUPER, W, closs
         bind = SUPER, E, teleport
         """;
 
@@ -19,7 +19,7 @@ public class ConfigDispatchersTests
         Assert.ContainsSingle(document.Binds);
         Assert.AreSequenceEqual(
             [
-                new ConfigWarning(2, "Unknown dispatcher 'killactiv'. Did you mean 'killactive'?"),
+                new ConfigWarning(2, "Unknown dispatcher 'closs'. Did you mean 'close'?"),
                 new ConfigWarning(3, "Unknown dispatcher 'teleport'."),
             ],
             document.Warnings);
@@ -28,7 +28,7 @@ public class ConfigDispatchersTests
     [TestMethod]
     public void ACaseThatDiffersStillMatches()
     {
-        var document = ConfigParser.Parse("bind = SUPER, Q, KillActive", dispatchers: Known);
+        var document = ConfigParser.Parse("bind = SUPER, Q, close", dispatchers: Known);
 
         Assert.IsEmpty(document.Warnings);
         Assert.ContainsSingle(document.Binds);

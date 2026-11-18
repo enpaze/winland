@@ -39,7 +39,7 @@ public class ReloadTests
             general:gaps_in = 0
             general:gaps_out = 0
             general:border_size = 0
-            bind = SUPER, Q, killactive
+            bind = SUPER, Q, close
             """)));
         core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
@@ -52,7 +52,7 @@ public class ReloadTests
             general:gaps_in = 0
             general:gaps_out = 10
             general:border_size = 0
-            bind = SUPER, W, killactive
+            bind = SUPER, W, close
             windowrule = float, class:kitty
             """)));
 
@@ -133,13 +133,13 @@ public class ReloadTests
             general:gaps_in = 0
             general:gaps_out = 0
             general:border_size = 0
-            bind = SUPER, Q, killactive
+            bind = SUPER, Q, close
             """)));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.ReadConfig = () => new ConfigRead(
             null,
             new ConfigWarning(0, "Could not read config 'winland.conf'.", "winland.conf"));
-        core.AfterReload = _ => called = true;
+        core.Reloaded += _ => called = true;
 
         var reply = core.Execute("reload");
 
@@ -166,7 +166,7 @@ public class ReloadTests
             exec-once = once
             """);
         core.ReadConfig = () => new ConfigRead(document);
-        core.AfterReload = loaded =>
+        core.Reloaded += loaded =>
         {
             calls++;
             seen = loaded;
@@ -187,7 +187,8 @@ public class ReloadTests
     public void ApplyingADocumentDirectlyDoesNotNotify()
     {
         var called = false;
-        var core = new WindowManager { AfterReload = _ => called = true };
+        var core = new WindowManager();
+        core.Reloaded += _ => called = true;
 
         core.Handle(new Configure(ConfigParser.Parse("exec-once = notepad")));
 
@@ -209,7 +210,7 @@ public class ReloadTests
         var core = new WindowManager();
         var called = false;
         core.ReadConfig = () => new ConfigRead(ConfigParser.Parse("general:gaps_out = 10"));
-        core.AfterReload = _ => called = true;
+        core.Reloaded += _ => called = true;
 
         var reply = core.Execute("reload now");
 
@@ -231,7 +232,7 @@ public class ReloadTests
             """);
         core.ReadConfig = () => new ConfigRead(document);
         var seen = new List<ConfigDocument>();
-        core.AfterReload = seen.Add;
+        core.Reloaded += seen.Add;
         core.Handle(new KeyPressed("Super_L"));
 
         var pressed = core.Handle(new KeyPressed("R"));

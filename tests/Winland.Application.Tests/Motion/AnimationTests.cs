@@ -55,7 +55,7 @@ public class AnimationTests
         Appear(core, 1);
         Appear(core, 2);
 
-        var resized = core.Handle(new Dispatch("resizeactive", "-100 0"));
+        var resized = core.Handle(new Dispatch("resize", "-100 0"));
 
         Assert.AreEqual(2, resized.Motions.Count(motion => !motion.Warp && motion.Move is not null));
     }
@@ -123,7 +123,7 @@ public class AnimationTests
         Appear(core, 1);
         Appear(core, 2);
 
-        var into = core.Handle(new Dispatch("fullscreen", "0"));
+        var into = core.Handle(new Dispatch("fullscreen"));
         var grown = Assert.ContainsSingle(motion => motion.Window == new WindowId(2), into.Motions);
         Assert.AreEqual(Right, grown.From);
         Assert.AreEqual(Area, grown.To);
@@ -136,9 +136,9 @@ public class AnimationTests
         var core = Load("");
         Appear(core, 1);
         Appear(core, 2);
-        core.Handle(new Dispatch("fullscreen", "0"));
+        core.Handle(new Dispatch("fullscreen"));
 
-        var back = core.Handle(new Dispatch("fullscreen", "0"));
+        var back = core.Handle(new Dispatch("fullscreen"));
 
         var shrunk = Assert.ContainsSingle(motion => motion.Window == new WindowId(2), back.Motions);
         Assert.AreEqual(Area, shrunk.From);
@@ -189,7 +189,7 @@ public class AnimationTests
 
         Assert.AreEqual(2, outcome.Hide.Count);
         Assert.IsEmpty(outcome.Motions);
-        Assert.IsEmpty(core.Handle(new Dispatch("killactive", "")).Motions);
+        Assert.IsEmpty(core.Handle(new Dispatch("close")).Motions);
     }
 
     [TestMethod]
@@ -221,7 +221,7 @@ public class AnimationTests
         Appear(core, 1);
         Appear(core, 2);
 
-        var outcome = core.Handle(new Dispatch("movefocus", "l"));
+        var outcome = core.Handle(new Dispatch("focus", "l"));
 
         Assert.AreEqual(new WindowId(1), outcome.Focus);
         var focused = Assert.ContainsSingle(motion => motion.Window == new WindowId(1), outcome.Motions);
@@ -241,9 +241,9 @@ public class AnimationTests
     [TestMethod]
     public void ADraggedWindowMovesAtOnce()
     {
-        var core = Load("bind = SUPER, mouse:left, movewindow");
+        var core = Load("bind = SUPER, mouse:left, move");
         Appear(core, 1);
-        var floated = core.Handle(new Dispatch("togglefloating"));
+        var floated = core.Handle(new Dispatch("float"));
         var bounds = Assert.ContainsSingle(floated.Placements).Bounds;
         var grab = new Point(bounds.X + 10, bounds.Y + 20);
         HoldSuper(core);
@@ -258,7 +258,7 @@ public class AnimationTests
     [TestMethod]
     public void TheTileThatMakesRoomForALiftedTileAnimatesWhileTheLiftedOneFollowsThePointer()
     {
-        var core = Load("bind = SUPER, mouse:left, movewindow");
+        var core = Load("bind = SUPER, mouse:left, move");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
@@ -277,7 +277,7 @@ public class AnimationTests
     [TestMethod]
     public void AMouseResizeOfATileMovesItsNeighborAtOnce()
     {
-        var core = Load("bind = SUPER, mouse:right, resizewindow");
+        var core = Load("bind = SUPER, mouse:right, resize");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);

@@ -67,7 +67,7 @@ public class BorderRingTests
         core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "", 0, 0, 1920, 1080, 1, true, Area)]));
         Assert.IsNotNull(Assert.ContainsSingle(core.Handle(new WindowAppeared(new WindowId(1), Area)).Decorations).Ring);
 
-        Assert.IsNull(Assert.ContainsSingle(core.Execute("fullscreen 0").Effect.Decorations).Ring);
+        Assert.IsNull(Assert.ContainsSingle(core.Execute("fullscreen").Effect.Decorations).Ring);
     }
 
 }

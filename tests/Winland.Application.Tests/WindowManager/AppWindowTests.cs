@@ -83,7 +83,7 @@ public class AppWindowTests
         Assert.AreEqual(new WorkspaceId("1"), Assert.ContainsSingle(client => client.Window == new WindowId(3), opened.State.Clients).Workspace);
         Assert.Contains(new WindowId(3), opened.Hide);
         Assert.Contains(item => item is ClientUrgent, opened.Events);
-        Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("killactive")).Close);
+        Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("close")).Close);
     }
 
     [TestMethod]
@@ -106,7 +106,7 @@ public class AppWindowTests
         Assert.IsTrue(client.Floating);
         Assert.IsTrue(client.Pinned);
         Assert.AreEqual(bounds, client.Bounds);
-        Assert.AreEqual(new WindowId(foreground ? 2 : 1), core.Handle(new Dispatch("killactive")).Close);
+        Assert.AreEqual(new WindowId(foreground ? 2 : 1), core.Handle(new Dispatch("close")).Close);
         var switched = core.Handle(new Dispatch("workspace", "2"));
         Assert.DoesNotContain(new WindowId(2), switched.Hide);
         var focused = core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));

@@ -8,7 +8,7 @@ public class FallbackMonitorTests
     {
         var desk = new TestDesktop();
 
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         desk.Ok("workspace", "9");
         desk.Spawn("fallback-workspace-a");
 

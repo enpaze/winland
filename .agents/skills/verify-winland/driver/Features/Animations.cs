@@ -31,7 +31,7 @@ public class Animations
                 var monitor = VerifyRun.MonitorArea(window);
 
                 run.Focus(window);
-                run.Dispatch("movetoworkspacesilent 2");
+                run.Dispatch("move 2 stay");
                 run.Until("the window leaves for hidden workspace 2", () => !VerifyRun.Visible(window));
 
                 run.Dispatch("workspace 2");

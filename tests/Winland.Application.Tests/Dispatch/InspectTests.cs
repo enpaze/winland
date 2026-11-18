@@ -64,7 +64,7 @@ public class InspectTests
     {
         var desktop = new TestDesktop();
         desktop.Spawn("term");
-        desktop.Ok("togglefloating");
+        desktop.Ok("float");
 
         var inspected = Inspect(desktop, "class:term");
 
@@ -172,7 +172,7 @@ public class InspectTests
     {
         var before = new TestDesktop();
         before.Spawn("term");
-        before.Ok("togglefloating");
+        before.Ok("float");
         var after = new TestDesktop();
         after.WindowManager.Restore(before.WindowManager.Recovery());
         after.Spawn("term");

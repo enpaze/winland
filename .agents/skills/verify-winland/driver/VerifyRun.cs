@@ -173,7 +173,7 @@ internal sealed class VerifyRun
 
     public void Focus(HWND hwnd)
     {
-        Dispatch($"focuswindow address:{Address(hwnd)}");
+        Dispatch($"focus address:{Address(hwnd)}");
         Until($"{Address(hwnd)} is the active window", () => Active() == Address(hwnd));
     }
 

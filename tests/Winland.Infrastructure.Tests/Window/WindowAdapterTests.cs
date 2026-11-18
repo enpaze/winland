@@ -190,11 +190,11 @@ public class WindowAdapterTests
     {
         using var windows = new TestWindows(reducedMotion: true);
         var first = windows.Open(1);
-        windows.Dispatch("togglegroup", "");
+        windows.Dispatch("group");
         var second = windows.Open(2);
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("changegroupactive", "b");
+        windows.Dispatch("tab", "prev");
 
         var desktop = windows.Desktop;
         var order = new[]
@@ -269,7 +269,7 @@ public class WindowAdapterTests
         Assert.AreEqual(0x80000u, windows.Desktop[1].ExStyle & 0x80000);
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("focuswindow", "address:0x1");
+        windows.Dispatch("focus", "address:0x1");
 
         Assert.AreEqual(0u, windows.Desktop[1].ExStyle & 0x80000);
         Assert.AreEqual(128, windows.Desktop[3].Alpha);
@@ -407,10 +407,10 @@ public class WindowAdapterTests
         using var windows = new TestWindows();
         windows.Open(1);
         windows.Open(2);
-        windows.Dispatch("togglefloating");
+        windows.Dispatch("float");
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("focuswindow", "address:0x1");
+        windows.Dispatch("focus", "address:0x1");
 
         var calls = windows.Desktop.Calls;
         Assert.IsTrue(calls.IndexOf("hold 2") >= 0, string.Join(" | ", calls));
@@ -425,11 +425,11 @@ public class WindowAdapterTests
         using var windows = new TestWindows();
         windows.Open(1);
         windows.Open(2);
-        windows.Dispatch("togglefloating");
+        windows.Dispatch("float");
         windows.Desktop[2].ExStyle |= 0x8;
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("focuswindow", "address:0x1");
+        windows.Dispatch("focus", "address:0x1");
 
         Assert.DoesNotContain("let-go 2", windows.Desktop.Calls);
         Assert.AreEqual(0x8u, windows.Desktop[2].ExStyle & 0x8);
@@ -443,7 +443,7 @@ public class WindowAdapterTests
         windows.Open(2);
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("killactive");
+        windows.Dispatch("close");
 
         var desktop = windows.Desktop;
         Assert.IsTrue(desktop.IndexOf("alpha 2 0") >= 0, "The window was not made transparent.");

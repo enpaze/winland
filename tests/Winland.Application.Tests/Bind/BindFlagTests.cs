@@ -6,7 +6,7 @@ public class BindFlagTests
     [TestMethod]
     public void ABindRunsOnceOnThePressAndSwallowsTheHeldKeyAndItsRelease()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = SUPER, Q, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -25,7 +25,7 @@ public class BindFlagTests
     [TestMethod]
     public void AmpersandIsASingleKeyWithoutTheSeparateFlag()
     {
-        var core = Load("bind = SUPER, A&B, killactive");
+        var core = Load("bind = SUPER, A&B, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -36,7 +36,7 @@ public class BindFlagTests
     [TestMethod]
     public void ScrollBindFiresThenWaitsForTheDelay()
     {
-        var core = Load("bind = SUPER, mouse_down, killactive\n");
+        var core = Load("bind = SUPER, mouse_down, close\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -52,7 +52,7 @@ public class BindFlagTests
     [TestMethod]
     public void AnUnknownKeyNameWarnsAndTheBindIsSkipped()
     {
-        var parsed = ConfigParser.Parse("bind = SUPER, Retrun, killactive\nbind = SUPER, a&b, killactive\nbind = SUPER, Return, killactive\n");
+        var parsed = ConfigParser.Parse("bind = SUPER, Retrun, close\nbind = SUPER, a&b, close\nbind = SUPER, Return, close\n");
 
         Assert.AreSequenceEqual(["Unknown key 'Retrun'.", "Unknown key 'a&b'."], parsed.Warnings.Select(warning => warning.Message));
         Assert.ContainsSingle(parsed.Binds);
@@ -61,7 +61,7 @@ public class BindFlagTests
     [TestMethod]
     public void AnUndefinedVariableInTheModifiersWarnsAndTheBindIsSkipped()
     {
-        var parsed = ConfigParser.Parse("bind = $mod SHIFT, Q, killactive" + Environment.NewLine);
+        var parsed = ConfigParser.Parse("bind = $mod SHIFT, Q, close" + Environment.NewLine);
 
         Assert.AreEqual("Undefined variable in modifiers '$mod SHIFT'.", Assert.ContainsSingle(parsed.Warnings).Message);
         Assert.IsEmpty(parsed.Binds);
@@ -70,7 +70,7 @@ public class BindFlagTests
     [TestMethod]
     public void MouseButtonNameRunsANormalBind()
     {
-        var core = Load("bind = SUPER, mouse:left, killactive");
+        var core = Load("bind = SUPER, mouse:left, close");
         Appear(core, 1);
         Press(core, "Super_L");
 

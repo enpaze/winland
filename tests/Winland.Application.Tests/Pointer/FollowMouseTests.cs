@@ -58,7 +58,7 @@ public class FollowMouseTests
     public void DisabledFollowLeavesTheFocusedClient()
     {
         var (core, laid) = Tiled("input:follow_mouse = false\n");
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
+        core.Handle(new Dispatch("focus", "address:0x2"));
 
         Move(core, Center(laid, 2), 1_000);
         var followed = Move(core, Center(laid, 1), 1_100);
@@ -112,7 +112,7 @@ public class FollowMouseTests
         var core = Floats("input:follow_mouse = 0\n");
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(Box(2, 100, 100, 200, 200));
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
+        core.Handle(new Dispatch("focus", "address:0x2"));
         var switched = Move(core, new Point(700, 700), 1_000);
 
         Assert.IsNull(switched.Focus);
@@ -168,7 +168,7 @@ public class FollowMouseTests
         core.Handle(Box(3, 1390, 490));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
+        core.Handle(new Dispatch("focus", "address:0x2"));
 
         var closed = core.Handle(new WindowClosed(new WindowId(2)));
         var last = core.Handle(new WindowClosed(new WindowId(1)));
@@ -181,7 +181,7 @@ public class FollowMouseTests
     public void HoverReachesTheTilesOfAnOpenSpecialWorkspaceBeforeTheTilesUnderIt()
     {
         var (core, _) = Tiled();
-        core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        core.Handle(new Dispatch("scratchpad", "scratch"));
         core.Handle(new WindowAppeared(new WindowId(3), Area));
         var special = core.Handle(new WindowAppeared(new WindowId(4), Area));
         Assert.AreEqual(new WorkspaceId("special:scratch"), Assert.ContainsSingle(client => client.Window == new WindowId(3), special.State.Clients).Workspace);
@@ -202,7 +202,7 @@ public class FollowMouseTests
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(2), left.WorkArea));
-        core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        core.Handle(new Dispatch("scratchpad", "scratch"));
         core.Handle(new WindowAppeared(new WindowId(3), left.WorkArea));
         var special = core.Handle(new WindowAppeared(new WindowId(4), left.WorkArea));
 

@@ -82,7 +82,7 @@ public class ReclassTests
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "one" } });
-        core.Execute("togglegroup");
+        core.Execute("group");
         core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Class = "two" } });
 
         var reclassed = core.Handle(new WindowClassChanged(new WindowId(1), "renamed"));

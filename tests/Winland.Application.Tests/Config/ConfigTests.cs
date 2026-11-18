@@ -218,13 +218,13 @@ public class ConfigTests
     [TestMethod]
     public void LongerVariableNamesExpandBeforeShorterOnes()
     {
-        var text = "$main = SUPER\n$mainMod = ALT\nbind = $mainMod, Q, killactive\n";
+        var text = "$main = SUPER\n$mainMod = ALT\nbind = $mainMod, Q, close\n";
 
         var document = ConfigParser.Parse(text);
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Alt, "Q", "killactive", "", null),
+            new Bind(Modifier.Alt, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
@@ -384,10 +384,10 @@ public class ConfigTests
     [TestMethod]
     public void MistypedDispatcherWarnsWithTheOneDispatcherItIsCloseTo()
     {
-        var document = ConfigParser.Parse("bind = SUPER, Q, killactiv\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("bind = SUPER, Q, closs\n", dispatchers: WindowManager.DispatcherNames);
 
         Assert.AreEqual(
-            new ConfigWarning(1, "Unknown dispatcher 'killactiv'. Did you mean 'killactive'?"),
+            new ConfigWarning(1, "Unknown dispatcher 'closs'. Did you mean 'close'?"),
             Assert.ContainsSingle(document.Warnings));
     }
 
@@ -549,7 +549,7 @@ public class ConfigTests
     [TestMethod]
     public void BindIsParsedIntoModifiersKeyAndDispatcher()
     {
-        var text = "$mainMod = SUPER\nbind = $mainMod, Q, killactive\nbind = WIN SHIFT, code:28, exec, notepad --title hello\n";
+        var text = "$mainMod = SUPER\nbind = $mainMod, Q, close\nbind = WIN SHIFT, code:28, exec, notepad --title hello\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -557,7 +557,7 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "Q", "killactive", "", null),
+                new Bind(Modifier.Super, "Q", "close", "", null),
                 new Bind(Modifier.Super | Modifier.Shift, "code:28", "exec", "notepad --title hello", null),
             },
             document.Binds);
@@ -567,7 +567,7 @@ public class ConfigTests
     public void AMouseKeyBindAndADescriptionAreParsed()
     {
         var text =
-            "bind = SUPER, mouse:left, movewindow\n" +
+            "bind = SUPER, mouse:left, move\n" +
             "bindd = SUPER, Return, Open a terminal, exec, kitty\n";
 
         var document = ConfigParser.Parse(text);
@@ -576,7 +576,7 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "mouse:left", "movewindow", "", null),
+                new Bind(Modifier.Super, "mouse:left", "move", "", null),
                 new Bind(Modifier.Super, "Return", "exec", "kitty", "Open a terminal"),
             },
             document.Binds);
@@ -602,21 +602,21 @@ public class ConfigTests
     [DataRow("SUPER SHIFT CTRL ALT", Modifier.Super | Modifier.Shift | Modifier.Ctrl | Modifier.Alt)]
     public void ModifierNamesAreParsed(string name, Modifier expected)
     {
-        var document = ConfigParser.Parse($"bind = {name}, Q, killactive\n");
+        var document = ConfigParser.Parse($"bind = {name}, Q, close\n");
 
         Assert.AreEqual(
-            new Bind(expected, "Q", "killactive", "", null),
+            new Bind(expected, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
     [TestMethod]
     public void AModifierVariableJoinedWithAnUnderscoreIsParsed()
     {
-        var document = ConfigParser.Parse("$mainMod = SUPER\nbind = $mainMod_SHIFT, Q, killactive\n");
+        var document = ConfigParser.Parse("$mainMod = SUPER\nbind = $mainMod_SHIFT, Q, close\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Super | Modifier.Shift, "Q", "killactive", "", null),
+            new Bind(Modifier.Super | Modifier.Shift, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
@@ -627,7 +627,7 @@ public class ConfigTests
     [DataRow("MOD3 SHIFT", Modifier.Mod3 | Modifier.Shift, 32 | 1)]
     public void TheLockAndLevelModifiersAreRead(string name, Modifier modifiers, int mask)
     {
-        var document = ConfigParser.Parse($"bind = {name}, Q, killactive\n");
+        var document = ConfigParser.Parse($"bind = {name}, Q, close\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(modifiers, Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds)).Modifiers);
@@ -660,11 +660,11 @@ public class ConfigTests
     public void InvalidBindIsSkippedAndALaterBindLoads()
     {
         var text =
-            "bindz = SUPER, Q, killactive\n" +
+            "bindz = SUPER, Q, close\n" +
             "bind = SUPER, Q\n" +
-            "bindzz = SUPER, Q, killactive\n" +
-            "bind = FOO, Q, killactive\n" +
-            "bind = SUPER, Q, killactive\n";
+            "bindzz = SUPER, Q, close\n" +
+            "bind = FOO, Q, close\n" +
+            "bind = SUPER, Q, close\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -678,7 +678,7 @@ public class ConfigTests
             },
             document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Super, "Q", "killactive", "", null),
+            new Bind(Modifier.Super, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
@@ -686,9 +686,9 @@ public class ConfigTests
     public void UnbindIsParsedInOrder()
     {
         var text =
-            "bind = SUPER, Q, killactive\n" +
+            "bind = SUPER, Q, close\n" +
             "unbind = SUPER, Q\n" +
-            "bind = SUPER, R, killactive\n" +
+            "bind = SUPER, R, close\n" +
             "unbind = all\n";
 
         var document = ConfigParser.Parse(text);
@@ -697,9 +697,9 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "Q", "killactive", "", null),
+                new Bind(Modifier.Super, "Q", "close", "", null),
                 new Unbind(Modifier.Super, "Q"),
-                new Bind(Modifier.Super, "R", "killactive", "", null),
+                new Bind(Modifier.Super, "R", "close", "", null),
                 new UnbindAll(),
             },
             document.Binds);

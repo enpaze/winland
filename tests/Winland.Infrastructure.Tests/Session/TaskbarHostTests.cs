@@ -27,6 +27,23 @@ public class TaskbarHostTests
     }
 
     [TestMethod]
+    public void AKeyBoundToReloadHidesTheTaskbarTheConfigNowHides()
+    {
+        using var files = new ConfigDir("bind = SUPER, R, reload\n");
+        var bars = new RecordingTaskbar();
+        var core = Core(files);
+        using var host = new SessionLoop(core, bars);
+        Assert.AreEqual("ok", host.Reload().Text);
+        Assert.AreEqual(0, bars.Hides);
+
+        files.Write("general:hide_taskbar = true\nbind = SUPER, R, reload\n");
+        core.Handle(new KeyPressed("Super_L"));
+        core.Handle(new KeyPressed("R"));
+
+        Assert.AreEqual(1, bars.Hides);
+    }
+
+    [TestMethod]
     public void ACrashMarkerIsPutBackWhenTheOptionIsOff()
     {
         using var files = new ConfigDir("\n");
@@ -61,14 +78,12 @@ public class TaskbarHostTests
         Assert.AreEqual(0, left.Restores);
     }
 
-    private static SessionLoop Host(ConfigDir files, RecordingTaskbar bars)
+    private static SessionLoop Host(ConfigDir files, RecordingTaskbar bars) => new(Core(files), bars);
+
+    private static WindowManager Core(ConfigDir files) => new()
     {
-        var core = new WindowManager
-        {
-            ReadConfig = () => new ConfigRead(ConfigParser.Parse(File.ReadAllText(files.Path))),
-        };
-        return new SessionLoop(core, bars);
-    }
+        ReadConfig = () => new ConfigRead(ConfigParser.Parse(File.ReadAllText(files.Path))),
+    };
 
     private sealed class ConfigDir : IDisposable
     {

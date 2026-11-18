@@ -60,9 +60,9 @@ public class WorkspaceTests
     }
 
     [TestMethod]
-    public void MoveToWorkspaceSendsTheActiveClientAndFollows()
+    public void MoveToAWorkspaceSendsTheActiveClientAndFollows()
     {
-        var core = Load("bind = SUPER SHIFT, 2, movetoworkspace, 2");
+        var core = Load("bind = SUPER SHIFT, 2, move, 2");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
@@ -80,9 +80,9 @@ public class WorkspaceTests
     }
 
     [TestMethod]
-    public void MoveToWorkspaceSilentKeepsTheCurrentWorkspace()
+    public void MoveToAWorkspaceAndStayKeepsTheCurrentWorkspace()
     {
-        var core = Load("bind = SUPER ALT, 2, movetoworkspacesilent, 2");
+        var core = Load("bind = SUPER ALT, 2, move, 2 stay");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
@@ -116,25 +116,25 @@ public class WorkspaceTests
     }
 
     [TestMethod]
-    public void RelativeAndPreviousAddressesFollowTheManual()
+    public void LastGoesBackToTheWorkspaceShownBefore()
     {
         var core = Load("""
-            bind = SUPER, O, workspace, +1
-            bind = SUPER, I, workspace, -1
-            bind = SUPER, P, workspace, previous
+            bind = SUPER, 2, workspace, 2
+            bind = SUPER, 3, workspace, 3
+            bind = SUPER, P, workspace, last
             bind = SUPER, 1, workspace, 1
             """);
         Appear(core, 1);
         HoldSuper(core);
 
-        var next = Tap(core, "O");
-        Assert.AreEqual(new WorkspaceId("2"), next.State.ActiveWorkspace);
-        Assert.AreSequenceEqual([new WindowId(1)], next.Hide);
+        var second = Tap(core, "2");
+        Assert.AreEqual(new WorkspaceId("2"), second.State.ActiveWorkspace);
+        Assert.AreSequenceEqual([new WindowId(1)], second.Hide);
 
-        var third = Tap(core, "O");
+        var third = Tap(core, "3");
         Assert.AreEqual(new WorkspaceId("3"), third.State.ActiveWorkspace);
 
-        var back = Tap(core, "I");
+        var back = Tap(core, "P");
         Assert.AreEqual(new WorkspaceId("2"), back.State.ActiveWorkspace);
 
         var previous = Tap(core, "P");
@@ -146,31 +146,27 @@ public class WorkspaceTests
     }
 
     [TestMethod]
-    public void NumericStepIncludesEmptyIdsAndMonitorStepUsesExistingWorkspaces()
+    public void NextStepsOverEmptyNumbersToTheNextExistingWorkspace()
     {
         var core = Load("""
-            bind = SUPER SHIFT, 3, movetoworkspacesilent, 3
-            bind = SUPER, R, workspace, r+1
-            bind = SUPER, M, workspace, m+1
-            bind = SUPER, P, workspace, previous
+            bind = SUPER SHIFT, 3, move, 3 stay
+            bind = SUPER, M, workspace, next
+            bind = SUPER, P, workspace, last
             """);
         Appear(core, 1);
+        Appear(core, 2);
         HoldSuper(core);
         core.Handle(new KeyPressed("Shift_L"));
         Tap(core, "3");
         core.Handle(new KeyReleased("Shift_L"));
 
-        var stepped = Tap(core, "R");
-
-        Assert.AreEqual(new WorkspaceId("2"), stepped.State.ActiveWorkspace);
-        Assert.Contains(client => client.Window == new WindowId(1) && client.Workspace == new WorkspaceId("3"), stepped.State.Hidden);
-
-        var home = Tap(core, "P");
-        Assert.AreEqual(new WorkspaceId("1"), home.State.ActiveWorkspace);
-
         var cycled = Tap(core, "M");
         Assert.AreEqual(new WorkspaceId("3"), cycled.State.ActiveWorkspace);
-        Assert.AreSequenceEqual([new WindowId(1)], cycled.Show);
+        Assert.AreSequenceEqual([new WindowId(2)], cycled.Show);
+
+        var back = Tap(core, "P");
+        Assert.AreEqual(new WorkspaceId("1"), back.State.ActiveWorkspace);
+        Assert.AreSequenceEqual([new WindowId(1)], back.Show);
     }
 
     [TestMethod]
@@ -233,13 +229,13 @@ public class WorkspaceTests
     }
 
     [TestMethod]
-    public void DispatchMoveToWorkspaceFollowsAndSilentStays()
+    public void MoveToAWorkspaceFollowsAndStayStays()
     {
         var core = new WindowManager();
         Appear(core, 1);
         Appear(core, 2);
 
-        var moved = core.Handle(new Dispatch("movetoworkspacesilent", "3"));
+        var moved = core.Handle(new Dispatch("move", "3 stay"));
 
         Assert.IsFalse(moved.Consumed);
         Assert.AreEqual(WorkspaceId.Initial, moved.State.ActiveWorkspace);
@@ -247,7 +243,7 @@ public class WorkspaceTests
         Assert.AreSequenceEqual([new WindowId(2)], moved.Hide);
         Assert.AreEqual(Area, BoundsOf(moved, 1));
 
-        var followed = core.Handle(new Dispatch("movetoworkspace", "3"));
+        var followed = core.Handle(new Dispatch("move", "3"));
 
         Assert.AreEqual(new WorkspaceId("3"), followed.State.ActiveWorkspace);
         Assert.AreEqual(new WorkspaceId("3"), Client(followed, 1).Workspace);
@@ -258,9 +254,9 @@ public class WorkspaceTests
     }
 
     [TestMethod]
-    public void MoveFocusStaysInsideTheActiveWorkspace()
+    public void FocusStaysInsideTheActiveWorkspace()
     {
-        var core = Load("bind = SUPER, H, movefocus, l");
+        var core = Load("bind = SUPER, H, focus, l");
         Appear(core, 1);
         Appear(core, 2);
         core.Handle(new Dispatch("workspace", "2"));
@@ -276,11 +272,11 @@ public class WorkspaceTests
         Assert.Contains(client => client.Window == new WindowId(1), focused.State.Hidden);
         Assert.Contains(client => client.Window == new WindowId(2), focused.State.Hidden);
 
-        var stopped = core.Handle(new Dispatch("movefocus", "l"));
+        var stopped = core.Handle(new Dispatch("focus", "l"));
 
         Assert.IsNull(stopped.Focus);
         Assert.AreEqual(new WorkspaceId("2"), stopped.State.ActiveWorkspace);
-        Assert.AreEqual(new WindowId(3), core.Handle(new Dispatch("killactive")).Close);
+        Assert.AreEqual(new WindowId(3), core.Handle(new Dispatch("close")).Close);
 
         var back = core.Handle(new Dispatch("workspace", "1"));
 
@@ -291,9 +287,9 @@ public class WorkspaceTests
     }
 
     [TestMethod]
-    public void ToggleFloatingAfterSwitchingLeavesTheOtherWorkspaceTiled()
+    public void FloatAfterSwitchingLeavesTheOtherWorkspaceTiled()
     {
-        var core = Load("bind = SUPER, Space, togglefloating");
+        var core = Load("bind = SUPER, Space, float");
         Appear(core, 1);
         Appear(core, 2);
         core.Handle(new Dispatch("workspace", "2"));
@@ -351,14 +347,14 @@ public class WorkspaceTests
     public void SwitchingToAWorkspaceOnAnotherMonitorMovesTheCursorToItsFocusedClient()
     {
         var core = TwoMonitors("");
-        core.Execute("focusmonitor RIGHT");
+        core.Execute("focus-monitor RIGHT");
         core.Execute("workspace 2");
         core.Handle(new WindowAppeared(new WindowId(1), Right));
         core.Handle(new WindowAppeared(new WindowId(2), Right));
         core.Handle(new WindowFocused(new WindowId(1), FocusCause.User));
-        core.Execute("focusmonitor LEFT");
+        core.Execute("focus-monitor LEFT");
 
-        var switched = core.Execute("workspace previous").Effect;
+        var switched = core.Execute("workspace last").Effect;
 
         Assert.AreEqual(new WarpTo(new Point(2400, 540)), switched.Warp);
     }
@@ -387,10 +383,10 @@ public class WorkspaceTests
 
     private static Outcome ShowTheRightsWorkspace(WindowManager core)
     {
-        core.Execute("focusmonitor RIGHT");
+        core.Execute("focus-monitor RIGHT");
         core.Execute("workspace 2");
-        core.Execute("focusmonitor LEFT");
-        return core.Execute("workspace previous").Effect;
+        core.Execute("focus-monitor LEFT");
+        return core.Execute("workspace last").Effect;
     }
 
     private static WindowManager TwoMonitors(string config)
@@ -401,7 +397,7 @@ public class WorkspaceTests
             new Monitor("LEFT", "Left", 0, 0, 1920, 1080, 1, true, Area),
             new Monitor("RIGHT", "Right", 1920, 0, 1920, 1080, 1, true, Right),
         ]));
-        core.Execute("focusmonitor LEFT");
+        core.Execute("focus-monitor LEFT");
         return core;
     }
 

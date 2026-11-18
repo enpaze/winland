@@ -72,21 +72,21 @@ public class TextRepliesTests
     {
         var core = new WindowManager(ConfigParser.Parse(
             """
-            bind = SUPER, W, killactive
+            bind = SUPER, W, close
             bind = SUPER SHIFT, 1, workspace, 1
-            bind = SUPER, minus, resizeactive, -40 0
-            bindd = SUPER, Q, Close the window, killactive
-            bind = SUPER, mouse:right, resizewindow, 1
+            bind = SUPER, minus, resize, -40 0
+            bindd = SUPER, Q, Close the window, close
+            bind = SUPER, mouse:right, resize
             """));
 
         var binds = core.Execute("get binds").Text;
 
         Assert.AreEqual(
-            "bind = SUPER, W, killactive\n"
+            "bind = SUPER, W, close\n"
             + "bind = SUPER SHIFT, 1, workspace, 1\n"
-            + "bind = SUPER, minus, resizeactive, -40 0\n"
-            + "bindd = SUPER, Q, Close the window, killactive\n"
-            + "bind = SUPER, mouse:right, resizewindow, 1",
+            + "bind = SUPER, minus, resize, -40 0\n"
+            + "bindd = SUPER, Q, Close the window, close\n"
+            + "bind = SUPER, mouse:right, resize",
             binds);
         Assert.StartsWith("[{", core.Execute("j/get binds").Text, StringComparison.Ordinal);
         Assert.AreEqual("no binds", new WindowManager().Execute("get binds").Text);
@@ -98,25 +98,25 @@ public class TextRepliesTests
     {
         var document = ConfigParser.Parse(
             """
-            bind = SUPER, W, killactive
+            bind = SUPER, W, close
             bind = , Print, exec, screenshot
-            bind = SUPER SHIFT CTRL ALT, Left, movewindow, mon:l
-            bind = SUPER CAPS MOD2 MOD3 MOD5, F5, killactive
+            bind = SUPER SHIFT CTRL ALT, Left, move, mon:l
+            bind = SUPER CAPS MOD2 MOD3 MOD5, F5, close
             bind = SUPER, 1, workspace, 1
-            bind = SUPER, minus, resizeactive, -40 0
-            bind = SUPER, equal, resizeactive, 40 0
-            bind = SUPER, grave, togglespecialworkspace
+            bind = SUPER, minus, resize, -40 0
+            bind = SUPER, equal, resize, 40 0
+            bind = SUPER, grave, scratchpad
             bind = SUPER, comma, exec, one, two
             bind = SUPER, Return, exec, wt
-            bind = SUPER, code:50, killactive
-            bind = SUPER, 25, killactive
+            bind = SUPER, code:50, close
+            bind = SUPER, 25, close
             bind = SUPER, Super_L, exec, start menu
             bind = SUPER, N, exec, echo ## literal
             bind = SUPER, E, exec, [float; tile] notepad
-            bindd = SUPER, Q, Close the window, killactive
-            bind = SUPER, mouse:left, movewindow
-            bind = SUPER, mouse:right, resizewindow, 1
-            bindd = SUPER, mouse:middle, Move, movewindow
+            bindd = SUPER, Q, Close the window, close
+            bind = SUPER, mouse:left, move
+            bind = SUPER, mouse:right, resize
+            bindd = SUPER, mouse:middle, Move, move
             """);
         Assert.IsEmpty(document.Warnings);
         var binds = document.Binds.OfType<Bind>().ToArray();

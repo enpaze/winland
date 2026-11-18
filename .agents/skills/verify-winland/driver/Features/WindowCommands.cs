@@ -14,14 +14,14 @@ public class WindowCommands
         var (left, right) = run.OpenPair();
 
         run.Focus(left);
-        run.Dispatch("swapwindow r");
-        run.Until("swapwindow r puts the focused window on the right", () => VerifyRun.Frame(left).Left > VerifyRun.Frame(right).Left);
+        run.Dispatch("swap right");
+        run.Until("swap right puts the focused window on the right", () => VerifyRun.Frame(left).Left > VerifyRun.Frame(right).Left);
 
-        run.Dispatch("movewindow l");
-        run.Until("movewindow l puts it back on the left", () => VerifyRun.Frame(left).Left < VerifyRun.Frame(right).Left);
+        run.Dispatch("move left");
+        run.Until("move left puts it back on the left", () => VerifyRun.Frame(left).Left < VerifyRun.Frame(right).Left);
 
-        run.Dispatch("togglefloating");
-        run.Until("togglefloating floats the window and the other fills the work area", () =>
+        run.Dispatch("float");
+        run.Until("float floats the window and the other fills the work area", () =>
             run.ClientOf(left).GetProperty("floating").GetBoolean() && VerifyRun.Frame(right).Near(VerifyRun.WorkArea(right), 12));
 
         run.Dispatch("pin");
@@ -36,7 +36,7 @@ public class WindowCommands
         run.Until("workspace 1 shows the tile and hides the unpinned window on workspace 2", () => VerifyRun.Visible(right) && !VerifyRun.Visible(left));
 
         run.Focus(right);
-        run.Dispatch("killactive");
-        run.Until("killactive closes the focused window", () => !PInvoke.IsWindow(right) && run.Client(right) is null);
+        run.Dispatch("close");
+        run.Until("close closes the focused window", () => !PInvoke.IsWindow(right) && run.Client(right) is null);
     });
 }

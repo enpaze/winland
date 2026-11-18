@@ -34,7 +34,7 @@ Nothing in Domain or Application calls Win32. A test drives `WindowManager` with
 | What a Client's rules give it and the rule decision it opened with | `Domain/Client/ClientProps.cs`. Matching the rules again, when a window's class or title changes or the config is loaded, is in `Application/WindowManager/DynamicRules.cs`. |
 | A Layout | `Domain/Layout`: one folder per Layout, such as `DwindleLayout/`. What the tiling Layouts keep alike is in `TiledLayout.cs`. |
 | Which Client has focus, what each Workspace gives focus back to, and the focus history | `Domain/Focus/FocusState.cs`. When a window may take focus is in `Application/WindowManager/Focus.cs`. |
-| Which Workspaces there are, their numbers, Guests, and which one a Monitor shows | `Domain/Workspace/WorkspaceSet.cs`, with `ShownWorkspaces.cs` for what each Monitor shows and `workspace previous`. `Application/WindowManager/Hotplug.cs` calls it when Monitors change. |
+| Which Workspaces there are, their numbers, Guests, and which one a Monitor shows | `Domain/Workspace/WorkspaceSet.cs`, with `ShownWorkspaces.cs` for what each Monitor shows and `workspace last`. `Application/WindowManager/Hotplug.cs` calls it when Monitors change. |
 | Which windows may stay over a fullscreen or maximized Client | `Domain/Fullscreen/FullscreenCover.cs`. Pinning is in `Application/WindowManager/Pin.cs`. |
 | Binds and keys | `Domain/Bind`. The hooks that feed them are in `Infrastructure/Input`. |
 | The pointer, scrolling and the touchpad | `Domain/Pointer`. |

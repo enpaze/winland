@@ -17,10 +17,10 @@ public class GroupBehaviorTests
         Assert.AreEqual(1, desk.Clients().Count(client => TestDesktop.Fullscreen(client) == 0));
 
         desk.Spawn("kittyB");
-        desk.Ok("focuswindow", "class:kittyB");
-        desk.Ok("togglegroup");
-        desk.Ok("focuswindow", "class:kittyA");
-        desk.Ok("togglegroup");
+        desk.Ok("focus", "class:kittyB");
+        desk.Ok("group");
+        desk.Ok("focus", "class:kittyA");
+        desk.Ok("group");
 
         Assert.AreEqual("931,1015", desk.ActivePlace().Size);
         Assert.AreEqual(0, TestDesktop.Fullscreen(desk.ActiveWindow()));
@@ -36,7 +36,7 @@ public class GroupBehaviorTests
         Assert.AreEqual(1, CountSize(desk, "1876,1036"));
         Assert.AreEqual(1, desk.Clients().Count(client => TestDesktop.Fullscreen(client) == 0));
 
-        desk.Ok("togglegroup");
+        desk.Ok("group");
         Assert.AreEqual(("22,43", "1876,1015"), desk.PlaceOf("a"));
     }
 
@@ -45,15 +45,15 @@ public class GroupBehaviorTests
     {
         var desk = new TestDesktop();
         desk.Spawn("a");
-        desk.Ok("togglegroup");
+        desk.Ok("group");
         desk.Spawn("b");
         Assert.AreEqual(2, desk.Clients().Length);
 
         var last = desk.ActiveId();
-        desk.Ok("changegroupactive", "f");
+        desk.Ok("tab", "next");
         Assert.AreNotEqual(last, desk.ActiveId());
 
-        desk.Dispatch("changegroupactive", "f");
+        desk.Dispatch("tab", "next");
         Assert.AreEqual(last, desk.ActiveId());
     }
 
@@ -62,8 +62,8 @@ public class GroupBehaviorTests
     {
         var desk = new TestDesktop();
         desk.Spawn("kittyA");
-        desk.Ok("togglegroup");
-        desk.Ok("togglegroup");
+        desk.Ok("group");
+        desk.Ok("group");
 
         Assert.AreEqual("kittyA", desk.ActiveClass());
     }
@@ -76,7 +76,7 @@ public class GroupBehaviorTests
             windowrule = float, class:kitty_floated
             """);
         desk.Spawn("kitty_tiled");
-        desk.Ok("togglegroup");
+        desk.Ok("group");
         desk.Spawn("kitty_floated");
         Assert.AreEqual(2, desk.Clients().Length);
 
@@ -93,7 +93,7 @@ public class GroupBehaviorTests
             windowrule = float, class:kitty_floated_B
             """);
         desk.Spawn("kitty_floated_A");
-        desk.Ok("togglegroup");
+        desk.Ok("group");
         desk.Spawn("kitty_floated_B");
         Assert.AreEqual(2, desk.Clients().Length);
 
@@ -112,7 +112,7 @@ public class GroupBehaviorTests
         desk.Spawn("kitty_floated_A");
         Assert.IsTrue(TestDesktop.Floating(desk.ActiveWindow()));
 
-        desk.Ok("togglegroup");
+        desk.Ok("group");
         desk.Spawn("kitty_tiled_B");
         Assert.AreEqual(2, desk.Clients().Length);
 
@@ -126,10 +126,10 @@ public class GroupBehaviorTests
     {
         var desk = new TestDesktop();
         desk.Spawn("kitty_A");
-        desk.Ok("togglegroup");
+        desk.Ok("group");
         desk.Spawn("kitty_B");
 
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
         ExpectFullscreen(desk, 2);
 
         desk.CloseActive();

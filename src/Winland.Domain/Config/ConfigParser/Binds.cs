@@ -61,9 +61,9 @@ public static partial class ConfigParser
                 return;
             }
 
-            if (dispatcher.Equals("resizewindow", StringComparison.OrdinalIgnoreCase) && !key.StartsWith("mouse:", StringComparison.Ordinal))
+            if (new BindDispatch(dispatcher, arguments).IsDrag && !key.StartsWith("mouse:", StringComparison.Ordinal))
             {
-                Warn(lineNumber, "resizewindow is a drag; bind it to a mouse button.");
+                Warn(lineNumber, $"{dispatcher} is a drag; bind it to a mouse button.");
                 return;
             }
 

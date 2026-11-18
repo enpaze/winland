@@ -133,14 +133,13 @@ internal sealed partial class ScrollingLayout
     private bool FocusToward(WindowId active, string direction, out WindowId? next, bool commit = true, bool wrap = true)
     {
         next = null;
-        if (direction.Length == 0 || CellFor(active) is not Cell cell || cell.Column is not Column column)
+        if (!Sides.TryParse(Tokens.First(direction), out var side) || CellFor(active) is not Cell cell || cell.Column is not Column column)
             return false;
 
-        var token = char.ToLowerInvariant(direction[0]);
-        var previousInColumn = token is 'u' or 't';
-        var nextInColumn = token is 'b' or 'd';
-        var previousColumn = token == 'l';
-        var nextColumn = token == 'r';
+        var previousInColumn = side == Side.Up;
+        var nextInColumn = side == Side.Down;
+        var previousColumn = side == Side.Left;
+        var nextColumn = side == Side.Right;
         if (previousInColumn)
         {
             if (!wrap && PreviousCell(column, cell) is null)
@@ -338,16 +337,15 @@ internal sealed partial class ScrollingLayout
             return [];
         }
 
-        int target;
-        if (Is(At(tokens, 1), "l"))
-            target = index == 0 ? _columns.Count - 1 : index - 1;
-        else if (Is(At(tokens, 1), "r"))
-            target = index == _columns.Count - 1 ? 0 : index + 1;
-        else
+        if (!Sides.TryParse(At(tokens, 1), out var side) || side is Side.Up or Side.Down)
         {
             Fail("no target (invalid direction?)");
             return [];
         }
+
+        var target = side == Side.Left
+            ? (index == 0 ? _columns.Count - 1 : index - 1)
+            : (index == _columns.Count - 1 ? 0 : index + 1);
 
         (_columns[index], _columns[target]) = (_columns[target], _columns[index]);
         FitColumn(column);
