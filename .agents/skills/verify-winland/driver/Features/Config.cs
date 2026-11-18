@@ -27,9 +27,9 @@ public class Config
         Assert.AreEqual(2, run.Cli("check", good, bad).ExitCode);
         Assert.AreEqual(1, run.Cli("check", Path.Combine(folder, "missing.conf")).ExitCode);
 
-        var files = run.Json("files");
+        var files = run.Json("get", "files");
         Assert.AreEqual(run.Daemon.ConfigPath, files.GetProperty("config").GetString(), StringComparer.OrdinalIgnoreCase);
-        Assert.AreEqual("no config errors", run.Ask("configerrors"));
+        Assert.AreEqual("no config errors", run.Ask("get", "errors"));
 
         var window = run.OpenManaged("1");
         run.Until("the window fills the work area with gaps_out 0", () => VerifyRun.Frame(window).Near(VerifyRun.WorkArea(window), 4));
@@ -38,13 +38,13 @@ public class Config
         File.AppendAllText(run.Daemon.ConfigPath, "general:gaps_out = 40\ngeneral:nosuchoption = 1\n");
         run.Say("saved the config with gaps_out 40 and an unknown option");
         run.UntilEvent("configreloaded");
-        Assert.Contains("general:nosuchoption", run.Ask("configerrors"), StringComparison.Ordinal);
+        Assert.Contains("general:nosuchoption", run.Ask("get", "errors"), StringComparison.Ordinal);
         Assert.Contains(error =>
             string.Equals(error.GetProperty("file").GetString(), run.Daemon.ConfigPath, StringComparison.OrdinalIgnoreCase)
             && error.GetProperty("line").GetInt32() > 0
             && error.GetProperty("message").GetString()!.Contains("general:nosuchoption", StringComparison.Ordinal),
-            run.Json("configerrors").EnumerateArray());
-        run.Say("saw: configerrors names general:nosuchoption with its file and line, in text and JSON");
+            run.Json("get", "errors").EnumerateArray());
+        run.Say("saw: get errors names general:nosuchoption with its file and line, in text and JSON");
         run.Until("saving the config reloaded it and the window moved in by gaps_out 40", () =>
         {
             var frame = VerifyRun.Frame(window);

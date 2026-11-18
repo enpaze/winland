@@ -197,21 +197,21 @@ internal sealed class TestDesktop
         _placed.TryGetValue(window, out var bounds) ? bounds : throw new InvalidOperationException($"Window {window.Value} was never placed.");
 
     internal string Dispatch(string dispatcher, string arguments = "") =>
-        Send(arguments.Length == 0 ? $"dispatch {dispatcher}" : $"dispatch {dispatcher} {arguments}");
+        Send(arguments.Length == 0 ? $"{dispatcher}" : $"{dispatcher} {arguments}");
 
     internal void Ok(string dispatcher, string arguments = "") =>
         Assert.AreEqual("ok", Dispatch(dispatcher, arguments));
 
-    internal JsonElement ActiveWindow() => Json(Send("j/activewindow"));
+    internal JsonElement ActiveWindow() => Json(Send("j/get window"));
 
-    internal JsonElement[] Clients() => [.. Json(Send("j/clients")).EnumerateArray()];
+    internal JsonElement[] Clients() => [.. Json(Send("j/get windows")).EnumerateArray()];
 
     internal JsonElement Client(string windowClass) =>
         Clients().Single(client => client.GetProperty("class").GetString() == windowClass);
 
-    internal JsonElement ActiveWorkspace() => Json(Send("j/activeworkspace"));
+    internal JsonElement ActiveWorkspace() => Json(Send("j/get workspace"));
 
-    internal JsonElement[] Workspaces() => [.. Json(Send("j/workspaces")).EnumerateArray()];
+    internal JsonElement[] Workspaces() => [.. Json(Send("j/get workspaces")).EnumerateArray()];
 
     internal static string At(JsonElement client) => Pair(client.GetProperty("at"));
 

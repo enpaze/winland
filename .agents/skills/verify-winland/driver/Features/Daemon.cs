@@ -39,7 +39,7 @@ public class Daemon
 
         run.Dispatch("workspace 2");
         run.Until("workspace 2 hides them again", () => !VerifyRun.Visible(left) && !VerifyRun.Visible(right));
-        run.Cli("dispatch", "exit");
+        run.Cli("exit");
         run.Until("exit stops winland", () => run.Daemon.Exited);
         run.Until("exit puts the hidden windows back", () => VerifyRun.Visible(left) && VerifyRun.Visible(right));
     });

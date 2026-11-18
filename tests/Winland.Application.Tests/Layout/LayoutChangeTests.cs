@@ -21,7 +21,7 @@ public class LayoutChangeTests
 
         desk.Set("general:layout", "scrolling");
 
-        Assert.Contains("HEADLESS-5", desk.Send("monitors all"), StringComparison.Ordinal);
+        Assert.Contains("HEADLESS-5", desk.Send("get monitors all"), StringComparison.Ordinal);
     }
 
     [TestMethod]

@@ -124,7 +124,7 @@ public class EventTests
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(7), Area));
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
         var closed = core.Handle(new WindowClosed(new WindowId(7)));
 
@@ -148,7 +148,7 @@ public class EventTests
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
-        var killed = core.Execute("dispatch killactive");
+        var killed = core.Execute("killactive");
         var closed = core.Handle(new WindowClosed(new WindowId(1)));
 
         Assert.IsEmpty(killed.Effect.Events);
@@ -197,7 +197,7 @@ public class EventTests
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
-        var outcome = core.Execute("dispatch workspace 2");
+        var outcome = core.Execute("workspace 2");
 
         Assert.AreSequenceEqual(
             [
@@ -213,9 +213,9 @@ public class EventTests
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
-        var outcome = core.Execute("dispatch workspace 1");
+        var outcome = core.Execute("workspace 1");
 
         Assert.AreSequenceEqual(
             [
@@ -231,7 +231,7 @@ public class EventTests
     {
         var core = new WindowManager();
 
-        var outcome = core.Execute("dispatch workspace 1");
+        var outcome = core.Execute("workspace 1");
 
         Assert.IsEmpty(outcome.Effect.Events);
     }
@@ -243,7 +243,7 @@ public class EventTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
-        var outcome = core.Execute("dispatch movetoworkspacesilent 3");
+        var outcome = core.Execute("movetoworkspacesilent 3");
 
         Assert.AreSequenceEqual(
             [
@@ -261,7 +261,7 @@ public class EventTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
-        var outcome = core.Execute("dispatch movetoworkspace 4");
+        var outcome = core.Execute("movetoworkspace 4");
 
         Assert.AreSequenceEqual(
             [
@@ -293,10 +293,10 @@ public class EventTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(0xFF), Area));
 
-        core.Execute("dispatch focuswindow address:0x1");
-        var lifted = core.Execute("dispatch togglefloating");
-        core.Execute("dispatch focuswindow address:0x1");
-        var dropped = core.Execute("dispatch togglefloating");
+        core.Execute("focuswindow address:0x1");
+        var lifted = core.Execute("togglefloating");
+        core.Execute("focuswindow address:0x1");
+        var dropped = core.Execute("togglefloating");
 
         Assert.AreSequenceEqual(["changefloatingmode>>1,1"], Lines(lifted));
         Assert.AreSequenceEqual(["changefloatingmode>>1,0"], Lines(dropped));
@@ -314,7 +314,7 @@ public class EventTests
         Assert.AreSequenceEqual(
             ["openwindow>>2a,1,1,,kitty,term", "focus>>,1,1,2a,term"],
             Lines(outcome));
-        using var active = System.Text.Json.JsonDocument.Parse(core.Execute("j/activewindow").Text);
+        using var active = System.Text.Json.JsonDocument.Parse(core.Execute("j/get window").Text);
         Assert.AreEqual("0x2a", active.RootElement.GetProperty("address").GetString());
     }
 
@@ -419,7 +419,7 @@ public class EventTests
             Traits = WindowTraits.Normal with { Class = "right", Title = "two" },
         });
 
-        var outcome = core.Execute(@"dispatch focusmonitor \\.\DISPLAY2");
+        var outcome = core.Execute(@"focusmonitor \\.\DISPLAY2");
 
         Assert.AreSequenceEqual(
             [
@@ -497,9 +497,9 @@ public class EventTests
     {
         var core = new WindowManager();
         core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "Dell", 0, 0, 1920, 1080, 1, true, Area)]));
-        core.Execute("dispatch togglespecialworkspace");
+        core.Execute("togglespecialworkspace");
 
-        var closed = core.Execute("dispatch togglespecialworkspace");
+        var closed = core.Execute("togglespecialworkspace");
 
         Assert.AreSequenceEqual(
             [

@@ -75,24 +75,35 @@ public sealed partial class WindowManager
     public Outcome Handle(Input input)
     {
         ArgumentNullException.ThrowIfNull(input);
+        Outcome outcome;
+        ConfigDocument? reloaded;
         lock (_gate)
         {
-            if (input is WindowClosed closed && _applied is { } last && WorkspaceContaining(closed.Window) is null)
-            {
-                _windowState.Forget(closed.Window);
-                return Outcome.Empty(last.State);
-            }
-
-            if (input is PointerMoved moved && _interaction is null && _applied is { } applied)
-            {
-                if (Glides(moved, applied, out var aim))
-                    return Outcome.Empty(applied.State);
-
-                return Step(input, () => View([], focus: Follow(moved, aim)));
-            }
-
-            return Step(input, () => HandleInput(input));
+            outcome = HandleLocked(input);
+            reloaded = TakeReloaded();
         }
+
+        NotifyReloaded(reloaded);
+        return outcome;
+    }
+
+    private Outcome HandleLocked(Input input)
+    {
+        if (input is WindowClosed closed && _applied is { } last && WorkspaceContaining(closed.Window) is null)
+        {
+            _windowState.Forget(closed.Window);
+            return Outcome.Empty(last.State);
+        }
+
+        if (input is PointerMoved moved && _interaction is null && _applied is { } applied)
+        {
+            if (Glides(moved, applied, out var aim))
+                return Outcome.Empty(applied.State);
+
+            return Step(input, () => View([], focus: Follow(moved, aim)));
+        }
+
+        return Step(input, () => HandleInput(input));
     }
 
     public Outcome Adopt(IReadOnlyList<WindowAppeared> windows)
@@ -159,26 +170,36 @@ public sealed partial class WindowManager
             var reply = default(CommandReply);
             var outcome = Step(null, () => (reply = ExecuteLine(parsed)).Effect);
             result = reply with { Effect = outcome };
-            reloaded = _reloaded;
-            _reloaded = null;
+            reloaded = TakeReloaded();
         }
 
-        if (reloaded is not null)
-        {
-            try
-            {
-                AfterReload?.Invoke(reloaded);
-            }
-            catch (Exception exception) when (exception is not OutOfMemoryException)
-            {
-                Console.Error.WriteLine(exception);
-            }
-        }
-
+        NotifyReloaded(reloaded);
         return result;
     }
 
     private ConfigDocument? _reloaded;
+
+    private ConfigDocument? TakeReloaded()
+    {
+        var reloaded = _reloaded;
+        _reloaded = null;
+        return reloaded;
+    }
+
+    private void NotifyReloaded(ConfigDocument? reloaded)
+    {
+        if (reloaded is null)
+            return;
+
+        try
+        {
+            AfterReload?.Invoke(reloaded);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            Console.Error.WriteLine(exception);
+        }
+    }
 
     private Outcome Step(Input? input, Func<Outcome> run)
     {

@@ -60,7 +60,7 @@ public class NativeDragTests
 
         desk.MovePointer(afterStale.X + 250, afterStale.Y + 200);
         desk.Click();
-        Assert.AreNotEqual("", desk.Send("clients"));
+        Assert.AreNotEqual("", desk.Send("get windows"));
     }
 
     private static void SetClientGeometry(TestDesktop desk, long pid, Rectangle geometry)

@@ -16,13 +16,13 @@ public class GroupTests
     public void ABackgroundGroupMemberLeavesTheShownMemberFocusedWhenFollowingIsOff()
     {
         var core = Opened("input:follow_mouse = false\n", First);
-        core.Execute("dispatch togglegroup");
+        core.Execute("togglegroup");
 
         var opened = core.Handle(Appear(Second, "two"));
 
         Assert.AreEqual(First, Assert.ContainsSingle(opened.GroupBars).Shown);
         Assert.Contains(Second, opened.State.Hidden.Select(client => client.Window));
-        Assert.Contains("\"address\":\"0x1\"", core.Execute("j/activewindow").Text, StringComparison.Ordinal);
+        Assert.Contains("\"address\":\"0x1\"", core.Execute("j/get window").Text, StringComparison.Ordinal);
         var clicked = core.Handle(new WindowFocused(Second, FocusCause.User));
         Assert.AreEqual(Second, clicked.Focus);
     }
@@ -36,7 +36,7 @@ public class GroupTests
             group:groupbar:col.active = 0xff00ff00
             group:groupbar:col.inactive = 0xffffffff
             """, First);
-        var grouped = core.Execute("dispatch togglegroup").Effect;
+        var grouped = core.Execute("togglegroup").Effect;
         Assert.AreEqual(new BorderColor(0x66, 0xFF, 0xFF, 0), Decoration(grouped, First).Border);
 
         var otherWorkspace = core.Handle(new WindowAppeared(Second, Area)
@@ -53,7 +53,7 @@ public class GroupTests
     {
         var core = Opened(First);
 
-        var made = core.Execute("dispatch togglegroup");
+        var made = core.Execute("togglegroup");
 
         Assert.AreEqual("ok", made.Text);
         Assert.AreSequenceEqual(["togglegroup>>1,1"], Lines(made));
@@ -72,7 +72,7 @@ public class GroupTests
     public void AGroupIsOneTileWithSeveralClients()
     {
         var core = Opened(First);
-        var alone = ClientOf(core.Execute("dispatch togglegroup").Effect, First).Bounds;
+        var alone = ClientOf(core.Execute("togglegroup").Effect, First).Bounds;
 
         var joined = core.Handle(Appear(Second, "two"));
 
@@ -92,7 +92,7 @@ public class GroupTests
     {
         var core = Grouped();
 
-        var back = core.Execute("dispatch changegroupactive b");
+        var back = core.Execute("changegroupactive b");
 
         Assert.AreEqual("ok", back.Text);
         Assert.AreEqual(First, back.Effect.Focus);
@@ -101,13 +101,13 @@ public class GroupTests
         var shown = Assert.ContainsSingle(placement => placement.Client == new ClientId(First.Value), back.Effect.Placements);
         Assert.AreEqual(shown.Bounds, Assert.ContainsSingle(placement => placement.Client == new ClientId(Second.Value), back.Effect.Placements).Bounds);
 
-        var forward = core.Execute("dispatch changegroupactive f");
+        var forward = core.Execute("changegroupactive f");
         Assert.AreEqual(Second, forward.Effect.Focus);
 
-        var indexed = core.Execute("dispatch changegroupactive 1");
+        var indexed = core.Execute("changegroupactive 1");
         Assert.AreEqual(First, indexed.Effect.Focus);
 
-        var last = core.Execute("dispatch changegroupactive 0");
+        var last = core.Execute("changegroupactive 0");
         Assert.AreEqual(Second, last.Effect.Focus);
     }
 
@@ -116,24 +116,24 @@ public class GroupTests
     {
         var core = Opened(First);
 
-        Assert.AreEqual("error: window is not in a group", core.Execute("dispatch changegroupactive f").Text);
-        Assert.AreEqual("error: window not in a group", core.Execute("dispatch moveoutofgroup").Text);
+        Assert.AreEqual("error: window is not in a group", core.Execute("changegroupactive f").Text);
+        Assert.AreEqual("error: window not in a group", core.Execute("moveoutofgroup").Text);
 
-        core.Execute("dispatch togglegroup");
-        Assert.AreEqual("error: only one window in group", core.Execute("dispatch changegroupactive f").Text);
+        core.Execute("togglegroup");
+        Assert.AreEqual("error: only one window in group", core.Execute("changegroupactive f").Text);
     }
 
     [TestMethod]
     public void GroupDirectionsAreWholeWordsNotTheirFirstLetter()
     {
         var core = Opened(First, Second);
-        core.Execute("dispatch focuswindow address:0x1");
-        core.Execute("dispatch togglegroup");
-        core.Execute("dispatch focuswindow address:0x2");
+        core.Execute("focuswindow address:0x1");
+        core.Execute("togglegroup");
+        core.Execute("focuswindow address:0x2");
 
-        Assert.AreEqual("error: unsupported direction: leftover", core.Execute("dispatch moveintogroup leftover").Text);
-        Assert.AreEqual("error: unsupported direction: ", core.Execute("dispatch moveintogroup").Text);
-        Assert.AreSequenceEqual([First], Assert.ContainsSingle(core.Execute("dispatch moveintogroup x").Effect.State.Groups));
+        Assert.AreEqual("error: unsupported direction: leftover", core.Execute("moveintogroup leftover").Text);
+        Assert.AreEqual("error: unsupported direction: ", core.Execute("moveintogroup").Text);
+        Assert.AreSequenceEqual([First], Assert.ContainsSingle(core.Execute("moveintogroup x").Effect.State.Groups));
     }
 
     [TestMethod]
@@ -141,7 +141,7 @@ public class GroupTests
     {
         var core = Grouped();
 
-        var left = core.Execute("dispatch moveoutofgroup");
+        var left = core.Execute("moveoutofgroup");
 
         Assert.AreEqual("ok", left.Text);
         Assert.AreSequenceEqual(["moveoutofgroup>>2"], Lines(left));
@@ -156,11 +156,11 @@ public class GroupTests
     public void MoveIntoGroupJoinsTheGroupInThatDirection()
     {
         var core = Opened(First, Second);
-        core.Execute("dispatch focuswindow address:0x1");
-        core.Execute("dispatch togglegroup");
-        core.Execute("dispatch focuswindow address:0x2");
+        core.Execute("focuswindow address:0x1");
+        core.Execute("togglegroup");
+        core.Execute("focuswindow address:0x2");
 
-        var moved = core.Execute("dispatch moveintogroup l");
+        var moved = core.Execute("moveintogroup l");
 
         Assert.AreEqual("ok", moved.Text);
         Assert.AreSequenceEqual(["moveintogroup>>2"], Lines(moved));
@@ -175,9 +175,9 @@ public class GroupTests
     public void MoveIntoGroupInADirectionLeavesAPlainNeighbourAlone()
     {
         var core = Opened(First, Second);
-        core.Execute("dispatch focuswindow address:0x2");
+        core.Execute("focuswindow address:0x2");
 
-        var moved = core.Execute("dispatch moveintogroup l");
+        var moved = core.Execute("moveintogroup l");
 
         Assert.AreEqual("ok", moved.Text);
         Assert.IsEmpty(moved.Effect.State.Groups);
@@ -215,7 +215,7 @@ public class GroupTests
     {
         var core = Grouped();
         core.Handle(Appear(Third, "three"));
-        core.Execute("dispatch changegroupactive 2");
+        core.Execute("changegroupactive 2");
 
         var closed = core.Handle(new WindowClosed(First));
 
@@ -243,7 +243,7 @@ public class GroupTests
         var core = Grouped();
         core.Handle(new WindowMinimized(Second));
 
-        var focused = core.Execute("dispatch focuswindow address:0x1").Effect;
+        var focused = core.Execute("focuswindow address:0x1").Effect;
 
         Assert.Contains(First, focused.Show);
         Assert.IsFalse(ClientOf(focused, First).Minimized);
@@ -279,7 +279,7 @@ public class GroupTests
         var core = Grouped();
         core.Handle(Appear(Third, "three"));
 
-        var ended = core.Execute("dispatch togglegroup");
+        var ended = core.Execute("togglegroup");
 
         Assert.AreSequenceEqual(["togglegroup>>0,1"], Lines(ended));
         Assert.IsEmpty(ended.Effect.State.Groups);
@@ -294,7 +294,7 @@ public class GroupTests
     {
         var core = Grouped();
 
-        var focused = core.Execute("dispatch focuswindow address:0x1");
+        var focused = core.Execute("focuswindow address:0x1");
 
         Assert.AreEqual(First, focused.Effect.Focus);
         Assert.Contains(First, focused.Effect.Show);
@@ -307,7 +307,7 @@ public class GroupTests
     {
         var core = Grouped();
 
-        var moved = core.Execute("dispatch movetoworkspacesilent 2");
+        var moved = core.Execute("movetoworkspacesilent 2");
 
         foreach (var client in moved.Effect.State.Clients)
 {
@@ -316,7 +316,7 @@ public class GroupTests
         Assert.AreSequenceEqual([First, Second], Assert.ContainsSingle(moved.Effect.State.Groups));
         Assert.IsEmpty(moved.Effect.GroupBars);
 
-        var back = core.Execute("dispatch workspace 2");
+        var back = core.Execute("workspace 2");
         Assert.Contains(Second, back.Effect.Show);
         Assert.DoesNotContain(First, back.Effect.Show);
         Assert.ContainsSingle(back.Effect.GroupBars);
@@ -327,7 +327,7 @@ public class GroupTests
     {
         var core = Grouped();
 
-        var moved = core.Execute("dispatch movetoworkspace 2");
+        var moved = core.Execute("movetoworkspace 2");
 
         var bar = Assert.ContainsSingle(moved.Effect.GroupBars);
         var placement = moved.Effect.Placements.Single(placement => placement.Client == new ClientId(Second.Value));
@@ -340,7 +340,7 @@ public class GroupTests
     {
         var core = Opened("group:groupbar:height = 20\n", First);
 
-        var bar = Assert.ContainsSingle(core.Execute("dispatch togglegroup").Effect.GroupBars);
+        var bar = Assert.ContainsSingle(core.Execute("togglegroup").Effect.GroupBars);
 
         Assert.AreEqual(2 + 20 + 3 + 2, bar.Bounds.Height);
     }
@@ -376,7 +376,7 @@ public class GroupTests
     {
         var core = Grouped();
 
-        using var clients = JsonDocument.Parse(core.Execute("j/clients").Text);
+        using var clients = JsonDocument.Parse(core.Execute("j/get windows").Text);
 
         foreach (var client in clients.RootElement.EnumerateArray())
             Assert.AreSequenceEqual(["0x1", "0x2"], client.GetProperty("grouped").EnumerateArray().Select(item => item.GetString()));
@@ -437,24 +437,24 @@ public class GroupTests
         Assert.AreEqual(First, followed.Focus);
 
         var core = Opened(First, Second, Third);
-        core.Execute("dispatch focuswindow address:0x1");
-        core.Execute("dispatch togglegroup");
-        core.Execute("dispatch focuswindow address:0x2");
-        core.Execute("dispatch moveintogroup l");
-        core.Execute("dispatch focuswindow address:0x3");
+        core.Execute("focuswindow address:0x1");
+        core.Execute("togglegroup");
+        core.Execute("focuswindow address:0x2");
+        core.Execute("moveintogroup l");
+        core.Execute("focuswindow address:0x3");
 
         var shown = core.Handle(new GroupBarScrolled(Second, Forward: false));
 
         Assert.AreEqual(First, Assert.ContainsSingle(shown.GroupBars).Shown);
         Assert.IsNull(shown.Focus);
-        Assert.AreEqual("0x3", core.Execute("j/activewindow").Text.Split("\"address\":\"")[1][..3]);
+        Assert.AreEqual("0x3", core.Execute("j/get window").Text.Split("\"address\":\"")[1][..3]);
         Assert.IsEmpty(core.Handle(new GroupBarScrolled(Third, Forward: true)).Placements);
     }
 
     private static WindowManager Grouped(string config = "")
     {
         var core = Opened(config, First);
-        core.Execute("dispatch togglegroup");
+        core.Execute("togglegroup");
         core.Handle(Appear(Second, "two"));
         return core;
     }

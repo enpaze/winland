@@ -5,6 +5,12 @@ RetireStaleInstallFiles();
 
 args = Elevation.SendOutputBack(args);
 
+if (args is ["help" or "--help"])
+{
+    Program.WriteUsage(Console.Out);
+    return 0;
+}
+
 if (ControlInvocation.TryAnswerLocally(args, out var local))
 {
     Console.WriteLine(local);
@@ -189,7 +195,7 @@ static int Run(string? path, RollingLogWriter log)
                     TrayFiles.Open(logFile);
                     break;
                 case TrayCommand.Quit:
-                    host.Command("dispatch exit");
+                    host.Command("exit");
                     break;
             }
         };
@@ -296,20 +302,7 @@ static RecoveryStore StateStore()
 
 static int Usage()
 {
-    Console.Error.WriteLine("usage: winland");
-    Console.Error.WriteLine("       winland --config <path>");
-    Console.Error.WriteLine("       winland check [file]");
-    Console.Error.WriteLine("       winland install [--user] [--no-logon] [--no-start]");
-    Console.Error.WriteLine("       winland update [--channel <stable|dev>]");
-    Console.Error.WriteLine("       winland uninstall [--purge]");
-    Console.Error.WriteLine("       winland tweaks --off [--touchpad]");
-    Console.Error.WriteLine("       winland tweaks --restore");
-    Console.Error.Write(ControlInvocation.Usage);
-    Console.Error.WriteLine("check reads a config as a start would, and changes nothing: 0 when clean, 1 for any warning or a file it cannot read, 2 for bad usage.");
-    Console.Error.WriteLine("dispatch with no name lists the Dispatchers this winland knows. A running Winland can differ.");
-    Console.Error.WriteLine("version prints this winland's version and needs no running Winland.");
-    Console.Error.WriteLine("WINLAND_NO_ELEVATE=1 or --no-elevate starts without elevation. install --user uses it.");
-    Console.Error.WriteLine("Elevated features then do not work. A per-user install never asks for elevation.");
+    Program.WriteUsage(Console.Error);
     return 2;
 }
 
@@ -342,6 +335,25 @@ static void CopyLog(RollingLogWriter log, DebugOptions options, string? file)
 
 internal partial class Program
 {
+    internal static void WriteUsage(TextWriter writer)
+    {
+        writer.WriteLine("usage: winland");
+        writer.WriteLine("       winland --config <path>");
+        writer.WriteLine("       winland check [file]");
+        writer.WriteLine("       winland install [--user] [--no-logon] [--no-start]");
+        writer.WriteLine("       winland update [--channel <stable|dev>]");
+        writer.WriteLine("       winland uninstall [--purge]");
+        writer.WriteLine("       winland tweaks --off [--touchpad]");
+        writer.WriteLine("       winland tweaks --restore");
+        writer.WriteLine("       winland help");
+        writer.Write(ControlInvocation.Usage);
+        writer.WriteLine("-j prints JSON, before or after the command.");
+        writer.WriteLine("check reads a config as a start would, and changes nothing: 0 when clean, 1 for any warning or a file it cannot read, 2 for bad usage.");
+        writer.WriteLine("version prints this winland's version and needs no running Winland.");
+        writer.WriteLine("WINLAND_NO_ELEVATE=1 or --no-elevate starts without elevation. install --user uses it.");
+        writer.WriteLine("Elevated features then do not work. A per-user install never asks for elevation.");
+    }
+
     internal static int Check(string[] arguments, string defaultConfig, TextWriter error)
     {
         if (arguments.Length > 1 || (arguments.Length == 1 && (string.IsNullOrWhiteSpace(arguments[0]) || arguments[0].StartsWith('-'))))

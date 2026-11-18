@@ -26,7 +26,7 @@ public class WindowRules
         run.Until("the opacity rule makes its window half transparent", () => Desktop.Alpha(faint) is >= 120 and <= 135);
         run.Holds("a window no rule adopts stays unmanaged", () => run.Client(ignored) is null, 500);
         Assert.AreEqual(1, run.ClientOf(faint).GetProperty("workspace").GetProperty("id").GetInt32());
-        Assert.Contains("Unsupported window rule 'no_blur'.", run.Ask("configerrors"), StringComparison.Ordinal);
+        Assert.Contains("Unsupported window rule 'no_blur'.", run.Ask("get", "errors"), StringComparison.Ordinal);
         run.Say("saw: one rule tiled and faded its window past the effect it warned about");
 
         var away = run.OpenTitled("WinlandRule Away");

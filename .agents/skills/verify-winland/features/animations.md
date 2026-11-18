@@ -11,7 +11,7 @@ Winland moves windows to their tiles through frames instead of at once: a Window
 
 - Leave `animations:enabled` at its default of true. The starter config has `animations:enabled = true` as a comment. False moves every window at once.
 - Keep the Windows setting Animation effects on. With it off, every window moves at once.
-- Press `Win+1` to `Win+0`, `Win+Tab` or `Win+Shift+Tab` to switch Workspace and watch it slide in, or run `winland dispatch workspace 2`.
+- Press `Win+1` to `Win+0`, `Win+Tab` or `Win+Shift+Tab` to switch Workspace and watch it slide in, or run `winland workspace 2`.
 - Open a window, resize a tile with the keyboard, or toggle fullscreen with `Win+F` to see the other motions.
 
 ## Driving it with drive.ps1
@@ -24,8 +24,8 @@ Preconditions:
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature animations`. It prints `== feature animations: passed`.
 - **Animation effects.** When the Windows setting Animation effects is off, the driver turns it on for the run without saving the change, and prints a line that says so.
 - **Tile one window.** The driver opens `WinlandVerify 1`. It becomes a Client and fills the work area.
-- **Move it away.** The driver focuses the window with `winland dispatch focuswindow address:<hwnd>` and runs `winland dispatch movetoworkspacesilent 2`. The window hides.
-- **Slide in.** The driver runs `winland dispatch workspace 2` and reads the window's left edge every 5 ms for 1.5 seconds. At least three different left edges lie between the right edge of the Monitor and a point 20 pixels right of the tile's left edge, and the driver prints `saw: the window passed through N places between the right edge and its tile`.
+- **Move it away.** The driver focuses the window with `winland focuswindow address:<hwnd>` and runs `winland movetoworkspacesilent 2`. The window hides.
+- **Slide in.** The driver runs `winland workspace 2` and reads the window's left edge every 5 ms for 1.5 seconds. At least three different left edges lie between the right edge of the Monitor and a point 20 pixels right of the tile's left edge, and the driver prints `saw: the window passed through N places between the right edge and its tile`.
 - **Rest on the tile.** The window ends on its tile and fills the work area again.
 
 ## Gotchas

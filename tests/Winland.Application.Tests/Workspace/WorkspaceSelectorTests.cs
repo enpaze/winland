@@ -154,13 +154,13 @@ public class WorkspaceSelectorTests
         var core = TwoMonitors(out var left, out _);
         Appear(core, 1, left);
 
-        var reply = core.Execute("dispatch nosuch");
-        Assert.AreEqual("error: unknown dispatcher 'nosuch'", reply.Text);
+        var reply = core.Execute("nosuch");
+        Assert.AreEqual("error: unknown command 'nosuch'", reply.Text);
         Assert.AreEqual(new WorkspaceId("1"), reply.Effect.State.ActiveWorkspace);
         Assert.IsNull(reply.Effect.Close);
 
-        var cased = core.Execute("dispatch NoSuch");
-        Assert.AreEqual("error: unknown dispatcher 'NoSuch'", cased.Text);
+        var cased = core.Execute("NoSuch");
+        Assert.AreEqual("error: unknown command 'NoSuch'", cased.Text);
 
         var loaded = core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = SUPER, Q, madeup\n", dispatchers: WindowManager.DispatcherNames)));
         var warned = Assert.ContainsSingle(loaded.Events.OfType<ConfigWarned>());
@@ -184,14 +184,14 @@ public class WorkspaceSelectorTests
         core.Handle(new WindowAppeared(new WindowId(1), area));
         core.Handle(new WindowAppeared(new WindowId(2), area));
 
-        var unknown = core.Execute("dispatch layoutmsg nosuch");
+        var unknown = core.Execute("layoutmsg nosuch");
         Assert.AreEqual("error: bad layoutmsg 'nosuch'", unknown.Text);
         Assert.IsEmpty(unknown.Effect.Placements);
 
-        var missing = core.Execute("dispatch layoutmsg");
+        var missing = core.Execute("layoutmsg");
         Assert.AreEqual("error: bad layoutmsg", missing.Text);
 
-        var ran = core.Execute("dispatch layoutmsg togglesplit");
+        var ran = core.Execute("layoutmsg togglesplit");
         Assert.AreEqual("ok", ran.Text);
         Assert.AreEqual(new Rectangle(0, 0, 1920, 540), BoundsOf(ran.Effect, 1));
         Assert.AreEqual(new Rectangle(0, 540, 1920, 540), BoundsOf(ran.Effect, 2));

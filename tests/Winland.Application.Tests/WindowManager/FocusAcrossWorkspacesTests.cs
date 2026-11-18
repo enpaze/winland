@@ -53,7 +53,7 @@ public class FocusAcrossWorkspacesTests
         desk.Ok("movetoworkspacesilent", "2");
 
         Assert.AreEqual(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
-        Assert.AreEqual(NoWindow, desk.Send("j/activewindow"));
+        Assert.AreEqual(NoWindow, desk.Send("j/get window"));
         Assert.ContainsSingle(desk.Clients());
 
         var client = desk.Client("silent_move_last_tiled");
@@ -78,6 +78,6 @@ public class FocusAcrossWorkspacesTests
 
         desk.Ok("workspace", "1");
         Assert.AreEqual(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
-        Assert.AreEqual(NoWindow, desk.Send("j/activewindow"));
+        Assert.AreEqual(NoWindow, desk.Send("j/get window"));
     }
 }

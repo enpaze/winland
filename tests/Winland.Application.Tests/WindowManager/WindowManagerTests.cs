@@ -26,7 +26,7 @@ public class WindowManagerTests
 
         var first = core.Handle(new WindowAppeared(new WindowId(42), new Rectangle(0, 0, 1920, 1080)));
         var second = core.Handle(new Dispatch("workspace", "2"));
-        var third = core.Execute("dispatch workspace 1").Effect;
+        var third = core.Execute("workspace 1").Effect;
 
         Assert.AreSequenceEqual([first, second, third], decided);
     }
@@ -593,7 +593,7 @@ public class WindowManagerTests
 {
     Assert.IsNull(outcome.Focus);
 }
-        Assert.AreEqual("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        Assert.AreEqual("0x1", Json(core.Execute("j/get window").Text).GetProperty("address").GetString());
     }
 
     [TestMethod]

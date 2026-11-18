@@ -14,8 +14,8 @@ Fullscreen makes the Focused window cover its whole Monitor without a frame, and
 
 - Press `Win+F` for fullscreen and `Win+Alt+F` to maximize.
 - Click a window's maximize button, press `Win+Up`, or double-click its title bar to maximize it.
-- Run `winland dispatch fullscreen` or `winland dispatch fullscreen 1`.
-- Run `winland clients` to see each Client's `fullscreen` mode and `allowedOverFullscreen` flag.
+- Run `winland fullscreen` or `winland fullscreen 1`.
+- Run `winland get windows` to see each Client's `fullscreen` mode and `allowedOverFullscreen` flag.
 
 ## Driving it with drive.ps1
 
@@ -25,11 +25,11 @@ Preconditions:
 - The driver's config adds no lines to the baseline config.
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature fullscreen`. It prints `== feature fullscreen: passed`.
-- **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`, which tile side by side, and focuses the left one with `winland dispatch focuswindow address:<hwnd>`.
-- **Go fullscreen.** The driver runs `winland dispatch fullscreen`. The left window covers the whole Monitor, its Client reports `fullscreen: 2`, and the right window's Client reports `allowedOverFullscreen: false`.
-- **Leave fullscreen.** The driver runs `winland dispatch fullscreen` again. The Client reports `fullscreen: 0`, and the two windows tile side by side again.
-- **Maximize.** The driver runs `winland dispatch fullscreen 1`. The left window fills the work area, and its Client reports `fullscreen: 1`.
-- **End maximize.** The driver runs `winland dispatch fullscreen 1` again. The Client reports `fullscreen: 0`, and the two windows tile side by side again.
+- **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`, which tile side by side, and focuses the left one with `winland focuswindow address:<hwnd>`.
+- **Go fullscreen.** The driver runs `winland fullscreen`. The left window covers the whole Monitor, its Client reports `fullscreen: 2`, and the right window's Client reports `allowedOverFullscreen: false`.
+- **Leave fullscreen.** The driver runs `winland fullscreen` again. The Client reports `fullscreen: 0`, and the two windows tile side by side again.
+- **Maximize.** The driver runs `winland fullscreen 1`. The left window fills the work area, and its Client reports `fullscreen: 1`.
+- **End maximize.** The driver runs `winland fullscreen 1` again. The Client reports `fullscreen: 0`, and the two windows tile side by side again.
 
 ## Gotchas
 
@@ -39,4 +39,4 @@ Preconditions:
 - `fullscreen` does nothing to a pinned Client.
 - `movewindow` in a direction, `swapwindow` and `togglesplit` refuse a Client that is fullscreen or maximized.
 - The driver does not reach the scrolling Layout's fullscreen, which gives the tile a column of its own, nor a window that covers its Monitor by itself, nor the maximize button, `Win+Up` or a double click.
-- The keys in the first list come from the starter config. The driver's config has no binds, so it drives this Dispatcher through `winland dispatch`. [Binds](./binds.md) proves the key path.
+- The keys in the first list come from the starter config. The driver's config has no binds, so it drives this Dispatcher through the `winland` CLI. [Binds](./binds.md) proves the key path.

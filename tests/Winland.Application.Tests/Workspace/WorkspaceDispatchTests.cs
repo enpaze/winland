@@ -125,14 +125,14 @@ public class WorkspaceDispatchTests
         {
             desk.Set("input:follow_mouse", followMouse.ToString(CultureInfo.InvariantCulture));
 
-            var before = desk.Send("activewindow");
+            var before = desk.Send("get window");
             Assert.AreNotEqual("", before);
 
             desk.Ok("workspace", "2");
-            Assert.AreEqual("", desk.Send("activewindow"));
+            Assert.AreEqual("", desk.Send("get window"));
 
             desk.Ok("workspace", "previous");
-            Assert.AreEqual(before, desk.Send("activewindow"));
+            Assert.AreEqual(before, desk.Send("get window"));
         }
     }
 
@@ -255,7 +255,7 @@ public class WorkspaceDispatchTests
 
     private static JsonElement[] Monitors(TestDesktop desk)
     {
-        using var document = JsonDocument.Parse(desk.Send("j/monitors"));
+        using var document = JsonDocument.Parse(desk.Send("j/get monitors"));
         return [.. document.RootElement.Clone().EnumerateArray()];
     }
 

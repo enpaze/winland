@@ -13,9 +13,9 @@ public class Monitors
     public void ReportsAndFocusesMonitorsAndMovesWorkspacesBetweenThem() => VerifyRun.Drive(TestContext, run =>
     {
         var count = PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CMONITORS);
-        var monitors = run.Json("monitors").EnumerateArray().ToList();
+        var monitors = run.Json("get", "monitors").EnumerateArray().ToList();
         Assert.AreEqual(count, monitors.Count);
-        Assert.IsTrue(run.Json("monitors", "all").GetArrayLength() >= count);
+        Assert.IsTrue(run.Json("get", "monitors", "all").GetArrayLength() >= count);
         foreach (var monitor in monitors)
         {
             Assert.IsTrue(monitor.GetProperty("width").GetInt32() > 0 && monitor.GetProperty("height").GetInt32() > 0);
@@ -29,8 +29,8 @@ public class Monitors
         var name = focused.GetProperty("name").GetString()!;
         run.Dispatch($"focusmonitor {name}");
         run.Dispatch("focusmonitor current");
-        Assert.AreEqual(name, run.Json("activeworkspace").GetProperty("monitor").GetString());
-        var unknown = run.Cli("dispatch", "focusmonitor", "NoSuchMonitor");
+        Assert.AreEqual(name, run.Json("get", "workspace").GetProperty("monitor").GetString());
+        var unknown = run.Cli("focusmonitor", "NoSuchMonitor");
         Assert.AreEqual(1, unknown.ExitCode);
         Assert.AreEqual("error: monitor not found", unknown.Error.Trim());
 
@@ -45,7 +45,7 @@ public class Monitors
         var window = run.OpenManaged("1");
         var other = monitors.First(monitor => !monitor.GetProperty("focused").GetBoolean()).GetProperty("name").GetString()!;
         run.Dispatch($"focusmonitor {other}");
-        run.Until($"focusmonitor {other} focuses that monitor", () => run.Json("activeworkspace").GetProperty("monitor").GetString() == other);
+        run.Until($"focusmonitor {other} focuses that monitor", () => run.Json("get", "workspace").GetProperty("monitor").GetString() == other);
         run.UntilEvent("focus", other + ",");
 
         run.Dispatch($"focusmonitor {name}");

@@ -78,8 +78,7 @@ public class FullscreenTests
         Assert.AreEqual(1, warning.Line);
         Assert.StartsWith("Unknown dispatcher 'maximize'", warning.Message, StringComparison.Ordinal);
         Assert.AreEqual("fullscreen", Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds)).Dispatcher);
-        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["dispatch"], out var names));
-        Assert.DoesNotContain("maximize", names.Split('\n'));
+        Assert.DoesNotContain("maximize", ControlInvocation.Usage, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -148,12 +147,12 @@ public class FullscreenTests
         OpenWindows(core, 1);
         core.Handle(new Dispatch("fullscreen", "1"));
 
-        using var clients = JsonDocument.Parse(core.Execute("j/clients").Text);
+        using var clients = JsonDocument.Parse(core.Execute("j/get windows").Text);
         var client = clients.RootElement[0];
         Assert.AreEqual(1, client.GetProperty("fullscreen").GetInt32());
         Assert.AreEqual("default", client.GetProperty("fullscreenHandler").GetString());
 
-        using var workspaces = JsonDocument.Parse(core.Execute("j/workspaces").Text);
+        using var workspaces = JsonDocument.Parse(core.Execute("j/get workspaces").Text);
         Assert.IsTrue(workspaces.RootElement[0].GetProperty("hasFullscreen").GetBoolean());
     }
 
@@ -161,7 +160,7 @@ public class FullscreenTests
     public void FullscreenWithoutAClientIsAnErrorAndABadActionDoesNothing()
     {
         var core = Desk();
-        var missing = core.Execute("dispatch fullscreen");
+        var missing = core.Execute("fullscreen");
         Assert.AreEqual("error: window not found", missing.Text);
 
         OpenWindows(core, 1);
@@ -344,7 +343,7 @@ public class FullscreenTests
         Assert.AreEqual((MonitorBounds.Width, MonitorBounds.Height), (held.Bounds.Width, held.Bounds.Height));
         Assert.AreNotEqual(MonitorBounds.X, held.Bounds.X);
 
-        using var clients = JsonDocument.Parse(core.Execute("j/clients").Text);
+        using var clients = JsonDocument.Parse(core.Execute("j/get windows").Text);
         foreach (var client in clients.RootElement.EnumerateArray())
 {
     Assert.AreEqual("scrolling", client.GetProperty("fullscreenHandler").GetString());
@@ -361,7 +360,7 @@ public class FullscreenTests
 
         Assert.AreEqual(MonitorBounds, BoundsOf(entered, 2));
         Assert.IsFalse(Client(entered, 2).LayoutFullscreen);
-        using var active = JsonDocument.Parse(core.Execute("j/activewindow").Text);
+        using var active = JsonDocument.Parse(core.Execute("j/get window").Text);
         Assert.AreEqual("default", active.RootElement.GetProperty("fullscreenHandler").GetString());
     }
 
@@ -379,7 +378,7 @@ public class FullscreenTests
         Assert.Contains(new ZOrderRequest(new WindowId(1), Top: false), covered.ZOrder);
         Assert.IsFalse(Client(covered, 1).AllowedOverFullscreen);
         Assert.IsTrue(Client(covered, 1).BelowFullscreen);
-        using (var clients = JsonDocument.Parse(core.Execute("j/clients").Text))
+        using (var clients = JsonDocument.Parse(core.Execute("j/get windows").Text))
         {
             var floating = clients.RootElement.EnumerateArray().Single(client => client.GetProperty("address").GetString() == "0x1");
             Assert.IsFalse(floating.GetProperty("visible").GetBoolean());

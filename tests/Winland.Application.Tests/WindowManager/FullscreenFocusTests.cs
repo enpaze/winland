@@ -116,7 +116,7 @@ public class FullscreenFocusTests
 
     private static string Address(WindowManager core)
     {
-        var text = core.Execute("j/activewindow").Text;
+        var text = core.Execute("j/get window").Text;
         var at = text.IndexOf("\"address\":", StringComparison.Ordinal);
         Assert.IsTrue(at >= 0, text);
         return text[at..(at + "\"address\":\"0x0\"".Length)];

@@ -16,7 +16,7 @@ public class SelectorDispatcherTests
 
         var stayed = core.Handle(new Dispatch("focuswindow", "class:app"));
 
-        Assert.AreEqual("ok", core.Execute("dispatch focuswindow class:app").Text);
+        Assert.AreEqual("ok", core.Execute("focuswindow class:app").Text);
         Assert.AreEqual(new WindowId(1), stayed.Focus);
         Assert.AreEqual(new WorkspaceId("1"), stayed.State.ActiveWorkspace);
 
@@ -60,8 +60,8 @@ public class SelectorDispatcherTests
         Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("focuswindow", "cascadia*")).Focus);
         Assert.AreEqual(new WindowId(1), core.Handle(new Dispatch("focuswindow", "title:*notes*")).Focus);
         Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("focuswindow", "exe:windows*")).Focus);
-        Assert.AreEqual("error: no such window", core.Execute("dispatch focuswindow title:Notes").Text);
-        Assert.AreEqual("error: no such window", core.Execute("dispatch focuswindow exe:Code").Text);
+        Assert.AreEqual("error: no such window", core.Execute("focuswindow title:Notes").Text);
+        Assert.AreEqual("error: no such window", core.Execute("focuswindow exe:Code").Text);
     }
 
     [TestMethod]
@@ -85,7 +85,7 @@ public class SelectorDispatcherTests
         var core = new WindowManager();
         Appear(core, 1, "app", "here");
 
-        var reply = core.Execute("dispatch focuswindow class:missing");
+        var reply = core.Execute("focuswindow class:missing");
 
         Assert.AreEqual("error: no such window", reply.Text);
         Assert.IsNull(reply.Effect.Focus);
@@ -111,10 +111,10 @@ public class SelectorDispatcherTests
         desk.Spawn("a");
         desk.Spawn("b");
         desk.Ok("focuswindow", "class:a");
-        var before = desk.Send("j/clients");
+        var before = desk.Send("j/get windows");
 
         Assert.StartsWith("error:", desk.Dispatch(line), StringComparison.Ordinal);
-        Assert.AreEqual(before, desk.Send("j/clients"));
+        Assert.AreEqual(before, desk.Send("j/get windows"));
     }
 
     [TestMethod]
@@ -136,7 +136,7 @@ public class SelectorDispatcherTests
         var core = new WindowManager();
         Appear(core, 1, "app", "term");
 
-        var exit = core.Execute("dispatch exit");
+        var exit = core.Execute("exit");
         Assert.AreEqual("ok", exit.Text);
         Assert.IsTrue(exit.Effect.Exit);
         Assert.ContainsSingle(exit.Effect.State.Clients);

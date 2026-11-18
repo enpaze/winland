@@ -118,7 +118,7 @@ public class WorkspaceSwipeTests
                 return new Shot(false, false, "");
 
             var monitor = workspace.GetProperty("monitor").GetString() ?? "";
-            using var monitors = JsonDocument.Parse(TestDesktop.Send("j/monitors"));
+            using var monitors = JsonDocument.Parse(TestDesktop.Send("j/get monitors"));
             var active = monitors.RootElement.EnumerateArray().Any(each =>
                 each.GetProperty("name").GetString() == monitor
                 && each.GetProperty("activeWorkspace").GetProperty("name").GetString() == name);

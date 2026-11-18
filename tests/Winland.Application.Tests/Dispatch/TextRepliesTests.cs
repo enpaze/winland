@@ -11,15 +11,15 @@ public class TextRepliesTests
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(42), Area) { Traits = WindowTraits.Normal with { Class = "term", Title = "shell" } });
 
-        var clients = core.Execute("clients").Text;
+        var clients = core.Execute("get windows").Text;
 
         Assert.StartsWith("Window 2a -> shell:\n\thidden: 0\n\tvisible: 1\n\tat: 0,0\n", clients, StringComparison.Ordinal);
         Assert.Contains("\n\tworkspace: 1\n\tfloating: 0\n\tmonitor: \n\tclass: term\n\ttitle: shell\n", clients, StringComparison.Ordinal);
         Assert.Contains("\n\tfullscreen: 0\n\tfullscreenHandler: default\n", clients, StringComparison.Ordinal);
         Assert.Contains("\n\tgrouped: 0\n\n", clients, StringComparison.Ordinal);
         Assert.EndsWith("\n\n", clients, StringComparison.Ordinal);
-        Assert.AreEqual(clients, core.Execute("activewindow").Text);
-        Assert.StartsWith("[", core.Execute("j/clients").Text, StringComparison.Ordinal);
+        Assert.AreEqual(clients, core.Execute("get window").Text);
+        Assert.StartsWith("[", core.Execute("j/get windows").Text, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -31,13 +31,13 @@ public class TextRepliesTests
             Traits = WindowTraits.Normal with { Class = "app\rclass", Title = "title\r\nWindow 99 -> forged:\nline" },
         });
 
-        var clients = core.Execute("clients").Text;
+        var clients = core.Execute("get windows").Text;
 
         Assert.StartsWith("Window 2a -> title Window 99 -> forged: line:\n", clients, StringComparison.Ordinal);
         Assert.Contains("\n\tclass: app class\n\ttitle: title Window 99 -> forged: line\n", clients, StringComparison.Ordinal);
         Assert.Contains("\n\tinitialTitle: title Window 99 -> forged: line\n", clients, StringComparison.Ordinal);
-        Assert.AreEqual(clients, core.Execute("activewindow").Text);
-        Assert.Contains("\n\tlastWindowTitle: title Window 99 -> forged: line\n", core.Execute("workspaces").Text, StringComparison.Ordinal);
+        Assert.AreEqual(clients, core.Execute("get window").Text);
+        Assert.Contains("\n\tlastWindowTitle: title Window 99 -> forged: line\n", core.Execute("get workspaces").Text, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -46,11 +46,11 @@ public class TextRepliesTests
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
-        var workspaces = core.Execute("workspaces").Text;
+        var workspaces = core.Execute("get workspaces").Text;
 
         Assert.StartsWith("workspace 1 on monitor :\n\tmonitorId: 0\n", workspaces, StringComparison.Ordinal);
         Assert.Contains("\n\twindows: 1\n\thasFullscreen: 0\n\tlastWindow: 0x1\n", workspaces, StringComparison.Ordinal);
-        Assert.AreEqual(workspaces, core.Execute("activeworkspace").Text);
+        Assert.AreEqual(workspaces, core.Execute("get workspace").Text);
     }
 
     [TestMethod]
@@ -59,7 +59,7 @@ public class TextRepliesTests
         var core = new WindowManager();
         core.Handle(new MonitorsChanged([new Monitor(@"\\.\DISPLAY1", "Dell", 0, 0, 1920, 1080, 1, true, Area)]));
 
-        var monitors = core.Execute("monitors").Text;
+        var monitors = core.Execute("get monitors").Text;
 
         Assert.StartsWith("Monitor " + @"\\.\DISPLAY1" + " (ID 0):\n\t1920x1080@", monitors, StringComparison.Ordinal);
         Assert.Contains("\n\tactive workspace: 1\n\tspecial workspace: \n", monitors, StringComparison.Ordinal);
@@ -79,7 +79,7 @@ public class TextRepliesTests
             bind = SUPER, mouse:right, resizewindow, 1
             """));
 
-        var binds = core.Execute("binds").Text;
+        var binds = core.Execute("get binds").Text;
 
         Assert.AreEqual(
             "bind = SUPER, W, killactive\n"
@@ -88,9 +88,9 @@ public class TextRepliesTests
             + "bindd = SUPER, Q, Close the window, killactive\n"
             + "bind = SUPER, mouse:right, resizewindow, 1",
             binds);
-        Assert.StartsWith("[{", core.Execute("j/binds").Text, StringComparison.Ordinal);
-        Assert.AreEqual("no binds", new WindowManager().Execute("binds").Text);
-        Assert.AreEqual("[]", new WindowManager().Execute("j/binds").Text);
+        Assert.StartsWith("[{", core.Execute("j/get binds").Text, StringComparison.Ordinal);
+        Assert.AreEqual("no binds", new WindowManager().Execute("get binds").Text);
+        Assert.AreEqual("[]", new WindowManager().Execute("j/get binds").Text);
     }
 
     [TestMethod]
@@ -148,8 +148,8 @@ public class TextRepliesTests
         const string path = @"C:\winland\winland.conf";
         const string colors = @"C:\winland\colors.conf";
         var core = new WindowManager();
-        Assert.AreEqual("no config errors", core.Execute("configerrors").Text);
-        Assert.AreEqual("[]", core.Execute("j/configerrors").Text);
+        Assert.AreEqual("no config errors", core.Execute("get errors").Text);
+        Assert.AreEqual("[]", core.Execute("j/get errors").Text);
 
         core.Handle(new Configure(new ConfigDocument(
             [],
@@ -161,14 +161,14 @@ public class TextRepliesTests
 
         Assert.AreEqual(
             path + ":1: Unsupported keyword 'blur'.\n" + colors + ":3: Invalid modifier 'X'.\n" + path + ": Could not read config.",
-            core.Execute("configerrors").Text);
+            core.Execute("get errors").Text);
         Assert.AreEqual(
             """[{"file":"C:\\winland\\winland.conf","line":1,"message":"Unsupported keyword 'blur'."},{"file":"C:\\winland\\colors.conf","line":3,"message":"Invalid modifier 'X'."},{"file":"C:\\winland\\winland.conf","line":0,"message":"Could not read config."}]""",
-            core.Execute("j/configerrors").Text);
+            core.Execute("j/get errors").Text);
 
         core.Handle(new Configure(new ConfigDocument([], [], [new ConfigWarning(2, "Unsupported keyword 'blur'.")])));
 
-        Assert.AreEqual("""[{"file":null,"line":2,"message":"Unsupported keyword 'blur'."}]""", core.Execute("j/configerrors").Text);
+        Assert.AreEqual("""[{"file":null,"line":2,"message":"Unsupported keyword 'blur'."}]""", core.Execute("j/get errors").Text);
     }
 
     [TestMethod]
@@ -177,17 +177,17 @@ public class TextRepliesTests
         const string path = @"C:\winland\work.conf";
         const string log = @"C:\winland\state\winland.log";
         var core = new WindowManager();
-        Assert.AreEqual("config: none\nlog: none", core.Execute("files").Text);
-        Assert.AreEqual("""{"config":null,"log":null}""", core.Execute("j/files").Text);
+        Assert.AreEqual("config: none\nlog: none", core.Execute("get files").Text);
+        Assert.AreEqual("""{"config":null,"log":null}""", core.Execute("j/get files").Text);
 
         string? writing = log;
         core.LogFile = () => writing;
         core.Handle(new Configure(new ConfigDocument([], [], []) { Path = path }));
 
-        Assert.AreEqual("config: " + path + "\nlog: " + log, core.Execute("files").Text);
-        Assert.AreEqual("""{"config":"C:\\winland\\work.conf","log":"C:\\winland\\state\\winland.log"}""", core.Execute("j/files").Text);
+        Assert.AreEqual("config: " + path + "\nlog: " + log, core.Execute("get files").Text);
+        Assert.AreEqual("""{"config":"C:\\winland\\work.conf","log":"C:\\winland\\state\\winland.log"}""", core.Execute("j/get files").Text);
 
         writing = null;
-        Assert.AreEqual("""{"config":"C:\\winland\\work.conf","log":null}""", core.Execute("j/files").Text);
+        Assert.AreEqual("""{"config":"C:\\winland\\work.conf","log":null}""", core.Execute("j/get files").Text);
     }
 }

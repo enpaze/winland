@@ -69,11 +69,11 @@ public class RetitleTests
         var client = Assert.ContainsSingle(outcome.State.Clients);
         Assert.AreEqual("new", client.Title);
         Assert.AreEqual("old", client.InitialTitle);
-        using var listed = JsonDocument.Parse(core.Execute("j/clients").Text);
+        using var listed = JsonDocument.Parse(core.Execute("j/get windows").Text);
         var json = Assert.ContainsSingle(listed.RootElement.EnumerateArray());
         Assert.AreEqual("new", json.GetProperty("title").GetString());
         Assert.AreEqual("old", json.GetProperty("initialTitle").GetString());
-        using var active = JsonDocument.Parse(core.Execute("j/activewindow").Text);
+        using var active = JsonDocument.Parse(core.Execute("j/get window").Text);
         Assert.AreEqual("new", active.RootElement.GetProperty("title").GetString());
         Assert.AreEqual("old", active.RootElement.GetProperty("initialTitle").GetString());
     }
@@ -83,7 +83,7 @@ public class RetitleTests
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "one" } });
-        core.Execute("dispatch togglegroup");
+        core.Execute("togglegroup");
         core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Title = "two" } });
 
         var retitled = core.Handle(new WindowTitleChanged(new WindowId(1), "renamed"));

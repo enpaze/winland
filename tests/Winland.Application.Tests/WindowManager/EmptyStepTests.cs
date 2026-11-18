@@ -172,29 +172,29 @@ public class EmptyStepTests
     }
 
     [TestMethod]
-    [DataRow("clients")]
-    [DataRow("j/clients")]
-    [DataRow("workspaces")]
-    [DataRow("monitors")]
-    [DataRow("monitors all")]
-    [DataRow("activewindow")]
-    [DataRow("activeworkspace")]
-    [DataRow("binds")]
+    [DataRow("get windows")]
+    [DataRow("j/get windows")]
+    [DataRow("get workspaces")]
+    [DataRow("get monitors")]
+    [DataRow("get monitors all")]
+    [DataRow("get window")]
+    [DataRow("get workspace")]
+    [DataRow("get binds")]
     [DataRow("version")]
-    [DataRow("configerrors")]
-    [DataRow("files")]
+    [DataRow("get errors")]
+    [DataRow("get files")]
     public void AQueryAnswersAndChangesNothing(string query)
     {
         var (core, laid) = Tiled();
         Move(core, Center(laid, 2), 1_000);
-        var before = core.Execute("j/clients").Text;
+        var before = core.Execute("j/get windows").Text;
 
         var reply = core.Execute(query);
 
         Assert.IsNotEmpty(reply.Text);
         Assert.IsTrue(reply.Effect.IsEmpty);
         Assert.AreEqual(2, reply.Effect.State.Clients.Count);
-        Assert.AreEqual(before, core.Execute("j/clients").Text);
+        Assert.AreEqual(before, core.Execute("j/get windows").Text);
         Assert.IsTrue(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_100).IsEmpty);
     }
 
@@ -203,7 +203,7 @@ public class EmptyStepTests
     {
         var (core, _) = Tiled();
 
-        var reply = core.Execute("dispatch togglefloating");
+        var reply = core.Execute("togglefloating");
 
         Assert.IsFalse(reply.Effect.IsEmpty);
     }

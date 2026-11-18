@@ -21,7 +21,7 @@ public class MouseDrag
     [VerifyFact]
     public void MovesAndResizesAFloatingWindowWithTheMouse() => VerifyRun.Drive(TestContext, Config, run =>
     {
-        var binds = run.Ask("binds");
+        var binds = run.Ask("get", "binds");
         Assert.Contains("bind = SHIFT CTRL ALT, mouse:left, movewindow", binds, StringComparison.Ordinal);
         Assert.Contains("bind = SHIFT CTRL ALT, mouse:right, resizewindow", binds, StringComparison.Ordinal);
         run.Say("saw: binds echoes both drags with the plain bind keyword");

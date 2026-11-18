@@ -6,9 +6,9 @@ public class DispatcherTableTests
     [TestMethod]
     public void AnUnknownDispatcherIsAnError()
     {
-        var reply = new WindowManager().Execute("dispatch notadispatcher");
+        var reply = new WindowManager().Execute("notadispatcher");
 
-        Assert.AreEqual("error: unknown dispatcher 'notadispatcher'", reply.Text);
+        Assert.AreEqual("error: unknown command 'notadispatcher'", reply.Text);
     }
 
     [TestMethod]
@@ -28,7 +28,7 @@ public class DispatcherTableTests
         var core = new WindowManager();
         Appear(core, 1);
 
-        Assert.AreEqual("error: resizewindow is a drag; bind it to a mouse button", core.Execute("dispatch resizewindow").Text);
+        Assert.AreEqual("error: resizewindow is a drag; bind it to a mouse button", core.Execute("resizewindow").Text);
     }
 
     [TestMethod]

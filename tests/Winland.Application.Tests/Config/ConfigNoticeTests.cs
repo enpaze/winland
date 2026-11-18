@@ -111,7 +111,7 @@ public class ConfigNoticeTests
         Assert.IsNotNull(notice);
         Assert.AreEqual("Winland", notice.Title);
         Assert.AreEqual(
-            "Winland is tiling your windows. Run winland binds to list the hotkeys. Right-click the Winland icon to edit the config or quit.",
+            "Winland is tiling your windows. Run winland get binds to list the hotkeys. Right-click the Winland icon to edit the config or quit.",
             notice.Text);
         Assert.IsInRange(1, 255, notice.Text.Length);
         Assert.AreEqual(Path, notice.File);
@@ -148,7 +148,7 @@ public class ConfigNoticeTests
 
     [TestMethod]
     public void SetErrorIsNotARequest() =>
-        Assert.AreEqual("error: unknown request", new WindowManager().Execute("seterror rgb(ff0000) broke").Text);
+        Assert.AreEqual("error: unknown command 'seterror'", new WindowManager().Execute("seterror rgb(ff0000) broke").Text);
 
     private static ConfigNotice? Load(string text) => Notice(Loaded(text));
 
@@ -159,5 +159,5 @@ public class ConfigNoticeTests
         return core;
     }
 
-    private static ConfigNotice? Notice(WindowManager core) => core.Execute("dispatch resizewindow").Effect.ConfigNotice;
+    private static ConfigNotice? Notice(WindowManager core) => core.Execute("resizewindow").Effect.ConfigNotice;
 }

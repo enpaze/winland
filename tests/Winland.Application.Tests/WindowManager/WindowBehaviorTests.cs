@@ -380,7 +380,7 @@ public class WindowBehaviorTests
 
     private static string? MonitorName(TestDesktop desk, string name)
     {
-        using var document = JsonDocument.Parse(desk.Send("j/monitors"));
+        using var document = JsonDocument.Parse(desk.Send("j/get monitors"));
         return document.RootElement.EnumerateArray()
             .Single(monitor => monitor.GetProperty("name").GetString() == name)
             .GetProperty("name").GetString();

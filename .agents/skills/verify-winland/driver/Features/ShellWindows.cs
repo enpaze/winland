@@ -14,7 +14,7 @@ public class ShellWindows
         var window = run.OpenManaged("1");
         run.Until("the window takes in the strip the taskbar reserved and fills the monitor", () =>
             VerifyRun.Frame(window).Near(VerifyRun.MonitorArea(window), 12));
-        Assert.DoesNotContain(client => client.GetProperty("class").GetString() is "Shell_TrayWnd" or "Shell_SecondaryTrayWnd", run.Json("clients").EnumerateArray());
+        Assert.DoesNotContain(client => client.GetProperty("class").GetString() is "Shell_TrayWnd" or "Shell_SecondaryTrayWnd", run.Json("get", "windows").EnumerateArray());
         run.Say("saw: the taskbar is not a Client");
     });
 }

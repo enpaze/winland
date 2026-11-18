@@ -206,12 +206,40 @@ public class ReloadTests
     [TestMethod]
     public void ReloadWithArgumentsIsRejected()
     {
-        var parsed = CommandProtocol.Parse("reload");
-        Assert.IsExactInstanceOfType<ReloadRequest>(Assert.IsExactInstanceOfType<CommandParsed>(parsed).Request);
+        var core = new WindowManager();
+        var called = false;
+        core.ReadConfig = () => new ConfigRead(ConfigParser.Parse("general:gaps_out = 10"));
+        core.AfterReload = _ => called = true;
 
-        var reply = new WindowManager().Execute("reload now");
+        var reply = core.Execute("reload now");
 
-        Assert.AreEqual("error: unknown request", reply.Text);
+        Assert.AreEqual("error: reload takes no arguments", reply.Text);
+        Assert.IsFalse(called);
+    }
+
+    [TestMethod]
+    public void AKeyBoundToReloadAppliesTheDocumentAndNotifiesOnce()
+    {
+        var core = new WindowManager();
+        core.Handle(new Configure(ConfigParser.Parse("bind = SUPER, R, reload")));
+        core.Handle(new WindowAppeared(new WindowId(1), Area));
+        var document = ConfigParser.Parse("""
+            general:gaps_in = 0
+            general:gaps_out = 10
+            general:border_size = 0
+            bind = SUPER, R, reload
+            """);
+        core.ReadConfig = () => new ConfigRead(document);
+        var seen = new List<ConfigDocument>();
+        core.AfterReload = seen.Add;
+        core.Handle(new KeyPressed("Super_L"));
+
+        var pressed = core.Handle(new KeyPressed("R"));
+
+        Assert.AreEqual(new Rectangle(10, 10, 1900, 1060), BoundsOf(pressed, 1));
+        Assert.AreSame(document, Assert.ContainsSingle(seen));
+        core.Execute("workspace 2");
+        Assert.ContainsSingle(seen);
     }
 
     [TestMethod]

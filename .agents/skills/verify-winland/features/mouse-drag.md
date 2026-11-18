@@ -24,8 +24,8 @@ Preconditions:
   - `windowrule = float, class:WinlandVerifyWindow, title:WinlandDrag`
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature mouse-drag`. It prints `== feature mouse-drag: passed`.
-- **List the binds.** The driver runs `winland binds`. The reply holds `bind = SHIFT CTRL ALT, mouse:left, movewindow` and `bind = SHIFT CTRL ALT, mouse:right, resizewindow`.
-- **Open a floating window.** The driver opens `WinlandDrag` at 400 by 300. Its Client reports `floating: true`, and the driver focuses it with `winland dispatch focuswindow address:<hwnd>`.
+- **List the binds.** The driver runs `winland get binds`. The reply holds `bind = SHIFT CTRL ALT, mouse:left, movewindow` and `bind = SHIFT CTRL ALT, mouse:right, resizewindow`.
+- **Open a floating window.** The driver opens `WinlandDrag` at 400 by 300. Its Client reports `floating: true`, and the driver focuses it with `winland focuswindow address:<hwnd>`.
 - **Move.** The driver glides the real pointer to the middle of the window, holds `Ctrl+Alt+Shift`, presses the left button, glides 160 pixels right and 90 down, and releases. The window's frame moves by 160,90 within 12 pixels and keeps its width.
 - **Resize.** The driver puts the pointer 20 pixels inside the bottom right corner, holds `Ctrl+Alt+Shift`, presses the right button, glides 120 pixels right and 70 down, and releases. The window grows at least 90 pixels wider and 50 taller, and its left edge stays within 6 pixels.
 
