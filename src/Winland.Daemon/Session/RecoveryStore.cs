@@ -78,15 +78,7 @@ sealed class RecoveryStore
             if (!_armed || _closed || json == _written)
                 return;
 
-            try
-            {
-                WriteAtomic(json);
-                _written = json;
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-            {
-                Report($"Could not write '{_path}': {exception.Message}");
-            }
+            Write(json);
         }
     }
 
@@ -105,15 +97,7 @@ sealed class RecoveryStore
             if (!armed)
                 return;
 
-            try
-            {
-                WriteAtomic(json);
-                _written = json;
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-            {
-                Report($"Could not write '{_path}': {exception.Message}");
-            }
+            Write(json);
         }
     }
 
@@ -137,6 +121,19 @@ sealed class RecoveryStore
             {
                 Console.Error.WriteLine($"Could not delete '{_path}': {exception.Message}");
             }
+        }
+    }
+
+    private void Write(string json)
+    {
+        try
+        {
+            WriteAtomic(json);
+            _written = json;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            Report($"Could not write '{_path}': {exception.Message}");
         }
     }
 
