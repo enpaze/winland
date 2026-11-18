@@ -102,6 +102,18 @@ internal sealed class UserInstall
 
     public void Say(string text) => _output.WriteLine(text);
 
+    public void Until(string what, Func<bool> condition, int timeoutMs = 30_000)
+    {
+        var deadline = Environment.TickCount64 + timeoutMs;
+        while (!condition())
+        {
+            Assert.True(Environment.TickCount64 < deadline, "Timed out waiting for: " + what);
+            Thread.Sleep(100);
+        }
+
+        Say("saw: " + what);
+    }
+
     private static bool Dispose(IDisposable disposable)
     {
         disposable.Dispose();

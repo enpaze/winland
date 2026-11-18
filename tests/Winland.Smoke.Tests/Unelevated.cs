@@ -37,7 +37,13 @@ internal static partial class Unelevated
         }
         finally
         {
-            SmokeDaemon.DeleteTree(folder);
+            try
+            {
+                SmokeDaemon.DeleteTree(folder);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+            }
         }
     }
 
@@ -110,7 +116,15 @@ internal static partial class Unelevated
     private static string Quote(string argument) =>
         argument.Length > 0 && !argument.Any(char.IsWhiteSpace) && !argument.Contains('"', StringComparison.Ordinal) ? argument : "\"" + argument + "\"";
 
-    private static string ReadText(string path) => File.Exists(path) ? File.ReadAllText(path) : "";
+    private static string ReadText(string path)
+    {
+        if (!File.Exists(path))
+            return "";
+
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
 
     [LibraryImport("advapi32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

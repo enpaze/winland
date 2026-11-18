@@ -37,6 +37,7 @@ public partial class Update(ITestOutputHelper output)
             }
 
             install.Uninstall();
+            install.Until("uninstall removes the updated copy", () => !Directory.Exists(UserInstall.Folder));
         }
         finally
         {

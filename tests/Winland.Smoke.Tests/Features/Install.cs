@@ -26,7 +26,7 @@ public class Install(ITestOutputHelper output)
             install.Say("saw: the installed winland runs");
 
             install.Uninstall();
-            Assert.False(Directory.Exists(UserInstall.Folder), $"{UserInstall.Folder} is still there.");
+            install.Until("uninstall's helper removes the install folder once winland has exited", () => !Directory.Exists(UserInstall.Folder));
             Assert.False(File.Exists(UserInstall.Shortcut), "The Start menu shortcut is still there.");
             Assert.False(UserInstall.Registered, "Settings › Apps still lists Winland.");
             Assert.False(UserInstall.OnPath, "The user PATH still has the install folder.");

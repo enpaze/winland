@@ -20,16 +20,14 @@ public class Tweaks(ITestOutputHelper output)
         {
             var off = install.Run(install.Paths.Daemon, "tweaks", "--off", "--touchpad");
             Assert.Equal(0, off.ExitCode);
-            var during = Read();
-            install.Say($"after tweaks --off --touchpad: {during}");
-            Assert.Equal(new Settings(false, 0, 0), during);
+            install.Until("Snap and both swipes are off", () => Read() == new Settings(false, 0, 0), 5_000);
+            install.Say($"after tweaks --off --touchpad: {Read()}");
             Assert.True(File.Exists(UserInstall.SettingsRecord), "tweaks --off recorded nothing to restore.");
 
             var restore = install.Run(install.Paths.Daemon, "tweaks", "--restore");
             Assert.Equal(0, restore.ExitCode);
-            var after = Read();
-            install.Say($"after tweaks --restore: {after}");
-            Assert.Equal(before, after);
+            install.Until("Snap and both swipes are back as they were", () => Read() == before, 5_000);
+            install.Say($"after tweaks --restore: {Read()}");
             Assert.False(File.Exists(UserInstall.SettingsRecord), "tweaks --restore kept its record.");
             install.Say("saw: Snap and both swipes went off, then came back exactly as they were");
         }
