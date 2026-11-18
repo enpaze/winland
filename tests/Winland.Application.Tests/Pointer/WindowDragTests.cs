@@ -75,13 +75,5 @@ public class WindowDragTests
     private static void Scroll(TestDesktop desk, int delta) =>
         desk.Handle(new WheelTurned(delta > 0 ? "mouse_down" : "mouse_up", Environment.TickCount64));
 
-    private static void ExpectDragState(TestDesktop desk, bool active, bool reached)
-    {
-        var interaction = typeof(WindowManager).GetField("_interaction", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(desk.WindowManager);
-        var gesture = interaction?.GetType().Name == "Gesture" ? interaction : null;
-        var pickedUp = gesture is not null && (bool)gesture.GetType().GetProperty("PickedUp")!.GetValue(gesture)!;
-        Assert.Equal((active, reached), (gesture is not null, pickedUp));
-    }
-
     private static bool Nearly(int a, int b, int tolerance = 4) => Math.Abs(a - b) <= tolerance;
 }

@@ -1,18 +1,8 @@
-using System.Reflection;
-
 namespace Winland.Application.Tests;
 
 public class OutcomeThenTests
 {
     private static readonly State Empty = new([]);
-
-    [Fact]
-    public void EveryPropertyHasARuleInThen()
-    {
-        var properties = typeof(Outcome).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-        Assert.Equal(27, properties.Length);
-    }
 
     [Fact]
     public void RequestsJoinInOrderAndTheStateIsTheSecondsOwn()

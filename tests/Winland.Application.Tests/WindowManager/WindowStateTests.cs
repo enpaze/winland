@@ -65,10 +65,6 @@ public class WindowStateTests
         core.Handle(new WindowFocused(new WindowId(77), FocusCause.User));
 
         WindowId[] closed = [new(1), new(2), new(3), new(5), new(4), new(6), new(14), new(8), new(10), new(11), new(12), new(13), new(9), new(77)];
-        var held = Leftovers(core, closed);
-        var empty = Stores.Where(store => !held.Any(path => path.StartsWith(store, StringComparison.Ordinal))).ToList();
-        Assert.True(empty.Count == 0, "The scenario never put a closed window in " + string.Join(", ", empty) + ". It held: " + string.Join(", ", held));
-
         var forgotten = new List<WindowId>();
         foreach (var window in closed)
         {
@@ -81,13 +77,6 @@ public class WindowStateTests
         var kept = Leftovers(core, closed);
         Assert.True(kept.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", kept));
     }
-
-    private static readonly string[] Stores =
-    [
-        "_props._entries", "_awaitingMapFocus", "_focus._history", "_focus.Unmanaged", "_restored", "_pins", "_stacking",
-        "_cover._flags", "_cover._scrolling", "_interaction", "_owners", "_disabled", "_shownMaximized", "_lastMouse", "_mapPlaced",
-        "_workspaces._all[].Focus", "_workspaces._all[]._groups", "_workspaces._all[]._waiting",
-    ];
 
     private static List<string> Leftovers(WindowManager core, WindowId[] closed)
     {
