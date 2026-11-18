@@ -58,13 +58,24 @@ public class ExtraCommandTests
     [TestMethod]
     public void VersionHasItsShape()
     {
-        var core = new WindowManager();
-        var version = Json(core.Execute("j/version").Text);
+        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["-j", "version"], out var json));
+        var version = Json(json);
         Assert.AreEqual(BuildStamp.Version, version.GetProperty("version").GetString());
         Assert.AreEqual(BuildStamp.Commit, version.GetProperty("commit").GetString());
         Assert.AreEqual("", version.GetProperty("tag").GetString());
         Assert.AreEqual(JsonValueKind.Array, version.GetProperty("flags").ValueKind);
-        Assert.StartsWith("{\"branch\":", core.Execute("j/version").Text, StringComparison.Ordinal);
+        Assert.StartsWith("{\"branch\":", json, StringComparison.Ordinal);
+    }
+
+    [TestMethod]
+    public void VersionIsAnsweredByTheCliAndNotByThePipe()
+    {
+        Assert.Contains("winland [-j] version\n", ControlInvocation.Usage, StringComparison.Ordinal);
+        Assert.IsFalse(ControlInvocation.TryCreate(["version"], out _, out _));
+
+        var core = new WindowManager();
+        Assert.AreEqual("error: unknown request", core.Execute("version").Text);
+        Assert.AreEqual("error: unknown request", core.Execute("j/version").Text);
     }
 
     [TestMethod]

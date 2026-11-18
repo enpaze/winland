@@ -108,7 +108,7 @@ Everything Winland keeps for you is in `%USERPROFILE%\.winland`.
 | `windows-settings.json` | The Windows settings the installer turned off, so uninstall can turn them back on |
 | `taskbar.marker` | Only there while `general:hide_taskbar` hides the taskbar, so a crash still brings it back |
 
-The default install runs as administrator and writes no log file. After a crash, open Event Viewer > Windows Logs > Application and find the .NET Runtime event 1026 for Winland at that time. Include that event's exception and stack trace, `winland version` and `winland configerrors` in a bug report. For an unelevated run with file logging enabled, also attach `winland.log` and `winland.log.1` if present.
+The default install runs as administrator and writes no log file. After a crash, open Event Viewer > Windows Logs > Application and find the .NET Runtime event 1026 for Winland at that time. Include that event's exception and stack trace and the output of `winland version` and `winland check` in a bug report. Both work while Winland is not running. For an unelevated run with file logging enabled, also attach `winland.log` and `winland.log.1` if present.
 
 ## CLI
 
@@ -118,6 +118,7 @@ The default install runs as administrator and writes no log file. After a crash,
 | `winland --config <file>` | Start Winland with that `.conf` file in place of your config |
 | `winland check [file]` | Validate a config and its sources without starting or changing Winland |
 | `winland [-j] dispatch` | List this binary's Dispatcher names without a Daemon |
+| `winland [-j] version` | Show this binary's version without a Daemon |
 | `winland install` | Install for this PC, running as administrator. Asks for one approval |
 | `winland install --user` | Install for you only, without administrator rights |
 | `winland install --no-logon` | Install without starting Winland at logon. Works with `--user` |
@@ -150,7 +151,6 @@ These talk to the running Winland.
 | `winland binds` | List the hotkeys, one config line each |
 | `winland configerrors` | List the config's warnings, each with its file and line |
 | `winland files` | Show the config Winland read and the log it writes |
-| `winland version` | Show the version |
 | `winland events` | Print every event as it happens, one per line |
 
 | Flag | Does |

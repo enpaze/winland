@@ -5,9 +5,9 @@ RetireStaleInstallFiles();
 
 args = Elevation.SendOutputBack(args);
 
-if (ControlInvocation.TryListNames(args, out var names))
+if (ControlInvocation.TryAnswerLocally(args, out var local))
 {
-    Console.WriteLine(names);
+    Console.WriteLine(local);
     return 0;
 }
 
@@ -307,6 +307,7 @@ static int Usage()
     Console.Error.Write(ControlInvocation.Usage);
     Console.Error.WriteLine("check reads a config as a start would, and changes nothing: 0 when clean, 1 for any warning or a file it cannot read, 2 for bad usage.");
     Console.Error.WriteLine("dispatch with no name lists the Dispatchers this winland knows. A running Winland can differ.");
+    Console.Error.WriteLine("version prints this winland's version and needs no running Winland.");
     Console.Error.WriteLine("WINLAND_NO_ELEVATE=1 or --no-elevate starts without elevation. install --user uses it.");
     Console.Error.WriteLine("Elevated features then do not work. A per-user install never asks for elevation.");
     return 2;

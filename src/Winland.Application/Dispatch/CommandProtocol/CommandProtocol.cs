@@ -20,7 +20,6 @@ public static partial class CommandProtocol
         new("reload", "", rest => Bare(rest, new ReloadRequest())),
         new("events", "", rest => Bare(rest, new EventsRequest())),
         new("binds", "", rest => Bare(rest, new BindsRequest())),
-        new("version", "", rest => Bare(rest, new VersionRequest())),
         new("configerrors", "", rest => Bare(rest, new ConfigErrorsRequest())),
         new("files", "", rest => Bare(rest, new FilesRequest())),
     ];
@@ -107,8 +106,6 @@ public sealed record EventsRequest : CommandRequest;
 public sealed record ReloadRequest : CommandRequest;
 
 public sealed record BindsRequest : CommandRequest;
-
-public sealed record VersionRequest : CommandRequest;
 
 public sealed record ConfigErrorsRequest : CommandRequest;
 
