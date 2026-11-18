@@ -15,8 +15,6 @@ public sealed partial class WindowManager
 
     public bool FirstStart { get; set; }
 
-    private Outcome Load(ConfigLoaded loaded) => Apply(loaded.Config);
-
     private CommandReply ReloadCommand()
     {
         if (ReadConfig is null)

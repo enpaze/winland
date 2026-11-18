@@ -219,7 +219,7 @@ public sealed partial class WindowManager
         input switch
         {
             WindowAppeared appeared => AppearMaybeMaximized(appeared),
-            ConfigLoaded loaded => Load(loaded),
+            ConfigLoaded loaded => Apply(loaded.Config),
             KeyPressed or KeyReleased => RunKey(input),
             PointerButtonPressed pressed => PressPointer(pressed),
             PointerButtonReleased released => ReleasePointer(released),
