@@ -118,7 +118,7 @@ public sealed partial class WindowManager
     public IReadOnlyList<Launch> StartupLaunches(ConfigDocument config)
     {
         lock (_gate)
-            return LaunchParser.FromConfig(config);
+            return LaunchParser.FromConfig(config, NumberedWorkspace);
     }
 
     public void NoteLaunched(int processId, Launch launch)
@@ -257,6 +257,8 @@ public sealed partial class WindowManager
         };
 
     private WorkspaceId LaunchWorkspace() => TopOn(FocusedId());
+
+    private WorkspaceId NumberedWorkspace(long number) => WorkspaceId.FromNumber(number, FocusedId());
 
     internal Func<long> Clock { get; set; } = static () => Environment.TickCount64;
 

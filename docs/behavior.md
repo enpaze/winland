@@ -74,7 +74,7 @@ The effects are these. `float`, `tile`, `ignore`, `pin`, `no_focus`, `fullscreen
 
 ## Launch lines
 
-A launch line that starts with `[`, such as `exec-once = [float; size 800 600] notepad` or `exec [float] kitty`, warns `Unsupported rule block.` and does not launch. Another launch line in the same file still runs. A single-instance program, such as `explorer`, Chrome, VS Code, Office or a Windows Terminal that is already running, hands the request to its running copy and exits, so the window opens in a process Winland did not start.
+A launch line can start with the rule block `[workspace N]`, such as `exec-once = [workspace 2] wt` or `exec [workspace 2] wt`. The program's first window opens on Workspace N of the focused Monitor without switching to it, as [Launching](#launching) describes. Any other rule block, such as `[float]` or `[workspace 2 silent]`, warns `Unsupported rule block. Only [workspace N] is supported.` and the line does not launch. Another launch line in the same file still runs. A single-instance program, such as `explorer`, Chrome, VS Code, Office or a Windows Terminal that is already running, hands the request to its running copy and exits, so the window opens in a process Winland did not start.
 
 ## Launching
 
@@ -86,7 +86,7 @@ Every program Winland starts runs as the normal user. An elevated Winland drops 
 
 A window that opens while Winland runs opens on the focused Monitor, wherever its program put it, so a Windows Terminal window opens on the Monitor with the focus and not where Terminal's last window was. A window with an owner that is a Client, such as a dialog, opens silently on its owner's Workspace and Monitor. If that Workspace is hidden, the new Client is urgent. A window that was already open when Winland started stays on the Monitor it is on, and so does one that places itself, as [Window placement](#window-placement) describes. A window rule's `monitor` or `workspace`, and the Workspace below, win over this.
 
-A program the `exec` dispatcher starts opens its window on the Workspace it was started on, without switching to it. That is the special workspace the focused Monitor shows, or its Workspace. `exec-once` starts programs without it. Every process the program starts holds the same Workspace. The first window that opens uses it up, and it lapses after 10 seconds. A window rule's `workspace` wins over it, and a window that comes back after a restart keeps its own Workspace. A window a single-instance program opens from its running copy opens on the current Workspace, because that window is not in a process Winland started.
+A program the `exec` dispatcher starts opens its window on the Workspace it was started on, without switching to it. That is the special workspace the focused Monitor shows, or its Workspace. A `[workspace N]` block holds Workspace N of the focused Monitor in its place. `exec-once` holds a Workspace only with that block. Every process the program starts holds the same Workspace. The first window that opens uses it up, and it lapses after 10 seconds. A window rule's `workspace` wins over it, and a window that comes back after a restart keeps its own Workspace. A window a single-instance program opens from its running copy opens on the current Workspace, because that window is not in a process Winland started.
 
 ## Window placement
 
