@@ -122,6 +122,7 @@ public sealed partial class WindowManager
             target,
             appeared.Traits.Class,
             appeared.Traits.Title,
+            appeared.Traits.Exe,
             MonitorById(desk.Monitor)?.Bounds ?? default,
             appeared.ProcessId,
             minSize: decision.MinSize,

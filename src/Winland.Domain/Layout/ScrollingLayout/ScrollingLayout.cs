@@ -48,6 +48,7 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
         WorkspaceId workspace,
         string windowClass = "",
         string title = "",
+        string exe = "",
         Rectangle monitor = default,
         long processId = 0,
         string? initialClass = null,
@@ -70,7 +71,7 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
         var placed = new SizeLimits(minSize, maxSize).Clamp(bounds);
         _floating.Remember(id, placed);
 
-        _clients.Add(ClientAdoption.Adopted(id, window, workspace, windowClass, title, floating, processId, initialClass, initialTitle));
+        _clients.Add(ClientAdoption.Adopted(id, window, workspace, windowClass, title, exe, floating, processId, initialClass, initialTitle));
         if (floating)
         {
             _floating.Set(id, placed);

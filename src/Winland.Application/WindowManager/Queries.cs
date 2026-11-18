@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace Winland.Application;
 
 public sealed partial class WindowManager
@@ -73,34 +71,10 @@ public sealed partial class WindowManager
     private bool TrySelect(string selector, out Client client)
     {
         client = null!;
-        WindowId? window;
-        if (TryAddress(selector, out var addressed))
-            window = addressed;
-        else
-            window = WindowSelector.Find(selector, ActiveWindow(), Snapshot().Clients);
-
-        if (window is not WindowId id || Find(id) is not Client found)
+        if (WindowSelector.Find(selector, ActiveWindow(), EveryClient()) is not WindowId id || Find(id) is not Client found)
             return false;
 
         client = found;
-        return true;
-    }
-
-    private static bool TryAddress(string text, out WindowId window)
-    {
-        window = default;
-        var hex = text.Trim();
-        const string prefix = "address:";
-        if (hex.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            hex = hex[prefix.Length..];
-
-        if (!hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        if (!long.TryParse(hex[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var value))
-            return false;
-
-        window = new WindowId(value);
         return true;
     }
 }

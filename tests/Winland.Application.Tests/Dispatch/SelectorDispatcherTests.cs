@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Winland.Application.Tests;
 
 [TestClass]
@@ -45,6 +47,36 @@ public class SelectorDispatcherTests
         Assert.AreEqual(new WindowId(2), outcome.Focus);
         Assert.AreEqual(new MonitorId(1), outcome.State.ActiveMonitor);
         Assert.AreEqual(WorkspaceId.FromNumber(1, new MonitorId(1)), outcome.State.ActiveWorkspace);
+    }
+
+    [TestMethod]
+    public void FocusWindowMatchesFieldsAsAWindowRuleDoes()
+    {
+        var core = new WindowManager();
+        Appear(core, 1, "Chrome_WidgetWin_1", "Release Notes - Code", exe: "Code.exe");
+        Appear(core, 2, "CASCADIA_HOSTING_WINDOW_CLASS", "PowerShell", exe: "WindowsTerminal.exe");
+
+        Assert.AreEqual(new WindowId(1), core.Handle(new Dispatch("focuswindow", "exe:code.EXE")).Focus);
+        Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("focuswindow", "cascadia*")).Focus);
+        Assert.AreEqual(new WindowId(1), core.Handle(new Dispatch("focuswindow", "title:*notes*")).Focus);
+        Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("focuswindow", "exe:windows*")).Focus);
+        Assert.AreEqual("error: no such window", core.Execute("dispatch focuswindow title:Notes").Text);
+        Assert.AreEqual("error: no such window", core.Execute("dispatch focuswindow exe:Code").Text);
+    }
+
+    [TestMethod]
+    public void FocusWindowFindsAHiddenGroupMemberByItsExe()
+    {
+        var desk = new TestDesktop();
+        desk.Spawn("a", traits: WindowTraits.Normal with { Exe = "first.exe" });
+        desk.Ok("togglegroup");
+        desk.Spawn("b", traits: WindowTraits.Normal with { Exe = "second.exe" });
+        Assert.AreEqual("b", desk.ActiveClass());
+
+        desk.Ok("focuswindow", "exe:first.exe");
+
+        Assert.AreEqual("a", desk.ActiveClass());
+        Assert.AreEqual("found", JsonElement.Parse(desk.Send("j/inspect exe:second.exe")).GetProperty("status").GetString());
     }
 
     [TestMethod]
@@ -110,10 +142,10 @@ public class SelectorDispatcherTests
         Assert.ContainsSingle(exit.Effect.State.Clients);
     }
 
-    private static void Appear(WindowManager core, long window, string windowClass, string title, long processId = 0) =>
+    private static void Appear(WindowManager core, long window, string windowClass, string title, long processId = 0, string exe = "") =>
         core.Handle(new WindowAppeared(new WindowId(window), Wide)
         {
-            Traits = WindowTraits.Normal with { Class = windowClass, Title = title },
+            Traits = WindowTraits.Normal with { Class = windowClass, Title = title, Exe = exe },
             ProcessId = processId,
         });
 

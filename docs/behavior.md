@@ -232,7 +232,7 @@ A command for the running Winland, such as `winland dispatch workspace 2` or `wi
 
 `exit` stops Winland and restores the windows it manages.
 
-A window selector `stableid:` takes the `stableId` that `clients` reports, in hex, and matches it exactly.
+A window selector picks one Client. `active`, or no selector, is the Focused window. `floating` and `tiled` pick the first floating or tiled Client on the Focused window's Workspace. `address:0x2a` and `pid:1234` pick the Client with that address or process id. `class:`, `title:` and `exe:` take a pattern and compare it as a `windowrule` field does: with the whole field, without case, and `*` matches any run of characters. Text with no prefix is a `class:` pattern, so `kitty` is `class:kitty`. When several Clients match, one on the Focused window's Workspace wins.
 
 A Store app's frame belongs to ApplicationFrameHost, which hosts every Store app, so its Client's process, `pid` in `clients` and the `pid:` selector are the app hosted in the frame.
 
@@ -357,7 +357,7 @@ With no window, `clients` replies `no open windows` and `activewindow` replies `
 
 ### Window inspection
 
-`winland [-j] inspect [selector]` reads a Window without focusing, adopting, moving or changing it. With no selector, it reads the top-level Window under the pointer now, including unmanaged Windows. Winland's own windows and the desktop are excluded. With a selector it reads a Client, including one on another Workspace, using the existing Client selectors and the whole rest of the line: `inspect title:My Doc`, for example.
+`winland [-j] inspect [selector]` reads a Window without focusing, adopting, moving or changing it. With no selector, it reads the top-level Window under the pointer now, including unmanaged Windows. Winland's own windows and the desktop are excluded. With a selector it reads a Client, including one on another Workspace, using a window selector and the whole rest of the line: `inspect title:My Doc`, for example.
 
 Class, title, executable file name, AUMID and process id are read afresh. An unavailable or empty field is `unavailable` in text and `null` in JSON. A disappeared Window gives `not_found`, rather than a partial successful explanation. Native reads use the existing Windows access boundaries.
 
@@ -365,7 +365,7 @@ A Client reports its effective floating flag now and its known admission-time re
 
 Inspection can offer a draft `windowrule` to float a tiled Client, tile a floating one, or adopt an eligible unmanaged Window. It prefers the executable, then the class, then the title. A draft is offered only when that field can be written as one literal pattern that reads back as a rule matching the Window. A field that contains `*` or a character the config line would read as something else gets no draft. Hard native exclusions get no draft, and inspection also leaves shell Windows without a draft. Inspection never writes or applies a rule; opening a Window again is when admission effects apply.
 
-A valid request finding no Window succeeds with exit 0. Its status is `not_found`, and its reason is `no_window` (pointer), `no_client` (a valid unmatched selector), or `closed` (the selected Window disappeared). Text says `window not found: ...`. A malformed selector, such as an invalid regex, nonnumeric `pid:`, invalid hex `stableid:`, or `address:` without `0x` and valid 64-bit hex, answers `error: invalid selector: ...` and exits 1, even when no Clients exist. Invalid CLI flags print usage and exit 2.
+A valid request finding no Window succeeds with exit 0. Its status is `not_found`, and its reason is `no_window` (pointer), `no_client` (a valid unmatched selector), or `closed` (the selected Window disappeared). Text says `window not found: ...`. A malformed selector, a nonnumeric `pid:` or an `address:` without `0x` and valid 64-bit hex, answers `error: invalid selector: ...` and exits 1, even when no Clients exist. Invalid CLI flags print usage and exit 2.
 
 Every inspection JSON key is present; fields that are unavailable or do not apply are null:
 

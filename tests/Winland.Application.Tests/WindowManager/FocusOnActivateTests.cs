@@ -35,7 +35,7 @@ public class FocusOnActivateTests
 
     private static void FocusSource(TestDesktop desk)
     {
-        desk.Ok("focuswindow", $"class:^{Source}$");
+        desk.Ok("focuswindow", $"class:{Source}");
         Assert.AreEqual(Source, desk.ActiveClass());
     }
 
