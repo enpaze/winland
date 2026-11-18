@@ -14,8 +14,10 @@ public class Tweaks(ITestOutputHelper output)
     public void TurnsSnapAndSwipesOffAndPutsThemBack()
     {
         var install = UserInstall.Begin(output);
+        var original = Read();
+        SetSnap(true);
         var before = Read();
-        install.Say($"before: {before}");
+        install.Say($"before, with Snap turned on so restore must turn it back on: {before}");
         try
         {
             var off = install.Run(install.Paths.Daemon, "tweaks", "--off", "--touchpad");
@@ -35,8 +37,17 @@ public class Tweaks(ITestOutputHelper output)
         {
             if (File.Exists(UserInstall.SettingsRecord))
                 _ = install.Run(install.Paths.Daemon, "tweaks", "--restore");
+
+            SetSnap(original.Snap);
         }
     }
+
+    private static unsafe void SetSnap(bool on) =>
+        _ = PInvoke.SystemParametersInfo(
+            SYSTEM_PARAMETERS_INFO_ACTION.SPI_SETWINARRANGING,
+            on ? 1u : 0u,
+            null,
+            SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS.SPIF_UPDATEINIFILE | SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS.SPIF_SENDCHANGE);
 
     private static unsafe Settings Read()
     {
