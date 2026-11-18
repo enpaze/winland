@@ -11,10 +11,12 @@ public class Ipc
     public void AnswersQueriesInspectsWindowsAndStreamsEvents() => VerifyRun.Drive(TestContext, run =>
     {
         Assert.AreEqual("no open windows", run.Ask("clients"));
-        Assert.AreEqual("Invalid", run.Ask("activewindow"));
-        Assert.AreEqual("{}", run.Ask("-j", "activewindow"));
+        var empty = run.Cli("activewindow");
+        Assert.AreEqual(0, empty.ExitCode);
+        Assert.AreEqual("", empty.Output);
+        Assert.AreEqual("null", run.Ask("-j", "activewindow"));
 
-        run.FollowEvents();
+        run.FollowEvents("-j events");
         var window = run.OpenManaged("1");
         run.UntilEvent("openwindow", VerifyRun.EventAddress(window) + ",1,");
         run.Focus(window);
@@ -42,6 +44,9 @@ public class Ipc
         var unknown = run.Cli("dispatch", "nosuchdispatcher");
         Assert.AreEqual(1, unknown.ExitCode);
         Assert.StartsWith("error:", unknown.Error.Trim(), StringComparison.Ordinal);
+        var drag = run.Cli("dispatch", "resizewindow");
+        Assert.AreEqual(1, drag.ExitCode);
+        Assert.AreEqual("error: resizewindow is a drag; bind it to a mouse button", drag.Error.Trim());
         var names = run.Cli("dispatch");
         Assert.AreEqual(0, names.ExitCode);
         Assert.Contains("workspace", names.Output.Split('\n', StringSplitOptions.TrimEntries));

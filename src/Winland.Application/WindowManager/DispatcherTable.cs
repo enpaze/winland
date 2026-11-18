@@ -48,7 +48,7 @@ public sealed partial class WindowManager
             ["moveintogroup"] = new(static (m, _, a) => m.MoveIntoGroup(a)),
             ["moveoutofgroup"] = new(static (m, _, a) => m.MoveOutOfGroup(a)),
 
-            ["resizewindow"] = new(static (m, _, _) => m.View([])),
+            ["resizewindow"] = new(static (m, _, _) => m.Rejected("error: resizewindow is a drag; bind it to a mouse button")),
         };
 
         return table.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);

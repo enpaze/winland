@@ -23,7 +23,7 @@ public sealed partial class WindowManager
                 : CommandProtocol.FormatMonitorsText(state, monitors.All)),
             ActiveWindowRequest active => Describe(state => Json(active)
                 ? CommandProtocol.FormatActiveWindow(state, ActiveWindow())
-                : Text(CommandProtocol.FormatActiveWindowText(state, ActiveWindow()), "Invalid")),
+                : CommandProtocol.FormatActiveWindowText(state, ActiveWindow())),
             ActiveWorkspaceRequest activeWorkspace => Describe(state => Json(activeWorkspace)
                 ? CommandProtocol.FormatActiveWorkspace(state)
                 : CommandProtocol.FormatActiveWorkspaceText(state)),

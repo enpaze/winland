@@ -211,9 +211,8 @@ public class CommandTests
         var core = new WindowManager();
         var active = Json(core.Execute("j/activewindow").Text);
 
-        Assert.AreEqual(JsonValueKind.Object, active.ValueKind);
-        Assert.IsEmpty(active.EnumerateObject());
-        Assert.AreEqual("Invalid", core.Execute("activewindow").Text);
+        Assert.AreEqual(JsonValueKind.Null, active.ValueKind);
+        Assert.AreEqual("", core.Execute("activewindow").Text);
     }
 
     [TestMethod]

@@ -474,9 +474,9 @@ internal sealed class EventLog : IDisposable
         }
     }
 
-    public static EventLog Follow(VerifyPaths paths, string pipe, string dotnetRoot)
+    public static EventLog Follow(VerifyPaths paths, string pipe, string dotnetRoot, string command)
     {
-        var info = new ProcessStartInfo(paths.Daemon, "events")
+        var info = new ProcessStartInfo(paths.Daemon, command)
         {
             UseShellExecute = false,
             CreateNoWindow = true,

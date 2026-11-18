@@ -46,7 +46,7 @@ public static partial class CommandProtocol
     }
 
     internal static string FormatActiveWindow(State state, WindowId? active) =>
-        ActiveClient(state, active) is { } client ? JsonSerializer.Serialize(client) : "{}";
+        ActiveClient(state, active) is { } client ? JsonSerializer.Serialize(client) : "null";
 
     private static List<ClientJson> ListedClients(State state)
     {

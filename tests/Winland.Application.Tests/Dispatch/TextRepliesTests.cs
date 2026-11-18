@@ -75,7 +75,7 @@ public class TextRepliesTests
             bind = SUPER SHIFT, 1, workspace, 1
             bind = SUPER, minus, resizeactive, -40 0
             bindd = SUPER, Q, Close the window, killactive
-            bind = SUPER, mouse:273, resizewindow, 1
+            bind = SUPER, mouse:right, resizewindow, 1
             """));
 
         var binds = core.Execute("binds").Text;
@@ -85,7 +85,7 @@ public class TextRepliesTests
             + "bind = SUPER SHIFT, 1, workspace, 1\n"
             + "bind = SUPER, minus, resizeactive, -40 0\n"
             + "bindd = SUPER, Q, Close the window, killactive\n"
-            + "bind = SUPER, mouse:273, resizewindow, 1",
+            + "bind = SUPER, mouse:right, resizewindow, 1",
             binds);
         Assert.StartsWith("[{", core.Execute("j/binds").Text, StringComparison.Ordinal);
         Assert.AreEqual("no binds", new WindowManager().Execute("binds").Text);
@@ -113,9 +113,9 @@ public class TextRepliesTests
             bind = SUPER, N, exec, echo ## literal
             bind = SUPER, E, exec, [float; tile] notepad
             bindd = SUPER, Q, Close the window, killactive
-            bind = SUPER, mouse:272, movewindow
-            bind = SUPER, mouse:273, resizewindow, 1
-            bindd = SUPER, mouse:274, Move, movewindow
+            bind = SUPER, mouse:left, movewindow
+            bind = SUPER, mouse:right, resizewindow, 1
+            bindd = SUPER, mouse:middle, Move, movewindow
             """);
         Assert.IsEmpty(document.Warnings);
         var binds = document.Binds.OfType<Bind>().ToArray();

@@ -136,7 +136,7 @@ internal sealed class TestDesktop
         Place(window, x, y, size.Width, size.Height);
     }
 
-    internal void Click(string button = "mouse:272")
+    internal void Click(string button = "mouse:left")
     {
         Handle(new PointerButtonPressed(button) { Position = Pointer });
         Handle(new PointerButtonReleased(button) { Position = Pointer });

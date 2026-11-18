@@ -241,13 +241,13 @@ public class AnimationTests
     [TestMethod]
     public void ADraggedWindowMovesAtOnce()
     {
-        var core = Load("bind = SUPER, mouse:272, movewindow");
+        var core = Load("bind = SUPER, mouse:left, movewindow");
         Appear(core, 1);
         var floated = core.Handle(new Dispatch("togglefloating"));
         var bounds = Assert.ContainsSingle(floated.Placements).Bounds;
         var grab = new Point(bounds.X + 10, bounds.Y + 20);
         HoldSuper(core);
-        core.Handle(new PointerButtonPressed("mouse:272") { Position = grab });
+        core.Handle(new PointerButtonPressed("mouse:left") { Position = grab });
 
         var moved = core.Handle(new PointerMoved(new Point(grab.X + 50, grab.Y + 30)));
 
@@ -258,11 +258,11 @@ public class AnimationTests
     [TestMethod]
     public void TheTileThatMakesRoomForALiftedTileAnimatesWhileTheLiftedOneFollowsThePointer()
     {
-        var core = Load("bind = SUPER, mouse:272, movewindow");
+        var core = Load("bind = SUPER, mouse:left, movewindow");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
-        core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(1400, 500) });
+        core.Handle(new PointerButtonPressed("mouse:left") { Position = new Point(1400, 500) });
 
         var lifted = core.Handle(new PointerMoved(new Point(1450, 520)));
 
@@ -277,11 +277,11 @@ public class AnimationTests
     [TestMethod]
     public void AMouseResizeOfATileMovesItsNeighborAtOnce()
     {
-        var core = Load("bind = SUPER, mouse:273, resizewindow");
+        var core = Load("bind = SUPER, mouse:right, resizewindow");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
-        core.Handle(new PointerButtonPressed("mouse:273") { Position = new Point(1000, 500) });
+        core.Handle(new PointerButtonPressed("mouse:right") { Position = new Point(1000, 500) });
 
         var resized = core.Handle(new PointerMoved(new Point(1100, 500)));
 

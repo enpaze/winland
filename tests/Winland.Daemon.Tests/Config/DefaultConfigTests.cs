@@ -80,8 +80,8 @@ public class DefaultConfigTests
         SUPER CTRL SHIFT|equal|resizeactive|0 300
         SUPER|mouse_down|workspace|m+1
         SUPER|mouse_up|workspace|m-1
-        SUPER|mouse:272|movewindow|
-        SUPER|mouse:273|resizewindow|
+        SUPER|mouse:left|movewindow|
+        SUPER|mouse:right|resizewindow|
         SUPER|G|togglegroup|
         SUPER ALT|G|moveoutofgroup|
         SUPER ALT|Left|moveintogroup|l

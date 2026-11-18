@@ -70,11 +70,11 @@ public class BindFlagTests
     [TestMethod]
     public void MouseButtonNameRunsANormalBind()
     {
-        var core = Load("bind = SUPER, mouse:272, killactive");
+        var core = Load("bind = SUPER, mouse:left, killactive");
         Appear(core, 1);
         Press(core, "Super_L");
 
-        var outcome = core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(4, 5) });
+        var outcome = core.Handle(new PointerButtonPressed("mouse:left") { Position = new Point(4, 5) });
 
         Assert.AreEqual(new WindowId(1), outcome.Close);
     }

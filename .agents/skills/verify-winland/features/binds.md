@@ -4,7 +4,7 @@ A bind runs a Dispatcher when the user presses its key chord, and the chord does
 
 ## Sub-features
 
-- `request:binds` lists the config's binds, one config line each, or as JSON with each bind's `key`, `modmask` and `dispatcher` with `-j`.
+- `request:binds` lists the config's binds, one config line each, or as JSON with each bind's `key`, `modmask` and `dispatcher` with `-j`. A mouse button prints by name, such as `mouse:left`.
 - `key-chord` runs a bind's Dispatcher when its chord goes down, with modifiers taken from a config variable.
 - `follow-mouse` focuses the Client under the pointer when `input:follow_mouse` is true.
 
@@ -24,10 +24,11 @@ Preconditions:
   - `$hyper = CTRL ALT SHIFT`
   - `bind = $hyper, F9, workspace, 4`
   - `bind = $hyper, F10, workspace, 1`
+  - `bind = $hyper, MOUSE:X2, workspace, 1`
   - `input:follow_mouse = true`
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature binds`. It prints `== feature binds: passed`.
-- **List the binds.** The driver runs `winland binds`. The reply holds `bind = SHIFT CTRL ALT, F9, workspace, 4`. `winland -j binds` holds a bind with key `F9`, `modmask` `13` and dispatcher `workspace`.
+- **List the binds.** The driver runs `winland binds`. The reply holds `bind = SHIFT CTRL ALT, F9, workspace, 4` and `bind = SHIFT CTRL ALT, mouse:x2, workspace, 1`. `winland -j binds` holds a bind with key `F9`, `modmask` `13` and dispatcher `workspace`, and a bind with key `mouse:x2` and `mouse` `true`.
 - **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`. Both become Clients and tile side by side across the work area.
 - **Press a bind.** The driver sends real `Ctrl+Alt+Shift+F9` key input. `winland -j activeworkspace` reports `4`, and the left window hides.
 - **Press the other bind.** The driver sends `Ctrl+Alt+Shift+F10`. `winland -j activeworkspace` reports `1`, and the left window shows again.

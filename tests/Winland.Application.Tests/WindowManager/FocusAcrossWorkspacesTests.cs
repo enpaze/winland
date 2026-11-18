@@ -3,7 +3,7 @@ namespace Winland.Application.Tests;
 [TestClass]
 public class FocusAcrossWorkspacesTests
 {
-    private const string NoWindow = "{}";
+    private const string NoWindow = "null";
 
     [TestMethod]
     public void CrossMonitorFullscreenFocus()

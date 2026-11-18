@@ -85,11 +85,22 @@ public class CommandServerTests
         using var server = new CommandServer(core, _ => { }, name);
         server.Start();
 
-        var clients = JsonElement.Parse(CommandClient.Transact("j/clients", name));
+        var clients = JsonElement.Parse(CommandClient.Transact("j/clients", name)!);
         var client = Assert.ContainsSingle(clients.EnumerateArray());
         Assert.AreEqual("0x2a", client.GetProperty("address").GetString());
         Assert.AreEqual("ok", CommandClient.Transact("dispatch exec", name));
         Assert.AreEqual("error: unknown request", CommandClient.Transact("nope", name));
+    }
+
+    [TestMethod]
+    public void AnEmptyReplyArrivesEmpty()
+    {
+        var name = PipeName();
+        using var server = new CommandServer(new WindowManager(), _ => { }, name);
+        server.Start();
+
+        Assert.AreEqual("", CommandClient.Transact("activewindow", name));
+        Assert.AreEqual("null", CommandClient.Transact("j/activewindow", name));
     }
 
     [TestMethod]
@@ -100,7 +111,7 @@ public class CommandServerTests
         using var server = new CommandServer(core, _ => { }, name);
         server.Start();
         using var first = new Listener(name);
-        using var second = new Listener(name);
+        using var second = new Listener(name, "j/events");
         WaitUntilSubscribed(core, first);
         WaitUntilSubscribed(core, second);
         Sync(core, first, second);
@@ -343,8 +354,8 @@ public class CommandServerTests
         private readonly CancellationTokenSource _cancel = new();
         private readonly Task _task;
 
-        public Listener(string pipe) =>
-            _task = Task.Run(() => CommandClient.Follow("events", line => _lines.Writer.TryWrite(line), pipe, cancel: _cancel.Token));
+        public Listener(string pipe, string command = "events") =>
+            _task = Task.Run(() => CommandClient.Follow(command, line => _lines.Writer.TryWrite(line), pipe, cancel: _cancel.Token));
 
         public bool TryTake(TimeSpan timeout, out string line)
         {

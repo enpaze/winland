@@ -29,7 +29,7 @@ public sealed partial class WindowManager
 
     private Outcome ReleasePointer(PointerButtonReleased released)
     {
-        if (released.Button == "mouse:272" && _interaction is NativeMove { Adopted: true } move)
+        if (released.Button == "mouse:left" && _interaction is NativeMove { Adopted: true } move)
             return EndNativeMove(new WindowMoveEnded(move.Window, released.Position, null));
 
         Outcome? ended = null;

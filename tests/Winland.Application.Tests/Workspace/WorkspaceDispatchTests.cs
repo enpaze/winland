@@ -126,10 +126,10 @@ public class WorkspaceDispatchTests
             desk.Set("input:follow_mouse", followMouse.ToString(CultureInfo.InvariantCulture));
 
             var before = desk.Send("activewindow");
-            Assert.AreNotEqual("Invalid", before);
+            Assert.AreNotEqual("", before);
 
             desk.Ok("workspace", "2");
-            Assert.AreEqual("Invalid", desk.Send("activewindow"));
+            Assert.AreEqual("", desk.Send("activewindow"));
 
             desk.Ok("workspace", "previous");
             Assert.AreEqual(before, desk.Send("activewindow"));

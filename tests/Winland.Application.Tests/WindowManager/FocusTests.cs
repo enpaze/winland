@@ -171,7 +171,7 @@ public class FocusTests
 
         core.Execute("dispatch workspace 2");
 
-        Assert.IsFalse(System.Text.Json.JsonElement.Parse(core.Execute("j/activewindow").Text).TryGetProperty("address", out _));
+        Assert.AreEqual("null", core.Execute("j/activewindow").Text);
     }
 
     [TestMethod]

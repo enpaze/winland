@@ -176,10 +176,10 @@ public class NativeMoveTests
         var core = Flat("");
         Appear(core, 1);
         Appear(core, 2);
-        core.Handle(new PointerGesture("movewindow", new Point(1500, 100), PointerDragPhase.Begin, "mouse:272"));
+        core.Handle(new PointerGesture("movewindow", new Point(1500, 100), PointerDragPhase.Begin, "mouse:left"));
         core.Handle(new WindowClosed(new WindowId(2)));
 
-        var moved = core.Handle(new PointerGesture("movewindow", new Point(1400, 200), PointerDragPhase.Move, "mouse:272"));
+        var moved = core.Handle(new PointerGesture("movewindow", new Point(1400, 200), PointerDragPhase.Move, "mouse:left"));
         var started = core.Handle(new WindowMoveStarted(new WindowId(1), new Point(500, 100)));
 
         Assert.IsEmpty(moved.Placements);

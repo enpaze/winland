@@ -52,7 +52,7 @@ public class GroupDragTests
         var tab = new Point(bar.Bounds.X + bar.TabWidth + bar.Style.GapsIn + 5, bar.Bounds.Y + (bar.Bounds.Height / 2));
         core.Handle(new KeyPressed("Super_L"));
 
-        var pressed = core.Handle(new PointerButtonPressed("mouse:272") { Position = tab });
+        var pressed = core.Handle(new PointerButtonPressed("mouse:left") { Position = tab });
 
         Assert.AreSequenceEqual([new WindowId(1)], Assert.ContainsSingle(pressed.State.Groups));
         Assert.Contains(item => item is ClientOutOfGroup left && left.Window == new WindowId(2), pressed.Events);
@@ -65,7 +65,7 @@ public class GroupDragTests
         var bar = Assert.ContainsSingle(core.Handle(new Dispatch("resizewindow")).GroupBars);
         core.Handle(new KeyPressed("Super_L"));
 
-        var pressed = core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(bar.Bounds.X + 5, bar.Bounds.Y + (bar.Bounds.Height / 2)) });
+        var pressed = core.Handle(new PointerButtonPressed("mouse:left") { Position = new Point(bar.Bounds.X + 5, bar.Bounds.Y + (bar.Bounds.Height / 2)) });
 
         Assert.AreSequenceEqual([new WindowId(1)], Assert.ContainsSingle(pressed.State.Groups));
         Assert.DoesNotContain(item => item is ClientOutOfGroup, pressed.Events);
@@ -77,7 +77,7 @@ public class GroupDragTests
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(
             "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"
-            + "bind = SUPER, mouse:272, movewindow\n")));
+            + "bind = SUPER, mouse:left, movewindow\n")));
         var right = new Rectangle(1920, 0, 1920, 1080);
         core.Handle(new MonitorsChanged(
         [
@@ -90,10 +90,10 @@ public class GroupDragTests
         core.Handle(new Dispatch("togglegroup"));
         core.Handle(new KeyPressed("Super_L"));
         var onto = Middle(Tile(core, 2));
-        core.Handle(new PointerButtonPressed("mouse:272") { Position = Middle(Tile(core, 1)) });
+        core.Handle(new PointerButtonPressed("mouse:left") { Position = Middle(Tile(core, 1)) });
 
         var moved = core.Handle(new PointerMoved(onto));
-        var dropped = core.Handle(new PointerButtonReleased("mouse:272") { Position = onto });
+        var dropped = core.Handle(new PointerButtonReleased("mouse:left") { Position = onto });
 
         Assert.AreEqual(new WorkspaceId("1", 1), Client(moved, 1).Workspace);
         Assert.IsTrue(Client(moved, 1).Floating);
@@ -118,7 +118,7 @@ public class GroupDragTests
         var held = Assert.ContainsSingle(first.GroupBars);
         var pastFirstTab = new Point(held.Bounds.X + (held.TabWidth / 2) + 10, held.Bounds.Y + 2);
         var past = core.Handle(new PointerMoved(pastFirstTab));
-        var dropped = core.Handle(new PointerButtonReleased("mouse:272") { Position = pastFirstTab });
+        var dropped = core.Handle(new PointerButtonReleased("mouse:left") { Position = pastFirstTab });
 
         Assert.AreEqual(0, held.Insertion);
         Assert.AreEqual(1, Assert.ContainsSingle(past.GroupBars).Insertion);
@@ -167,7 +167,7 @@ public class GroupDragTests
         alone.Handle(new PointerMoved(new Point(only.Bounds.X + 2, only.Bounds.Y + 2)));
 
         var gone = alone.Handle(new WindowClosed(new WindowId(1)));
-        var dropped = alone.Handle(new PointerButtonReleased("mouse:272") { Position = new Point(only.Bounds.X + 2, only.Bounds.Y + 2) });
+        var dropped = alone.Handle(new PointerButtonReleased("mouse:left") { Position = new Point(only.Bounds.X + 2, only.Bounds.Y + 2) });
 
         Assert.IsEmpty(gone.GroupBars);
         Assert.IsEmpty(dropped.State.Groups);
@@ -206,7 +206,7 @@ public class GroupDragTests
     {
         var from = Middle(Tile(core, window));
         core.Handle(new KeyPressed("Super_L"));
-        core.Handle(new PointerButtonPressed("mouse:272") { Position = from });
+        core.Handle(new PointerButtonPressed("mouse:left") { Position = from });
     }
 
     private static WindowManager Grouped(string extra)
@@ -214,7 +214,7 @@ public class GroupDragTests
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(
             "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"
-            + "bind = SUPER, mouse:272, movewindow\n" + extra)));
+            + "bind = SUPER, mouse:left, movewindow\n" + extra)));
         core.Handle(new WindowAppeared(new WindowId(1), Wide));
         core.Handle(new WindowAppeared(new WindowId(2), Wide));
         core.Handle(new Dispatch("focuswindow", "address:0x1"));
@@ -226,9 +226,9 @@ public class GroupDragTests
     {
         var from = Middle(Tile(core, window));
         core.Handle(new KeyPressed("Super_L"));
-        core.Handle(new PointerButtonPressed("mouse:272") { Position = from });
+        core.Handle(new PointerButtonPressed("mouse:left") { Position = from });
         core.Handle(new PointerMoved(to));
-        var dropped = core.Handle(new PointerButtonReleased("mouse:272") { Position = to });
+        var dropped = core.Handle(new PointerButtonReleased("mouse:left") { Position = to });
         core.Handle(new KeyReleased("Super_L"));
         return dropped;
     }

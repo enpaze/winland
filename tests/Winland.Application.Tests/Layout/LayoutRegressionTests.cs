@@ -111,12 +111,12 @@ public class LayoutRegressionTests
             Traits = WindowTraits.Normal with { Dialog = true, MinSize = new Size(200, 100), MaxSize = new Size(400, 300) },
             Bounds = new Rectangle(0, 0, 300, 200),
         });
-        core.Handle(new PointerGesture("resizewindow", new Point(640, 490), PointerDragPhase.Begin, "mouse:273"));
+        core.Handle(new PointerGesture("resizewindow", new Point(640, 490), PointerDragPhase.Begin, "mouse:right"));
 
-        var grown = core.Handle(new PointerGesture("resizewindow", new Point(900, 700), PointerDragPhase.Move, "mouse:273"));
+        var grown = core.Handle(new PointerGesture("resizewindow", new Point(900, 700), PointerDragPhase.Move, "mouse:right"));
 
         Assert.AreEqual(new Size(400, 300), SizeOf(Client(grown, 1).Bounds));
-        var shrunk = core.Handle(new PointerGesture("resizewindow", new Point(400, 350), PointerDragPhase.Move, "mouse:273"));
+        var shrunk = core.Handle(new PointerGesture("resizewindow", new Point(400, 350), PointerDragPhase.Move, "mouse:right"));
         Assert.AreEqual(new Size(200, 100), SizeOf(Client(shrunk, 1).Bounds));
     }
 }

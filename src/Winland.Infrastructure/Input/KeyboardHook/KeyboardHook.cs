@@ -265,10 +265,10 @@ public sealed partial class KeyboardHook : IDisposable
         {
             return key switch
             {
-                "mouse:272" or "mouse:273" => Down(0x01) || Down(0x02),
-                "mouse:274" => Down(0x04),
-                "mouse:275" => Down(0x05),
-                "mouse:276" => Down(0x06),
+                "mouse:left" or "mouse:right" => Down(0x01) || Down(0x02),
+                "mouse:middle" => Down(0x04),
+                "mouse:x1" => Down(0x05),
+                "mouse:x2" => Down(0x06),
                 _ => false,
             };
         }

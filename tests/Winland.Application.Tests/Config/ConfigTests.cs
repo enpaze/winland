@@ -567,7 +567,7 @@ public class ConfigTests
     public void AMouseKeyBindAndADescriptionAreParsed()
     {
         var text =
-            "bind = SUPER, mouse:272, movewindow\n" +
+            "bind = SUPER, mouse:left, movewindow\n" +
             "bindd = SUPER, Return, Open a terminal, exec, kitty\n";
 
         var document = ConfigParser.Parse(text);
@@ -576,7 +576,7 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "mouse:272", "movewindow", "", null),
+                new Bind(Modifier.Super, "mouse:left", "movewindow", "", null),
                 new Bind(Modifier.Super, "Return", "exec", "kitty", "Open a terminal"),
             },
             document.Binds);

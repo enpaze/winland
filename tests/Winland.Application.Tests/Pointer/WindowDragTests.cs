@@ -4,8 +4,8 @@ namespace Winland.Application.Tests;
 public class WindowDragTests
 {
     private const string DragOnLeftButton = """
-        unbind = SUPER, mouse:272
-        bind = , mouse:272, movewindow
+        unbind = SUPER, mouse:left
+        bind = , mouse:left, movewindow
         """;
 
     [TestMethod]
@@ -68,9 +68,9 @@ public class WindowDragTests
     private static void Click(TestDesktop desk, bool pressed)
     {
         if (pressed)
-            desk.Handle(new PointerButtonPressed("mouse:272") { Position = desk.Pointer });
+            desk.Handle(new PointerButtonPressed("mouse:left") { Position = desk.Pointer });
         else
-            desk.Handle(new PointerButtonReleased("mouse:272") { Position = desk.Pointer });
+            desk.Handle(new PointerButtonReleased("mouse:left") { Position = desk.Pointer });
     }
 
     private static void Scroll(TestDesktop desk, int delta) =>
