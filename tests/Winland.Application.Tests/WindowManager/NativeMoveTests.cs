@@ -77,7 +77,7 @@ public class NativeMoveTests
     [TestMethod]
     public void MasterDropsTheClientOntoTheMasterWhenThePointerEndsOverIt()
     {
-        var core = Flat("general:layout = master\n");
+        var core = Flat("layout = master\n");
         Appear(core, 1);
         Appear(core, 2);
 
@@ -91,7 +91,7 @@ public class NativeMoveTests
     [TestMethod]
     public void ScrollingTilesTheClientAgainAfterTheDrop()
     {
-        var core = Flat("general:layout = scrolling\n");
+        var core = Flat("layout = scrolling\n");
         Appear(core, 1);
         Appear(core, 2);
 

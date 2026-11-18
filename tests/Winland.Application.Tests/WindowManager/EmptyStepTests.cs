@@ -132,7 +132,7 @@ public class EmptyStepTests
     [TestMethod]
     public void AMoveWithoutAStepStillMovesThePointerATileReturnsTo()
     {
-        var core = new WindowManager(ConfigParser.Parse(FlatConfig("input:follow_mouse = 0\n")));
+        var core = new WindowManager(ConfigParser.Parse(FlatConfig("focus_follows_mouse = 0\n")));
         core.Handle(new WindowAppeared(OneWindow, Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
         core.Handle(new Dispatch("float"));

@@ -44,7 +44,7 @@ public class BorderRingTests
     public void EachClientGetsARingFromItsBorderSizeAndColors()
     {
         var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("general:border_size = 3\ngeneral:col.active_border = rgba(33ccffff)\n")));
+        core.Handle(new Configure(ConfigParser.Parse("border_size = 3\nborder_color = rgba(33ccffff)\n")));
         core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "", 0, 0, 1920, 1080, 1, true, Area)]));
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), Area));
@@ -58,12 +58,12 @@ public class BorderRingTests
     [TestMethod]
     public void NoRingWithoutABorderOrInFullscreen()
     {
-        var none = new WindowManager(ConfigParser.Parse("general:border_size = 0\n"));
+        var none = new WindowManager(ConfigParser.Parse("border_size = 0\n"));
         none.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "", 0, 0, 1920, 1080, 1, true, Area)]));
         Assert.IsNull(Assert.ContainsSingle(none.Handle(new WindowAppeared(new WindowId(1), Area)).Decorations).Ring);
 
         var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("general:border_size = 2\n")));
+        core.Handle(new Configure(ConfigParser.Parse("border_size = 2\n")));
         core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "", 0, 0, 1920, 1080, 1, true, Area)]));
         Assert.IsNotNull(Assert.ContainsSingle(core.Handle(new WindowAppeared(new WindowId(1), Area)).Decorations).Ring);
 

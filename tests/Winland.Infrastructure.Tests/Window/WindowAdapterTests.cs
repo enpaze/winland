@@ -262,7 +262,7 @@ public class WindowAdapterTests
     [TestMethod]
     public void TheClientsWhoseDecorationChangedArePaintedAgain()
     {
-        using var windows = new TestWindows("decoration:inactive_opacity = 0.5\n", reducedMotion: true);
+        using var windows = new TestWindows("inactive_opacity = 0.5\n", reducedMotion: true);
         windows.Open(1);
         windows.Open(2);
         windows.Open(3);

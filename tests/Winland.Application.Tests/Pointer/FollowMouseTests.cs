@@ -57,7 +57,7 @@ public class FollowMouseTests
     [TestMethod]
     public void DisabledFollowLeavesTheFocusedClient()
     {
-        var (core, laid) = Tiled("input:follow_mouse = false\n");
+        var (core, laid) = Tiled("focus_follows_mouse = false\n");
         core.Handle(new Dispatch("focus", "address:0x2"));
 
         Move(core, Center(laid, 2), 1_000);
@@ -70,7 +70,7 @@ public class FollowMouseTests
     [TestMethod]
     public void DisabledFollowLeavesANewBackgroundWindowUnfocusedUntilAClick()
     {
-        var core = new WindowManager(ConfigParser.Parse("input:follow_mouse = false\n"));
+        var core = new WindowManager(ConfigParser.Parse("focus_follows_mouse = false\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
         core.Handle(new WindowAppeared(new WindowId(2), Area));
@@ -84,7 +84,7 @@ public class FollowMouseTests
     [TestMethod]
     public void DisabledFollowKeepsTheForegroundWindowWhenItIsAdopted()
     {
-        var core = new WindowManager(ConfigParser.Parse("input:follow_mouse = false\n"));
+        var core = new WindowManager(ConfigParser.Parse("focus_follows_mouse = false\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
         core.Handle(new WindowAppeared(new WindowId(2), Area) { Foreground = true });
@@ -109,7 +109,7 @@ public class FollowMouseTests
     [TestMethod]
     public void DisabledFollowLeavesFocusAcrossTiledAndFloating()
     {
-        var core = Floats("input:follow_mouse = 0\n");
+        var core = Floats("focus_follows_mouse = 0\n");
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(Box(2, 100, 100, 200, 200));
         core.Handle(new Dispatch("focus", "address:0x2"));
@@ -121,7 +121,7 @@ public class FollowMouseTests
     [TestMethod]
     public void DisabledFollowLeavesTheFocusedMonitor()
     {
-        var core = new WindowManager(ConfigParser.Parse("input:follow_mouse = 0\n"));
+        var core = new WindowManager(ConfigParser.Parse("focus_follows_mouse = 0\n"));
         var left = Display(@"\\.\DISPLAY1", 0, 800, 600);
         var right = Display(@"\\.\DISPLAY2", 800, 800, 600);
         core.Handle(new MonitorsChanged([left, right]));
@@ -138,7 +138,7 @@ public class FollowMouseTests
     [TestMethod]
     public void FollowMouseFocusesTheClientOnTheMonitorUnderThePointer()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"));
+        var core = new WindowManager(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\n"));
         var left = Display(@"\\.\DISPLAY1", 0, 800, 600);
         var right = Display(@"\\.\DISPLAY2", 800, 800, 600);
         core.Handle(new MonitorsChanged([left, right]));

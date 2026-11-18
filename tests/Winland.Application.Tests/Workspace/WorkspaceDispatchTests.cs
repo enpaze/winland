@@ -113,7 +113,7 @@ public class WorkspaceDispatchTests
         desk.Spawn("a");
         for (var followMouse = 0; followMouse <= 1; followMouse++)
         {
-            desk.Set("input:follow_mouse", followMouse.ToString(CultureInfo.InvariantCulture));
+            desk.Set("focus_follows_mouse", followMouse.ToString(CultureInfo.InvariantCulture));
 
             var before = desk.Send("get window");
             Assert.AreNotEqual("", before);
@@ -128,7 +128,7 @@ public class WorkspaceDispatchTests
 
     private static void MultimonFocus(TestDesktop desk)
     {
-        desk.Set("input:follow_mouse", "0");
+        desk.Set("focus_follows_mouse", "0");
         desk.Ok("focus-monitor", "HEADLESS-3");
         desk.Ok("workspace", "8");
         desk.Ok("focus-monitor", "HEADLESS-2");

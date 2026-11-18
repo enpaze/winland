@@ -29,7 +29,7 @@ $env:WINLAND_PIPE = "winland-dev-$devId"
 $env:WINLAND_STATE = Join-Path $env:TEMP "winland-dev-$devId.json"
 $devConfig = Join-Path $env:TEMP "winland-dev-$devId.conf"
 @'
-animations:enabled = false
+animations = false
 windowrule = ignore, class:*
 windowrule = tile; workspace 1, class:WinlandDevWindow, title:WinlandDev *
 '@ | Set-Content -LiteralPath $devConfig
@@ -49,7 +49,7 @@ pwsh -NoProfile -File scripts/run.ps1 -Stop
 Remove-Item Env:WINLAND_PIPE, Env:WINLAND_STATE
 ```
 
-A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forced stop left it hidden, run the script with the same pipe, state and config, then use `-Stop`. After stopping the dev build, start your installed Winland again from the Start menu.
+A clean stop shows the taskbar again if `hide_taskbar` hid it. If a forced stop left it hidden, run the script with the same pipe, state and config, then use `-Stop`. After stopping the dev build, start your installed Winland again from the Start menu.
 
 ## Environment
 

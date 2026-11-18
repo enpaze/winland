@@ -12,7 +12,7 @@ public sealed class CheckCommandTests : IDisposable
     [TestMethod]
     public void AConfigAndItsSourcesWithNoWarningsPass()
     {
-        var path = Write("winland.conf", "source = binds.conf\ngeneral:gaps_in = 4\n");
+        var path = Write("winland.conf", "source = binds.conf\ngaps_in = 4\n");
         Write("binds.conf", "bind = Win+Q, close\n");
 
         var (exit, error) = Check(path);

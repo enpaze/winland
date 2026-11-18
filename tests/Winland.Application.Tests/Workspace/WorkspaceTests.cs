@@ -360,9 +360,9 @@ public class WorkspaceTests
     }
 
     [TestMethod]
-    public void NoWarpsKeepsTheCursorWhenASwitchLandsOnAnotherMonitor()
+    public void WarpCursorOffKeepsTheCursorWhenASwitchLandsOnAnotherMonitor()
     {
-        var core = TwoMonitors("cursor:no_warps = true\n");
+        var core = TwoMonitors("warp_cursor = false\n");
 
         var switched = ShowTheRightsWorkspace(core);
 
@@ -401,7 +401,7 @@ public class WorkspaceTests
         return core;
     }
 
-    private const string Gapless = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n";
+    private const string Gapless = "gaps_in = 0\ngaps_out = 0\nborder_size = 0\n";
 
     private static WindowManager Load(string text)
     {

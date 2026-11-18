@@ -4,15 +4,15 @@ Winland draws a border around each Client, in one color on the focused Client an
 
 ## Sub-features
 
-- `client-border` draws a border `general:border_size` pixels wide outside each Client's frame, as click-through windows that follow the Client.
-- `inactive-opacity` makes every Client that is not focused as transparent as `decoration:inactive_opacity` says, and keeps the focused Client opaque.
+- `client-border` draws a border `border_size` pixels wide outside each Client's frame, as click-through windows that follow the Client.
+- `inactive-opacity` makes every Client that is not focused as transparent as `inactive_opacity` says, and keeps the focused Client opaque.
 - `decoration-follows-focus` moves the transparency and the focused border to the window that takes the focus.
 
 ## How to get to it (user POV)
 
-- Set `general:border_size`, `general:col.active_border` and `general:col.inactive_border` in the config. The starter config has `general:border_size` and `general:col.inactive_border` as comments, and the focused border follows the Windows accent color until `general:col.active_border` is set.
-- Set `decoration:active_opacity` and `decoration:inactive_opacity` to fractions from 0 to 1, or give a window an `opacity` window rule.
-- Set `decoration:rounding` for the corner radius and `decoration:blur:enabled` for the acrylic backdrop.
+- Set `border_size`, `border_color` and `border_color_inactive` in the config. The starter config has `border_size`, `border_color = accent` and `border_color_inactive` as comments. `border_color` defaults to `accent`, the Windows accent color.
+- Set `active_opacity` and `inactive_opacity` to fractions from 0 to 1, or give a window an `opacity` window rule.
+- Set `rounding` for the corner radius and `backdrop` for the acrylic backdrop.
 - Open the config with Edit config in the tray menu and save it to reload, or run `winland reload`.
 - Press `Win+Arrows` to move the focus, which moves the focused border and the opacity with it.
 
@@ -21,7 +21,7 @@ Winland draws a border around each Client, in one color on the focused Client an
 Preconditions:
 
 - The baseline in [README.md](./README.md) holds, and `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Doctor` prints `doctor: ok`.
-- The driver's config adds `general:border_size = 6`, `general:col.active_border = 0xffff0000`, `general:col.inactive_border = 0xff0000ff` and `decoration:inactive_opacity = 0.5` to the baseline config.
+- The driver's config adds `border_size = 6`, `border_color = 0xffff0000`, `border_color_inactive = 0xff0000ff` and `inactive_opacity = 0.5` to the baseline config.
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature decoration`. It prints `== feature decoration: passed`.
 - **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`. Both become Clients and tile side by side across the work area.
@@ -31,8 +31,8 @@ Preconditions:
 
 ## Gotchas
 
-- The baseline config sets `general:border_size = 0`, so other drivers draw no border. Only this driver's lines turn borders on.
+- The baseline config sets `border_size = 0`, so other drivers draw no border. Only this driver's lines turn borders on.
 - The driver reads opacity as the window's layered alpha. A window without `WS_EX_LAYERED` counts as opaque, because Winland adds that style only for an alpha below 255.
-- The driver sets two border colors but does not read them. It does not reach `decoration:rounding`, `decoration:blur:enabled`, `decoration:active_opacity`, an `opacity` window rule, the Group border, or High Contrast colors.
+- The driver sets two border colors but does not read them. It does not reach `rounding`, `backdrop`, `active_opacity`, an `opacity` window rule, the Group border, or High Contrast colors.
 - The border is four windows kept just above the Client, so a window raised over the Client covers its border too. Check a border by eye with nothing on top of the Client.
 - A fullscreen, minimized or hidden Client draws no border, and a Client in fullscreen mode 2 is opaque.

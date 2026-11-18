@@ -13,14 +13,14 @@ public sealed record DecorationOptions
 
     public BorderColor InactiveBorder { get; init; }
 
-    public bool ActiveBorderSet { get; init; }
+    public bool AccentBorder { get; init; } = true;
 
     public DecorationOptions WithAccent(BorderColor? accent) =>
-        ActiveBorderSet || accent is not BorderColor color ? this : this with { ActiveBorder = color };
+        AccentBorder && accent is BorderColor color ? this with { ActiveBorder = color } : this;
 
     public int Rounding { get; init; }
 
-    public bool Blur { get; init; } = true;
+    public bool Acrylic { get; init; } = true;
 
     public float ActiveOpacity { get; init; } = 1;
 
@@ -29,14 +29,27 @@ public sealed record DecorationOptions
     private static readonly OptionValue<int> Radius =
         (string text, out int radius) => OptionValue.Int()(text, out radius) && radius >= 0;
 
+    private static readonly OptionValue<BorderColor?> ColorOrAccent = (string text, out BorderColor? color) =>
+    {
+        color = null;
+        if (text.Trim().Equals("accent", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (!OptionValue.Color(text, out var parsed))
+            return false;
+
+        color = parsed;
+        return true;
+    };
+
     internal static OptionSet<DecorationOptions> Options { get; } = new(
     [
-        Option<DecorationOptions>.Of("general:col.active_border", OptionValue.Color, (o, v) => o with { ActiveBorder = v, ActiveBorderSet = true }),
-        Option<DecorationOptions>.Of("general:col.inactive_border", OptionValue.Color, (o, v) => o with { InactiveBorder = v }),
-        Option<DecorationOptions>.Of("decoration:rounding", Radius, (o, v) => o with { Rounding = v }),
-        Option<DecorationOptions>.Of("decoration:blur:enabled", OptionValue.Bool, (o, v) => o with { Blur = v }),
-        Option<DecorationOptions>.Of("decoration:active_opacity", OptionValue.Single(0f, 1f), (o, v) => o with { ActiveOpacity = v }),
-        Option<DecorationOptions>.Of("decoration:inactive_opacity", OptionValue.Single(0f, 1f), (o, v) => o with { InactiveOpacity = v }),
+        Option<DecorationOptions>.Of("border_color", ColorOrAccent, (o, v) => v is BorderColor color ? o with { ActiveBorder = color, AccentBorder = false } : o with { AccentBorder = true }),
+        Option<DecorationOptions>.Of("border_color_inactive", OptionValue.Color, (o, v) => o with { InactiveBorder = v }),
+        Option<DecorationOptions>.Of("rounding", Radius, (o, v) => o with { Rounding = v }),
+        Option<DecorationOptions>.Of("backdrop", OptionValue.OneOf("acrylic", "none"), (o, v) => o with { Acrylic = v == "acrylic" }),
+        Option<DecorationOptions>.Of("active_opacity", OptionValue.Single(0f, 1f), (o, v) => o with { ActiveOpacity = v }),
+        Option<DecorationOptions>.Of("inactive_opacity", OptionValue.Single(0f, 1f), (o, v) => o with { InactiveOpacity = v }),
     ]);
 
     public static DecorationOptions From(ConfigDocument document, HighContrast? contrast = null) =>

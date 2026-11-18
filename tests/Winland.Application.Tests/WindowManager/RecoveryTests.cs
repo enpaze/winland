@@ -239,7 +239,7 @@ public class RecoveryTests
             new RecoveredClient(new WindowId(2), new WorkspaceId("4"), MonitorId.Primary, false, "App", "Two", 10, Floating: false, Bounds: new Rectangle(0, 0, 600, 1080)),
             new RecoveredClient(new WindowId(3), new WorkspaceId("4"), MonitorId.Primary, false, "App", "Three", 10, Floating: false, Bounds: new Rectangle(600, 0, 1320, 1080)),
         ]);
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"));
+        var core = new WindowManager(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\n"));
         core.Restore(snapshot);
         foreach (var client in snapshot.Clients)
         {

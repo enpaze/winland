@@ -7,9 +7,9 @@ public class MonitorTests
     public void AWindowOpensOnTheFallbackMonitorWhenEveryMonitorIsDisabled()
     {
         var core = new WindowManager(ConfigParser.Parse("""
-            general:gaps_out = 0
-            general:border_size = 0
-            general:border_size = 0
+            gaps_out = 0
+            border_size = 0
+            border_size = 0
             """));
         var display = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 2560, 1440, 1, enabled: false);
         core.Handle(new MonitorsChanged([display]));
@@ -149,9 +149,9 @@ public class MonitorTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
             """)));
         var low = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 1920, 1080, 1);
         var high = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 3840, 2160, 2);

@@ -6,7 +6,7 @@ namespace Winland.Application.Tests;
 [TestClass]
 public class ScrollingBehaviorTests
 {
-    private const string Scrolling = "general:layout = scrolling\n";
+    private const string Scrolling = "layout = scrolling\n";
 
     [TestMethod]
     public void ScrollFocusCycling()
@@ -382,10 +382,10 @@ public class ScrollingBehaviorTests
     public void LayoutRuleExpand()
     {
         var desk = new TestDesktop(Scrolling + """
-            general:gaps_in = 0
-            general:border_size = 0
-            general:gaps_out = 0
-            scrolling:column_width = 0.5
+            gaps_in = 0
+            border_size = 0
+            gaps_out = 0
+            column_width = 0.5
             """);
         desk.Spawn("a");
         var single = X(desk.ActivePlace().Size);

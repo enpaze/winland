@@ -200,7 +200,7 @@ public class MouseDragTests
     [TestMethod]
     public void MasterSmartResizingTakesSpaceFromTheTileAboveAGrabbedTopEdge()
     {
-        var core = Flat("general:layout = master\nbind = Win+mouse:right, resize\n");
+        var core = Flat("layout = master\nbind = Win+mouse:right, resize\n");
         Outcome placed = null!;
         for (var window = 1; window <= 4; window++)
             placed = Appear(core, window);
@@ -225,7 +225,7 @@ public class MouseDragTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(
-            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 2\nbind = Win+mouse:right, resize\n")));
+            "gaps_in = 0\ngaps_out = 0\nborder_size = 2\nbind = Win+mouse:right, resize\n")));
         Appear(core, 1);
         core.Handle(new Dispatch("float"));
         var frame = Client(core.Handle(new Dispatch("resize")), 1).Bounds;
@@ -363,7 +363,7 @@ public class MouseDragTests
     [TestMethod]
     public void AFloatingDragInMasterKeepsFollowingAfterItCrosses()
     {
-        var core = TwoMonitors("general:layout = master\n");
+        var core = TwoMonitors("layout = master\n");
         Appear(core, 1);
         core.Handle(new Dispatch("float"));
         Press(core, "Super_L");
@@ -550,7 +550,7 @@ public class MouseDragTests
     [TestMethod]
     public void InMonocleAFloatingClientFollowsThePointer()
     {
-        var core = Flat("general:layout = monocle\nbind = Win+mouse:left, move\n");
+        var core = Flat("layout = monocle\nbind = Win+mouse:left, move\n");
         Appear(core, 1);
         core.Handle(new Dispatch("float"));
         Press(core, "Super_L");

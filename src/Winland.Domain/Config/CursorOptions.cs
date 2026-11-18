@@ -2,7 +2,7 @@ namespace Winland.Domain;
 
 public sealed record CursorOptions
 {
-    public bool NoWarps { get; init; }
+    public bool WarpCursor { get; init; } = true;
 
     public bool HideOnKeyPress { get; init; } = true;
 
@@ -12,8 +12,8 @@ public sealed record CursorOptions
 
     internal static OptionSet<CursorOptions> Options { get; } = new(
     [
-        Option<CursorOptions>.Of("cursor:no_warps", OptionValue.Bool, (o, v) => o with { NoWarps = v }),
-        Option<CursorOptions>.Of("cursor:hide_on_key_press", OptionValue.Bool, (o, v) => o with { HideOnKeyPress = v }),
+        Option<CursorOptions>.Of("warp_cursor", OptionValue.Bool, (o, v) => o with { WarpCursor = v }),
+        Option<CursorOptions>.Of("hide_cursor_while_typing", OptionValue.Bool, (o, v) => o with { HideOnKeyPress = v }),
     ]);
 
     public static CursorOptions From(ConfigDocument document) => Options.From(Documented, document);

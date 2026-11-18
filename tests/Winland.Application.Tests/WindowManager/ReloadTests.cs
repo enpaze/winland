@@ -10,10 +10,10 @@ public class ReloadTests
     {
         var core = new WindowManager();
         core.Handle(new ConfigLoaded(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
-            general:layout = scrolling
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
+            layout = scrolling
             windowrule = float, class:kitty
             """)));
 
@@ -36,9 +36,9 @@ public class ReloadTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 0
             bind = Win+Q, close
             """)));
         core.Handle(new WindowAppeared(new WindowId(1), Area)
@@ -49,9 +49,9 @@ public class ReloadTests
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
         var reloaded = core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
             bind = Win+W, close
             windowrule = float, class:kitty
             """)));
@@ -84,9 +84,9 @@ public class ReloadTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
         var outcome = core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
             blur = yes
             """)));
 
@@ -106,9 +106,9 @@ public class ReloadTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         var document = ConfigParser.Parse("""
             source = missing.conf
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
             """);
         core.ReadConfig = () => new ConfigRead(document);
 
@@ -130,9 +130,9 @@ public class ReloadTests
         var core = new WindowManager();
         var called = false;
         core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 0
             bind = Win+Q, close
             """)));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
@@ -160,9 +160,9 @@ public class ReloadTests
         var calls = 0;
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         var document = ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
             exec-once = once
             """);
         core.ReadConfig = () => new ConfigRead(document);
@@ -209,7 +209,7 @@ public class ReloadTests
     {
         var core = new WindowManager();
         var called = false;
-        core.ReadConfig = () => new ConfigRead(ConfigParser.Parse("general:gaps_out = 10"));
+        core.ReadConfig = () => new ConfigRead(ConfigParser.Parse("gaps_out = 10"));
         core.Reloaded += _ => called = true;
 
         var reply = core.Execute("reload now");
@@ -225,9 +225,9 @@ public class ReloadTests
         core.Handle(new Configure(ConfigParser.Parse("bind = Win+R, reload")));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         var document = ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
             bind = Win+R, reload
             """);
         core.ReadConfig = () => new ConfigRead(document);
@@ -278,7 +278,7 @@ public class ReloadTests
     {
         var source = new MemorySource(new Dictionary<string, string>
         {
-            ["colors.conf"] = "general:gaps_in = 1\n",
+            ["colors.conf"] = "gaps_in = 1\n",
         });
 
         var document = ConfigParser.Parse("source = colors.conf\nsource = missing.conf\n", source);
@@ -287,7 +287,7 @@ public class ReloadTests
     }
 
     private static string LayoutText(string name) =>
-        "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\ngeneral:layout = " + name + "\n";
+        "gaps_in = 0\ngaps_out = 0\nborder_size = 0\nlayout = " + name + "\n";
 
     private static Outcome Reload(WindowManager core, string layout) =>
         core.Handle(new Configure(ConfigParser.Parse(LayoutText(layout))));

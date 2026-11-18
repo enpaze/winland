@@ -13,7 +13,7 @@ A Layout places the Clients of a Workspace: dwindle splits the area in two for e
 
 ## How to get to it (user POV)
 
-- Set `general:layout = dwindle`, `scrolling` or `floating` in the config.
+- Set `layout = dwindle`, `scrolling` or `floating` in the config.
 - Press `Win+J` to flip the split, and `Win+K` or `Win+Alt+K` for the next or previous Layout.
 - Press `Win+Alt+Minus` or `Win+Alt+Equal` to make the window narrower or wider by 25 pixels, `Win+Ctrl+Minus` or `Win+Ctrl+Equal` for 300 pixels, and `Win+Shift+Minus` or `Win+Shift+Equal` to make it shorter or taller.
 - Run `winland layout scrolling`, `winland layout next`, `winland layout prev`, `winland split`, `winland resize 120 0` or `winland layoutmsg colresize +conf`.
@@ -24,7 +24,7 @@ A Layout places the Clients of a Workspace: dwindle splits the area in two for e
 Preconditions:
 
 - The baseline in [README.md](./README.md) holds, and `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Doctor` prints `doctor: ok`.
-- The driver's config adds `general:layout = dwindle` to the baseline config.
+- The driver's config adds `layout = dwindle` to the baseline config.
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature layouts`. It prints `== feature layouts: passed`.
 - **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`. Both become Clients and tile side by side across the work area, and `winland -j get workspace` reports `tiledLayout` `dwindle`.
@@ -43,5 +43,5 @@ Preconditions:
 - `layout` lasts until the config is loaded again or Winland restarts, which puts the Workspace back on the Layout the config names. A reload mid-run undoes the switch.
 - With an open special workspace on the focused Monitor, `layout` changes the special workspace's Layout, not the normal Workspace's.
 - `winland resize -10 0` passes `-10` as a number, not a flag, because the CLI reads an argument that is a number as a number.
-- The driver's config sets `general:layout = dwindle`, so the run starts in dwindle whatever the default is. To reproduce a run by hand, set the same line.
+- The driver's config sets `layout = dwindle`, so the run starts in dwindle whatever the default is. To reproduce a run by hand, set the same line.
 - The keys in the first list come from the starter config. The driver's config has no binds, so it drives these Dispatchers through the `winland` CLI. The starter binds no key to `layout` or `layoutmsg`.

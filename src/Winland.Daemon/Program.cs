@@ -317,7 +317,7 @@ static void CopyLog(RollingLogWriter log, DebugOptions options, string? file)
 
         if (UserAccess.IsElevated)
         {
-            Console.Error.WriteLine("debug:disable_logs is false, but an elevated Winland writes no log file.");
+            Console.Error.WriteLine("log_file is true, but an elevated Winland writes no log file.");
             return null;
         }
 

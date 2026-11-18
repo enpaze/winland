@@ -260,7 +260,7 @@ public class WindowBehaviorTests
     public void GetFullscreenHandler()
     {
         var desk = new TestDesktop();
-        desk.Set("general:layout", "dwindle");
+        desk.Set("layout", "dwindle");
 
         desk.Spawn("cat");
 
@@ -274,7 +274,7 @@ public class WindowBehaviorTests
         Assert.AreEqual("default", Handler(desk));
         desk.Ok("fullscreen");
 
-        desk.Set("general:layout", "scrolling");
+        desk.Set("layout", "scrolling");
 
         desk.Ok("fullscreen");
         Assert.AreEqual("default", Handler(desk));

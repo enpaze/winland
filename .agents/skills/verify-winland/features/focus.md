@@ -34,7 +34,7 @@ Preconditions:
 ## Gotchas
 
 - The driver reads the cursor position after `focus right`. Moving the mouse during a run can fail that check.
-- `cursor:no_warps` stops the cursor move, and leaving a fullscreen window for another on its Workspace does not move the cursor.
+- `warp_cursor = false` stops the cursor move, and leaving a fullscreen window for another on its Workspace does not move the cursor.
 - A Workspace with a fullscreen or maximized Client offers no window to `focus` in a direction, so focus goes to the neighbouring Monitor or stays.
 - `focus` in a direction continues onto the neighbouring Monitor when nothing in that direction can take focus. The driver does not reach that.
 - Among Dispatchers, only `focus` takes a window selector. The driver does not assert the reply to an unmatched selector, only that focus stays.

@@ -55,7 +55,7 @@ public class WindowStateTests
         core.Handle(new Dispatch("workspace", "1"));
         core.Handle(new Dispatch("focus", "address:0x8"));
         core.Handle(new Dispatch("fullscreen"));
-        core.Handle(new Configure(ConfigParser.Parse("general:layout = scrolling\nwindowrule = float, class:stick")));
+        core.Handle(new Configure(ConfigParser.Parse("layout = scrolling\nwindowrule = float, class:stick")));
         core.Handle(new WindowAppeared(new WindowId(14), Area) { Traits = WindowTraits.Normal with { Dialog = true } });
         core.Handle(new Dispatch("focus", "address:0x8"));
         core.Handle(new Dispatch("fullscreen"));

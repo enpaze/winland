@@ -145,7 +145,7 @@ public class WorkspaceSelectorTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(
-            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n")));
+            "gaps_in = 0\ngaps_out = 0\nborder_size = 0\n")));
         var area = new Rectangle(0, 0, 1920, 1080);
         core.Handle(new WindowAppeared(new WindowId(1), area));
         core.Handle(new WindowAppeared(new WindowId(2), area));

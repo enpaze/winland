@@ -10,7 +10,7 @@ public class DispatcherRegressionTests
     [DataRow("close", "")]
     public void APreviousLayoutMessageDoesNotOverrideFocusOnAnotherDispatcher(string name, string argument)
     {
-        var core = Configured("general:layout = scrolling");
+        var core = Configured("layout = scrolling");
         for (var id = 1; id <= 3; id++)
             core.Handle(new WindowAppeared(new WindowId(id), Area));
         core.Handle(new Dispatch("layoutmsg", "focus l"));

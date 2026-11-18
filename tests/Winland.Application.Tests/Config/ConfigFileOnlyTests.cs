@@ -4,13 +4,13 @@ namespace Winland.Application.Tests;
 public class ConfigFileOnlyTests
 {
     [TestMethod]
-    [DataRow("keyword general:hide_taskbar true")]
-    [DataRow("keyword general:gaps_out 0")]
+    [DataRow("keyword hide_taskbar true")]
+    [DataRow("keyword gaps_out 0")]
     [DataRow("keyword windowrule float, class:b")]
-    [DataRow("getoption general:gaps_out")]
+    [DataRow("getoption gaps_out")]
     [DataRow("setprop address:0x1 border_size 9")]
     [DataRow("getprop address:0x1 border_size")]
-    [DataRow("[[BATCH]]keyword general:gaps_out 0 ; keyword general:border_size 9")]
+    [DataRow("[[BATCH]]keyword gaps_out 0 ; keyword border_size 9")]
     [DataRow("[[BATCH]]j/get windows")]
     [DataRow("[[BATCH]]/reload")]
     public void NoRequestReadsOrChangesASetting(string line)
@@ -35,7 +35,7 @@ public class ConfigFileOnlyTests
     [TestMethod]
     public void AReloadGivesEveryWindowTheRuleEffectsOfTheFileAsItIsNow()
     {
-        const string options = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 2\n";
+        const string options = "gaps_in = 0\ngaps_out = 0\nborder_size = 2\n";
         var rules = "windowrule = opacity 0.5, class:b\n";
         var core = new WindowManager(ConfigParser.Parse(options + rules));
         core.ReadConfig = () => new ConfigRead(ConfigParser.Parse(options + rules));

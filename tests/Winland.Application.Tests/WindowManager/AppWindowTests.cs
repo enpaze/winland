@@ -10,7 +10,7 @@ public class AppWindowTests
     [DataRow("scrolling")]
     public void AWindowAdoptedUnderADragKeepsItsFrameUntilTheButtonIsReleased(string layout)
     {
-        var core = new WindowManager(ConfigParser.Parse($"general:layout = {layout}"));
+        var core = new WindowManager(ConfigParser.Parse($"layout = {layout}"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         var bounds = new Rectangle(200, 250, 500, 350);
         var opened = core.Handle(new WindowAppeared(new WindowId(2), Area)

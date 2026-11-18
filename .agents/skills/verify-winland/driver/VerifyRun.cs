@@ -17,10 +17,10 @@ internal sealed class VerifyRun
 
     private const string BaseConfig =
         """
-        general:gaps_in = 0
-        general:gaps_out = 0
-        general:border_size = 0
-        animations:enabled = false
+        gaps_in = 0
+        gaps_out = 0
+        border_size = 0
+        animations = false
         windowrule = ignore, class:*
         windowrule = tile, class:WinlandVerifyWindow, title:WinlandVerify *
         windowrule = workspace 1, class:WinlandVerifyWindow, title:WinlandVerify *

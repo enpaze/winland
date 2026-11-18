@@ -8,7 +8,7 @@ public class ShellWindows
 
     public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void HidesTheTaskbarWhileRunningAndShowsItOnExit() => VerifyRun.Drive(TestContext, "general:hide_taskbar = true\n", run =>
+    public void HidesTheTaskbarWhileRunningAndShowsItOnExit() => VerifyRun.Drive(TestContext, "hide_taskbar = true\n", run =>
     {
         run.Until("hide_taskbar hides every taskbar", () => !Taskbars.AllVisible(out _));
         var window = run.OpenManaged("1");

@@ -32,7 +32,7 @@ public class MonitorLayoutEventTests
         var core = new WindowManager();
         core.Handle(new MonitorsChanged([One]));
 
-        var reloaded = core.Handle(new ConfigLoaded(ConfigParser.Parse("general:gaps_in = 3\n")));
+        var reloaded = core.Handle(new ConfigLoaded(ConfigParser.Parse("gaps_in = 3\n")));
 
         var events = reloaded.Events.ToList();
         Assert.IsTrue(events.FindIndex(e => e is MonitorLayoutChanged) > events.FindIndex(e => e is ConfigReloaded));

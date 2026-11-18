@@ -298,12 +298,12 @@ public class ScrollingLayoutTests
     public void ScrollingOptionsParseAndClamp()
     {
         var options = ScrollingOptions.From(ConfigParser.Parse("""
-            scrolling:column_width = 2
+            column_width = 2
             """));
 
         Assert.AreEqual(1, options.ColumnWidth);
 
-        var narrow = ScrollingOptions.From(ConfigParser.Parse("scrolling:column_width = 0.01\n"));
+        var narrow = ScrollingOptions.From(ConfigParser.Parse("column_width = 0.01\n"));
         Assert.AreEqual(0.1, narrow.ColumnWidth);
     }
 
@@ -311,10 +311,10 @@ public class ScrollingLayoutTests
     public void CoreSelectsScrollingAndConcealsTheHiddenColumn()
     {
         var core = Configured("""
-            general:layout = scrolling
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
+            layout = scrolling
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 0
             """);
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
@@ -415,7 +415,7 @@ public class ScrollingLayoutTests
         return layout;
     }
 
-    private static WindowManager Scrolling() => Flat("general:layout = scrolling\n");
+    private static WindowManager Scrolling() => Flat("layout = scrolling\n");
 
     private static WindowId Window(long id) => new(id);
 

@@ -89,7 +89,7 @@ public class AnimationTests
     public void AWindowSlidingOutKeepsItsBorderUntilItHides()
     {
         var core = Load("""
-            general:border_size = 2
+            border_size = 2
             bind = Win+1, workspace 1
             bind = Win+2, workspace 2
             """);
@@ -106,8 +106,8 @@ public class AnimationTests
     public void AWindowHiddenWithoutMotionLosesItsBorderAtOnce()
     {
         var core = Load("""
-            general:border_size = 2
-            animations:enabled = false
+            border_size = 2
+            animations = false
             bind = Win+2, workspace 2
             """);
         Appear(core, 1);
@@ -177,8 +177,8 @@ public class AnimationTests
     public void AnimationsOffPlansNoMotion()
     {
         var core = Load("""
-            general:border_size = 2
-            animations:enabled = false
+            border_size = 2
+            animations = false
             bind = Win+2, workspace 2
             """);
         Assert.IsEmpty(Appear(core, 1).Motions);
@@ -207,7 +207,7 @@ public class AnimationTests
         var core = new WindowManager();
         Appear(core, 1);
 
-        core.Handle(new Configure(ConfigParser.Parse("animations:enabled = no")));
+        core.Handle(new Configure(ConfigParser.Parse("animations = no")));
 
         Assert.IsEmpty(Appear(core, 2).Motions);
     }
@@ -216,7 +216,7 @@ public class AnimationTests
     public void FocusMovesTheAlphaAndBorderOfBothClients()
     {
         var core = Load("""
-            decoration:inactive_opacity = 0.5
+            inactive_opacity = 0.5
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -329,9 +329,9 @@ public class AnimationTests
     public void ADroppedWindowSlidesIntoItsTileFromWhereTheSystemLeftIt()
     {
         var core = Load("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 0
             """);
         Appear(core, 1);
         Appear(core, 2);
@@ -345,7 +345,7 @@ public class AnimationTests
         Assert.AreEqual(Left, motion.To);
     }
 
-    private const string Gapless = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n";
+    private const string Gapless = "gaps_in = 0\ngaps_out = 0\nborder_size = 0\n";
 
     private static WindowManager Load(string text)
     {

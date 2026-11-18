@@ -85,7 +85,7 @@ public class IpcJsonTests
     [DataRow("dwindle")]
     public void WorkspacesReportTheirTiledLayout(string layout)
     {
-        var core = new WindowManager(ConfigParser.Parse("general:layout = " + layout));
+        var core = new WindowManager(ConfigParser.Parse("layout = " + layout));
         core.Handle(new WindowAppeared(new WindowId(42), new Rectangle(0, 0, 800, 600)));
 
         var workspace = Assert.ContainsSingle(Json(core.Execute("j/get workspaces").Text).EnumerateArray());

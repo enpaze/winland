@@ -5,30 +5,16 @@ namespace Winland.Application.Tests;
 internal sealed class TestDesktop
 {
     internal const string Config = """
-        general {
-            gaps_in = 5
-            gaps_out = 20
-            border_size = 2
-            col.active_border = rgba(33ccffee)
-            col.inactive_border = rgba(595959aa)
-            layout = dwindle
-        }
-        decoration {
-            rounding = 10
-        }
-        animations {
-            enabled = false
-        }
-        master {
-            new_status = master
-        }
-        scrolling {
-            column_width = 0.5
-            explicit_column_widths = 0.25, 0.333, 0.5, 0.667, 0.75, 1.0
-        }
-        input {
-            follow_mouse = 1
-        }
+        gaps_in = 5
+        gaps_out = 20
+        border_size = 2
+        border_color = rgba(33ccffee)
+        border_color_inactive = rgba(595959aa)
+        layout = dwindle
+        rounding = 10
+        animations = false
+        column_width = 0.5
+        focus_follows_mouse = 1
         windowrule = float, class:wr_kitty
         windowrule = size 200 200, class:wr_kitty
         """;
