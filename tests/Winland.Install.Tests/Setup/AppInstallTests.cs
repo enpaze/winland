@@ -418,6 +418,76 @@ public class AppInstallTests
         Assert.False(tasks.Contains("Winland"));
     }
 
+    [Fact]
+    public void MachineInstallCreatesTheLogonTaskWhenNoneExists()
+    {
+        install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
+
+        var task = tasks.Only();
+        Assert.Equal("Winland", task.Name);
+        Assert.Equal(Path.Combine(Machine, "winland.exe"), task.Executable);
+        Assert.Equal(@"DESKTOP\dante", task.User);
+        Assert.Equal("create", Assert.Single(tasks.Operations));
+    }
+
+    [Fact]
+    public void MachineInstallReplacesTheExistingTaskAndLeavesOne()
+    {
+        tasks.Seed(LogonTaskDefinition.Build(@"C:\old\winland.exe", @"DESKTOP\dante"));
+
+        install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
+
+        Assert.Equal(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
+        Assert.Equal("replace", Assert.Single(tasks.Operations));
+    }
+
+    [Fact]
+    public void MachineInstallTwiceLeavesOneTask()
+    {
+        install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
+        install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
+
+        Assert.Equal(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
+        Assert.Equal(["create", "replace"], tasks.Operations);
+    }
+
+    [Fact]
+    public void MachineInstallRejectsABlankExecutable()
+    {
+        var error = Assert.Throws<ArgumentException>(() => install.InstallMachine(" ", @"DESKTOP\dante", "0.1.0"));
+
+        Assert.Equal("executable", error.ParamName);
+        Assert.Empty(tasks.Operations);
+    }
+
+    [Fact]
+    public void MachineInstallRejectsABlankAccount()
+    {
+        var error = Assert.Throws<ArgumentException>(() => install.InstallMachine(Source, " ", "0.1.0"));
+
+        Assert.Equal("account", error.ParamName);
+        Assert.Empty(tasks.Operations);
+    }
+
+    [Fact]
+    public void MachineUninstallRemovesTheLogonTask()
+    {
+        tasks.Seed(LogonTaskDefinition.Build(Path.Combine(Machine, "winland.exe"), @"DESKTOP\dante"));
+
+        install.Uninstall(purge: false, machine: true);
+
+        Assert.False(tasks.Contains("Winland"));
+        Assert.Equal("delete", Assert.Single(tasks.Operations));
+    }
+
+    [Fact]
+    public void MachineUninstallWithoutTheTaskLeavesTheCatalogAlone()
+    {
+        install.Uninstall(purge: false, machine: true);
+
+        Assert.Empty(tasks.Operations);
+    }
+
     private sealed class WatchingRestore(Action onRestore) : IDesktopRestore
     {
         public void Restore() => onRestore();

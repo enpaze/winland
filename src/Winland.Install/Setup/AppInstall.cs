@@ -57,9 +57,9 @@ public sealed class AppInstall
         ApplyStopped(plan, perUser: false);
         var installed = plan.InstalledExecutable;
         if (logon)
-            new LogonInstall(tasks).Install(installed, account);
+            InstallLogonTask(installed, account);
         else
-            new LogonInstall(tasks).Uninstall();
+            RemoveLogonTask();
         Place(installed, layout.CommonPrograms, arguments: "");
         RegisterUninstall(RegistryRoot.Machine, installed, layout.MachineDirectory, version);
         SetPath(RegistryRoot.Machine, InstallLocations.MachinePathKey, layout.MachineDirectory);
@@ -127,7 +127,7 @@ public sealed class AppInstall
             unrestored = exception;
         }
 
-        RemoveUser();
+        RemoveUserInstall();
         if (purge)
             files.DeleteTree(layout.ConfigDirectory);
 
@@ -135,7 +135,14 @@ public sealed class AppInstall
             throw new InvalidOperationException("Winland is uninstalled, but the Windows settings it turned off were not put back: " + unrestored.Message, unrestored);
     }
 
-    public void RemoveUserInstall() => RemoveUser();
+    public void RemoveUserInstall()
+    {
+        registry.DeleteValue(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue);
+        shortcuts.Remove(InstallLocations.Shortcut(layout.UserPrograms));
+        registry.DeleteKey(RegistryRoot.User, InstallLocations.UninstallKey);
+        ClearPath(RegistryRoot.User, InstallLocations.UserPathKey, layout.UserDirectory);
+        files.DeleteTree(layout.UserDirectory);
+    }
 
     private sealed class NoDesktopRestore : IDesktopRestore
     {
@@ -253,20 +260,26 @@ public sealed class AppInstall
 
     private void RemoveMachine()
     {
-        new LogonInstall(tasks).Uninstall();
+        RemoveLogonTask();
         shortcuts.Remove(InstallLocations.Shortcut(layout.CommonPrograms));
         registry.DeleteKey(RegistryRoot.Machine, InstallLocations.UninstallKey);
         ClearPath(RegistryRoot.Machine, InstallLocations.MachinePathKey, layout.MachineDirectory);
         files.DeleteTree(layout.MachineDirectory);
     }
 
-    private void RemoveUser()
+    private void InstallLogonTask(string executable, string user)
     {
-        registry.DeleteValue(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue);
-        shortcuts.Remove(InstallLocations.Shortcut(layout.UserPrograms));
-        registry.DeleteKey(RegistryRoot.User, InstallLocations.UninstallKey);
-        ClearPath(RegistryRoot.User, InstallLocations.UserPathKey, layout.UserDirectory);
-        files.DeleteTree(layout.UserDirectory);
+        var task = LogonTaskDefinition.Build(executable, user);
+        if (tasks.Contains(task.Name))
+            tasks.Replace(task);
+        else
+            tasks.Create(task);
+    }
+
+    private void RemoveLogonTask()
+    {
+        if (tasks.Contains(LogonTaskDefinition.TaskName))
+            tasks.Delete(LogonTaskDefinition.TaskName);
     }
 
     private void ClearPath(RegistryRoot root, string key, string folder)
