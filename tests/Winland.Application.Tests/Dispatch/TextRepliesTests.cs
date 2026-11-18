@@ -165,6 +165,10 @@ public class TextRepliesTests
         Assert.AreEqual(
             """[{"file":"C:\\winland\\winland.conf","line":1,"message":"Unsupported keyword 'blur'."},{"file":"C:\\winland\\colors.conf","line":3,"message":"Invalid modifier 'X'."},{"file":"C:\\winland\\winland.conf","line":0,"message":"Could not read config."}]""",
             core.Execute("j/configerrors").Text);
+
+        core.Handle(new Configure(new ConfigDocument([], [], [new ConfigWarning(2, "Unsupported keyword 'blur'.")])));
+
+        Assert.AreEqual("""[{"file":null,"line":2,"message":"Unsupported keyword 'blur'."}]""", core.Execute("j/configerrors").Text);
     }
 
     [TestMethod]

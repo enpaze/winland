@@ -226,11 +226,12 @@ public class WindowBehaviorTests
     {
         var desk = new TestDesktop("windowrule = monitor HEADLESS-3, class:monitor_kitty\n");
         desk.AddMonitor("HEADLESS-3", TestDesktop.Second);
+        var third = MonitorName(desk, "HEADLESS-3");
 
         desk.Ok("focusmonitor", "HEADLESS-2");
         desk.Spawn("monitor_kitty");
         Assert.ContainsSingle(desk.Clients());
-        Assert.AreEqual("HEADLESS-3", desk.ActiveWindow().GetProperty("monitor").GetString());
+        Assert.AreEqual(third, desk.ActiveWindow().GetProperty("monitor").GetString());
         Assert.AreEqual("HEADLESS-3", desk.ActiveWorkspace().GetProperty("monitor").GetString());
 
         CloseAll(desk);
@@ -240,7 +241,7 @@ public class WindowBehaviorTests
         desk.Set("windowrule", "monitor HEADLESS-3 silent, class:silent_kitty");
 
         desk.Spawn("silent_kitty");
-        Assert.AreEqual("HEADLESS-3", desk.Clients()[0].GetProperty("monitor").GetString());
+        Assert.AreEqual(third, desk.Clients()[0].GetProperty("monitor").GetString());
         Assert.AreEqual("HEADLESS-2", desk.ActiveWorkspace().GetProperty("monitor").GetString());
     }
 
@@ -375,6 +376,14 @@ public class WindowBehaviorTests
     {
         foreach (var client in desk.Clients())
             desk.Handle(new WindowClosed(IdOf(client)));
+    }
+
+    private static string? MonitorName(TestDesktop desk, string name)
+    {
+        using var document = JsonDocument.Parse(desk.Send("j/monitors"));
+        return document.RootElement.EnumerateArray()
+            .Single(monitor => monitor.GetProperty("name").GetString() == name)
+            .GetProperty("name").GetString();
     }
 
     private static void ResetWindow(TestDesktop desk)

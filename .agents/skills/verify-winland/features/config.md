@@ -34,7 +34,7 @@ Preconditions:
 - **Files and errors.** `winland -j files` reports the run's config path as `config`. `winland configerrors` replies `no config errors`.
 - **Open a window.** The driver opens `WinlandVerify 1`. It becomes a Client and fills the work area, because `gaps_out` is 0.
 - **Save the config.** The driver starts `winland events` and appends `general:gaps_out = 40` and `general:nosuchoption = 1` to the config. The Event stream holds `configreloaded`, and the window moves in 40 pixels from the left and right of the work area.
-- **List the warning.** `winland configerrors` names `general:nosuchoption`. `winland -j configerrors` holds an entry whose `file` is the run's config path, whose `line` is above 0, and whose `message` names `general:nosuchoption`.
+- **List the warning.** Once `configreloaded` arrives, before the window moves, `winland configerrors` names `general:nosuchoption`. `winland -j configerrors` holds an entry whose `file` is the run's config path, whose `line` is above 0, and whose `message` names `general:nosuchoption`.
 - **Reload by hand.** The driver runs `winland reload`. It replies `ok`.
 
 ## Gotchas

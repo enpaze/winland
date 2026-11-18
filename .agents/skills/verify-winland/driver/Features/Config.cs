@@ -38,18 +38,19 @@ public class Config
         File.AppendAllText(run.Daemon.ConfigPath, "general:gaps_out = 40\ngeneral:nosuchoption = 1\n");
         run.Say("saved the config with gaps_out 40 and an unknown option");
         run.UntilEvent("configreloaded");
-        run.Until("saving the config reloaded it and the window moved in by gaps_out 40", () =>
-        {
-            var frame = VerifyRun.Frame(window);
-            var work = VerifyRun.WorkArea(window);
-            return Math.Abs(frame.Left - work.Left - 40) <= 4 && Math.Abs(work.Right - frame.Right - 40) <= 4;
-        });
         Assert.Contains("general:nosuchoption", run.Ask("configerrors"), StringComparison.Ordinal);
         Assert.Contains(error =>
             string.Equals(error.GetProperty("file").GetString(), run.Daemon.ConfigPath, StringComparison.OrdinalIgnoreCase)
             && error.GetProperty("line").GetInt32() > 0
             && error.GetProperty("message").GetString()!.Contains("general:nosuchoption", StringComparison.Ordinal),
             run.Json("configerrors").EnumerateArray());
+        run.Say("saw: configerrors names general:nosuchoption with its file and line, in text and JSON");
+        run.Until("saving the config reloaded it and the window moved in by gaps_out 40", () =>
+        {
+            var frame = VerifyRun.Frame(window);
+            var work = VerifyRun.WorkArea(window);
+            return Math.Abs(frame.Left - work.Left - 40) <= 4 && Math.Abs(work.Right - frame.Right - 40) <= 4;
+        });
 
         Assert.AreEqual("ok", run.Ask("reload"));
         run.UntilEvent("configreloaded");
