@@ -33,7 +33,10 @@ public class Daemon
 
         run.Kill();
         Assert.IsFalse(VerifyRun.Visible(left) || VerifyRun.Visible(right), "The windows came back without a restart.");
-        run.Restart();
+        var renamed = Path.Combine(run.Daemon.Folder, "winland.txt");
+        File.Copy(run.Daemon.ConfigPath, renamed);
+        run.Restart(renamed);
+        Assert.AreEqual(renamed, run.Json("get", "files").GetProperty("config").GetString(), StringComparer.OrdinalIgnoreCase);
         run.Until("the next start shows what the killed winland left hidden and manages both windows again", () =>
             VerifyRun.Visible(left) && VerifyRun.Visible(right) && run.Client(left) is not null && run.Client(right) is not null);
 

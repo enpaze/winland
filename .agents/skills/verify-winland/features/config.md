@@ -14,7 +14,7 @@ Winland reads one config file and the files it `source`s, reloads them when one 
 ## How to get to it (user POV)
 
 - Edit `%USERPROFILE%\.winland\winland.conf`. Winland writes it with comments the first time it starts.
-- Start Winland with `winland --config <file>` to read that `.conf` file instead.
+- Start Winland with `winland --config <file>` to read that file instead, whatever its name.
 - Save the config, or a file it sources, to reload it. Run `winland reload`, or choose Reload from the tray menu, to read it again by hand.
 - Choose Edit config from the tray menu, or click the config-errors notification, to open the file.
 - Run `winland check [file]` to validate a draft or the default config.

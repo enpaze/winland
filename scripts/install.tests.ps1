@@ -51,8 +51,8 @@ Test-Case 'a no leaves out the logon start or the start now' {
 }
 
 Test-Case 'the chosen settings include swipes only with a precision touchpad' {
-    Assert-Equal ((Get-TweakArguments $true) -join ' ') 'tweaks --off --touchpad'
-    Assert-Equal ((Get-TweakArguments $false) -join ' ') 'tweaks --off'
+    Assert-Equal ((Get-TweakArguments $true) -join ' ') 'tweaks off --touchpad'
+    Assert-Equal ((Get-TweakArguments $false) -join ' ') 'tweaks off'
 }
 
 Test-Case 'the third answer controls the Windows settings change' {
@@ -160,7 +160,7 @@ Test-Case 'the summary says how to quit, where the keys are and how to undo' {
     Assert-Equal $lines[3] '    Quit       right-click the Winland icon in the notification area (behind ^ if hidden), then Quit'
     Assert-Equal $lines[4] '    Keys       winland get binds lists your hotkeys and their descriptions'
     Assert-Equal $lines[5] '    Edit       right-click the Winland icon, then Edit config'
-    Assert-Equal $lines[6] '    Tweaks     winland tweaks --restore restores recorded Snap and swipes from a normal terminal'
+    Assert-Equal $lines[6] '    Tweaks     winland tweaks restore restores recorded Snap and swipes from a normal terminal'
     Assert-Equal $lines[7] '    Remove     winland uninstall removes Winland and restores recorded Windows settings'
 }
 

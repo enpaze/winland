@@ -11,7 +11,7 @@ On a precision touchpad, a swipe with three or more fingers switches to the next
 
 - Swipe three fingers sideways. The starter config has `gesture = 3, horizontal, workspace`. Fingers moving left go to the next Workspace, and fingers moving right go to the previous one.
 - Add a `gesture` line to the config, such as `gesture = 4, vertical, workspace`.
-- Turn off Windows' own three- and four-finger swipes with `winland tweaks --off --touchpad`, or in Settings under Bluetooth & devices, then Touchpad.
+- Turn off Windows' own three- and four-finger swipes with `winland tweaks off --touchpad`, or in Settings under Bluetooth & devices, then Touchpad.
 - Run `winland get errors` to see the `gesture` lines Winland warned about.
 
 ## Driving it with drive.ps1

@@ -98,8 +98,8 @@ public class InstallCommandTests
     [TestMethod]
     public void TweaksTurnsOffSnapAndAsksForNoAdministrator()
     {
-        var snap = Assert.IsExactInstanceOfType<InstallCommand.Tweaks>(InstallCommand.Parse(["tweaks", "--off"]));
-        var swipes = Assert.IsExactInstanceOfType<InstallCommand.Tweaks>(InstallCommand.Parse(["TWEAKS", "--OFF", "--touchpad"]));
+        var snap = Assert.IsExactInstanceOfType<InstallCommand.Tweaks>(InstallCommand.Parse(["tweaks", "off"]));
+        var swipes = Assert.IsExactInstanceOfType<InstallCommand.Tweaks>(InstallCommand.Parse(["TWEAKS", "OFF", "--touchpad"]));
 
         Assert.IsFalse(snap.Touchpad);
         Assert.IsTrue(swipes.Touchpad);
@@ -110,7 +110,7 @@ public class InstallCommandTests
     [TestMethod]
     public void TweaksRestorePutsBackWhatWasRecordedAndAsksForNoAdministrator()
     {
-        var restore = Assert.IsExactInstanceOfType<InstallCommand.RestoreTweaks>(InstallCommand.Parse(["Tweaks", "--RESTORE"]));
+        var restore = Assert.IsExactInstanceOfType<InstallCommand.RestoreTweaks>(InstallCommand.Parse(["Tweaks", "RESTORE"]));
 
         Assert.IsFalse(restore.RequiresAdministrator(machineInstallPresent: true));
     }
@@ -121,7 +121,7 @@ public class InstallCommandTests
         var restore = new InstallCommand.RestoreTweaks().ElevatedRefusal;
         var cleanup = new InstallCommand.UserCleanup().ElevatedRefusal;
 
-        Assert.Contains("winland tweaks --restore", restore!, StringComparison.Ordinal);
+        Assert.Contains("winland tweaks restore", restore!, StringComparison.Ordinal);
         Assert.Contains("normal terminal", restore!, StringComparison.Ordinal);
         Assert.Contains("normal terminal", cleanup!, StringComparison.Ordinal);
         Assert.IsNull(new InstallCommand.Tweaks(true).ElevatedRefusal);
@@ -142,11 +142,15 @@ public class InstallCommandTests
     [DataRow("update", "--channel", "dev", "extra")]
     [DataRow("tweaks")]
     [DataRow("tweaks", "--touchpad")]
-    [DataRow("tweaks", "--off", "--user")]
-    [DataRow("tweaks", "--restore", "--off")]
-    [DataRow("tweaks", "--off", "--restore")]
-    [DataRow("tweaks", "--restore", "--touchpad")]
-    [DataRow("tweaks", "--off", "--touchpad", "--restore")]
+    [DataRow("tweaks", "off", "--user")]
+    [DataRow("tweaks", "restore", "off")]
+    [DataRow("tweaks", "off", "restore")]
+    [DataRow("tweaks", "restore", "--touchpad")]
+    [DataRow("tweaks", "off", "--touchpad", "restore")]
+    [DataRow("tweaks", "--off")]
+    [DataRow("tweaks", "--off", "--touchpad")]
+    [DataRow("tweaks", "--restore")]
+    [DataRow("tweaks", "--touchpad", "off")]
     public void AMisusedVerbIsRefused(params string[] args)
     {
         Assert.ThrowsExactly<ArgumentException>(() => InstallCommand.Parse(args));
