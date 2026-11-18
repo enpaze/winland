@@ -45,6 +45,11 @@ public class Config
             return Math.Abs(frame.Left - work.Left - 40) <= 4 && Math.Abs(work.Right - frame.Right - 40) <= 4;
         });
         Assert.Contains("general:nosuchoption", run.Ask("configerrors"), StringComparison.Ordinal);
+        Assert.Contains(error =>
+            string.Equals(error.GetProperty("file").GetString(), run.Daemon.ConfigPath, StringComparison.OrdinalIgnoreCase)
+            && error.GetProperty("line").GetInt32() > 0
+            && error.GetProperty("message").GetString()!.Contains("general:nosuchoption", StringComparison.Ordinal),
+            run.Json("configerrors").EnumerateArray());
 
         Assert.AreEqual("ok", run.Ask("reload"));
         run.UntilEvent("configreloaded");

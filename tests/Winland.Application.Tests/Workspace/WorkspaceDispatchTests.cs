@@ -248,7 +248,7 @@ public class WorkspaceDispatchTests
     private static string[] Labels(TestDesktop desk) => [.. desk.Workspaces().Select(Label)];
 
     private static string Label(JsonElement workspace) =>
-        $"{workspace.GetProperty("address").GetString()} ({workspace.GetProperty("name").GetString()})";
+        $"{workspace.GetProperty("id").GetInt32()} ({workspace.GetProperty("name").GetString()})";
 
     private static string WorkspaceNameOf(JsonElement client) =>
         client.GetProperty("workspace").GetProperty("name").GetString() ?? "";

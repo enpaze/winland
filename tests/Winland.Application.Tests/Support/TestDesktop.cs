@@ -221,8 +221,6 @@ internal sealed class TestDesktop
 
     internal static int Fullscreen(JsonElement client) => client.GetProperty("fullscreen").GetInt32();
 
-    internal static int FullscreenClient(JsonElement client) => client.GetProperty("fullscreenClient").GetInt32();
-
     internal static bool Floating(JsonElement client) => client.GetProperty("floating").GetBoolean();
 
     internal static bool Pinned(JsonElement client) => client.GetProperty("pinned").GetBoolean();

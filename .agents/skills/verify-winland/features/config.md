@@ -5,7 +5,7 @@ Winland reads one config file and the files it `source`s, reloads them when one 
 ## Sub-features
 
 - `request:reload` reads the config again and replies `ok`.
-- `request:configerrors` lists each config warning as `file:line: message`, or replies `no config errors`.
+- `request:configerrors` lists each config warning as `file:line: message`, or replies `no config errors`. With `-j` it lists `{"file","line","message"}` objects.
 - `request:files` reports the config Winland read and the log it writes, each as a full path.
 - `config-check` validates a file and its sources with `winland check [file]`, without a Daemon, and exits 0 when clean, 1 for diagnostics or a read failure, and 2 for invalid usage.
 - `reload-on-save` reloads the config when it is saved, applies the new values and reports `configreloaded` on the Event stream.
@@ -34,7 +34,7 @@ Preconditions:
 - **Files and errors.** `winland -j files` reports the run's config path as `config`. `winland configerrors` replies `no config errors`.
 - **Open a window.** The driver opens `WinlandVerify 1`. It becomes a Client and fills the work area, because `gaps_out` is 0.
 - **Save the config.** The driver starts `winland events` and appends `general:gaps_out = 40` and `general:nosuchoption = 1` to the config. The Event stream holds `configreloaded`, and the window moves in 40 pixels from the left and right of the work area.
-- **List the warning.** `winland configerrors` names `general:nosuchoption`.
+- **List the warning.** `winland configerrors` names `general:nosuchoption`. `winland -j configerrors` holds an entry whose `file` is the run's config path, whose `line` is above 0, and whose `message` names `general:nosuchoption`.
 - **Reload by hand.** The driver runs `winland reload`. It replies `ok`.
 
 ## Gotchas
@@ -44,5 +44,5 @@ Preconditions:
 - The driver appends to its own config under `%TEMP%\winland-verify-<guid>`. Never edit `%USERPROFILE%\.winland\winland.conf` to test a reload.
 - After `winland reload`, the driver waits for `configreloaded` again, but the line from the save already matches. Only the `ok` reply proves the hand reload.
 - The driver saves only the config itself, not a file it sources, so it does not reach a reload from a sourced file.
-- `configerrors` writes `file:line: message`, and `-j configerrors` writes `line N: message`. Match the form you asked for.
+- `configerrors` writes `file:line: message`, and `-j configerrors` writes objects with `file`, `line` and `message`. Match the form you asked for.
 - The driver does not check the config-errors notification or the click that opens the file.

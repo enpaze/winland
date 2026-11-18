@@ -25,7 +25,7 @@ Preconditions:
 - The driver's config adds no lines to the baseline config.
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature monitors`. It prints `== feature monitors: passed`.
-- **List Monitors.** The driver runs `winland -j monitors`. It lists as many Monitors as Windows reports, each with a `width` and `height` above 0, and `winland -j monitors all` lists at least as many.
+- **List Monitors.** The driver runs `winland -j monitors`. It lists as many Monitors as Windows reports, each with a `width` and `height` above 0 and exactly the keys [Monitors](../../../../docs/behavior.md#monitors) lists, and `winland -j monitors all` lists at least as many.
 - **Focus the focused Monitor.** The driver runs `winland dispatch focusmonitor <name>` with the name of the Monitor that reports `focused: true`, then `winland dispatch focusmonitor current`. Both reply `ok`, and `winland -j activeworkspace` reports that Monitor.
 - **Unknown Monitor.** The driver runs `winland dispatch focusmonitor NoSuchMonitor`. It exits 1 and writes `error: monitor not found` to standard error.
 - **One Monitor.** With one Monitor, the driver runs `winland dispatch movecurrentworkspacetomonitor current`, which replies `ok`, prints `only one monitor: focusmonitor and movecurrentworkspacetomonitor answered on it, and moving between monitors was not driven`, and ends.

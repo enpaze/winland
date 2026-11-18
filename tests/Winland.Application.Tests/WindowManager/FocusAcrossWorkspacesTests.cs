@@ -14,14 +14,14 @@ public class FocusAcrossWorkspacesTests
         desk.Ok("workspace", "1");
         desk.Spawn("1A");
         desk.Ok("focuswindow", "class:1A");
-        var source = desk.ActiveWindow().GetProperty("monitor").GetInt32();
+        var source = desk.ActiveWindow().GetProperty("monitor").GetString();
 
         desk.Ok("focusmonitor", "HYPRTEST-2");
         desk.Ok("workspace", "2");
         desk.Spawn("2A");
         desk.Spawn("2B");
         desk.Ok("focuswindow", "class:2B");
-        var destination = desk.ActiveWindow().GetProperty("monitor").GetInt32();
+        var destination = desk.ActiveWindow().GetProperty("monitor").GetString();
 
         Assert.AreNotEqual(source, destination);
 

@@ -146,16 +146,16 @@ public class DwindleLayoutTests
 
         desk.Ok("focuswindow", "class:kitty_A");
         desk.Ok("fullscreen", "0 set");
-        ExpectFullscreen(desk, 2, 2);
+        ExpectFullscreen(desk, 2);
 
         desk.Ok("fullscreen", "0 unset");
-        ExpectFullscreen(desk, 0, 0);
+        ExpectFullscreen(desk, 0);
 
         desk.Ok("fullscreen", "1 toggle");
-        ExpectFullscreen(desk, 1, 1);
+        ExpectFullscreen(desk, 1);
 
         desk.Ok("fullscreen", "1 toggle");
-        ExpectFullscreen(desk, 0, 0);
+        ExpectFullscreen(desk, 0);
     }
 
     [TestMethod]
@@ -181,11 +181,11 @@ public class DwindleLayoutTests
         var desk = new TestDesktop();
         desk.Spawn("kitty_A");
         desk.Ok("fullscreen", "0");
-        ExpectFullscreen(desk, 2, 2);
+        ExpectFullscreen(desk, 2);
         Assert.AreEqual("kitty_A", desk.ActiveClass());
 
         desk.Spawn("kitty_B");
-        ExpectFullscreen(desk, 0, 0);
+        ExpectFullscreen(desk, 0);
         Assert.AreEqual("kitty_B", desk.ActiveClass());
     }
 
@@ -197,10 +197,10 @@ public class DwindleLayoutTests
         desk.Spawn("kitty_B");
 
         desk.Ok("fullscreen", "0");
-        ExpectFullscreen(desk, 2, 2);
+        ExpectFullscreen(desk, 2);
 
         desk.CloseActive();
-        ExpectFullscreen(desk, 0, 0);
+        ExpectFullscreen(desk, 0);
     }
 
     [TestMethod]
@@ -234,7 +234,7 @@ public class DwindleLayoutTests
         {
             desk.Ok("movefocus", direction);
             Assert.AreEqual("fs", desk.ActiveClass());
-            ExpectFullscreen(desk, 2, 2);
+            ExpectFullscreen(desk, 2);
         }
     }
 
@@ -250,18 +250,18 @@ public class DwindleLayoutTests
             desk.Ok("fullscreen", mode + " set");
             Assert.AreEqual("kitty_tiled", desk.ActiveClass());
             Assert.IsFalse(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, mode == "0" ? 2 : 1, mode == "0" ? 2 : 1);
+            ExpectFullscreen(desk, mode == "0" ? 2 : 1);
 
             desk.Spawn("kitty_floated");
             Assert.AreEqual("kitty_floated", desk.ActiveClass());
             Assert.IsTrue(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, 0, 0);
+            ExpectFullscreen(desk, 0);
 
             desk.Ok("workspace", "2");
             desk.Ok("workspace", "1");
             Assert.AreEqual("kitty_floated", desk.ActiveClass());
             Assert.IsTrue(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, 0, 0);
+            ExpectFullscreen(desk, 0);
         }
     }
 
@@ -272,12 +272,8 @@ public class DwindleLayoutTests
         Assert.Contains(place => place.Size == size, places);
     }
 
-    private static void ExpectFullscreen(TestDesktop desk, int fullscreen, int fullscreenClient)
-    {
-        var active = desk.ActiveWindow();
-        Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(active));
-        Assert.AreEqual(fullscreenClient, TestDesktop.FullscreenClient(active));
-    }
+    private static void ExpectFullscreen(TestDesktop desk, int fullscreen) =>
+        Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(desk.ActiveWindow()));
 
     private static void ExpectUnmovedByMaximize(TestDesktop desk, string[] names)
     {

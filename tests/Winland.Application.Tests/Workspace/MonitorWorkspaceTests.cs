@@ -55,10 +55,10 @@ public class MonitorWorkspaceTests
         var workspaces = Json(core.Execute("j/workspaces").Text).EnumerateArray().ToArray();
         var onLeft = Assert.ContainsSingle(item => item.GetProperty("monitor").GetString() == @"\\.\DISPLAY1", workspaces);
         var onRight = Assert.ContainsSingle(item => item.GetProperty("monitor").GetString() == @"\\.\DISPLAY2", workspaces);
-        Assert.AreEqual(0, onLeft.GetProperty("monitorID").GetInt32());
+        Assert.AreEqual(0, onLeft.GetProperty("monitorId").GetInt32());
         Assert.AreEqual(1, onLeft.GetProperty("windows").GetInt32());
         Assert.AreEqual("1", onLeft.GetProperty("name").GetString());
-        Assert.AreEqual(1, onRight.GetProperty("monitorID").GetInt32());
+        Assert.AreEqual(1, onRight.GetProperty("monitorId").GetInt32());
         Assert.AreEqual(1, onRight.GetProperty("windows").GetInt32());
         Assert.AreEqual("1", onRight.GetProperty("name").GetString());
 
@@ -99,7 +99,7 @@ public class MonitorWorkspaceTests
             .ToDictionary(item => item.GetProperty("name").GetString()!);
         Assert.AreEqual(@"\\.\DISPLAY1", workspaces["1"].GetProperty("monitor").GetString());
         Assert.AreEqual(@"\\.\DISPLAY1", workspaces["2"].GetProperty("monitor").GetString());
-        Assert.AreEqual(0, workspaces["2"].GetProperty("monitorID").GetInt32());
+        Assert.AreEqual(0, workspaces["2"].GetProperty("monitorId").GetInt32());
         Assert.AreEqual(1, workspaces["1"].GetProperty("windows").GetInt32());
         Assert.AreEqual(1, workspaces["2"].GetProperty("windows").GetInt32());
 

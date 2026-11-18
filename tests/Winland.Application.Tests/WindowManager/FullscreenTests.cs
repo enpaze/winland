@@ -151,11 +151,10 @@ public class FullscreenTests
         using var clients = JsonDocument.Parse(core.Execute("j/clients").Text);
         var client = clients.RootElement[0];
         Assert.AreEqual(1, client.GetProperty("fullscreen").GetInt32());
-        Assert.AreEqual(1, client.GetProperty("fullscreenClient").GetInt32());
         Assert.AreEqual("default", client.GetProperty("fullscreenHandler").GetString());
 
         using var workspaces = JsonDocument.Parse(core.Execute("j/workspaces").Text);
-        Assert.IsTrue(workspaces.RootElement[0].GetProperty("hasfullscreen").GetBoolean());
+        Assert.IsTrue(workspaces.RootElement[0].GetProperty("hasFullscreen").GetBoolean());
     }
 
     [TestMethod]
@@ -383,7 +382,6 @@ public class FullscreenTests
         using (var clients = JsonDocument.Parse(core.Execute("j/clients").Text))
         {
             var floating = clients.RootElement.EnumerateArray().Single(client => client.GetProperty("address").GetString() == "0x1");
-            Assert.IsFalse(floating.GetProperty("acceptsInput").GetBoolean());
             Assert.IsFalse(floating.GetProperty("visible").GetBoolean());
         }
 

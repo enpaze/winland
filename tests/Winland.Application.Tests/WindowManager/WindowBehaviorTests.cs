@@ -45,7 +45,6 @@ public class WindowBehaviorTests
         desk.Ok("focuswindow", "floating");
         Assert.Contains("kitty_b", desk.ActiveClass(), StringComparison.Ordinal);
         Assert.AreEqual(2, TestDesktop.Fullscreen(desk.Client("kitty_a")));
-        Assert.AreEqual(2, TestDesktop.FullscreenClient(desk.Client("kitty_a")));
 
         desk.Ok("fullscreen", "0 set");
         desk.Ok("focuswindow", "tiled");
@@ -227,12 +226,11 @@ public class WindowBehaviorTests
     {
         var desk = new TestDesktop("windowrule = monitor HEADLESS-3, class:monitor_kitty\n");
         desk.AddMonitor("HEADLESS-3", TestDesktop.Second);
-        var third = MonitorId(desk, "HEADLESS-3");
 
         desk.Ok("focusmonitor", "HEADLESS-2");
         desk.Spawn("monitor_kitty");
         Assert.ContainsSingle(desk.Clients());
-        Assert.AreEqual(third, desk.ActiveWindow().GetProperty("monitor").GetInt32());
+        Assert.AreEqual("HEADLESS-3", desk.ActiveWindow().GetProperty("monitor").GetString());
         Assert.AreEqual("HEADLESS-3", desk.ActiveWorkspace().GetProperty("monitor").GetString());
 
         CloseAll(desk);
@@ -242,7 +240,7 @@ public class WindowBehaviorTests
         desk.Set("windowrule", "monitor HEADLESS-3 silent, class:silent_kitty");
 
         desk.Spawn("silent_kitty");
-        Assert.AreEqual(third, desk.Clients()[0].GetProperty("monitor").GetInt32());
+        Assert.AreEqual("HEADLESS-3", desk.Clients()[0].GetProperty("monitor").GetString());
         Assert.AreEqual("HEADLESS-2", desk.ActiveWorkspace().GetProperty("monitor").GetString());
     }
 
@@ -377,14 +375,6 @@ public class WindowBehaviorTests
     {
         foreach (var client in desk.Clients())
             desk.Handle(new WindowClosed(IdOf(client)));
-    }
-
-    private static int MonitorId(TestDesktop desk, string name)
-    {
-        using var document = JsonDocument.Parse(desk.Send("j/monitors"));
-        return document.RootElement.EnumerateArray()
-            .Single(monitor => monitor.GetProperty("name").GetString() == name)
-            .GetProperty("id").GetInt32();
     }
 
     private static void ResetWindow(TestDesktop desk)

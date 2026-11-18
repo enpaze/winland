@@ -130,57 +130,57 @@ public class ScrollingBehaviorTests
 
         desk.Spawn("tiledOne");
         desk.Ok("fullscreen", "0");
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false, visible: false);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
         desk.Spawn("tiledTwo");
         desk.Ok("fullscreen", "1");
 
         desk.Ok("focuswindow", "class:tiledOne");
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: true, fullscreen: 2, visible: true);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "tiledOne", floating: false, visible: true, fullscreen: 2);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
         desk.Set("windowrule", "float, class:floating*");
         desk.Set("windowrule", "size 950 500, class:floating*");
         desk.Spawn("floatingOne");
         desk.Spawn("floatingTwo");
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: true, fullscreen: 0, over: true);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingOne", floating: true, visible: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: true, fullscreen: 0, over: true);
 
         desk.Ok("focuswindow", "class:floatingOne");
         desk.Ok("fullscreen", "1");
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: true, fullscreen: 1, over: true);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: false, fullscreen: 2);
-        ExpectClient(desk, "tiledTwo", floating: false, acceptsInput: false, fullscreen: 1);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingOne", floating: true, visible: true, fullscreen: 1, over: true);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "tiledOne", floating: false, visible: false, fullscreen: 2);
+        ExpectClient(desk, "tiledTwo", floating: false, visible: false, fullscreen: 1);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
         desk.Spawn("floatingThree");
-        ExpectClient(desk, "floatingThree", floating: true, acceptsInput: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingThree", floating: true, visible: true, fullscreen: 0, over: true);
 
         desk.Ok("focuswindow", "class:floatingOne");
         desk.Ok("fullscreen", "1 unset");
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: true, fullscreen: 0, over: true);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: true, fullscreen: 0, over: true);
-        ExpectClient(desk, "floatingThree", floating: true, acceptsInput: true, fullscreen: 0, over: true);
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: true, fullscreen: 2);
-        ExpectClient(desk, "tiledTwo", floating: false, acceptsInput: false, fullscreen: 1);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingOne", floating: true, visible: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingThree", floating: true, visible: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "tiledOne", floating: false, visible: true, fullscreen: 2);
+        ExpectClient(desk, "tiledTwo", floating: false, visible: false, fullscreen: 1);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
         desk.Ok("focuswindow", "class:tiledTwo");
-        ExpectClient(desk, "tiledTwo", floating: false, acceptsInput: true, fullscreen: 1);
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "floatingThree", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: false, fullscreen: 2);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "tiledTwo", floating: false, visible: true, fullscreen: 1);
+        ExpectClient(desk, "floatingOne", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingThree", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "tiledOne", floating: false, visible: false, fullscreen: 2);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
         desk.Ok("focuswindow", "class:tiledOne");
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: true, fullscreen: 2);
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "floatingThree", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "tiledTwo", floating: false, acceptsInput: false, fullscreen: 1);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "tiledOne", floating: false, visible: true, fullscreen: 2);
+        ExpectClient(desk, "floatingOne", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingThree", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "tiledTwo", floating: false, visible: false, fullscreen: 1);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
     }
 
     [TestMethod]
@@ -215,16 +215,16 @@ public class ScrollingBehaviorTests
 
         desk.Ok("focuswindow", "class:kitty_A");
         desk.Ok("fullscreen", "0 set");
-        ExpectFullscreen(desk, 2, 2);
+        ExpectFullscreen(desk, 2);
 
         desk.Ok("fullscreen", "0 unset");
-        ExpectFullscreen(desk, 0, 0);
+        ExpectFullscreen(desk, 0);
 
         desk.Ok("fullscreen", "1 toggle");
-        ExpectFullscreen(desk, 1, 1);
+        ExpectFullscreen(desk, 1);
 
         desk.Ok("fullscreen", "1 toggle");
-        ExpectFullscreen(desk, 0, 0);
+        ExpectFullscreen(desk, 0);
     }
 
     [TestMethod]
@@ -264,10 +264,10 @@ public class ScrollingBehaviorTests
         desk.Spawn("kitty_B");
 
         desk.Ok("fullscreen", "0 default");
-        ExpectFullscreen(desk, 2, 2);
+        ExpectFullscreen(desk, 2);
 
         desk.CloseActive();
-        ExpectFullscreen(desk, 0, 0);
+        ExpectFullscreen(desk, 0);
     }
 
     [TestMethod]
@@ -450,18 +450,18 @@ public class ScrollingBehaviorTests
             desk.Ok("fullscreen", mode + " set" + handler);
             Assert.AreEqual("kitty_tiled", desk.ActiveClass());
             Assert.IsFalse(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, expected, expected);
+            ExpectFullscreen(desk, expected);
 
             desk.Spawn("kitty_floated");
             Assert.AreEqual("kitty_floated", desk.ActiveClass());
             Assert.IsTrue(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, 0, 0);
+            ExpectFullscreen(desk, 0);
 
             desk.Ok("workspace", "2");
             desk.Ok("workspace", "1");
             Assert.AreEqual("kitty_floated", desk.ActiveClass());
             Assert.IsTrue(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, 0, 0);
+            ExpectFullscreen(desk, 0);
 
             CloseAll(desk);
             Assert.IsEmpty(desk.Clients());
@@ -490,30 +490,23 @@ public class ScrollingBehaviorTests
     private static void ExpectPlace(TestDesktop desk, string windowClass, string at, string size) =>
         Assert.AreEqual((at, size), desk.PlaceOf(windowClass));
 
-    private static void ExpectFullscreen(TestDesktop desk, int fullscreen, int fullscreenClient)
-    {
-        var active = desk.ActiveWindow();
-        Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(active));
-        Assert.AreEqual(fullscreenClient, TestDesktop.FullscreenClient(active));
-    }
+    private static void ExpectFullscreen(TestDesktop desk, int fullscreen) =>
+        Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(desk.ActiveWindow()));
 
     private static void ExpectActiveFullscreen(TestDesktop desk, string windowClass, int mode)
     {
         Assert.AreEqual(windowClass, desk.ActiveClass());
-        ExpectFullscreen(desk, mode, mode);
+        ExpectFullscreen(desk, mode);
     }
 
-    private static void ExpectClient(TestDesktop desk, string windowClass, bool floating, bool acceptsInput, int fullscreen, bool? over = null, bool? visible = null)
+    private static void ExpectClient(TestDesktop desk, string windowClass, bool floating, bool visible, int fullscreen, bool? over = null)
     {
         var client = desk.Client(windowClass);
         Assert.AreEqual(floating, TestDesktop.Floating(client));
         if (over is bool allowed)
             Assert.AreEqual(allowed, client.GetProperty("allowedOverFullscreen").GetBoolean());
-        if (visible is bool shown)
-            Assert.AreEqual(shown, client.GetProperty("visible").GetBoolean());
-        Assert.AreEqual(acceptsInput, client.GetProperty("acceptsInput").GetBoolean());
+        Assert.AreEqual(visible, client.GetProperty("visible").GetBoolean());
         Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(client));
-        Assert.AreEqual(fullscreen, TestDesktop.FullscreenClient(client));
     }
 
     private static void ExpectUnmovedByMaximize(TestDesktop desk, string[] names)

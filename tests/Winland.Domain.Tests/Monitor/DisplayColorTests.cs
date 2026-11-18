@@ -9,6 +9,5 @@ public class DisplayColorTests
         Assert.AreEqual("XRGB2101010", DisplayColors.Format(10));
         Assert.AreEqual("XRGB8888", DisplayColors.Format(8));
         Assert.AreEqual("", DisplayColors.Format(0));
-        Assert.AreEqual("srgb", DisplayColors.StandardPreset);
     }
 }

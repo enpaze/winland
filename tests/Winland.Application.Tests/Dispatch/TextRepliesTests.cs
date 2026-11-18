@@ -13,9 +13,10 @@ public class TextRepliesTests
 
         var clients = core.Execute("clients").Text;
 
-        Assert.StartsWith("Window 2a -> shell:\n\tmapped: 1\n\thidden: 0\n\tvisible: 1\n\tacceptsInput: 1\n", clients, StringComparison.Ordinal);
-        Assert.Contains("\n\tworkspace: 1 (1) on monitor \n\tfloating: 0\n\tmonitor: 0\n\tclass: term\n\ttitle: shell\n", clients, StringComparison.Ordinal);
-        Assert.Contains("\n\tgrouped: 0\n\tstableID: 2a\n\n", clients, StringComparison.Ordinal);
+        Assert.StartsWith("Window 2a -> shell:\n\thidden: 0\n\tvisible: 1\n\tat: 0,0\n", clients, StringComparison.Ordinal);
+        Assert.Contains("\n\tworkspace: 1\n\tfloating: 0\n\tmonitor: \n\tclass: term\n\ttitle: shell\n", clients, StringComparison.Ordinal);
+        Assert.Contains("\n\tfullscreen: 0\n\tfullscreenHandler: default\n", clients, StringComparison.Ordinal);
+        Assert.Contains("\n\tgrouped: 0\n\n", clients, StringComparison.Ordinal);
         Assert.EndsWith("\n\n", clients, StringComparison.Ordinal);
         Assert.AreEqual(clients, core.Execute("activewindow").Text);
         Assert.StartsWith("[", core.Execute("j/clients").Text, StringComparison.Ordinal);
@@ -36,7 +37,7 @@ public class TextRepliesTests
         Assert.Contains("\n\tclass: app class\n\ttitle: title Window 99 -> forged: line\n", clients, StringComparison.Ordinal);
         Assert.Contains("\n\tinitialTitle: title Window 99 -> forged: line\n", clients, StringComparison.Ordinal);
         Assert.AreEqual(clients, core.Execute("activewindow").Text);
-        Assert.Contains("\n\tlastwindowtitle: title Window 99 -> forged: line\n", core.Execute("workspaces").Text, StringComparison.Ordinal);
+        Assert.Contains("\n\tlastWindowTitle: title Window 99 -> forged: line\n", core.Execute("workspaces").Text, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -47,8 +48,8 @@ public class TextRepliesTests
 
         var workspaces = core.Execute("workspaces").Text;
 
-        Assert.StartsWith("workspace 1 (1) on monitor ", workspaces, StringComparison.Ordinal);
-        Assert.Contains("\n\twindows: 1\n\thasfullscreen: 0\n\tlastwindow: 0x1\n", workspaces, StringComparison.Ordinal);
+        Assert.StartsWith("workspace 1 on monitor :\n\tmonitorId: 0\n", workspaces, StringComparison.Ordinal);
+        Assert.Contains("\n\twindows: 1\n\thasFullscreen: 0\n\tlastWindow: 0x1\n", workspaces, StringComparison.Ordinal);
         Assert.AreEqual(workspaces, core.Execute("activeworkspace").Text);
     }
 
@@ -61,9 +62,9 @@ public class TextRepliesTests
         var monitors = core.Execute("monitors").Text;
 
         Assert.StartsWith("Monitor " + @"\\.\DISPLAY1" + " (ID 0):\n\t1920x1080@", monitors, StringComparison.Ordinal);
-        Assert.Contains("\n\tfocused: yes\n\tdpmsStatus: 1\n\tvrr: false\n", monitors, StringComparison.Ordinal);
-        Assert.Contains("\n\tsolitaryBlockedBy: null\n", monitors, StringComparison.Ordinal);
-        Assert.EndsWith("\t\tvrrCapable: no\n\n", monitors, StringComparison.Ordinal);
+        Assert.Contains("\n\tactive workspace: 1\n\tspecial workspace: \n", monitors, StringComparison.Ordinal);
+        Assert.Contains("\n\tfocused: yes\n\tdisabled: false\n\tcurrentFormat: \n", monitors, StringComparison.Ordinal);
+        Assert.EndsWith("\t\tbt2020: no\n\n", monitors, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -162,7 +163,7 @@ public class TextRepliesTests
             path + ":1: Unsupported keyword 'blur'.\n" + colors + ":3: Invalid modifier 'X'.\n" + path + ": Could not read config.",
             core.Execute("configerrors").Text);
         Assert.AreEqual(
-            "[\"line 1: Unsupported keyword 'blur'.\",\"line 3: Invalid modifier 'X'.\",\"Could not read config.\"]",
+            """[{"file":"C:\\winland\\winland.conf","line":1,"message":"Unsupported keyword 'blur'."},{"file":"C:\\winland\\colors.conf","line":3,"message":"Invalid modifier 'X'."},{"file":"C:\\winland\\winland.conf","line":0,"message":"Could not read config."}]""",
             core.Execute("j/configerrors").Text);
     }
 

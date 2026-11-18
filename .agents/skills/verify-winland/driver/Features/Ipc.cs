@@ -29,8 +29,13 @@ public class Ipc
             && focused.GetProperty("class").GetString() == "WinlandVerifyWindow");
         run.Focus(window);
         Assert.Contains("WinlandVerify 1", run.Ask("clients"), StringComparison.Ordinal);
-        Assert.AreEqual("WinlandVerify 1", run.Json("activewindow").GetProperty("title").GetString());
-        Assert.AreEqual(1, run.Json("activeworkspace").GetProperty("windows").GetInt32());
+        var active = run.Json("activewindow");
+        Assert.AreEqual("WinlandVerify 1", active.GetProperty("title").GetString());
+        Assert.AreEqual("address hidden visible at size workspace floating monitor class title initialClass initialTitle pid pinned fullscreen fullscreenHandler allowedOverFullscreen grouped", Keys(active));
+        var activeWorkspace = run.Json("activeworkspace");
+        Assert.AreEqual(1, activeWorkspace.GetProperty("windows").GetInt32());
+        Assert.AreEqual(activeWorkspace.GetProperty("monitor").GetString(), active.GetProperty("monitor").GetString());
+        Assert.AreEqual("id type name monitor monitorId windows hasFullscreen lastWindow lastWindowTitle tiledLayout", Keys(activeWorkspace));
         Assert.Contains(workspace => workspace.GetProperty("id").GetInt32() == 1, run.Json("workspaces").EnumerateArray());
 
         var found = run.Json("inspect", "address:" + VerifyRun.Address(window));
@@ -64,6 +69,10 @@ public class Ipc
         Assert.AreEqual(1, run.Cli("clients").ExitCode);
         var version = run.Ask("version");
         Assert.MatchesRegex(@"^winland \S+ \(\S+\)$", version);
-        Assert.StartsWith("winland " + run.Json("version").GetProperty("version").GetString() + " (", version, StringComparison.Ordinal);
+        var versionJson = run.Json("version");
+        Assert.StartsWith("winland " + versionJson.GetProperty("version").GetString() + " (", version, StringComparison.Ordinal);
+        Assert.AreEqual("version commit dirty", Keys(versionJson));
     });
+
+    private static string Keys(JsonElement json) => string.Join(' ', json.EnumerateObject().Select(property => property.Name));
 }
