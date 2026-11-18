@@ -1,12 +1,16 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class DomainDependencyTests
 {
-    [Fact]
+    [TestMethod]
     public void TheDomainReferencesOnlyTheBaseClassLibrary()
     {
         var references = typeof(WindowId).Assembly.GetReferencedAssemblies().Select(name => name.Name!);
 
-        Assert.All(references, name => Assert.True(name.StartsWith("System", StringComparison.Ordinal), name));
+        foreach (var name in references)
+{
+    Assert.IsTrue(name.StartsWith("System", StringComparison.Ordinal), name);
+}
     }
 }

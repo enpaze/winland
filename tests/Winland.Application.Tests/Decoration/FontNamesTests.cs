@@ -1,19 +1,20 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class FontNamesTests
 {
-    [Theory]
-    [InlineData("Sans", "Segoe UI")]
-    [InlineData("sans-serif", "Segoe UI")]
-    [InlineData("", "Segoe UI")]
-    [InlineData(null, "Segoe UI")]
-    [InlineData("Monospace", "Consolas")]
-    [InlineData("serif", "Cambria")]
-    [InlineData(" Fira Code ", "Fira Code")]
+    [TestMethod]
+    [DataRow("Sans", "Segoe UI")]
+    [DataRow("sans-serif", "Segoe UI")]
+    [DataRow("", "Segoe UI")]
+    [DataRow(null, "Segoe UI")]
+    [DataRow("Monospace", "Consolas")]
+    [DataRow("serif", "Cambria")]
+    [DataRow(" Fira Code ", "Fira Code")]
     public void GenericNamesMapToWindowsFonts(string? family, string font) =>
-        Assert.Equal(font, FontNames.Windows(family));
+        Assert.AreEqual(font, FontNames.Windows(family));
 
-    [Fact]
+    [TestMethod]
     public void AnUnnamedTabBarUsesTheWindowsInterfaceFont()
     {
         var core = new WindowManager(ConfigParser.Parse(""));
@@ -21,9 +22,9 @@ public class FontNamesTests
         core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 800, 600)));
         core.Execute("dispatch togglegroup");
 
-        Assert.Equal("Segoe UI", Assert.Single(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
+        Assert.AreEqual("Segoe UI", Assert.ContainsSingle(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
 
         core.Handle(new Configure(ConfigParser.Parse("group:groupbar:font_family = Fira Code\n")));
-        Assert.Equal("Fira Code", Assert.Single(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
+        Assert.AreEqual("Fira Code", Assert.ContainsSingle(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
     }
 }

@@ -1,8 +1,9 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class SessionEffectTests
 {
-    [Fact]
+    [TestMethod]
     public void HaltInvokesTheInstalledStop()
     {
         var stopped = 0;
@@ -10,7 +11,7 @@ public class SessionEffectTests
         try
         {
             SessionHalt.Request();
-            Assert.Equal(1, stopped);
+            Assert.AreEqual(1, stopped);
         }
         finally
         {

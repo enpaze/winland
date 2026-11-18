@@ -1,21 +1,22 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class PointerSourceTests
 {
-    [Theory]
-    [InlineData(0u, 0ul, PointerSource.Mouse)]
-    [InlineData(1u, 0ul, PointerSource.Injected)]
-    [InlineData(1u, 0xFF515780ul, PointerSource.Touch)]
-    [InlineData(1u, 0xFF515700ul, PointerSource.Pen)]
-    [InlineData(0u, 0xFF515701ul, PointerSource.Pen)]
-    [InlineData(0u, 0xFF515600ul, PointerSource.Mouse)]
+    [TestMethod]
+    [DataRow(0u, 0ul, PointerSource.Mouse)]
+    [DataRow(1u, 0ul, PointerSource.Injected)]
+    [DataRow(1u, 0xFF515780ul, PointerSource.Touch)]
+    [DataRow(1u, 0xFF515700ul, PointerSource.Pen)]
+    [DataRow(0u, 0xFF515701ul, PointerSource.Pen)]
+    [DataRow(0u, 0xFF515600ul, PointerSource.Mouse)]
     public void TheSignatureTellsTouchAndPensApart(uint flags, ulong extra, PointerSource expected) =>
-        Assert.Equal(expected, PointerSources.Of(flags, extra));
+        Assert.AreEqual(expected, PointerSources.Of(flags, extra));
 }
 
 public partial class CursorIdleTests
 {
-    [Fact]
+    [TestMethod]
     public void TouchHidesTheCursorUntilTheMouseMoves()
     {
         var cursor = new FakeCursor();
@@ -23,9 +24,9 @@ public partial class CursorIdleTests
         idle.Configure(new CursorBehavior(false));
 
         idle.Touched();
-        Assert.True(cursor.Hidden);
+        Assert.IsTrue(cursor.Hidden);
 
         idle.Moved();
-        Assert.False(cursor.Hidden);
+        Assert.IsFalse(cursor.Hidden);
     }
 }

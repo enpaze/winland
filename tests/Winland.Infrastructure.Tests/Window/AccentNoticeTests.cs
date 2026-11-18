@@ -1,25 +1,26 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class AccentNoticeTests
 {
-    [Fact]
+    [TestMethod]
     public void ColorizationSystemColorsAndSettingsAskForANewAccent()
     {
-        Assert.True(AccentNotices.Changed(AccentNotices.ColorizationChanged));
-        Assert.True(AccentNotices.Changed(AccentNotices.SystemColorChange));
-        Assert.True(AccentNotices.Changed(AccentNotices.SettingChange));
-        Assert.False(AccentNotices.Changed(0x0010));
+        Assert.IsTrue(AccentNotices.Changed(AccentNotices.ColorizationChanged));
+        Assert.IsTrue(AccentNotices.Changed(AccentNotices.SystemColorChange));
+        Assert.IsTrue(AccentNotices.Changed(AccentNotices.SettingChange));
+        Assert.IsFalse(AccentNotices.Changed(0x0010));
     }
 
-    [Fact]
+    [TestMethod]
     public void AReadAccentIsOpaque()
     {
         var color = SystemAccent.ReadWindows();
         if (color is BorderColor read)
-            Assert.Equal(0xFF, read.A);
+            Assert.AreEqual(0xFF, read.A);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheHostFeedsTheAccentIntoTheCoreAndSkipsAnUnchangedRead()
     {
         var previous = SystemAccent.Read;
@@ -38,7 +39,7 @@ public class AccentNoticeTests
             host.NoteAccent();
             host.NoteAccent();
 
-            Assert.Equal(2, reads);
+            Assert.AreEqual(2, reads);
         }
         finally
         {
@@ -46,7 +47,7 @@ public class AccentNoticeTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AConfiguredBorderWinsOverTheAccentTheHostReads()
     {
         var previous = SystemAccent.Read;

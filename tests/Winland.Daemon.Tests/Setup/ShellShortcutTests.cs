@@ -1,5 +1,6 @@
 namespace Winland.Daemon.Tests;
 
+[TestClass]
 public sealed class ShellShortcutTests : IDisposable
 {
     private readonly string link = Path.Combine(Path.GetTempPath(), "winland-shortcut-" + Guid.NewGuid().ToString("N") + ".lnk");
@@ -10,9 +11,9 @@ public sealed class ShellShortcutTests : IDisposable
             File.Delete(link);
     }
 
-    [Theory]
-    [InlineData(@"C:\Program Files\Winland\winland.exe")]
-    [InlineData(@"C:\Program Files\Winland2\winland.exe")]
+    [TestMethod]
+    [DataRow(@"C:\Program Files\Winland\winland.exe")]
+    [DataRow(@"C:\Program Files\Winland2\winland.exe")]
     public void TheShortcutCarriesTheAppUserModelId(string target)
     {
         ShellShortcut.Write(
@@ -23,6 +24,6 @@ public sealed class ShellShortcutTests : IDisposable
 
         var bytes = File.ReadAllBytes(link);
         var appUserModelId = System.Text.Encoding.Unicode.GetBytes("Winland.Winland");
-        Assert.True(bytes.AsSpan().IndexOf(appUserModelId) >= 0, "The shortcut must contain the AppUserModelID.");
+        Assert.IsTrue(bytes.AsSpan().IndexOf(appUserModelId) >= 0, "The shortcut must contain the AppUserModelID.");
     }
 }

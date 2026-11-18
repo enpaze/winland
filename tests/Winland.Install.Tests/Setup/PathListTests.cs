@@ -1,35 +1,36 @@
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class PathListTests
 {
-    [Fact]
+    [TestMethod]
     public void AddAppendsTheFolderAndLeavesTheOtherEntriesUnexpanded()
     {
         var path = PathList.Add(@"%SystemRoot%\system32;C:\Tools", @"C:\Program Files\Winland");
 
-        Assert.Equal(@"%SystemRoot%\system32;C:\Tools;C:\Program Files\Winland", path);
+        Assert.AreEqual(@"%SystemRoot%\system32;C:\Tools;C:\Program Files\Winland", path);
     }
 
-    [Fact]
+    [TestMethod]
     public void AddDoesNothingWhenTheFolderIsAlreadyThere()
     {
         const string current = @"C:\Tools;C:\Program Files\Winland\;C:\Other";
 
-        Assert.Null(PathList.Add(current, @"C:\Program Files\Winland"));
+        Assert.IsNull(PathList.Add(current, @"C:\Program Files\Winland"));
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveDropsOnlyThatFolder()
     {
         var path = PathList.Remove(@"C:\Tools;C:\Program Files\Winland;C:\Other", @"C:\Program Files\Winland");
 
-        Assert.Equal(@"C:\Tools;C:\Other", path);
+        Assert.AreEqual(@"C:\Tools;C:\Other", path);
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveDoesNothingWhenTheFolderIsAbsent()
     {
-        Assert.Null(PathList.Remove(@"%SystemRoot%\system32", @"C:\Program Files\Winland"));
-        Assert.Null(PathList.Remove(null, @"C:\Program Files\Winland"));
+        Assert.IsNull(PathList.Remove(@"%SystemRoot%\system32", @"C:\Program Files\Winland"));
+        Assert.IsNull(PathList.Remove(null, @"C:\Program Files\Winland"));
     }
 }

@@ -114,6 +114,30 @@ function Test-MarkdownLinks([string]$Root, [string[]]$Tracked) {
     return $broken
 }
 
+function Find-BannedFramework([string]$Root) {
+    $token = 'x' + 'unit'
+    $allowed = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($extension in @('.cs', '.csproj', '.props', '.targets', '.json', '.md', '.yml', '.yaml', '.ps1', '.slnx', '.config')) {
+        [void]$allowed.Add($extension)
+    }
+    $hits = New-Object System.Collections.Generic.List[string]
+    $files = @(& git -c core.quotepath=off -C $Root ls-files)
+    if ($LASTEXITCODE -ne 0) { throw "git ls-files failed in $Root" }
+    foreach ($relative in $files) {
+        $extension = [System.IO.Path]::GetExtension($relative)
+        if (-not $allowed.Contains($extension)) { continue }
+        $path = Join-Path $Root ($relative -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
+        $text = [System.IO.File]::ReadAllText($path)
+        if ($text.IndexOf($token, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            $hits.Add($relative)
+        }
+    }
+    return $hits
+}
+
+if ($MyInvocation.InvocationName -eq '.') { return }
+
 $failed = 0
 $scratch = $null
 $root = $repoRoot
@@ -166,6 +190,16 @@ try {
 
     & (Join-Path $PSScriptRoot 'comments.ps1') -Root $root
     if ($LASTEXITCODE -ne 0) { $failed = 1 }
+
+    $banned = @(Find-BannedFramework $root)
+    if ($banned.Count -eq 0) {
+        Write-Output 'no banned test framework reference'
+    } else {
+        foreach ($hit in $banned) {
+            Write-Output "Banned test framework reference: $hit"
+        }
+        $failed = 1
+    }
 
     if (-not $SkipBuild) {
         $solution = Join-Path $root 'Winland.slnx'

@@ -1,8 +1,9 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class BorderlessFrameTests
 {
-    [Fact]
+    [TestMethod]
     public void ModeTwoDropsTheFrameAndLeavingRestoresIt()
     {
         var frames = new FakeFrames();
@@ -12,19 +13,19 @@ public class BorderlessFrameTests
 
         borderless.Apply(window, true);
 
-        Assert.Equal(BorderlessStyle.Strip(0x00CF0000), frames.Style[window]);
-        Assert.True(borderless.Owns(window));
-        Assert.Equal(1, frames.Writes);
+        Assert.AreEqual(BorderlessStyle.Strip(0x00CF0000), frames.Style[window]);
+        Assert.IsTrue(borderless.Owns(window));
+        Assert.AreEqual(1, frames.Writes);
 
         borderless.Apply(window, true);
-        Assert.Equal(1, frames.Writes);
+        Assert.AreEqual(1, frames.Writes);
 
         borderless.Apply(window, false);
-        Assert.Equal(0x00CF0000u, frames.Style[window]);
-        Assert.False(borderless.Owns(window));
+        Assert.AreEqual(0x00CF0000u, frames.Style[window]);
+        Assert.IsFalse(borderless.Owns(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void LeavingPutsBackOnlyTheFrameAndKeepsWhatChangedSince()
     {
         const uint Visible = 0x10000000;
@@ -41,11 +42,11 @@ public class BorderlessFrameTests
         borderless.Apply(window, false);
         borderless.PutBack(crashed, 0x00CF0000 | Visible);
 
-        Assert.Equal(0x00CF0000u | Disabled, frames.Style[window]);
-        Assert.Equal(0x00CF0000u | Disabled, frames.Style[crashed]);
+        Assert.AreEqual(0x00CF0000u | Disabled, frames.Style[window]);
+        Assert.AreEqual(0x00CF0000u | Disabled, frames.Style[crashed]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReleasingAllSkipsAWindowThatStoppedAnsweringAndKeepsItForTheNextStart()
     {
         var frames = new FakeFrames();
@@ -61,13 +62,13 @@ public class BorderlessFrameTests
 
         borderless.ReleaseAll();
 
-        Assert.Equal(BorderlessStyle.Strip(0x00CF0000), frames.Style[hung]);
-        Assert.Equal(0x00CF0000u, frames.Style[answering]);
+        Assert.AreEqual(BorderlessStyle.Strip(0x00CF0000), frames.Style[hung]);
+        Assert.AreEqual(0x00CF0000u, frames.Style[answering]);
         var snapshot = borderless.Stamp(new RecoverySnapshot([Client(hung), Client(answering)]));
-        Assert.Equal([0x00CF0000u, null], snapshot.Clients.Select(client => client.FrameStyle));
+        Assert.AreSequenceEqual([0x00CF0000u, null], snapshot.Clients.Select(client => client.FrameStyle));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatCannotChangeStyleIsNotRemembered()
     {
         var frames = new FakeFrames { FailWrite = true };
@@ -77,11 +78,11 @@ public class BorderlessFrameTests
 
         borderless.Apply(window, true);
 
-        Assert.False(borderless.Owns(window));
-        Assert.Equal(0x00CF0000u, frames.Style[window]);
+        Assert.IsFalse(borderless.Owns(window));
+        Assert.AreEqual(0x00CF0000u, frames.Style[window]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReleasingAllPutsEveryFrameBack()
     {
         var frames = new FakeFrames();
@@ -95,13 +96,13 @@ public class BorderlessFrameTests
 
         borderless.ReleaseAll();
 
-        Assert.Equal(0x00CF0000u, frames.Style[first]);
-        Assert.Equal(0x00C40000u, frames.Style[second]);
-        Assert.False(borderless.Owns(first));
-        Assert.False(borderless.Owns(second));
+        Assert.AreEqual(0x00CF0000u, frames.Style[first]);
+        Assert.AreEqual(0x00C40000u, frames.Style[second]);
+        Assert.IsFalse(borderless.Owns(first));
+        Assert.IsFalse(borderless.Owns(second));
     }
 
-    [Fact]
+    [TestMethod]
     public void AfterReleasingAllNoFrameIsDropped()
     {
         var frames = new FakeFrames();
@@ -112,11 +113,11 @@ public class BorderlessFrameTests
 
         borderless.Apply(window, true);
 
-        Assert.Equal(0x00CF0000u, frames.Style[window]);
-        Assert.False(borderless.Owns(window));
+        Assert.AreEqual(0x00CF0000u, frames.Style[window]);
+        Assert.IsFalse(borderless.Owns(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheOriginalStyleIsRecordedAndAfterACrashWrittenBackInsteadOfTheStrippedOne()
     {
         var frames = new FakeFrames();
@@ -131,29 +132,29 @@ public class BorderlessFrameTests
             new RecoveredClient(window, WorkspaceId.Initial, MonitorId.Primary, false, "", "", 1),
             new RecoveredClient(other, WorkspaceId.Initial, MonitorId.Primary, false, "", "", 1),
         ]));
-        Assert.Equal(0x00CF0000u, stamped.Clients[0].FrameStyle);
-        Assert.Null(stamped.Clients[1].FrameStyle);
+        Assert.AreEqual(0x00CF0000u, stamped.Clients[0].FrameStyle);
+        Assert.IsNull(stamped.Clients[1].FrameStyle);
 
         var restarted = new BorderlessFrame(frames);
         restarted.PutBack(window, stamped.Clients[0].FrameStyle!.Value);
-        Assert.Equal(0x00CF0000u, frames.Style[window]);
+        Assert.AreEqual(0x00CF0000u, frames.Style[window]);
 
         restarted.Apply(window, true);
         restarted.Apply(window, false);
-        Assert.Equal(0x00CF0000u, frames.Style[window]);
+        Assert.AreEqual(0x00CF0000u, frames.Style[window]);
     }
 
-    [Theory]
-    [InlineData(0x00CF0000u, 0x800B0000u)]
-    [InlineData(0x10000000u, 0x90000000u)]
-    [InlineData(0x80000000u, 0x80000000u)]
-    [InlineData(0x16CF0001u, 0x960B0001u)]
+    [TestMethod]
+    [DataRow(0x00CF0000u, 0x800B0000u)]
+    [DataRow(0x10000000u, 0x90000000u)]
+    [DataRow(0x80000000u, 0x80000000u)]
+    [DataRow(0x16CF0001u, 0x960B0001u)]
     public void StrippingKeepsEveryBitButTheFrame(uint style, uint stripped)
     {
-        Assert.Equal(stripped, BorderlessStyle.Strip(style));
+        Assert.AreEqual(stripped, BorderlessStyle.Strip(style));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowWithoutAFrameIsRememberedButNotWritten()
     {
         var frames = new FakeFrames();
@@ -163,11 +164,11 @@ public class BorderlessFrameTests
 
         borderless.Apply(window, true);
 
-        Assert.Equal(0, frames.Writes);
-        Assert.True(borderless.Owns(window));
+        Assert.AreEqual(0, frames.Writes);
+        Assert.IsTrue(borderless.Owns(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowWhoseStyleCannotBeReadIsLeftAlone()
     {
         var frames = new FakeFrames();
@@ -176,11 +177,11 @@ public class BorderlessFrameTests
 
         borderless.Apply(window, true);
 
-        Assert.Equal(0, frames.Writes);
-        Assert.False(borderless.Owns(window));
+        Assert.AreEqual(0, frames.Writes);
+        Assert.IsFalse(borderless.Owns(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void PuttingBackForgetsWhatThisRunDropped()
     {
         var frames = new FakeFrames();
@@ -193,13 +194,13 @@ public class BorderlessFrameTests
         var writes = frames.Writes;
         borderless.Release(window);
 
-        Assert.False(borderless.Owns(window));
-        Assert.Equal(writes, frames.Writes);
+        Assert.IsFalse(borderless.Owns(window));
+        Assert.AreEqual(writes, frames.Writes);
 
-        Assert.Equal(0x00CB0000u, frames.Style[window]);
+        Assert.AreEqual(0x00CB0000u, frames.Style[window]);
     }
 
-    [Fact]
+    [TestMethod]
     public void StampChangesOnlyTheStylesThatAreWrong()
     {
         var frames = new FakeFrames();
@@ -221,10 +222,13 @@ public class BorderlessFrameTests
         var unchanged = borderless.Stamp(right);
         var corrected = borderless.Stamp(wrong);
 
-        Assert.Same(right, unchanged);
-        Assert.All(corrected.Clients, client => Assert.Null(client.FrameStyle));
-        Assert.Throws<ArgumentNullException>(() => borderless.Stamp(null!));
-        Assert.Throws<ArgumentNullException>(() => new BorderlessFrame(null!));
+        Assert.AreSame(right, unchanged);
+        foreach (var client in corrected.Clients)
+{
+    Assert.IsNull(client.FrameStyle);
+}
+        Assert.ThrowsExactly<ArgumentNullException>(() => borderless.Stamp(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => new BorderlessFrame(null!));
     }
 
     private static RecoveredClient Client(WindowId window) =>

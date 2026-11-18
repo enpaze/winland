@@ -2,6 +2,7 @@ using System.IO.Compression;
 
 namespace Winland.Install.Tests;
 
+[TestClass]
 public sealed class ReleasePackageTests : IDisposable
 {
     private readonly string root = Path.Combine(Path.GetTempPath(), "winland-zip-" + Guid.NewGuid().ToString("N"));
@@ -15,7 +16,7 @@ public sealed class ReleasePackageTests : IDisposable
             Directory.Delete(root, recursive: true);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExtractReturnsWinlandExe()
     {
         var archive = Zip(
@@ -25,29 +26,29 @@ public sealed class ReleasePackageTests : IDisposable
 
         var executable = package.Extract(archive, Path.Combine(root, "stage"));
 
-        Assert.Equal(Path.Combine(root, "stage", "winland", "winland.exe"), executable);
-        Assert.Equal("daemon", File.ReadAllText(executable));
+        Assert.AreEqual(Path.Combine(root, "stage", "winland", "winland.exe"), executable);
+        Assert.AreEqual("daemon", File.ReadAllText(executable));
     }
 
-    [Fact]
+    [TestMethod]
     public void ExtractRefusesAnEntryThatLeavesTheFolder()
     {
         var archive = Zip(
             ("winland/winland.exe", "daemon"),
             ("../outside.txt", "no"));
 
-        var error = Assert.Throws<InvalidOperationException>(() => package.Extract(archive, Path.Combine(root, "stage")));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => package.Extract(archive, Path.Combine(root, "stage")));
 
         Assert.Contains("Refusing to unpack", error.Message, StringComparison.Ordinal);
-        Assert.False(File.Exists(Path.Combine(root, "outside.txt")));
+        Assert.IsFalse(File.Exists(Path.Combine(root, "outside.txt")));
     }
 
-    [Fact]
+    [TestMethod]
     public void ExtractRefusesAZipWithNoDaemon()
     {
         var archive = Zip(("winland/winland.dll", "lib"));
 
-        var error = Assert.Throws<InvalidOperationException>(() => package.Extract(archive, Path.Combine(root, "stage")));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => package.Extract(archive, Path.Combine(root, "stage")));
 
         Assert.Contains("winland.exe", error.Message, StringComparison.Ordinal);
     }

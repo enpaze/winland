@@ -4,6 +4,7 @@ using Winland.Install;
 
 namespace Winland.Verify.Tests;
 
+[TestClass]
 public partial class FeatureMapTests
 {
     private const string Skill = ".agents/skills/verify-winland";
@@ -14,10 +15,10 @@ public partial class FeatureMapTests
     private static readonly string Folder = Path.Combine(Root, Skill, "features");
     private static readonly IReadOnlyList<Feature> Map = Feature.ReadAll(Folder);
 
-    [Fact]
+    [TestMethod]
     public void EveryFeatureFileHasTheSkillShape()
     {
-        Assert.NotEmpty(Map);
+        Assert.IsNotEmpty(Map);
         var problems = new List<string>();
         foreach (var feature in Map)
         {
@@ -45,10 +46,10 @@ public partial class FeatureMapTests
                 .Select(sub => $"{file}: the sub-feature `{sub.Kind}:{sub.Name}` has an unknown kind. Use {string.Join(", ", Kinds.Select(kind => kind + ":"))} or a plain id."));
         }
 
-        Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
+        Assert.IsTrue(problems.Count == 0, string.Join(Environment.NewLine, problems));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheIndexListsEveryFeatureFile()
     {
         var linked = IndexLinkPattern().Matches(File.ReadAllText(Path.Combine(Folder, "README.md")))
@@ -57,11 +58,11 @@ public partial class FeatureMapTests
         var ids = Map.Select(feature => feature.Id).ToList();
         var unlisted = ids.Except(linked, StringComparer.Ordinal).ToList();
         var missing = linked.Except(ids, StringComparer.Ordinal).ToList();
-        Assert.True(unlisted.Count == 0, $"{Skill}/features/README.md does not list these features. Add '- [<Title>](./<id>.md) <what it covers>' under '## Features': " + string.Join(", ", unlisted));
-        Assert.True(missing.Count == 0, $"{Skill}/features/README.md links feature files that do not exist: " + string.Join(", ", missing));
+        Assert.IsTrue(unlisted.Count == 0, $"{Skill}/features/README.md does not list these features. Add '- [<Title>](./<id>.md) <what it covers>' under '## Features': " + string.Join(", ", unlisted));
+        Assert.IsTrue(missing.Count == 0, $"{Skill}/features/README.md links feature files that do not exist: " + string.Join(", ", missing));
     }
 
-    [Fact]
+    [TestMethod]
     public void EverySectionOfTheBehaviorSpecBelongsToAFeature()
     {
         var headings = File.ReadAllLines(Path.Combine(Root, "docs", "behavior.md"))
@@ -75,27 +76,27 @@ public partial class FeatureMapTests
         var broken = Map
             .SelectMany(feature => feature.Spec.Where(anchor => !anchors.Contains(anchor)).Select(anchor => $"{feature.Id}: #{anchor}"))
             .ToList();
-        Assert.True(broken.Count == 0, "These feature files link sections docs/behavior.md does not have: " + string.Join(", ", broken));
+        Assert.IsTrue(broken.Count == 0, "These feature files link sections docs/behavior.md does not have: " + string.Join(", ", broken));
 
         var unclaimed = headings.Where(heading => heading.Level == 2 && !linked.Contains(heading.Anchor)).Select(heading => heading.Anchor).ToList();
-        Assert.True(
+        Assert.IsTrue(
             unclaimed.Count == 0,
             "These sections of docs/behavior.md belong to no feature. Link each from the intro paragraph of the feature file that drives it, or add a feature: " + string.Join(", ", unclaimed));
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryDispatcherBelongsToExactlyOneFeature() =>
         AssertClaimedOnce("dispatcher", WindowManager.DispatcherNames);
 
-    [Fact]
+    [TestMethod]
     public void EveryPipeRequestBelongsToExactlyOneFeature() =>
         AssertClaimedOnce("request", CommandProtocol.VerbForms.Select(form => form.Split(' ')[0]));
 
-    [Fact]
+    [TestMethod]
     public void EveryInstallCommandBelongsToExactlyOneFeature() =>
         AssertClaimedOnce("install", typeof(InstallCommand).GetNestedTypes().Where(type => type.IsSubclassOf(typeof(InstallCommand))).Select(type => type.Name));
 
-    [Fact]
+    [TestMethod]
     public void EveryFeatureHasExactlyOneDriverClass()
     {
         var drivers = Directory.GetFiles(Path.Combine(Root, Skill, "driver", "Features"), "*.cs")
@@ -107,7 +108,7 @@ public partial class FeatureMapTests
             .Where(driver => driver.Ids.Count != 1 || !driver.Text.Contains("VerifyFact]", StringComparison.Ordinal))
             .Select(driver => driver.File)
             .ToList();
-        Assert.True(
+        Assert.IsTrue(
             malformed.Count == 0,
             $"Each file in {Skill}/driver/Features needs exactly one [Trait(\"Feature\", \"<id>\")] naming its feature file, and a [VerifyFact] or [SystemVerifyFact] test: " + string.Join(", ", malformed));
 
@@ -116,17 +117,17 @@ public partial class FeatureMapTests
         var undriven = ids.Except(driven, StringComparer.Ordinal).ToList();
         var unmapped = driven.Except(ids, StringComparer.Ordinal).ToList();
         var twice = driven.GroupBy(id => id, StringComparer.Ordinal).Where(group => group.Count() > 1).Select(group => group.Key).ToList();
-        Assert.True(undriven.Count == 0, $"These features have no driver. Add {Skill}/driver/Features/<Name>.cs with [Trait(\"Feature\", \"<id>\")]: " + string.Join(", ", undriven));
-        Assert.True(unmapped.Count == 0, $"These drivers name features {Skill}/features has no file for. Add the feature file or fix the trait: " + string.Join(", ", unmapped));
-        Assert.True(twice.Count == 0, "These features have more than one driver class. Keep one class per feature: " + string.Join(", ", twice));
+        Assert.IsTrue(undriven.Count == 0, $"These features have no driver. Add {Skill}/driver/Features/<Name>.cs with [Trait(\"Feature\", \"<id>\")]: " + string.Join(", ", undriven));
+        Assert.IsTrue(unmapped.Count == 0, $"These drivers name features {Skill}/features has no file for. Add the feature file or fix the trait: " + string.Join(", ", unmapped));
+        Assert.IsTrue(twice.Count == 0, "These features have more than one driver class. Keep one class per feature: " + string.Join(", ", twice));
     }
 
-    [Fact]
+    [TestMethod]
     public void ClaudeCodeLoadsTheSameSkill()
     {
         var skill = File.ReadAllText(Path.Combine(Root, Skill, "SKILL.md"));
         var copy = Path.Combine(Root, ".claude", "skills", "verify-winland", "SKILL.md");
-        Assert.True(
+        Assert.IsTrue(
             File.Exists(copy) && File.ReadAllText(copy) == skill,
             $"Claude Code reads .claude/skills/verify-winland/SKILL.md, a copy of {Skill}/SKILL.md, because Windows checkouts do not keep symlinks. Copy {Skill}/SKILL.md over it.");
     }
@@ -140,9 +141,9 @@ public partial class FeatureMapTests
         var unclaimed = known.Where(name => !claimed.Any(claim => claim.Name.Equals(name, StringComparison.OrdinalIgnoreCase))).Order(StringComparer.Ordinal).ToList();
         var unknown = claimed.Where(claim => !known.Contains(claim.Name)).Select(claim => $"{claim.Id}: {kind}:{claim.Name}").ToList();
         var twice = claimed.GroupBy(claim => claim.Name, StringComparer.OrdinalIgnoreCase).Where(group => group.Count() > 1).Select(group => $"{group.Key} ({string.Join(", ", group.Select(claim => claim.Id))})").ToList();
-        Assert.True(unclaimed.Count == 0, $"These belong to no feature. Add '- `{kind}:<name>` <what it does>' to '## Sub-features' of the feature whose driver exercises it: " + string.Join(", ", unclaimed));
-        Assert.True(unknown.Count == 0, $"These {kind}: sub-features name nothing the code has. Remove them or use the current name: " + string.Join(", ", unknown));
-        Assert.True(twice.Count == 0, $"These {kind}: sub-features belong to more than one feature. Keep each in one: " + string.Join(", ", twice));
+        Assert.IsTrue(unclaimed.Count == 0, $"These belong to no feature. Add '- `{kind}:<name>` <what it does>' to '## Sub-features' of the feature whose driver exercises it: " + string.Join(", ", unclaimed));
+        Assert.IsTrue(unknown.Count == 0, $"These {kind}: sub-features name nothing the code has. Remove them or use the current name: " + string.Join(", ", unknown));
+        Assert.IsTrue(twice.Count == 0, $"These {kind}: sub-features belong to more than one feature. Keep each in one: " + string.Join(", ", twice));
     }
 
     private static string Anchor(string heading) =>

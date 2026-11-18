@@ -3,6 +3,7 @@ using System.Security.Principal;
 
 namespace Winland.Daemon.Tests;
 
+[TestClass]
 public sealed class FileConfigSourceTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "winland-source-" + Guid.NewGuid().ToString("N"));
@@ -10,7 +11,7 @@ public sealed class FileConfigSourceTests : IDisposable
 
     public FileConfigSourceTests() => Directory.CreateDirectory(_root);
 
-    [Fact]
+    [TestMethod]
     public void APatternInTheConfigFolderDoesNotLookIntoSubfolders()
     {
         Write("a.conf");
@@ -19,10 +20,10 @@ public sealed class FileConfigSourceTests : IDisposable
 
         var matches = new FileConfigSource(_root).Match("*.conf");
 
-        Assert.Equal([Path.Combine(_root, "a.conf")], matches);
+        Assert.AreSequenceEqual([Path.Combine(_root, "a.conf")], matches);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUnreadableFolderDoesNotHideTheOtherMatches()
     {
         Write(@"one\x.conf");
@@ -32,36 +33,36 @@ public sealed class FileConfigSourceTests : IDisposable
 
         var matches = new FileConfigSource(_root).Match(@"*\*.conf");
 
-        Assert.Equal([Path.Combine(_root, "one", "x.conf"), Path.Combine(_root, "two", "y.conf")], matches);
+        Assert.AreSequenceEqual([Path.Combine(_root, "one", "x.conf"), Path.Combine(_root, "two", "y.conf")], matches);
     }
 
-    [Theory]
-    [InlineData(@"C:\*.conf", @"C:\", 0)]
-    [InlineData(@"C:\conf\*.conf", @"C:\conf", 0)]
-    [InlineData(@"C:\conf\*\*.conf", @"C:\conf", 1)]
-    [InlineData(@"C:\conf\**\x\*.conf", @"C:\conf", 2)]
-    [InlineData(@"C:\conf\a?\*.conf", @"C:\conf", 1)]
-    [InlineData(@"C:/conf/*/*.conf", @"C:\conf", 1)]
-    [InlineData(@"\*.conf", @"\", 0)]
-    [InlineData(@"*\x.conf", "", 0)]
+    [TestMethod]
+    [DataRow(@"C:\*.conf", @"C:\", 0)]
+    [DataRow(@"C:\conf\*.conf", @"C:\conf", 0)]
+    [DataRow(@"C:\conf\*\*.conf", @"C:\conf", 1)]
+    [DataRow(@"C:\conf\**\x\*.conf", @"C:\conf", 2)]
+    [DataRow(@"C:\conf\a?\*.conf", @"C:\conf", 1)]
+    [DataRow(@"C:/conf/*/*.conf", @"C:\conf", 1)]
+    [DataRow(@"\*.conf", @"\", 0)]
+    [DataRow(@"*\x.conf", "", 0)]
     public void TheSearchStartsAtTheLastFolderWithoutAWildcard(string pattern, string root, int depth)
     {
         var plan = FileConfigSource.Plan(pattern);
 
-        Assert.Equal((root, depth), plan);
+        Assert.AreEqual((root, depth), plan);
     }
 
-    [Fact]
+    [TestMethod]
     public void ARelativeSourceIsReadFromTheConfigFolder()
     {
         File.WriteAllText(Path.Combine(_root, "colors.conf"), "$accent = red");
 
         var text = new FileConfigSource(_root).Read("colors.conf");
 
-        Assert.Equal("$accent = red", text);
+        Assert.AreEqual("$accent = red", text);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFileAnotherProgramHasOpenIsStillRead()
     {
         var path = Path.Combine(_root, "winland.conf");
@@ -70,10 +71,10 @@ public sealed class FileConfigSourceTests : IDisposable
 
         var text = new FileConfigSource(_root).Read(path);
 
-        Assert.Equal("general { gaps_in = 5 }", text);
+        Assert.AreEqual("general { gaps_in = 5 }", text);
     }
 
-    [Fact]
+    [TestMethod]
     public void AByteOrderMarkSelectsTheEncoding()
     {
         var path = Path.Combine(_root, "winland.conf");
@@ -81,13 +82,13 @@ public sealed class FileConfigSourceTests : IDisposable
 
         var text = new FileConfigSource(_root).Read(path);
 
-        Assert.Equal("$name = Åsa", text);
+        Assert.AreEqual("$name = Åsa", text);
     }
 
-    [Fact]
+    [TestMethod]
     public void AMissingFileReadsAsNothing()
     {
-        Assert.Null(new FileConfigSource(_root).Read("missing.conf"));
+        Assert.IsNull(new FileConfigSource(_root).Read("missing.conf"));
     }
 
     public void Dispose()

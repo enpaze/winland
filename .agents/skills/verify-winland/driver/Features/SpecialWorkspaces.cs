@@ -1,12 +1,14 @@
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "special-workspaces")]
-public class SpecialWorkspaces(ITestOutputHelper output)
+[TestClass]
+public class SpecialWorkspaces
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void ShowsAndHidesASpecialWorkspaceOverTheNormalOne() => VerifyRun.Drive(output, run =>
+    public void ShowsAndHidesASpecialWorkspaceOverTheNormalOne() => VerifyRun.Drive(TestContext, run =>
     {
         run.FollowEvents();
         var (left, right) = run.OpenPair();
@@ -19,7 +21,7 @@ public class SpecialWorkspaces(ITestOutputHelper output)
         run.Dispatch("togglespecialworkspace");
         run.Until("togglespecialworkspace shows the special workspace over workspace 1", () => VerifyRun.Visible(right) && VerifyRun.Visible(left));
         run.UntilEvent("activespecial", "special:special,");
-        Assert.Equal(1, run.ActiveWorkspace());
+        Assert.AreEqual(1, run.ActiveWorkspace());
 
         run.Dispatch("togglespecialworkspace");
         run.Until("togglespecialworkspace again hides it", () => !VerifyRun.Visible(right) && VerifyRun.Visible(left));

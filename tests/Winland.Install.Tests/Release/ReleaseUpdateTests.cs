@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class ReleaseUpdateTests
 {
     private const string Source = @"C:\Users\me\Downloads\Winland\winland\winland.exe";
@@ -42,35 +43,35 @@ public class ReleaseUpdateTests
         tasks.Seed(LogonTaskDefinition.Build(Path.Combine(Machine, "winland.exe"), @"DESKTOP\dante"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFolderThatIsNotAnInstallStopsBeforeTheFeed()
     {
         var feed = new ScriptedFeed(Archive, Sums(Archive), "0.2.0");
 
         var result = Update(feed).Run("0.1.0", @"C:\Dev\winland\winland.exe", Machine, User, elevated: true);
 
-        Assert.IsType<UpdateResult.NotInstalled>(result);
-        Assert.Equal(0, feed.LatestCalls);
-        Assert.Empty(session.Operations);
-        Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
+        Assert.IsExactInstanceOfType<UpdateResult.NotInstalled>(result);
+        Assert.AreEqual(0, feed.LatestCalls);
+        Assert.IsEmpty(session.Operations);
+        TestSequence.Equal((byte[])[8], files.Read(Path.Combine(Machine, "winland.exe")));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheSameVersionStopsBeforeTheZip()
     {
         var feed = new ScriptedFeed(Archive, Sums(Archive), "0.1.0");
 
         var result = Update(feed).Run("0.1.0", MachineExe(), Machine, User, elevated: true);
 
-        Assert.IsType<UpdateResult.Current>(result);
-        Assert.Equal(1, feed.LatestCalls);
-        Assert.Empty(feed.Downloads);
-        Assert.Empty(session.Operations);
-        Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
+        Assert.IsExactInstanceOfType<UpdateResult.Current>(result);
+        Assert.AreEqual(1, feed.LatestCalls);
+        Assert.IsEmpty(feed.Downloads);
+        Assert.IsEmpty(session.Operations);
+        TestSequence.Equal((byte[])[8], files.Read(Path.Combine(Machine, "winland.exe")));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
     }
 
-    [Fact]
+    [TestMethod]
     public void AMachineInstallAsksForAnAdministratorAfterTheHashMatches()
     {
         var feed = new ScriptedFeed(Archive, Sums(Archive), "0.2.0");
@@ -79,14 +80,14 @@ public class ReleaseUpdateTests
         var result = new ReleaseUpdate(feed, package, install, () => throw new InvalidOperationException("staged"), _ => throw new InvalidOperationException("removed"))
             .Run("0.1.0", MachineExe(), Machine, User, elevated: false);
 
-        Assert.IsType<UpdateResult.NeedsAdministrator>(result);
-        Assert.Equal([ArchiveUrl, SumsUrl], feed.Downloads);
-        Assert.Equal(0, package.Calls);
-        Assert.Empty(session.Operations);
-        Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
+        Assert.IsExactInstanceOfType<UpdateResult.NeedsAdministrator>(result);
+        Assert.AreSequenceEqual([ArchiveUrl, SumsUrl], feed.Downloads);
+        Assert.AreEqual(0, package.Calls);
+        Assert.IsEmpty(session.Operations);
+        TestSequence.Equal((byte[])[8], files.Read(Path.Combine(Machine, "winland.exe")));
     }
 
-    [Fact]
+    [TestMethod]
     public void AMismatchedHashChangesNothing()
     {
         var feed = new ScriptedFeed(Archive, Sums(new byte[] { 9 }), "0.2.0");
@@ -96,17 +97,17 @@ public class ReleaseUpdateTests
         var result = new ReleaseUpdate(feed, package, install, () => { staged++; return @"C:\stage"; }, _ => { })
             .Run("0.1.0", MachineExe(), Machine, User, elevated: false);
 
-        Assert.IsType<UpdateResult.Rejected>(result);
-        Assert.Equal([ArchiveUrl, SumsUrl], feed.Downloads);
-        Assert.Equal(0, package.Calls);
-        Assert.Equal(0, staged);
-        Assert.Empty(session.Operations);
-        Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
-        Assert.Empty(tasks.Operations);
+        Assert.IsExactInstanceOfType<UpdateResult.Rejected>(result);
+        Assert.AreSequenceEqual([ArchiveUrl, SumsUrl], feed.Downloads);
+        Assert.AreEqual(0, package.Calls);
+        Assert.AreEqual(0, staged);
+        Assert.IsEmpty(session.Operations);
+        TestSequence.Equal((byte[])[8], files.Read(Path.Combine(Machine, "winland.exe")));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
+        Assert.IsEmpty(tasks.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void ANewerMachineReleaseReplacesTheInstallItWasRunFrom()
     {
         var feed = new ScriptedFeed(Archive, Sums(Archive), "0.2.0");
@@ -114,35 +115,35 @@ public class ReleaseUpdateTests
 
         var result = Update(feed, path => removed = path).Run("0.1.0", MachineExe(), Machine, User, elevated: true);
 
-        var updated = Assert.IsType<UpdateResult.Updated>(result);
-        Assert.Equal("0.2.0", updated.Version);
-        Assert.Equal([1], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([7], files.Read(Path.Combine(User, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
-        Assert.Equal(["stop", "start"], session.Operations);
-        Assert.Empty(session.StartedArguments);
-        Assert.Equal("0.2.0", registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion"));
-        Assert.Empty(tasks.Operations);
-        Assert.Equal(@"C:\stage", removed);
+        var updated = Assert.IsExactInstanceOfType<UpdateResult.Updated>(result);
+        Assert.AreEqual("0.2.0", updated.Version);
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(Machine, "winland.exe")));
+        TestSequence.Equal((byte[])[7], files.Read(Path.Combine(User, "winland.exe")));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
+        Assert.AreSequenceEqual(["stop", "start"], session.Operations);
+        Assert.IsEmpty(session.StartedArguments);
+        Assert.AreEqual("0.2.0", registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion"));
+        Assert.IsEmpty(tasks.Operations);
+        Assert.AreEqual(@"C:\stage", removed);
     }
 
-    [Fact]
+    [TestMethod]
     public void AUserInstallUpdatesWithoutAnAdministrator()
     {
         var feed = new ScriptedFeed(Archive, Sums(Archive), "0.2.0");
 
         var result = Update(feed).Run("0.0.0-dev", UserExe(), Machine, User, elevated: false);
 
-        Assert.IsType<UpdateResult.Updated>(result);
-        Assert.Equal([1], files.Read(Path.Combine(User, "winland.exe")));
-        Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal(["--no-elevate"], session.StartedArguments);
-        Assert.Equal("0.2.0", registry.GetString(RegistryRoot.User, InstallLocations.UninstallKey, "DisplayVersion"));
-        Assert.Null(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion"));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
+        Assert.IsExactInstanceOfType<UpdateResult.Updated>(result);
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(User, "winland.exe")));
+        TestSequence.Equal((byte[])[8], files.Read(Path.Combine(Machine, "winland.exe")));
+        Assert.AreSequenceEqual(["--no-elevate"], session.StartedArguments);
+        Assert.AreEqual("0.2.0", registry.GetString(RegistryRoot.User, InstallLocations.UninstallKey, "DisplayVersion"));
+        Assert.IsNull(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion"));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheSameDevCommitStopsBeforeTheZipEvenWhenTheVersionTextDiffers()
     {
         const string commit = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -150,14 +151,14 @@ public class ReleaseUpdateTests
 
         var result = Apply(feed, "0.1.0-dev.42", MachineExe(), elevated: true, UpdateChannel.Dev, commit);
 
-        Assert.IsType<UpdateResult.Current>(result);
-        Assert.Equal(UpdateChannel.Dev, feed.Requested);
-        Assert.Empty(feed.Downloads);
-        Assert.Empty(session.Operations);
-        Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
+        Assert.IsExactInstanceOfType<UpdateResult.Current>(result);
+        Assert.AreEqual(UpdateChannel.Dev, feed.Requested);
+        Assert.IsEmpty(feed.Downloads);
+        Assert.IsEmpty(session.Operations);
+        TestSequence.Equal((byte[])[8], files.Read(Path.Combine(Machine, "winland.exe")));
     }
 
-    [Fact]
+    [TestMethod]
     public void ADifferentDevCommitReplacesTheInstall()
     {
         var feed = new ScriptedFeed(Archive, Sums(Archive), "0.1.0-dev.42+bbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
@@ -170,14 +171,14 @@ public class ReleaseUpdateTests
             UpdateChannel.Dev,
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-        var updated = Assert.IsType<UpdateResult.Updated>(result);
-        Assert.Equal("0.1.0-dev.42+bbbbbbb", updated.Version);
-        Assert.Equal(UpdateChannel.Dev, feed.Requested);
-        Assert.Equal([1], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
+        var updated = Assert.IsExactInstanceOfType<UpdateResult.Updated>(result);
+        Assert.AreEqual("0.1.0-dev.42+bbbbbbb", updated.Version);
+        Assert.AreEqual(UpdateChannel.Dev, feed.Requested);
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(Machine, "winland.exe")));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
     }
 
-    [Fact]
+    [TestMethod]
     public void SwitchingFromDevToStableInstallsTheOlderStableRelease()
     {
         var feed = new ScriptedFeed(Archive, Sums(Archive), "0.1.0", "cccccccccccccccccccccccccccccccccccccccc");
@@ -190,11 +191,11 @@ public class ReleaseUpdateTests
             UpdateChannel.Stable,
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-        var updated = Assert.IsType<UpdateResult.Updated>(result);
-        Assert.Equal("0.1.0", updated.Version);
-        Assert.Equal(UpdateChannel.Stable, feed.Requested);
-        Assert.Equal([1], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
+        var updated = Assert.IsExactInstanceOfType<UpdateResult.Updated>(result);
+        Assert.AreEqual("0.1.0", updated.Version);
+        Assert.AreEqual(UpdateChannel.Stable, feed.Requested);
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(Machine, "winland.exe")));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
     }
 
     private UpdateResult Apply(

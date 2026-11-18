@@ -1,5 +1,6 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class DecorationTests
 {
     private static readonly Rectangle Area = new(0, 0, 800, 600);
@@ -8,45 +9,45 @@ public class DecorationTests
 
     private static readonly BorderColor Inactive = new(0x80, 0x00, 0x22, 0x33);
 
-    [Theory]
-    [InlineData("rgba(33ccffee)", 0x33, 0xCC, 0xFF, 0xEE)]
-    [InlineData("RGBA(33CCFFEE)", 0x33, 0xCC, 0xFF, 0xEE)]
-    [InlineData("0xee33ccff", 0x33, 0xCC, 0xFF, 0xEE)]
-    [InlineData("rgb(112233)", 0x11, 0x22, 0x33, 0xFF)]
+    [TestMethod]
+    [DataRow("rgba(33ccffee)", (byte)0x33, (byte)0xCC, (byte)0xFF, (byte)0xEE)]
+    [DataRow("RGBA(33CCFFEE)", (byte)0x33, (byte)0xCC, (byte)0xFF, (byte)0xEE)]
+    [DataRow("0xee33ccff", (byte)0x33, (byte)0xCC, (byte)0xFF, (byte)0xEE)]
+    [DataRow("rgb(112233)", (byte)0x11, (byte)0x22, (byte)0x33, (byte)0xFF)]
     public void OneBorderColorIsParsed(string text, byte r, byte g, byte b, byte a)
     {
-        Assert.True(BorderColor.TryParse(text, out var color));
-        Assert.Equal(new BorderColor(a, r, g, b), color);
+        Assert.IsTrue(BorderColor.TryParse(text, out var color));
+        Assert.AreEqual(new BorderColor(a, r, g, b), color);
     }
 
-    [Theory]
-    [InlineData("rgba(33ccffee) rgba(00ff99ee) 45deg")]
-    [InlineData("rgba(ff00ffff) 90deg")]
-    [InlineData("")]
-    [InlineData("nope")]
-    [InlineData("rgba(123)")]
-    [InlineData("0x112233")]
+    [TestMethod]
+    [DataRow("rgba(33ccffee) rgba(00ff99ee) 45deg")]
+    [DataRow("rgba(ff00ffff) 90deg")]
+    [DataRow("")]
+    [DataRow("nope")]
+    [DataRow("rgba(123)")]
+    [DataRow("0x112233")]
     public void MalformedBorderColorIsRejected(string text)
     {
-        Assert.False(BorderColor.TryParse(text, out _));
+        Assert.IsFalse(BorderColor.TryParse(text, out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void OmittedDecorationUsesTheDocumentedDefaults()
     {
         var options = DecorationOptions.From(ConfigParser.Parse(""));
 
-        Assert.Equal(DecorationOptions.Documented, options);
-        Assert.Equal(new BorderColor(0xFF, 0xFF, 0xFF, 0xFF), options.ActiveBorder);
-        Assert.Equal(new BorderColor(0xFF, 0x40, 0x40, 0x40), options.InactiveBorder);
-        Assert.False(options.ActiveBorderSet);
-        Assert.Equal(8, options.Rounding);
-        Assert.True(options.Blur);
-        Assert.Equal(1f, options.ActiveOpacity);
-        Assert.Equal(1f, options.InactiveOpacity);
+        Assert.AreEqual(DecorationOptions.Documented, options);
+        Assert.AreEqual(new BorderColor(0xFF, 0xFF, 0xFF, 0xFF), options.ActiveBorder);
+        Assert.AreEqual(new BorderColor(0xFF, 0x40, 0x40, 0x40), options.InactiveBorder);
+        Assert.IsFalse(options.ActiveBorderSet);
+        Assert.AreEqual(8, options.Rounding);
+        Assert.IsTrue(options.Blur);
+        Assert.AreEqual(1f, options.ActiveOpacity);
+        Assert.AreEqual(1f, options.InactiveOpacity);
     }
 
-    [Fact]
+    [TestMethod]
     public void LatestBorderAndRoundingWinAndAGradientWarnsAndKeepsThePreviousColor()
     {
         var document = ConfigParser.Parse("""
@@ -59,39 +60,39 @@ public class DecorationTests
 
         var options = DecorationOptions.From(document);
 
-        Assert.Equal(new BorderColor(0xFF, 0xFF, 0x00, 0x00), options.ActiveBorder);
-        Assert.Equal(new BorderColor(0x80, 0xAA, 0xBB, 0xCC), options.InactiveBorder);
-        Assert.Equal(3, options.Rounding);
-        Assert.Equal([2, 5], document.Warnings.Select(warning => warning.Line));
+        Assert.AreEqual(new BorderColor(0xFF, 0xFF, 0x00, 0x00), options.ActiveBorder);
+        Assert.AreEqual(new BorderColor(0x80, 0xAA, 0xBB, 0xCC), options.InactiveBorder);
+        Assert.AreEqual(3, options.Rounding);
+        TestSequence.Equal([2, 5], document.Warnings.Select(warning => warning.Line));
     }
 
-    [Fact]
+    [TestMethod]
     public void RoundingRejectsANegativeRadius()
     {
         var options = DecorationOptions.From(ConfigParser.Parse("decoration:rounding = 10\ndecoration:rounding = -1\n"));
 
-        Assert.Equal(10, options.Rounding);
+        Assert.AreEqual(10, options.Rounding);
     }
 
-    [Fact]
+    [TestMethod]
     public void AdoptedClientGetsTheActiveBorderAndTheOtherGetsTheInactiveOne()
     {
         var core = Configured();
 
         var first = core.Handle(Appeared(1, Area));
         var only = For(first, 1);
-        Assert.Equal(Active, only.Border);
-        Assert.Equal(CornerPreference.Round, only.Corners);
-        Assert.Empty(first.ResetDecorations);
+        Assert.AreEqual(Active, only.Border);
+        Assert.AreEqual(CornerPreference.Round, only.Corners);
+        Assert.IsEmpty(first.ResetDecorations);
 
         var second = core.Handle(Appeared(2, Area));
 
-        Assert.Equal(Inactive, For(second, 1).Border);
-        Assert.Equal(Active, For(second, 2).Border);
-        Assert.Empty(second.ResetDecorations);
+        Assert.AreEqual(Inactive, For(second, 1).Border);
+        Assert.AreEqual(Active, For(second, 2).Border);
+        Assert.IsEmpty(second.ResetDecorations);
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusChangeSwapsTheActiveBorder()
     {
         var core = Configured();
@@ -100,12 +101,12 @@ public class DecorationTests
 
         var outcome = core.Handle(new WindowFocused(new WindowId(1)));
 
-        Assert.Equal(Active, For(outcome, 1).Border);
-        Assert.Equal(Inactive, For(outcome, 2).Border);
-        Assert.Empty(outcome.ResetDecorations);
+        Assert.AreEqual(Active, For(outcome, 1).Border);
+        Assert.AreEqual(Inactive, For(outcome, 2).Border);
+        Assert.IsEmpty(outcome.ResetDecorations);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosingAClientResetsThatWindowAndRecolorsTheSurvivor()
     {
         var core = Configured();
@@ -114,12 +115,12 @@ public class DecorationTests
 
         var outcome = core.Handle(new WindowClosed(new WindowId(2)));
 
-        Assert.Equal([new WindowId(2)], outcome.ResetDecorations);
-        Assert.Equal(Active, For(outcome, 1).Border);
-        Assert.DoesNotContain(outcome.State.Clients, client => client.Window == new WindowId(2));
+        Assert.AreSequenceEqual([new WindowId(2)], outcome.ResetDecorations);
+        Assert.AreEqual(Active, For(outcome, 1).Border);
+        Assert.DoesNotContain(client => client.Window == new WindowId(2), outcome.State.Clients);
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspaceSwitchRecolorsTheHiddenClientWithoutResettingIt()
     {
         var core = Configured();
@@ -127,16 +128,16 @@ public class DecorationTests
 
         var away = core.Execute("dispatch workspace 2").Effect;
 
-        Assert.Equal(Inactive, For(away, 1).Border);
-        Assert.Empty(away.ResetDecorations);
+        Assert.AreEqual(Inactive, For(away, 1).Border);
+        Assert.IsEmpty(away.ResetDecorations);
 
         var back = core.Execute("dispatch workspace 1").Effect;
 
-        Assert.Equal(Active, For(back, 1).Border);
-        Assert.Empty(back.ResetDecorations);
+        Assert.AreEqual(Active, For(back, 1).Border);
+        Assert.IsEmpty(back.ResetDecorations);
     }
 
-    [Fact]
+    [TestMethod]
     public void ConfigReloadRecolorsEveryClient()
     {
         var core = Configured();
@@ -149,21 +150,21 @@ public class DecorationTests
             decoration:rounding = 0
             """)));
 
-        Assert.Equal(new BorderColor(0xFF, 0x00, 0xFF, 0x00), For(reloaded, 2).Border);
-        Assert.Equal(new BorderColor(0xFF, 0x00, 0x00, 0xFF), For(reloaded, 1).Border);
-        Assert.Equal(CornerPreference.DoNotRound, For(reloaded, 1).Corners);
-        Assert.Empty(reloaded.ResetDecorations);
+        Assert.AreEqual(new BorderColor(0xFF, 0x00, 0xFF, 0x00), For(reloaded, 2).Border);
+        Assert.AreEqual(new BorderColor(0xFF, 0x00, 0x00, 0xFF), For(reloaded, 1).Border);
+        Assert.AreEqual(CornerPreference.DoNotRound, For(reloaded, 1).Corners);
+        Assert.IsEmpty(reloaded.ResetDecorations);
 
         var loaded = core.Handle(new ConfigLoaded(ConfigParser.Parse("""
             general:col.active_border = 0xff112233
             decoration:rounding = 4
             """)));
 
-        Assert.Equal(new BorderColor(0xFF, 0x11, 0x22, 0x33), For(loaded, 2).Border);
-        Assert.Equal(CornerPreference.RoundSmall, For(loaded, 2).Corners);
+        Assert.AreEqual(new BorderColor(0xFF, 0x11, 0x22, 0x33), For(loaded, 2).Border);
+        Assert.AreEqual(CornerPreference.RoundSmall, For(loaded, 2).Corners);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReloadCommandRecolorsClientsAfterTheConfigIsApplied()
     {
         var core = Configured();
@@ -179,17 +180,17 @@ public class DecorationTests
 
         var reply = core.Execute("reload");
 
-        Assert.True(notified);
-        Assert.Equal("ok", reply.Text);
-        Assert.Equal(new BorderColor(0xFF, 0x00, 0xFF, 0x00), For(reply.Effect, 2).Border);
-        Assert.Equal(new BorderColor(0xFF, 0x00, 0x00, 0xFF), For(reply.Effect, 1).Border);
-        Assert.Equal(CornerPreference.DoNotRound, For(reply.Effect, 1).Corners);
-        Assert.Equal(CornerPreference.DoNotRound, For(reply.Effect, 2).Corners);
-        Assert.Empty(reply.Effect.ResetDecorations);
-        Assert.Contains(reply.Effect.Events, static item => item is ConfigReloaded);
+        Assert.IsTrue(notified);
+        Assert.AreEqual("ok", reply.Text);
+        Assert.AreEqual(new BorderColor(0xFF, 0x00, 0xFF, 0x00), For(reply.Effect, 2).Border);
+        Assert.AreEqual(new BorderColor(0xFF, 0x00, 0x00, 0xFF), For(reply.Effect, 1).Border);
+        Assert.AreEqual(CornerPreference.DoNotRound, For(reply.Effect, 1).Corners);
+        Assert.AreEqual(CornerPreference.DoNotRound, For(reply.Effect, 2).Corners);
+        Assert.IsEmpty(reply.Effect.ResetDecorations);
+        Assert.Contains(static item => item is ConfigReloaded, reply.Effect.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspaceSwitchRedecoratesTheShownClient()
     {
         var core = Configured();
@@ -199,15 +200,15 @@ public class DecorationTests
 
         var back = core.Execute("dispatch workspace 1").Effect;
 
-        Assert.Equal(Active, For(back, 1).Border);
-        Assert.Equal(Inactive, For(back, 2).Border);
-        Assert.Equal(CornerPreference.Round, For(back, 1).Corners);
-        Assert.Empty(back.ResetDecorations);
-        Assert.Contains(back.Show, window => window == new WindowId(1));
-        Assert.Contains(back.Hide, window => window == new WindowId(2));
+        Assert.AreEqual(Active, For(back, 1).Border);
+        Assert.AreEqual(Inactive, For(back, 2).Border);
+        Assert.AreEqual(CornerPreference.Round, For(back, 1).Corners);
+        Assert.IsEmpty(back.ResetDecorations);
+        Assert.Contains(window => window == new WindowId(1), back.Show);
+        Assert.Contains(window => window == new WindowId(2), back.Hide);
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspaceSwitchAcrossMonitorsRedecoratesTheShownClient()
     {
         var core = Configured();
@@ -216,22 +217,22 @@ public class DecorationTests
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         var placed = core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
-        Assert.Equal(Active, For(placed, 1).Border);
-        Assert.Equal(Inactive, For(placed, 2).Border);
+        Assert.AreEqual(Active, For(placed, 1).Border);
+        Assert.AreEqual(Inactive, For(placed, 2).Border);
 
         var moved = core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY2"));
 
-        Assert.Equal(Inactive, For(moved, 1).Border);
-        Assert.Equal(Active, For(moved, 2).Border);
-        Assert.Equal(CornerPreference.Round, For(moved, 2).Corners);
-        Assert.Empty(moved.ResetDecorations);
-        Assert.Equal(new WindowId(2), moved.Focus);
-        Assert.Empty(moved.Show);
-        Assert.Empty(moved.Hide);
-        Assert.Empty(moved.State.Hidden);
+        Assert.AreEqual(Inactive, For(moved, 1).Border);
+        Assert.AreEqual(Active, For(moved, 2).Border);
+        Assert.AreEqual(CornerPreference.Round, For(moved, 2).Corners);
+        Assert.IsEmpty(moved.ResetDecorations);
+        Assert.AreEqual(new WindowId(2), moved.Focus);
+        Assert.IsEmpty(moved.Show);
+        Assert.IsEmpty(moved.Hide);
+        Assert.IsEmpty(moved.State.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void HotplugRedecoratesClientsOnTheRemainingMonitor()
     {
         var core = Configured();
@@ -243,13 +244,13 @@ public class DecorationTests
 
         var outcome = core.Handle(new MonitorsChanged([left]));
 
-        Assert.Equal(Active, For(outcome, 1).Border);
-        Assert.Equal(Inactive, For(outcome, 2).Border);
-        Assert.Empty(outcome.ResetDecorations);
-        Assert.Equal(2, outcome.Decorations.Count);
+        Assert.AreEqual(Active, For(outcome, 1).Border);
+        Assert.AreEqual(Inactive, For(outcome, 2).Border);
+        Assert.IsEmpty(outcome.ResetDecorations);
+        Assert.AreEqual(2, outcome.Decorations.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnmanagedWindowIsNotDecorated()
     {
         var core = Configured();
@@ -259,9 +260,9 @@ public class DecorationTests
             Traits = WindowTraits.Normal with { Taskbar = true },
         });
 
-        Assert.Empty(outcome.State.Clients);
-        Assert.Empty(outcome.Decorations);
-        Assert.Empty(outcome.ResetDecorations);
+        Assert.IsEmpty(outcome.State.Clients);
+        Assert.IsEmpty(outcome.Decorations);
+        Assert.IsEmpty(outcome.ResetDecorations);
     }
 
     private static WindowManager Configured()
@@ -280,7 +281,7 @@ public class DecorationTests
 
     private static Decoration For(Outcome outcome, long window)
     {
-        var client = Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(window));
-        return Assert.Single(outcome.Decorations, decoration => decoration.Client == client.Id);
+        var client = Assert.ContainsSingle(candidate => candidate.Window == new WindowId(window), outcome.State.Clients);
+        return Assert.ContainsSingle(decoration => decoration.Client == client.Id, outcome.Decorations);
     }
 }

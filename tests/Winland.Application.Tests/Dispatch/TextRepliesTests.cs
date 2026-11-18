@@ -1,10 +1,11 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class TextRepliesTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void ClientsAndActiveWindowAnswerInThePinnedReleasesTextForm()
     {
         var core = new WindowManager();
@@ -16,11 +17,11 @@ public class TextRepliesTests
         Assert.Contains("\n\tworkspace: 1 (1) on monitor \n\tfloating: 0\n\tmonitor: 0\n\tclass: term\n\ttitle: shell\n", clients, StringComparison.Ordinal);
         Assert.Contains("\n\tgrouped: 0\n\tstableID: 2a\n\n", clients, StringComparison.Ordinal);
         Assert.EndsWith("\n\n", clients, StringComparison.Ordinal);
-        Assert.Equal(clients, core.Execute("activewindow").Text);
+        Assert.AreEqual(clients, core.Execute("activewindow").Text);
         Assert.StartsWith("[", core.Execute("j/clients").Text, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void WindowTextCannotForgeLinesInQueries()
     {
         var core = new WindowManager();
@@ -34,11 +35,11 @@ public class TextRepliesTests
         Assert.StartsWith("Window 2a -> title Window 99 -> forged: line:\n", clients, StringComparison.Ordinal);
         Assert.Contains("\n\tclass: app class\n\ttitle: title Window 99 -> forged: line\n", clients, StringComparison.Ordinal);
         Assert.Contains("\n\tinitialTitle: title Window 99 -> forged: line\n", clients, StringComparison.Ordinal);
-        Assert.Equal(clients, core.Execute("activewindow").Text);
+        Assert.AreEqual(clients, core.Execute("activewindow").Text);
         Assert.Contains("\n\tlastwindowtitle: title Window 99 -> forged: line\n", core.Execute("workspaces").Text, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspacesAndActiveWorkspaceAnswerInText()
     {
         var core = new WindowManager();
@@ -48,10 +49,10 @@ public class TextRepliesTests
 
         Assert.StartsWith("workspace 1 (1) on monitor ", workspaces, StringComparison.Ordinal);
         Assert.Contains("\n\twindows: 1\n\thasfullscreen: 0\n\tlastwindow: 0x1\n", workspaces, StringComparison.Ordinal);
-        Assert.Equal(workspaces, core.Execute("activeworkspace").Text);
+        Assert.AreEqual(workspaces, core.Execute("activeworkspace").Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void MonitorsAnswerInText()
     {
         var core = new WindowManager();
@@ -65,7 +66,7 @@ public class TextRepliesTests
         Assert.EndsWith("\t\tvrrCapable: no\n\n", monitors, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void BindsAnswerOneConfigLineEach()
     {
         var core = new WindowManager(ConfigParser.Parse(
@@ -79,7 +80,7 @@ public class TextRepliesTests
 
         var binds = core.Execute("binds").Text;
 
-        Assert.Equal(
+        Assert.AreEqual(
             "bind = SUPER, W, killactive\n"
             + "bind = SUPER SHIFT, 1, workspace, 1\n"
             + "bind = SUPER, minus, resizeactive, -40 0\n"
@@ -87,11 +88,11 @@ public class TextRepliesTests
             + "bindm = SUPER, mouse:273, resizewindow 1",
             binds);
         Assert.StartsWith("[{", core.Execute("j/binds").Text, StringComparison.Ordinal);
-        Assert.Equal("no binds", new WindowManager().Execute("binds").Text);
-        Assert.Equal("[]", new WindowManager().Execute("j/binds").Text);
+        Assert.AreEqual("no binds", new WindowManager().Execute("binds").Text);
+        Assert.AreEqual("[]", new WindowManager().Execute("j/binds").Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void EachBindReadsBackFromItsLineAsTheSameBind()
     {
         var document = ConfigParser.Parse(
@@ -117,18 +118,18 @@ public class TextRepliesTests
             bindm = SUPER, mouse:273, resizewindow 1
             bindmd = SUPER, mouse:274, Move, movewindow
             """);
-        Assert.Empty(document.Warnings);
+        Assert.IsEmpty(document.Warnings);
         var binds = document.Binds.OfType<Bind>().ToArray();
-        Assert.Equal(20, binds.Length);
+        Assert.AreEqual(20, binds.Length);
 
         var text = CommandProtocol.FormatBindsText(binds);
         var again = ConfigParser.Parse(text);
 
-        Assert.Empty(again.Warnings);
-        Assert.Equal(binds, again.Binds);
+        Assert.IsEmpty(again.Warnings);
+        Assert.AreSequenceEqual(binds, again.Binds);
     }
 
-    [Fact]
+    [TestMethod]
     public void VersionAnswersOneLine()
     {
         var version = new WindowManager().Execute("version").Text;
@@ -140,14 +141,14 @@ public class TextRepliesTests
         Assert.StartsWith("{", new WindowManager().Execute("j/version").Text, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void ConfigErrorsAnswerOneFileLineAndMessageEach()
     {
         const string path = @"C:\winland\winland.conf";
         const string colors = @"C:\winland\colors.conf";
         var core = new WindowManager();
-        Assert.Equal("no config errors", core.Execute("configerrors").Text);
-        Assert.Equal("[]", core.Execute("j/configerrors").Text);
+        Assert.AreEqual("no config errors", core.Execute("configerrors").Text);
+        Assert.AreEqual("[]", core.Execute("j/configerrors").Text);
 
         core.Handle(new Configure(new ConfigDocument(
             [],
@@ -157,31 +158,31 @@ public class TextRepliesTests
             Path = path,
         }));
 
-        Assert.Equal(
+        Assert.AreEqual(
             path + ":1: Unsupported keyword 'blur'.\n" + colors + ":3: Invalid modifier 'X'.\n" + path + ": Could not read config.",
             core.Execute("configerrors").Text);
-        Assert.Equal(
+        Assert.AreEqual(
             "[\"line 1: Unsupported keyword 'blur'.\",\"line 3: Invalid modifier 'X'.\",\"Could not read config.\"]",
             core.Execute("j/configerrors").Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void FilesAnswerTheConfigReadAndTheLogWritten()
     {
         const string path = @"C:\winland\work.conf";
         const string log = @"C:\winland\state\winland.log";
         var core = new WindowManager();
-        Assert.Equal("config: none\nlog: none", core.Execute("files").Text);
-        Assert.Equal("""{"config":null,"log":null}""", core.Execute("j/files").Text);
+        Assert.AreEqual("config: none\nlog: none", core.Execute("files").Text);
+        Assert.AreEqual("""{"config":null,"log":null}""", core.Execute("j/files").Text);
 
         string? writing = log;
         core.LogFile = () => writing;
         core.Handle(new Configure(new ConfigDocument([], [], []) { Path = path }));
 
-        Assert.Equal("config: " + path + "\nlog: " + log, core.Execute("files").Text);
-        Assert.Equal("""{"config":"C:\\winland\\work.conf","log":"C:\\winland\\state\\winland.log"}""", core.Execute("j/files").Text);
+        Assert.AreEqual("config: " + path + "\nlog: " + log, core.Execute("files").Text);
+        Assert.AreEqual("""{"config":"C:\\winland\\work.conf","log":"C:\\winland\\state\\winland.log"}""", core.Execute("j/files").Text);
 
         writing = null;
-        Assert.Equal("""{"config":"C:\\winland\\work.conf","log":null}""", core.Execute("j/files").Text);
+        Assert.AreEqual("""{"config":"C:\\winland\\work.conf","log":null}""", core.Execute("j/files").Text);
     }
 }

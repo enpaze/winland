@@ -1,8 +1,9 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class DeviceCacheTests
 {
-    [Fact]
+    [TestMethod]
     public void AnOpenedDeviceIsOpenedOnce()
     {
         var opened = 0;
@@ -10,11 +11,11 @@ public class DeviceCacheTests
 
         var first = cache.For(1);
 
-        Assert.Same(first, cache.For(1));
-        Assert.Equal(1, opened);
+        Assert.AreSame(first, cache.For(1));
+        Assert.AreEqual(1, opened);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFailedOpenIsTriedAgainAfterTheRetryDelay()
     {
         var now = 0L;
@@ -22,17 +23,17 @@ public class DeviceCacheTests
         var opened = 0;
         using var cache = new DeviceCache<Probe>(_ => { opened++; return answers.Dequeue(); }, () => now, retryMs: 1000);
 
-        Assert.Null(cache.For(1));
+        Assert.IsNull(cache.For(1));
         now = 999;
-        Assert.Null(cache.For(1));
-        Assert.Equal(1, opened);
+        Assert.IsNull(cache.For(1));
+        Assert.AreEqual(1, opened);
 
         now = 1000;
-        Assert.NotNull(cache.For(1));
-        Assert.Equal(2, opened);
+        Assert.IsNotNull(cache.For(1));
+        Assert.AreEqual(2, opened);
     }
 
-    [Fact]
+    [TestMethod]
     public void ARemovedDeviceIsDisposedAndOpenedAfreshWhenItsHandleComesBack()
     {
         var probes = new List<Probe>();
@@ -41,23 +42,23 @@ public class DeviceCacheTests
 
         cache.Remove(1);
 
-        Assert.True(first!.Disposed);
-        Assert.NotSame(first, cache.For(1));
+        Assert.IsTrue(first!.Disposed);
+        Assert.AreNotSame(first, cache.For(1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ARemovedFailureIsTriedAgainAtOnce()
     {
         var answers = new Queue<Probe?>([null, new Probe()]);
         using var cache = new DeviceCache<Probe>(_ => answers.Dequeue(), () => 0, retryMs: 1000);
-        Assert.Null(cache.For(1));
+        Assert.IsNull(cache.For(1));
 
         cache.Remove(1);
 
-        Assert.NotNull(cache.For(1));
+        Assert.IsNotNull(cache.For(1));
     }
 
-    [Fact]
+    [TestMethod]
     public void DisposingTheCacheDisposesEveryDevice()
     {
         var cache = new DeviceCache<Probe>(_ => new Probe(), () => 0, retryMs: 1000);
@@ -66,8 +67,8 @@ public class DeviceCacheTests
 
         cache.Dispose();
 
-        Assert.True(first.Disposed);
-        Assert.True(second.Disposed);
+        Assert.IsTrue(first.Disposed);
+        Assert.IsTrue(second.Disposed);
     }
 
     private sealed class Probe : IDisposable

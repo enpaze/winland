@@ -1,5 +1,6 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class WorkspaceGestureTests
 {
     private const string ConfigGestures = """
@@ -9,29 +10,29 @@ public class WorkspaceGestureTests
     private static string Config(string extra = "") =>
         ConfigGestures + "\n" + extra;
 
-    [Fact]
+    [TestMethod]
     public void Gestures()
     {
         var desk = new TestDesktop(Config());
         var touchpad = new Touchpad(desk);
         desk.Spawn("a");
-        Assert.Single(desk.Clients());
+        Assert.ContainsSingle(desk.Clients());
 
 
         touchpad.Swipe("left", 3);
-        Assert.True(HasWorkspace(desk, 2));
+        Assert.IsTrue(HasWorkspace(desk, 2));
 
         touchpad.Swipe("right", 3);
-        Assert.False(HasWorkspace(desk, 2));
+        Assert.IsFalse(HasWorkspace(desk, 2));
 
         touchpad.Swipe("right", 3);
-        Assert.False(HasWorkspace(desk, 2));
+        Assert.IsFalse(HasWorkspace(desk, 2));
 
         touchpad.Swipe("left", 3);
-        Assert.True(HasWorkspace(desk, 2));
+        Assert.IsTrue(HasWorkspace(desk, 2));
 
         touchpad.Swipe("right", 3);
-        Assert.False(HasWorkspace(desk, 2));
+        Assert.IsFalse(HasWorkspace(desk, 2));
 
         desk.Ok("workspace", "3");
 
@@ -40,13 +41,13 @@ public class WorkspaceGestureTests
 
         desk.Ok("workspace", "1");
         touchpad.Swipe("left", 3);
-        Assert.Equal(5, desk.ActiveWorkspace().GetProperty("id").GetInt32());
+        Assert.AreEqual(5, desk.ActiveWorkspace().GetProperty("id").GetInt32());
 
         desk.Ok("workspace", "previous");
-        Assert.Equal(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
+        Assert.AreEqual(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
 
         desk.Ok("workspace", "previous");
-        Assert.Equal(5, desk.ActiveWorkspace().GetProperty("id").GetInt32());
+        Assert.AreEqual(5, desk.ActiveWorkspace().GetProperty("id").GetInt32());
 
         desk.Ok("workspace", "1");
     }

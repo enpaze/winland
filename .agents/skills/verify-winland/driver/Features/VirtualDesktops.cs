@@ -1,13 +1,15 @@
 using Windows.Win32.UI.Input.KeyboardAndMouse;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "virtual-desktops")]
-public class VirtualDesktops(ITestOutputHelper output)
+[TestClass]
+public class VirtualDesktops
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void ReleasesWindowsOnAnotherDesktopAndTakesThemBack() => VerifyRun.Drive(output, run =>
+    public void ReleasesWindowsOnAnotherDesktopAndTakesThemBack() => VerifyRun.Drive(TestContext, run =>
     {
         var (left, right) = run.OpenPair();
         var leftBox = VerifyRun.Frame(left);

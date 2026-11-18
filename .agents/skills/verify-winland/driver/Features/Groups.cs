@@ -1,12 +1,14 @@
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "groups")]
-public class Groups(ITestOutputHelper output)
+[TestClass]
+public class Groups
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void GroupsWindowsIntoOneTileAndCyclesThem() => VerifyRun.Drive(output, run =>
+    public void GroupsWindowsIntoOneTileAndCyclesThem() => VerifyRun.Drive(TestContext, run =>
     {
         run.FollowEvents();
         var (left, right) = run.OpenPair();

@@ -1,10 +1,11 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class ReloadTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void ALoadedConfigAppliesWindowRulesLayoutOptionsAndTheLayout()
     {
         var core = new WindowManager();
@@ -24,13 +25,13 @@ public class ReloadTests
 
         var third = core.Handle(new WindowAppeared(new WindowId(3), Area));
 
-        Assert.True(Client(opened, 2).Floating);
-        Assert.Equal("scrolling", Assert.Single(third.State.Workspaces).TiledLayout);
-        Assert.Equal(10, Client(third, 3).Bounds.Y);
-        Assert.Equal(1060, Client(third, 3).Bounds.Height);
+        Assert.IsTrue(Client(opened, 2).Floating);
+        Assert.AreEqual("scrolling", Assert.ContainsSingle(third.State.Workspaces).TiledLayout);
+        Assert.AreEqual(10, Client(third, 3).Bounds.Y);
+        Assert.AreEqual(1060, Client(third, 3).Bounds.Height);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReloadSwapsSettingsKeepsClientsAndLaysOut()
     {
         var core = new WindowManager();
@@ -55,28 +56,28 @@ public class ReloadTests
             windowrule = float, class:kitty
             """)));
 
-        Assert.Equal(new WorkspaceId("2"), reloaded.State.ActiveWorkspace);
-        Assert.Equal(2, reloaded.State.Clients.Count);
-        Assert.Equal(2, reloaded.State.Workspaces.Count);
-        Assert.False(Client(reloaded, 1).Floating);
-        Assert.Equal(new Rectangle(10, 10, 1900, 1060), BoundsOf(reloaded, 2));
-        Assert.Equal(
+        Assert.AreEqual(new WorkspaceId("2"), reloaded.State.ActiveWorkspace);
+        Assert.AreEqual(2, reloaded.State.Clients.Count);
+        Assert.AreEqual(2, reloaded.State.Workspaces.Count);
+        Assert.IsFalse(Client(reloaded, 1).Floating);
+        Assert.AreEqual(new Rectangle(10, 10, 1900, 1060), BoundsOf(reloaded, 2));
+        Assert.AreSequenceEqual(
             ["configreloaded>>"],
             Lines(reloaded));
 
         core.Handle(new KeyPressed("Super_L"));
-        Assert.Null(core.Handle(new KeyPressed("Q")).Close);
-        Assert.Equal(new WindowId(2), core.Handle(new KeyPressed("W")).Close);
+        Assert.IsNull(core.Handle(new KeyPressed("Q")).Close);
+        Assert.AreEqual(new WindowId(2), core.Handle(new KeyPressed("W")).Close);
 
         var opened = core.Handle(new WindowAppeared(new WindowId(3), Area)
         {
             Traits = WindowTraits.Normal with { Class = "kitty" },
         });
-        Assert.True(Client(opened, 3).Floating);
-        Assert.False(Client(opened, 1).Floating);
+        Assert.IsTrue(Client(opened, 3).Floating);
+        Assert.IsFalse(Client(opened, 1).Floating);
     }
 
-    [Fact]
+    [TestMethod]
     public void WarningsStillApplyAndAreReportedBeforeReload()
     {
         var core = new WindowManager();
@@ -89,8 +90,8 @@ public class ReloadTests
             blur = yes
             """)));
 
-        Assert.Equal(new Rectangle(10, 10, 1900, 1060), BoundsOf(outcome, 1));
-        Assert.Equal(
+        Assert.AreEqual(new Rectangle(10, 10, 1900, 1060), BoundsOf(outcome, 1));
+        Assert.AreSequenceEqual(
             [
                 "warning>>4,,Unsupported keyword 'blur'.",
                 "configreloaded>>",
@@ -98,7 +99,7 @@ public class ReloadTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void AMissingSourceStillAppliesTheRest()
     {
         var core = new WindowManager();
@@ -113,9 +114,9 @@ public class ReloadTests
 
         var reply = core.Execute("reload");
 
-        Assert.Equal("ok", reply.Text);
-        Assert.Equal(new Rectangle(10, 10, 1900, 1060), BoundsOf(reply.Effect, 1));
-        Assert.Equal(
+        Assert.AreEqual("ok", reply.Text);
+        Assert.AreEqual(new Rectangle(10, 10, 1900, 1060), BoundsOf(reply.Effect, 1));
+        Assert.AreSequenceEqual(
             [
                 "warning>>1,,Could not read source 'missing.conf'.",
                 "configreloaded>>",
@@ -123,7 +124,7 @@ public class ReloadTests
             Lines(reply));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUnreadableConfigKeepsTheWorkingConfigAndWarns()
     {
         var core = new WindowManager();
@@ -142,16 +143,16 @@ public class ReloadTests
 
         var reply = core.Execute("reload");
 
-        Assert.False(called);
-        Assert.Equal("error: Could not read config 'winland.conf'.", reply.Text);
-        Assert.Equal(["warning>>0,winland.conf,Could not read config 'winland.conf'."], Lines(reply));
-        Assert.Single(reply.Effect.State.Clients);
+        Assert.IsFalse(called);
+        Assert.AreEqual("error: Could not read config 'winland.conf'.", reply.Text);
+        Assert.AreSequenceEqual(["warning>>0,winland.conf,Could not read config 'winland.conf'."], Lines(reply));
+        Assert.ContainsSingle(reply.Effect.State.Clients);
 
         core.Handle(new KeyPressed("Super_L"));
-        Assert.Equal(new WindowId(1), core.Handle(new KeyPressed("Q")).Close);
+        Assert.AreEqual(new WindowId(1), core.Handle(new KeyPressed("Q")).Close);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReloadCommandAppliesTheDocumentAndNotifiesOnce()
     {
         var core = new WindowManager();
@@ -173,16 +174,16 @@ public class ReloadTests
 
         var reply = core.Execute("reload");
 
-        Assert.Equal("ok", reply.Text);
-        Assert.Equal(1, calls);
-        Assert.Same(document, seen);
-        Assert.NotNull(seen);
-        Assert.Null(reply.Effect.Launch);
-        Assert.Equal(new Rectangle(10, 10, 1900, 1060), BoundsOf(reply.Effect, 1));
+        Assert.AreEqual("ok", reply.Text);
+        Assert.AreEqual(1, calls);
+        Assert.AreSame(document, seen);
+        Assert.IsNotNull(seen);
+        Assert.IsNull(reply.Effect.Launch);
+        Assert.AreEqual(new Rectangle(10, 10, 1900, 1060), BoundsOf(reply.Effect, 1));
         Assert.Contains("configreloaded>>", Lines(reply));
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyingADocumentDirectlyDoesNotNotify()
     {
         var called = false;
@@ -190,30 +191,30 @@ public class ReloadTests
 
         core.Handle(new Configure(ConfigParser.Parse("exec-once = notepad")));
 
-        Assert.False(called);
+        Assert.IsFalse(called);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReloadWithoutAConfigSourceReportsAnError()
     {
         var reply = new WindowManager().Execute("reload");
 
-        Assert.Equal("error: config is not available", reply.Text);
-        Assert.Empty(reply.Effect.Events);
+        Assert.AreEqual("error: config is not available", reply.Text);
+        Assert.IsEmpty(reply.Effect.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReloadWithArgumentsIsRejected()
     {
         var parsed = CommandProtocol.Parse("reload");
-        Assert.IsType<ReloadRequest>(Assert.IsType<CommandParsed>(parsed).Request);
+        Assert.IsExactInstanceOfType<ReloadRequest>(Assert.IsExactInstanceOfType<CommandParsed>(parsed).Request);
 
         var reply = new WindowManager().Execute("reload now");
 
-        Assert.Equal("error: unknown request", reply.Text);
+        Assert.AreEqual("error: unknown request", reply.Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReloadSwitchesEveryLayoutAndKeepsTheClients()
     {
         var area = new Rectangle(0, 0, 2000, 1000);
@@ -233,17 +234,17 @@ public class ReloadTests
 
         var scrolling = Reload(core, "scrolling");
         AssertKept(scrolling, floated);
-        Assert.DoesNotContain(scrolling.Placements, placement => placement.Client == Client(scrolling, 1).Id);
-        Assert.Equal(new Rectangle(0, 0, 1000, 1000), BoundsOf(scrolling, 2));
-        Assert.Equal(new Rectangle(1000, 0, 1000, 1000), BoundsOf(scrolling, 3));
+        Assert.DoesNotContain(placement => placement.Client == Client(scrolling, 1).Id, scrolling.Placements);
+        Assert.AreEqual(new Rectangle(0, 0, 1000, 1000), BoundsOf(scrolling, 2));
+        Assert.AreEqual(new Rectangle(1000, 0, 1000, 1000), BoundsOf(scrolling, 3));
 
         var dwindle = Reload(core, "dwindle");
         AssertKept(dwindle, floated);
-        Assert.Equal(3, dwindle.Placements.Count);
-        Assert.NotEqual(new Rectangle(0, 0, 1100, 1000), BoundsOf(dwindle, 1));
+        Assert.AreEqual(3, dwindle.Placements.Count);
+        Assert.AreNotEqual(new Rectangle(0, 0, 1100, 1000), BoundsOf(dwindle, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void SourcesAreRecordedInOrder()
     {
         var source = new MemorySource(new Dictionary<string, string>
@@ -253,7 +254,7 @@ public class ReloadTests
 
         var document = ConfigParser.Parse("source = colors.conf\nsource = missing.conf\n", source);
 
-        Assert.Equal(["colors.conf", "missing.conf"], document.Sources);
+        Assert.AreSequenceEqual(["colors.conf", "missing.conf"], document.Sources);
     }
 
     private static string LayoutText(string name) =>
@@ -276,18 +277,18 @@ public class ReloadTests
 
     private static void AssertKept(Outcome outcome, Rectangle floated)
     {
-        Assert.Equal(4, outcome.State.Clients.Count);
+        Assert.AreEqual(4, outcome.State.Clients.Count);
         for (var window = 1L; window <= 4; window++)
         {
             var client = Client(outcome, window);
-            Assert.Equal("c" + window, client.Class);
-            Assert.Equal("t" + window, client.Title);
-            Assert.Equal(1000 + window, client.ProcessId);
+            Assert.AreEqual("c" + window, client.Class);
+            Assert.AreEqual("t" + window, client.Title);
+            Assert.AreEqual(1000 + window, client.ProcessId);
         }
 
         var dialog = Client(outcome, 4);
-        Assert.True(dialog.Floating);
-        Assert.Equal(floated, dialog.Bounds);
+        Assert.IsTrue(dialog.Floating);
+        Assert.AreEqual(floated, dialog.Bounds);
     }
 
     private static IReadOnlyList<string> Lines(Outcome outcome) =>

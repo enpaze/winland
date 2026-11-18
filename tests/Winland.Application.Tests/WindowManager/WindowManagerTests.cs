@@ -1,22 +1,23 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class WindowManagerTests
 {
-    [Fact]
+    [TestMethod]
     public void AppearingWindowIsPlacedOnItsWorkArea()
     {
         var core = new WindowManager();
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(42), new Rectangle(0, 0, 1920, 1080)));
 
-        var client = Assert.Single(outcome.State.Clients);
-        var placement = Assert.Single(outcome.Placements);
-        Assert.Equal(new WindowId(42), client.Window);
-        Assert.Equal(client.Id, placement.Client);
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), placement.Bounds);
+        var client = Assert.ContainsSingle(outcome.State.Clients);
+        var placement = Assert.ContainsSingle(outcome.Placements);
+        Assert.AreEqual(new WindowId(42), client.Window);
+        Assert.AreEqual(client.Id, placement.Client);
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 1080), placement.Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryOutcomeThatAsksForSomethingIsHandedOnInTheOrderTheCoreDecidedIt()
     {
         var core = new WindowManager();
@@ -27,10 +28,10 @@ public class WindowManagerTests
         var second = core.Handle(new Dispatch("workspace", "2"));
         var third = core.Execute("dispatch workspace 1").Effect;
 
-        Assert.Equal([first, second, third], decided);
+        Assert.AreSequenceEqual([first, second, third], decided);
     }
 
-    [Fact]
+    [TestMethod]
     public void SecondWindowSplitsTheWorkAreaSideBySide()
     {
         var core = new WindowManager();
@@ -39,11 +40,11 @@ public class WindowManagerTests
         core.Handle(new WindowAppeared(new WindowId(1), area));
         var outcome = core.Handle(new WindowAppeared(new WindowId(2), area));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void ThirdWindowSplitsTheActiveHalfTopAndBottom()
     {
         var core = new WindowManager();
@@ -53,12 +54,12 @@ public class WindowManagerTests
         core.Handle(new WindowAppeared(new WindowId(2), area));
         var outcome = core.Handle(new WindowAppeared(new WindowId(3), area));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 540), BoundsOf(outcome, 2));
-        Assert.Equal(new Rectangle(960, 540, 960, 540), BoundsOf(outcome, 3));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 540), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(960, 540, 960, 540), BoundsOf(outcome, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void TallerWorkAreaSplitsTopAndBottom()
     {
         var core = new WindowManager();
@@ -67,11 +68,11 @@ public class WindowManagerTests
         core.Handle(new WindowAppeared(new WindowId(1), area));
         var outcome = core.Handle(new WindowAppeared(new WindowId(2), area));
 
-        Assert.Equal(new Rectangle(0, 0, 1080, 960), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 960, 1080, 960), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 1080, 960), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(0, 960, 1080, 960), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void PointerInTheFirstHalfPlacesTheNewWindowThere()
     {
         var core = new WindowManager();
@@ -80,11 +81,11 @@ public class WindowManagerTests
         core.Handle(new WindowAppeared(new WindowId(1), area));
         var outcome = core.Handle(new WindowAppeared(new WindowId(2), area) { Pointer = new Point(10, 540) });
 
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void PointerInTheTopHalfOfATallSplitPlacesTheNewWindowThere()
     {
         var core = new WindowManager();
@@ -93,11 +94,11 @@ public class WindowManagerTests
         core.Handle(new WindowAppeared(new WindowId(1), area));
         var outcome = core.Handle(new WindowAppeared(new WindowId(2), area) { Pointer = new Point(540, 10) });
 
-        Assert.Equal(new Rectangle(0, 960, 1080, 960), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 0, 1080, 960), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 960, 1080, 960), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(0, 0, 1080, 960), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosingAWindowGivesItsSpaceToItsNeighbor()
     {
         var core = new WindowManager();
@@ -107,11 +108,11 @@ public class WindowManagerTests
 
         var outcome = core.Handle(new WindowClosed(new WindowId(2)));
 
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
-        Assert.DoesNotContain(outcome.State.Clients, client => client.Window == new WindowId(2));
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
+        Assert.DoesNotContain(client => client.Window == new WindowId(2), outcome.State.Clients);
     }
 
-    [Fact]
+    [TestMethod]
     public void MinimizingAWindowGivesItsSpaceBackAndRestoringReturnsIt()
     {
         var core = new WindowManager();
@@ -122,21 +123,21 @@ public class WindowManagerTests
 
         var minimized = core.Handle(new WindowMinimized(new WindowId(3)));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(minimized, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(minimized, 2));
-        var hidden = Assert.Single(minimized.State.Clients, client => client.Window == new WindowId(3));
-        Assert.True(hidden.Minimized);
-        Assert.DoesNotContain(minimized.Placements, placement => placement.Client == hidden.Id);
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(minimized, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(minimized, 2));
+        var hidden = Assert.ContainsSingle(client => client.Window == new WindowId(3), minimized.State.Clients);
+        Assert.IsTrue(hidden.Minimized);
+        Assert.DoesNotContain(placement => placement.Client == hidden.Id, minimized.Placements);
 
         var restored = core.Handle(new WindowRestored(new WindowId(3)));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(restored, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 540), BoundsOf(restored, 2));
-        Assert.Equal(new Rectangle(960, 540, 960, 540), BoundsOf(restored, 3));
-        Assert.False(Assert.Single(restored.State.Clients, client => client.Window == new WindowId(3)).Minimized);
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(restored, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 540), BoundsOf(restored, 2));
+        Assert.AreEqual(new Rectangle(960, 540, 960, 540), BoundsOf(restored, 3));
+        Assert.IsFalse(Assert.ContainsSingle(client => client.Window == new WindowId(3), restored.State.Clients).Minimized);
     }
 
-    [Fact]
+    [TestMethod]
     public void RestoringTheOnlyWindowReturnsItToTheWorkArea()
     {
         var core = new WindowManager();
@@ -145,16 +146,16 @@ public class WindowManagerTests
 
         var minimized = core.Handle(new WindowMinimized(new WindowId(1)));
 
-        Assert.Empty(minimized.Placements);
-        Assert.True(Assert.Single(minimized.State.Clients).Minimized);
+        Assert.IsEmpty(minimized.Placements);
+        Assert.IsTrue(Assert.ContainsSingle(minimized.State.Clients).Minimized);
 
         var restored = core.Handle(new WindowRestored(new WindowId(1)));
 
-        Assert.Equal(area, BoundsOf(restored, 1));
-        Assert.False(Assert.Single(restored.State.Clients).Minimized);
+        Assert.AreEqual(area, BoundsOf(restored, 1));
+        Assert.IsFalse(Assert.ContainsSingle(restored.State.Clients).Minimized);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosingAMinimizedWindowRemovesIt()
     {
         var core = new WindowManager();
@@ -165,20 +166,20 @@ public class WindowManagerTests
 
         var outcome = core.Handle(new WindowClosed(new WindowId(2)));
 
-        var client = Assert.Single(outcome.State.Clients);
-        Assert.Equal(new WindowId(1), client.Window);
-        Assert.Empty(outcome.Placements);
+        var client = Assert.ContainsSingle(outcome.State.Clients);
+        Assert.AreEqual(new WindowId(1), client.Window);
+        Assert.IsEmpty(outcome.Placements);
     }
 
-    [Theory]
-    [InlineData("tool")]
-    [InlineData("tooltip")]
-    [InlineData("taskbar")]
-    [InlineData("cloaked")]
-    [InlineData("invisible")]
-    [InlineData("untitled")]
-    [InlineData("child")]
-    [InlineData("overlay")]
+    [TestMethod]
+    [DataRow("tool")]
+    [DataRow("tooltip")]
+    [DataRow("taskbar")]
+    [DataRow("cloaked")]
+    [DataRow("invisible")]
+    [DataRow("untitled")]
+    [DataRow("child")]
+    [DataRow("overlay")]
     public void WindowsOutsideTheAdoptionFilterAreLeftAlone(string reason)
     {
         var core = new WindowManager();
@@ -187,12 +188,12 @@ public class WindowManagerTests
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(99), area) { Traits = Rejected(reason) });
 
-        var client = Assert.Single(outcome.State.Clients);
-        Assert.Equal(new WindowId(1), client.Window);
-        Assert.Empty(outcome.Placements);
+        var client = Assert.ContainsSingle(outcome.State.Clients);
+        Assert.AreEqual(new WindowId(1), client.Window);
+        Assert.IsEmpty(outcome.Placements);
     }
 
-    [Fact]
+    [TestMethod]
     public void ElevatedWindowIsTiled()
     {
         var core = new WindowManager();
@@ -203,11 +204,11 @@ public class WindowManagerTests
             Traits = WindowTraits.Normal with { Elevated = true },
         });
 
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 7));
-        Assert.False(Assert.Single(outcome.State.Clients).Floating);
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 7));
+        Assert.IsFalse(Assert.ContainsSingle(outcome.State.Clients).Floating);
     }
 
-    [Fact]
+    [TestMethod]
     public void DialogFloatsCenteredAndLeavesTheTilesAlone()
     {
         var core = new WindowManager();
@@ -221,19 +222,19 @@ public class WindowManagerTests
             Bounds = bounds,
         });
 
-        var dialog = Assert.Single(floated.State.Clients, client => client.Window == new WindowId(2));
-        Assert.True(dialog.Floating);
-        Assert.Equal(NewFloat.Centered(area, bounds), Assert.Single(floated.Placements, placement => placement.Client == dialog.Id).Bounds);
-        Assert.Contains(floated.State.Clients, client => client.Window == new WindowId(1) && !client.Floating);
+        var dialog = Assert.ContainsSingle(client => client.Window == new WindowId(2), floated.State.Clients);
+        Assert.IsTrue(dialog.Floating);
+        Assert.AreEqual(NewFloat.Centered(area, bounds), Assert.ContainsSingle(placement => placement.Client == dialog.Id, floated.Placements).Bounds);
+        Assert.Contains(client => client.Window == new WindowId(1) && !client.Floating, floated.State.Clients);
 
         var split = core.Handle(new WindowAppeared(new WindowId(3), area));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(split, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(split, 3));
-        Assert.True(Assert.Single(split.State.Clients, client => client.Window == new WindowId(2)).Floating);
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(split, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(split, 3));
+        Assert.IsTrue(Assert.ContainsSingle(client => client.Window == new WindowId(2), split.State.Clients).Floating);
     }
 
-    [Fact]
+    [TestMethod]
     public void WindowIsAdoptedOnceItGainsATitle()
     {
         var core = new WindowManager();
@@ -243,14 +244,14 @@ public class WindowManagerTests
         {
             Traits = WindowTraits.Normal with { Titled = false },
         });
-        Assert.Empty(ignored.State.Clients);
+        Assert.IsEmpty(ignored.State.Clients);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(5), area));
 
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 5));
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 5));
     }
 
-    [Fact]
+    [TestMethod]
     public void ClassRuleFloatsTheWindowAndLeavesTheTilesAlone()
     {
         var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:kitty\n"));
@@ -264,20 +265,20 @@ public class WindowManagerTests
             Bounds = bounds,
         });
 
-        var floated = Assert.Single(outcome.State.Clients, client => client.Window == new WindowId(2));
-        Assert.True(floated.Floating);
-        Assert.Equal(NewFloat.Centered(area, bounds), Assert.Single(outcome.Placements).Bounds);
-        Assert.Contains(outcome.State.Clients, client => client.Window == new WindowId(1) && !client.Floating);
+        var floated = Assert.ContainsSingle(client => client.Window == new WindowId(2), outcome.State.Clients);
+        Assert.IsTrue(floated.Floating);
+        Assert.AreEqual(NewFloat.Centered(area, bounds), Assert.ContainsSingle(outcome.Placements).Bounds);
+        Assert.Contains(client => client.Window == new WindowId(1) && !client.Floating, outcome.State.Clients);
 
         var split = core.Handle(new WindowAppeared(new WindowId(3), area));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(split, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(split, 3));
-        Assert.True(Assert.Single(split.State.Clients, client => client.Window == new WindowId(2)).Floating);
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(split, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(split, 3));
+        Assert.IsTrue(Assert.ContainsSingle(client => client.Window == new WindowId(2), split.State.Clients).Floating);
     }
 
-    [Theory]
-    [InlineData("title:Editor")]
+    [TestMethod]
+    [DataRow("title:Editor")]
     public void TitleRuleFloatsAMatchingWindow(string match)
     {
         var core = new WindowManager(ConfigParser.Parse($"windowrule = float, {match}\n"));
@@ -289,7 +290,7 @@ public class WindowManagerTests
             Traits = WindowTraits.Normal with { Title = "Release Notes" },
             Bounds = bounds,
         });
-        Assert.False(Assert.Single(missed.State.Clients).Floating);
+        Assert.IsFalse(Assert.ContainsSingle(missed.State.Clients).Floating);
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(2), area)
         {
@@ -297,12 +298,12 @@ public class WindowManagerTests
             Bounds = bounds,
         });
 
-        var floated = Assert.Single(outcome.State.Clients, client => client.Window == new WindowId(2));
-        Assert.True(floated.Floating);
-        Assert.Equal(NewFloat.Centered(area, bounds), Assert.Single(outcome.Placements, placement => placement.Client == floated.Id).Bounds);
+        var floated = Assert.ContainsSingle(client => client.Window == new WindowId(2), outcome.State.Clients);
+        Assert.IsTrue(floated.Floating);
+        Assert.AreEqual(NewFloat.Centered(area, bounds), Assert.ContainsSingle(placement => placement.Client == floated.Id, outcome.Placements).Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void CloakedFrameStaysUnmanagedWithAPackagedIdentity()
     {
         var core = new WindowManager();
@@ -318,11 +319,11 @@ public class WindowManagerTests
             },
         });
 
-        Assert.Empty(outcome.State.Clients);
-        Assert.Empty(outcome.Placements);
+        Assert.IsEmpty(outcome.State.Clients);
+        Assert.IsEmpty(outcome.Placements);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExeRuleIgnoresTheWindow()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = ignore, exe:notepad.exe\n"));
@@ -334,12 +335,12 @@ public class WindowManagerTests
             Traits = WindowTraits.Normal with { Exe = "notepad.exe" },
         });
 
-        Assert.Single(outcome.State.Clients, client => client.Window == new WindowId(1));
-        Assert.DoesNotContain(outcome.State.Clients, client => client.Window == new WindowId(2));
-        Assert.Empty(outcome.Placements);
+        Assert.ContainsSingle(client => client.Window == new WindowId(1), outcome.State.Clients);
+        Assert.DoesNotContain(client => client.Window == new WindowId(2), outcome.State.Clients);
+        Assert.IsEmpty(outcome.Placements);
     }
 
-    [Fact]
+    [TestMethod]
     public void RuleMatchesOnlyWhenClassTitleAndExeAllMatch()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 4, class:code, title:Editor, exe:code.exe\n"));
@@ -349,18 +350,18 @@ public class WindowManagerTests
         {
             Traits = WindowTraits.Normal with { Class = "code", Title = "Editor", Exe = "other.exe" },
         });
-        Assert.Equal(WorkspaceId.Initial, Assert.Single(missed.State.Clients).Workspace);
+        Assert.AreEqual(WorkspaceId.Initial, Assert.ContainsSingle(missed.State.Clients).Workspace);
 
         var hit = core.Handle(new WindowAppeared(new WindowId(2), area)
         {
             Traits = WindowTraits.Normal with { Class = "code", Title = "Editor", Exe = "code.exe" },
         });
-        var client = Assert.Single(hit.State.Clients, candidate => candidate.Window == new WindowId(2));
-        Assert.Equal(new WorkspaceId("4"), client.Workspace);
-        Assert.False(client.Floating);
+        var client = Assert.ContainsSingle(candidate => candidate.Window == new WindowId(2), hit.State.Clients);
+        Assert.AreEqual(new WorkspaceId("4"), client.Workspace);
+        Assert.IsFalse(client.Floating);
     }
 
-    [Fact]
+    [TestMethod]
     public void VersionOneRuleMatchesClassOnly()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:kitty\n"));
@@ -372,19 +373,19 @@ public class WindowManagerTests
             Traits = WindowTraits.Normal with { Class = "other", Title = "kitty" },
             Bounds = bounds,
         });
-        Assert.False(Assert.Single(byTitle.State.Clients).Floating);
+        Assert.IsFalse(Assert.ContainsSingle(byTitle.State.Clients).Floating);
 
         var byClass = core.Handle(new WindowAppeared(new WindowId(2), area)
         {
             Traits = WindowTraits.Normal with { Class = "kitty" },
             Bounds = bounds,
         });
-        var floated = Assert.Single(byClass.State.Clients, client => client.Window == new WindowId(2));
-        Assert.True(floated.Floating);
-        Assert.Equal(NewFloat.Centered(area, bounds), Assert.Single(byClass.Placements, placement => placement.Client == floated.Id).Bounds);
+        var floated = Assert.ContainsSingle(client => client.Window == new WindowId(2), byClass.State.Clients);
+        Assert.IsTrue(floated.Floating);
+        Assert.AreEqual(NewFloat.Centered(area, bounds), Assert.ContainsSingle(placement => placement.Client == floated.Id, byClass.Placements).Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void TileRuleAdoptsAWindowTheFilterWouldLeaveAlone()
     {
         var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = tile, class:toolwindow\n"));
@@ -395,12 +396,12 @@ public class WindowManagerTests
             Traits = WindowTraits.Normal with { Tool = true, Class = "toolwindow" },
         });
 
-        Assert.False(Assert.Single(outcome.State.Clients).Floating);
-        Assert.Equal(WorkspaceId.Initial, Assert.Single(outcome.State.Clients).Workspace);
-        Assert.Equal(area, BoundsOf(outcome, 7));
+        Assert.IsFalse(Assert.ContainsSingle(outcome.State.Clients).Floating);
+        Assert.AreEqual(WorkspaceId.Initial, Assert.ContainsSingle(outcome.State.Clients).Workspace);
+        Assert.AreEqual(area, BoundsOf(outcome, 7));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWorkspaceRuleForAProgramLeavesItsPopupsAlone()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2, exe:chrome.exe\n"));
@@ -415,11 +416,11 @@ public class WindowManagerTests
             Traits = WindowTraits.Normal with { Overlay = true, Exe = "chrome.exe" },
         });
 
-        Assert.Empty(menu.State.Clients);
-        Assert.Empty(popup.State.Clients);
+        Assert.IsEmpty(menu.State.Clients);
+        Assert.IsEmpty(popup.State.Clients);
     }
 
-    [Fact]
+    [TestMethod]
     public void TileRuleTilesADialog()
     {
         var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = tile, class:dialog\n"));
@@ -431,11 +432,11 @@ public class WindowManagerTests
             Bounds = new Rectangle(1, 1, 10, 10),
         });
 
-        Assert.False(Assert.Single(outcome.State.Clients).Floating);
-        Assert.Equal(area, BoundsOf(outcome, 1));
+        Assert.IsFalse(Assert.ContainsSingle(outcome.State.Clients).Floating);
+        Assert.AreEqual(area, BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void FloatAndWorkspaceBothApply()
     {
         var text = "windowrule = workspace 4, class:kitty\nwindowrule = float, class:kitty\n";
@@ -448,14 +449,14 @@ public class WindowManagerTests
             Bounds = bounds,
         });
 
-        var client = Assert.Single(outcome.State.Clients);
-        Assert.True(client.Floating);
-        Assert.Equal(new WorkspaceId("4"), client.Workspace);
-        Assert.Equal(new WorkspaceId("4"), outcome.State.ActiveWorkspace);
-        Assert.Equal(NewFloat.Centered(new Rectangle(0, 0, 800, 600), bounds), Assert.Single(outcome.Placements).Bounds);
+        var client = Assert.ContainsSingle(outcome.State.Clients);
+        Assert.IsTrue(client.Floating);
+        Assert.AreEqual(new WorkspaceId("4"), client.Workspace);
+        Assert.AreEqual(new WorkspaceId("4"), outcome.State.ActiveWorkspace);
+        Assert.AreEqual(NewFloat.Centered(new Rectangle(0, 0, 800, 600), bounds), Assert.ContainsSingle(outcome.Placements).Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspaceRuleOnADialogKeepsItFloating()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 3, class:dialog\n"));
@@ -467,13 +468,13 @@ public class WindowManagerTests
             Bounds = bounds,
         });
 
-        var client = Assert.Single(outcome.State.Clients);
-        Assert.True(client.Floating);
-        Assert.Equal(new WorkspaceId("3"), client.Workspace);
-        Assert.Equal(NewFloat.Centered(new Rectangle(0, 0, 900, 700), bounds), Assert.Single(outcome.Placements).Bounds);
+        var client = Assert.ContainsSingle(outcome.State.Clients);
+        Assert.IsTrue(client.Floating);
+        Assert.AreEqual(new WorkspaceId("3"), client.Workspace);
+        Assert.AreEqual(NewFloat.Centered(new Rectangle(0, 0, 900, 700), bounds), Assert.ContainsSingle(outcome.Placements).Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void SilentWorkspaceRuleDoesNotSwitch()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:kitty\n"));
@@ -485,17 +486,17 @@ public class WindowManagerTests
             Traits = WindowTraits.Normal with { Class = "kitty" },
         });
 
-        var client = Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(2));
-        Assert.Equal(new WorkspaceId("2"), client.Workspace);
-        Assert.False(client.Floating);
-        Assert.Equal(WorkspaceId.Initial, outcome.State.ActiveWorkspace);
-        Assert.Contains(outcome.State.Clients, candidate => candidate.Window == new WindowId(1) && candidate.Workspace == WorkspaceId.Initial);
-        Assert.DoesNotContain(outcome.State.Hidden, hidden => hidden.Window == new WindowId(1));
-        Assert.DoesNotContain(outcome.Placements, placement => placement.Client == client.Id);
-        Assert.Contains(outcome.State.Hidden, hidden => hidden.Window == new WindowId(2));
+        var client = Assert.ContainsSingle(candidate => candidate.Window == new WindowId(2), outcome.State.Clients);
+        Assert.AreEqual(new WorkspaceId("2"), client.Workspace);
+        Assert.IsFalse(client.Floating);
+        Assert.AreEqual(WorkspaceId.Initial, outcome.State.ActiveWorkspace);
+        Assert.Contains(candidate => candidate.Window == new WindowId(1) && candidate.Workspace == WorkspaceId.Initial, outcome.State.Clients);
+        Assert.DoesNotContain(hidden => hidden.Window == new WindowId(1), outcome.State.Hidden);
+        Assert.DoesNotContain(placement => placement.Client == client.Id, outcome.Placements);
+        Assert.Contains(hidden => hidden.Window == new WindowId(2), outcome.State.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void LaterRuleWinsAndDifferentEffectsCombine()
     {
         var text =
@@ -511,15 +512,15 @@ public class WindowManagerTests
             Traits = WindowTraits.Normal with { Class = "kitty" },
         });
 
-        var client = Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(2));
-        Assert.False(client.Floating);
-        Assert.Equal(new WorkspaceId("9"), client.Workspace);
-        Assert.Equal(new WorkspaceId("9"), outcome.State.ActiveWorkspace);
-        Assert.Equal(area, BoundsOf(outcome, 2));
-        Assert.Contains(outcome.State.Hidden, hidden => hidden.Window == new WindowId(1));
+        var client = Assert.ContainsSingle(candidate => candidate.Window == new WindowId(2), outcome.State.Clients);
+        Assert.IsFalse(client.Floating);
+        Assert.AreEqual(new WorkspaceId("9"), client.Workspace);
+        Assert.AreEqual(new WorkspaceId("9"), outcome.State.ActiveWorkspace);
+        Assert.AreEqual(area, BoundsOf(outcome, 2));
+        Assert.Contains(hidden => hidden.Window == new WindowId(1), outcome.State.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void LaterIgnoreLeavesTheWindowUnmanaged()
     {
         var text = "windowrule = workspace 2, class:kitty\nwindowrule = ignore, class:kitty\n";
@@ -530,11 +531,11 @@ public class WindowManagerTests
             Traits = WindowTraits.Normal with { Class = "kitty" },
         });
 
-        Assert.Empty(outcome.State.Clients);
-        Assert.Empty(outcome.Placements);
+        Assert.IsEmpty(outcome.State.Clients);
+        Assert.IsEmpty(outcome.Placements);
     }
 
-    [Fact]
+    [TestMethod]
     public void XwaylandMatchIsNotApplied()
     {
         var document = ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\nwindowrule = float, class:kitty, xwayland:1\n");
@@ -546,11 +547,11 @@ public class WindowManagerTests
             Bounds = new Rectangle(1, 2, 3, 4),
         });
 
-        Assert.False(Assert.Single(outcome.State.Clients).Floating);
-        Assert.Equal(new Rectangle(0, 0, 100, 100), BoundsOf(outcome, 1));
+        Assert.IsFalse(Assert.ContainsSingle(outcome.State.Clients).Floating);
+        Assert.AreEqual(new Rectangle(0, 0, 100, 100), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatternMustMatchTheWholeField()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = float, title:Notes\n"));
@@ -561,10 +562,10 @@ public class WindowManagerTests
             Bounds = new Rectangle(4, 5, 6, 7),
         });
 
-        Assert.False(Assert.Single(outcome.State.Clients).Floating);
+        Assert.IsFalse(Assert.ContainsSingle(outcome.State.Clients).Floating);
     }
 
-    [Fact]
+    [TestMethod]
     public void AppearingAgainDoesNotSplitAgain()
     {
         var core = new WindowManager();
@@ -573,11 +574,11 @@ public class WindowManagerTests
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), area));
 
-        Assert.Single(outcome.State.Clients);
-        Assert.Empty(outcome.Placements);
+        Assert.ContainsSingle(outcome.State.Clients);
+        Assert.IsEmpty(outcome.Placements);
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientShownAgainLeavesTheFocusWhereItWas()
     {
         var core = new WindowManager();
@@ -588,11 +589,14 @@ public class WindowManagerTests
 
         var echo = Echo(core, 2, area);
 
-        Assert.All(echo, outcome => Assert.Null(outcome.Focus));
-        Assert.Equal("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        foreach (var outcome in echo)
+{
+    Assert.IsNull(outcome.Focus);
+}
+        Assert.AreEqual("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientShownAgainChangesNoPlacement()
     {
         var core = new WindowManager();
@@ -602,16 +606,18 @@ public class WindowManagerTests
 
         var echo = Echo(core, 1, area);
 
-        Assert.All(echo, outcome =>
-        {
-            Assert.Empty(outcome.Placements);
-            Assert.Empty(outcome.Show);
-            Assert.Empty(outcome.Hide);
-        });
-        Assert.Equal(2, echo[^1].State.Clients.Count);
+        foreach (var outcome in echo)
+{
+    {
+            Assert.IsEmpty(outcome.Placements);
+            Assert.IsEmpty(outcome.Show);
+            Assert.IsEmpty(outcome.Hide);
+        }
+}
+        Assert.AreEqual(2, echo[^1].State.Clients.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientThatShowsItselfOnAHiddenWorkspaceIsHiddenAgain()
     {
         var core = new WindowManager();
@@ -621,7 +627,7 @@ public class WindowManagerTests
 
         var echo = Echo(core, 1, area);
 
-        Assert.Equal([new WindowId(1)], echo[^1].Hide);
+        Assert.AreSequenceEqual([new WindowId(1)], echo[^1].Hide);
     }
 
     private static Outcome[] Echo(WindowManager core, long window, Rectangle area)

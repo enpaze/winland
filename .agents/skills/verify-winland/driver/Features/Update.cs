@@ -1,15 +1,17 @@
 using System.Text.RegularExpressions;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "update")]
-public partial class Update(ITestOutputHelper output)
+[TestClass]
+public partial class Update
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [SystemVerifyFact]
     public void UpdatesAnInstalledCopyFromTheDevRelease()
     {
-        var install = UserInstall.Begin(output);
+        var install = UserInstall.Begin(TestContext);
         var channel = Path.Combine(UserInstall.Home, "channel");
         var savedChannel = File.Exists(channel) ? File.ReadAllText(channel) : null;
         try
@@ -19,15 +21,15 @@ public partial class Update(ITestOutputHelper output)
             install.Say($"installed version: {before}");
 
             var updated = install.Run(UserInstall.Executable, "update", "--channel", "dev");
-            Assert.True(updated.ExitCode == 0, $"winland update --channel dev failed: {updated}");
-            Assert.Equal("dev", File.ReadAllText(channel).Trim());
+            Assert.IsTrue(updated.ExitCode == 0, $"winland update --channel dev failed: {updated}");
+            Assert.AreEqual("dev", File.ReadAllText(channel).Trim());
             install.Say("saw: update --channel dev saved the dev channel");
 
             if (UpdatedTo().Match(updated.Output) is { Success: true } match)
             {
                 var version = match.Groups[1].Value;
-                Assert.Equal(version, UserInstall.RegisteredVersion);
-                Assert.True(File.Exists(UserInstall.Executable));
+                Assert.AreEqual(version, UserInstall.RegisteredVersion);
+                Assert.IsTrue(File.Exists(UserInstall.Executable));
                 install.Say($"saw: the installed copy was replaced with the dev release {version}, and Settings › Apps shows that version");
             }
             else
@@ -40,7 +42,7 @@ public partial class Update(ITestOutputHelper output)
             install.Say("saw: update printed no retirement error");
             var swept = install.Run(UserInstall.Executable, "check", Path.Combine(Path.GetTempPath(), "winland-verify-absent.conf"));
             AssertNoRetirementError(swept);
-            Assert.False(RetiredFileRemains(UserInstall.Folder), "a .winland-old file remained after the next run");
+            Assert.IsFalse(RetiredFileRemains(UserInstall.Folder), "a .winland-old file remained after the next run");
             install.Say("saw: the next run left no file whose name contains .winland-old");
 
             install.Uninstall();

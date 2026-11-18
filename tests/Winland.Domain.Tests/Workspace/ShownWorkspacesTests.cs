@@ -1,5 +1,6 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class ShownWorkspacesTests
 {
     private static readonly MonitorId Left = new(0);
@@ -7,7 +8,7 @@ public class ShownWorkspacesTests
 
     private static WorkspaceId Number(long number, MonitorId monitor) => WorkspaceId.FromNumber(number, monitor);
 
-    [Fact]
+    [TestMethod]
     public void AMonitorThatJustBecameLiveHasNoShownWorkspaceButStillAnswersWhatItShowedLast()
     {
         var shown = new ShownWorkspaces();
@@ -15,11 +16,11 @@ public class ShownWorkspacesTests
 
         shown.SetLive([Left]);
 
-        Assert.Null(shown.Shown(Left));
-        Assert.Equal(Number(3, Left), shown.ActiveOn(Left));
+        Assert.IsNull(shown.Shown(Left));
+        Assert.AreEqual(Number(3, Left), shown.ActiveOn(Left));
     }
 
-    [Fact]
+    [TestMethod]
     public void AShowOnALiveMonitorIsItsShownWorkspace()
     {
         var shown = new ShownWorkspaces();
@@ -27,12 +28,12 @@ public class ShownWorkspacesTests
 
         shown.Show(Left, Number(2, Left));
 
-        Assert.Equal(Number(2, Left), shown.Shown(Left));
-        Assert.Null(shown.Shown(Right));
-        Assert.Equal(WorkspaceId.Initial, shown.ActiveOn(Right));
+        Assert.AreEqual(Number(2, Left), shown.Shown(Left));
+        Assert.IsNull(shown.Shown(Right));
+        Assert.AreEqual(WorkspaceId.Initial, shown.ActiveOn(Right));
     }
 
-    [Fact]
+    [TestMethod]
     public void AMonitorThatLeavesKeepsWhatItShowedLast()
     {
         var shown = new ShownWorkspaces();
@@ -41,12 +42,12 @@ public class ShownWorkspacesTests
 
         shown.SetLive([Left]);
 
-        Assert.Null(shown.Shown(Right));
-        Assert.Equal(Number(4, Right), shown.LastShown(Right));
-        Assert.Equal(Number(4, Right), shown.ActiveOn(Right));
+        Assert.IsNull(shown.Shown(Right));
+        Assert.AreEqual(Number(4, Right), shown.LastShown(Right));
+        Assert.AreEqual(Number(4, Right), shown.ActiveOn(Right));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASpecialWorkspaceShowsOverALiveMonitorUntilItCloses()
     {
         var shown = new ShownWorkspaces();
@@ -57,11 +58,11 @@ public class ShownWorkspacesTests
         var open = shown.SpecialOn(Left);
         shown.ShowSpecial(Left, null);
 
-        Assert.Equal(scratch, open);
-        Assert.Null(shown.SpecialOn(Left));
+        Assert.AreEqual(scratch, open);
+        Assert.IsNull(shown.SpecialOn(Left));
     }
 
-    [Fact]
+    [TestMethod]
     public void ARenameMovesTheShownWorkspaceAndItsVisits()
     {
         var shown = new ShownWorkspaces();
@@ -72,10 +73,10 @@ public class ShownWorkspacesTests
 
         shown.Rename(Number(2, Left), Number(7, Left));
 
-        Assert.Equal(Number(7, Left), shown.Previous(Left, perMonitor: false));
+        Assert.AreEqual(Number(7, Left), shown.Previous(Left, perMonitor: false));
     }
 
-    [Fact]
+    [TestMethod]
     public void ARemovedWorkspaceIsNoLongerShownOrVisited()
     {
         var shown = new ShownWorkspaces();
@@ -86,11 +87,11 @@ public class ShownWorkspacesTests
 
         shown.Remove(Number(1, Left));
 
-        Assert.Null(shown.Shown(Left));
-        Assert.Equal(WorkspaceId.Initial, shown.ActiveOn(Left));
+        Assert.IsNull(shown.Shown(Left));
+        Assert.AreEqual(WorkspaceId.Initial, shown.ActiveOn(Left));
     }
 
-    [Fact]
+    [TestMethod]
     public void PreviousPerMonitorSkipsVisitsOnOtherMonitors()
     {
         var shown = new ShownWorkspaces();
@@ -100,11 +101,11 @@ public class ShownWorkspacesTests
         shown.Visit(Number(1, Left), Left);
         shown.Show(Left, Number(1, Left));
 
-        Assert.Equal(Number(1, Right), shown.Previous(Left, perMonitor: false));
-        Assert.Equal(Number(5, Left), shown.Previous(Left, perMonitor: true));
+        Assert.AreEqual(Number(1, Right), shown.Previous(Left, perMonitor: false));
+        Assert.AreEqual(Number(5, Left), shown.Previous(Left, perMonitor: true));
     }
 
-    [Fact]
+    [TestMethod]
     public void WithoutCyclesTheSameWorkspaceTwiceIsOneVisit()
     {
         var shown = new ShownWorkspaces();
@@ -114,10 +115,10 @@ public class ShownWorkspacesTests
         shown.Visit(Number(1, Left), Left);
         shown.Show(Left, Number(1, Left));
 
-        Assert.Equal(Number(2, Left), shown.Previous(Left, perMonitor: false));
+        Assert.AreEqual(Number(2, Left), shown.Previous(Left, perMonitor: false));
     }
 
-    [Fact]
+    [TestMethod]
     public void OnlyWhatAnEnabledMonitorShowsIsShown()
     {
         var shown = new ShownWorkspaces();
@@ -125,13 +126,13 @@ public class ShownWorkspacesTests
         shown.Show(Left, Number(1, Left));
         shown.Show(Right, Number(1, Right));
 
-        Assert.True(shown.IsShown(Number(1, Left)));
-        Assert.False(shown.IsShown(Number(1, Right)));
-        Assert.True(shown.ShowsAWorkspace(Left));
-        Assert.False(shown.ShowsAWorkspace(Right));
+        Assert.IsTrue(shown.IsShown(Number(1, Left)));
+        Assert.IsFalse(shown.IsShown(Number(1, Right)));
+        Assert.IsTrue(shown.ShowsAWorkspace(Left));
+        Assert.IsFalse(shown.ShowsAWorkspace(Right));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASpecialWorkspaceIsShownOverTheEnabledMonitorThatOpensIt()
     {
         var shown = new ShownWorkspaces();
@@ -139,21 +140,21 @@ public class ShownWorkspacesTests
         shown.SetLive([Left, Right]);
         shown.ShowSpecial(Right, scratch);
 
-        Assert.Equal(Right, shown.ShowingSpecial(scratch));
-        Assert.True(shown.IsShown(scratch));
+        Assert.AreEqual(Right, shown.ShowingSpecial(scratch));
+        Assert.IsTrue(shown.IsShown(scratch));
 
         shown.SetLive([Left, Right], enabled: [Left]);
-        Assert.Null(shown.ShowingSpecial(scratch));
+        Assert.IsNull(shown.ShowingSpecial(scratch));
     }
 
-    [Fact]
+    [TestMethod]
     public void WithNoMonitorReportedThePrimaryShowsWhatItShowedLast()
     {
         var shown = new ShownWorkspaces();
         shown.Show(MonitorId.Primary, Number(3, MonitorId.Primary));
 
-        Assert.True(shown.IsShown(Number(3, MonitorId.Primary)));
-        Assert.False(shown.IsShown(Number(4, MonitorId.Primary)));
-        Assert.True(shown.ShowsAWorkspace(Left));
+        Assert.IsTrue(shown.IsShown(Number(3, MonitorId.Primary)));
+        Assert.IsFalse(shown.IsShown(Number(4, MonitorId.Primary)));
+        Assert.IsTrue(shown.ShowsAWorkspace(Left));
     }
 }

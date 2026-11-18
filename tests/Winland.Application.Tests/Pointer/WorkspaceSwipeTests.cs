@@ -2,9 +2,10 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class WorkspaceSwipeTests
 {
-    [Fact]
+    [TestMethod]
     public void WorkspaceSwipePreexistingForce()
     {
         var swipe = Fixture.Run();
@@ -124,14 +125,14 @@ public class WorkspaceSwipeTests
             return new Shot(true, active, monitor);
         }
 
-        internal void Neutral(string name) => Assert.Equal(new Shot(true, true, O.Monitor), Snapshot(name));
+        internal void Neutral(string name) => Assert.AreEqual(new Shot(true, true, O.Monitor), Snapshot(name));
 
-        internal void Baseline(string name, Shot expected) => Assert.Equal(expected, Snapshot(name));
+        internal void Baseline(string name, Shot expected) => Assert.AreEqual(expected, Snapshot(name));
 
         internal void Preview(string name)
         {
-            Assert.False(Snapshot(name).Active);
-            Assert.True(Snapshot(Origin).Active);
+            Assert.IsFalse(Snapshot(name).Active);
+            Assert.IsTrue(Snapshot(Origin).Active);
         }
 
         internal void Cleaned()
@@ -147,10 +148,10 @@ public class WorkspaceSwipeTests
             L = Snapshot(Left);
             O = Snapshot(Origin);
             R = Snapshot(Right);
-            Assert.True(L.Exists);
-            Assert.True(R.Exists);
-            Assert.False(L.Active);
-            Assert.False(R.Active);
+            Assert.IsTrue(L.Exists);
+            Assert.IsTrue(R.Exists);
+            Assert.IsFalse(L.Active);
+            Assert.IsFalse(R.Active);
             Neutral(Origin);
         }
     }

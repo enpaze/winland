@@ -1,30 +1,35 @@
 using Windows.Win32;
 using Windows.Win32.UI.WindowsAndMessaging;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "monitors")]
-public class Monitors(ITestOutputHelper output)
+[TestClass]
+public class Monitors
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void ReportsAndFocusesMonitorsAndMovesWorkspacesBetweenThem() => VerifyRun.Drive(output, run =>
+    public void ReportsAndFocusesMonitorsAndMovesWorkspacesBetweenThem() => VerifyRun.Drive(TestContext, run =>
     {
         var count = PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CMONITORS);
         var monitors = run.Json("monitors").EnumerateArray().ToList();
-        Assert.Equal(count, monitors.Count);
-        Assert.True(run.Json("monitors", "all").GetArrayLength() >= count);
-        Assert.All(monitors, monitor => Assert.True(monitor.GetProperty("width").GetInt32() > 0 && monitor.GetProperty("height").GetInt32() > 0));
+        Assert.AreEqual(count, monitors.Count);
+        Assert.IsTrue(run.Json("monitors", "all").GetArrayLength() >= count);
+        foreach (var monitor in monitors)
+{
+    Assert.IsTrue(monitor.GetProperty("width").GetInt32() > 0 && monitor.GetProperty("height").GetInt32() > 0);
+}
         run.Say($"saw: monitors lists the {count} monitor(s) Windows reports");
 
         var focused = monitors.Single(monitor => monitor.GetProperty("focused").GetBoolean());
         var name = focused.GetProperty("name").GetString()!;
         run.Dispatch($"focusmonitor {name}");
         run.Dispatch("focusmonitor current");
-        Assert.Equal(name, run.Json("activeworkspace").GetProperty("monitor").GetString());
+        Assert.AreEqual(name, run.Json("activeworkspace").GetProperty("monitor").GetString());
         var unknown = run.Cli("dispatch", "focusmonitor", "NoSuchMonitor");
-        Assert.Equal(1, unknown.ExitCode);
-        Assert.Equal("error: monitor not found", unknown.Error.Trim());
+        Assert.AreEqual(1, unknown.ExitCode);
+        Assert.AreEqual("error: monitor not found", unknown.Error.Trim());
 
         if (count < 2)
         {

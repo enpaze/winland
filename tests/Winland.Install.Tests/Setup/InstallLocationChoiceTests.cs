@@ -1,49 +1,50 @@
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class InstallLocationChoiceTests
 {
-    [Fact]
+    [TestMethod]
     public void ThePerUserCopyIsRecognizedWhateverItsCase()
     {
         var directory = @"C:\Users\me\AppData\Local\Programs\Winland";
 
-        Assert.True(InstallLocations.IsPerUserInstall(Path.Combine(directory, "winland.exe"), directory));
-        Assert.True(InstallLocations.IsPerUserInstall(Path.Combine(directory.ToLowerInvariant(), "winland.exe"), directory + @"\"));
+        Assert.IsTrue(InstallLocations.IsPerUserInstall(Path.Combine(directory, "winland.exe"), directory));
+        Assert.IsTrue(InstallLocations.IsPerUserInstall(Path.Combine(directory.ToLowerInvariant(), "winland.exe"), directory + @"\"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnotherFolderIsNotThePerUserCopy()
     {
-        Assert.False(InstallLocations.IsPerUserInstall(
+        Assert.IsFalse(InstallLocations.IsPerUserInstall(
             @"C:\Program Files\Winland\winland.exe",
             @"C:\Users\me\AppData\Local\Programs\Winland"));
-        Assert.False(InstallLocations.IsPerUserInstall(null, @"C:\Users\me\AppData\Local\Programs\Winland"));
+        Assert.IsFalse(InstallLocations.IsPerUserInstall(null, @"C:\Users\me\AppData\Local\Programs\Winland"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheConfigIsTheDotWinlandFolder()
     {
-        Assert.Equal(@"C:\Users\me\.winland", InstallLocations.Config(@"C:\Users\me"));
+        Assert.AreEqual(@"C:\Users\me\.winland", InstallLocations.Config(@"C:\Users\me"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheInstalledProgramFoldersStayWhereTheyAre()
     {
-        Assert.Equal(@"C:\Program Files\Winland", InstallLocations.Machine(@"C:\Program Files"));
-        Assert.Equal(
+        Assert.AreEqual(@"C:\Program Files\Winland", InstallLocations.Machine(@"C:\Program Files"));
+        Assert.AreEqual(
             @"C:\Users\me\AppData\Local\Programs\Winland",
             InstallLocations.User(@"C:\Users\me\AppData\Local"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheRunningFolderSelectsTheInstall()
     {
         var machine = @"C:\Program Files\Winland";
         var user = @"C:\Users\me\AppData\Local\Programs\Winland";
 
-        Assert.Equal(InstallKind.Machine, InstalledCopy.Of(Path.Combine(machine, "winland.exe"), machine, user));
-        Assert.Equal(InstallKind.Machine, InstalledCopy.Of(Path.Combine(machine.ToLowerInvariant(), "winland.exe"), machine + @"\", user));
-        Assert.Equal(InstallKind.User, InstalledCopy.Of(Path.Combine(user, "winland.exe"), machine, user + @"\"));
-        Assert.Equal(InstallKind.None, InstalledCopy.Of(@"C:\Dev\winland\winland.exe", machine, user));
+        Assert.AreEqual(InstallKind.Machine, InstalledCopy.Of(Path.Combine(machine, "winland.exe"), machine, user));
+        Assert.AreEqual(InstallKind.Machine, InstalledCopy.Of(Path.Combine(machine.ToLowerInvariant(), "winland.exe"), machine + @"\", user));
+        Assert.AreEqual(InstallKind.User, InstalledCopy.Of(Path.Combine(user, "winland.exe"), machine, user + @"\"));
+        Assert.AreEqual(InstallKind.None, InstalledCopy.Of(@"C:\Dev\winland\winland.exe", machine, user));
     }
 }

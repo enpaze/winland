@@ -1,10 +1,11 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class SwipeRecognizerTests
 {
     private static readonly TrackpadGesture Horizontal = new(3, GestureAxis.Horizontal);
 
-    [Fact]
+    [TestMethod]
     public void ASwipeShorterThanThePickDistancePicksNothing()
     {
         var swipe = new SwipeRecognizer();
@@ -12,11 +13,11 @@ public class SwipeRecognizerTests
 
         var step = swipe.Update(new SwipeUpdated(3, 4, 0), [Horizontal]);
 
-        Assert.Equal(default, step);
-        Assert.Null(swipe.Active);
+        Assert.AreEqual(default, step);
+        Assert.IsNull(swipe.Active);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheUpdateThatPicksTheGestureIsItsFirstStep()
     {
         var swipe = new SwipeRecognizer();
@@ -26,12 +27,12 @@ public class SwipeRecognizerTests
         var picking = swipe.Update(new SwipeUpdated(3, 3, 1), [Horizontal]);
         var next = swipe.Update(new SwipeUpdated(3, -1, 0), [Horizontal]);
 
-        Assert.Equal(new SwipeStep(Picked: true, Along: 3), picking);
-        Assert.Equal(new SwipeStep(Picked: false, Along: -1), next);
-        Assert.Same(Horizontal, swipe.Active);
+        Assert.AreEqual(new SwipeStep(Picked: true, Along: 3), picking);
+        Assert.AreEqual(new SwipeStep(Picked: false, Along: -1), next);
+        Assert.AreSame(Horizontal, swipe.Active);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASwipeThatMatchesNoGestureIsIgnoredUntilTheNextBegins()
     {
         var swipe = new SwipeRecognizer();
@@ -42,11 +43,11 @@ public class SwipeRecognizerTests
         swipe.Begin();
         var again = swipe.Update(new SwipeUpdated(3, 10, 0), [Horizontal]);
 
-        Assert.Equal(default, later);
-        Assert.True(again.Picked);
+        Assert.AreEqual(default, later);
+        Assert.IsTrue(again.Picked);
     }
 
-    [Fact]
+    [TestMethod]
     public void AVerticalSwipeDoesNotPickAHorizontalGesture()
     {
         var swipe = new SwipeRecognizer();
@@ -54,10 +55,10 @@ public class SwipeRecognizerTests
 
         var step = swipe.Update(new SwipeUpdated(3, 2, 10), [Horizontal]);
 
-        Assert.Equal(default, step);
+        Assert.AreEqual(default, step);
     }
 
-    [Fact]
+    [TestMethod]
     public void AVerticalGestureReadsVerticalMovement()
     {
         var vertical = new TrackpadGesture(3, GestureAxis.Vertical);
@@ -66,10 +67,10 @@ public class SwipeRecognizerTests
 
         var step = swipe.Update(new SwipeUpdated(3, 2, 10), [vertical]);
 
-        Assert.Equal(new SwipeStep(Picked: true, Along: 10), step);
+        Assert.AreEqual(new SwipeStep(Picked: true, Along: 10), step);
     }
 
-    [Fact]
+    [TestMethod]
     public void EndReturnsTheGestureAndIgnoresLaterUpdates()
     {
         var swipe = new SwipeRecognizer();
@@ -79,8 +80,8 @@ public class SwipeRecognizerTests
         var ended = swipe.End();
         var after = swipe.Update(new SwipeUpdated(3, 10, 0), [Horizontal]);
 
-        Assert.Same(Horizontal, ended);
-        Assert.Null(swipe.Active);
-        Assert.Equal(default, after);
+        Assert.AreSame(Horizontal, ended);
+        Assert.IsNull(swipe.Active);
+        Assert.AreEqual(default, after);
     }
 }

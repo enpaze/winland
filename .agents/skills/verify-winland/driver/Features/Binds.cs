@@ -1,12 +1,14 @@
 using Windows.Win32.UI.Input.KeyboardAndMouse;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "binds")]
-public class Binds(ITestOutputHelper output)
+[TestClass]
+public class Binds
 {
-    private const string Config =
+
+    public TestContext TestContext { get; set; } = null!;
+        private const string Config =
         """
         $hyper = CTRL ALT SHIFT
         bind = $hyper, F9, workspace, 4
@@ -16,12 +18,12 @@ public class Binds(ITestOutputHelper output)
         """;
 
     [VerifyFact]
-    public void RunsKeyBindsAndFollowsTheMouse() => VerifyRun.Drive(output, Config, run =>
+    public void RunsKeyBindsAndFollowsTheMouse() => VerifyRun.Drive(TestContext, Config, run =>
     {
         var binds = run.Ask("binds");
         Assert.Contains("bind = SHIFT CTRL ALT, F9, workspace, 4", binds, StringComparison.Ordinal);
         var json = run.Json("binds").EnumerateArray().ToList();
-        Assert.Contains(json, bind => bind.GetProperty("key").GetString() == "F9" && bind.GetProperty("modmask").GetInt32() == 13 && bind.GetProperty("dispatcher").GetString() == "workspace");
+        Assert.Contains(bind => bind.GetProperty("key").GetString() == "F9" && bind.GetProperty("modmask").GetInt32() == 13 && bind.GetProperty("dispatcher").GetString() == "workspace", json);
         run.Say("saw: binds lists the config's binds, with CTRL ALT SHIFT as modmask 13");
 
         var (left, right) = run.OpenPair();

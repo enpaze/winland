@@ -1,8 +1,9 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class BindDecisionTests
 {
-    [Fact]
+    [TestMethod]
     public void DecisionDoesNotWaitForTheCoreLock()
     {
         var core = new WindowManager();
@@ -18,7 +19,7 @@ public class BindDecisionTests
             release.Wait(TimeSpan.FromSeconds(5));
         }));
         held.Start();
-        Assert.True(entered.Wait(TimeSpan.FromSeconds(2)));
+        Assert.IsTrue(entered.Wait(TimeSpan.FromSeconds(2)));
 
         Exception? failure = null;
         BindDecision decision = default;
@@ -36,7 +37,7 @@ public class BindDecisionTests
         decided.Start();
         try
         {
-            Assert.True(decided.Join(TimeSpan.FromMilliseconds(500)), "The bind decision waited on the core lock.");
+            Assert.IsTrue(decided.Join(TimeSpan.FromMilliseconds(500)), "The bind decision waited on the core lock.");
         }
         finally
         {
@@ -44,12 +45,12 @@ public class BindDecisionTests
             held.Join();
         }
 
-        Assert.Null(failure);
-        Assert.True(decision.Consumed);
-        Assert.Equal("killactive", decision.Dispatcher);
+        Assert.IsNull(failure);
+        Assert.IsTrue(decision.Consumed);
+        Assert.AreEqual("killactive", decision.Dispatcher);
     }
 
-    [Fact]
+    [TestMethod]
     public void DecisionSwallowsTheReleaseOfABindItRanAndPassesTheModifierRelease()
     {
         var core = new WindowManager();
@@ -61,17 +62,17 @@ public class BindDecisionTests
         var keyUp = core.Decide(new KeyReleased("Q"), session);
         var superUp = core.Decide(new KeyReleased("Super_L"), session);
 
-        Assert.Equal("killactive", ran.Dispatcher);
-        Assert.True(ran.Consumed);
-        Assert.True(ran.Mask);
-        Assert.True(keyUp.Consumed);
-        Assert.Null(keyUp.Dispatcher);
-        Assert.False(superUp.Consumed);
-        Assert.Null(superUp.Dispatcher);
-        Assert.False(core.Decide(new KeyPressed("E"), session).Consumed);
+        Assert.AreEqual("killactive", ran.Dispatcher);
+        Assert.IsTrue(ran.Consumed);
+        Assert.IsTrue(ran.Mask);
+        Assert.IsTrue(keyUp.Consumed);
+        Assert.IsNull(keyUp.Dispatcher);
+        Assert.IsFalse(superUp.Consumed);
+        Assert.IsNull(superUp.Dispatcher);
+        Assert.IsFalse(core.Decide(new KeyPressed("E"), session).Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void NoBindRunsWhileBindsArePaused()
     {
         var core = new WindowManager();
@@ -81,11 +82,11 @@ public class BindDecisionTests
 
         var paused = core.Decide(new KeyPressed("Q"), session);
 
-        Assert.False(paused.Consumed);
-        Assert.Null(paused.Dispatcher);
+        Assert.IsFalse(paused.Consumed);
+        Assert.IsNull(paused.Dispatcher);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReloadReplacesTheBindTableAtomically()
     {
         var core = new WindowManager();
@@ -124,17 +125,17 @@ public class BindDecisionTests
 
         Volatile.Write(ref stop, 1);
         reader.Join();
-        Assert.True(samples > 0);
-        Assert.Equal(0, torn);
+        Assert.IsTrue(samples > 0);
+        Assert.AreEqual(0, torn);
 
         core.Handle(new Configure(killW));
         var session = new BindSession();
         core.Decide(new KeyPressed("Super_L"), session);
-        Assert.Null(core.Decide(new KeyPressed("Q"), session).Dispatcher);
-        Assert.Equal("killactive", core.Decide(new KeyPressed("W"), session).Dispatcher);
+        Assert.IsNull(core.Decide(new KeyPressed("Q"), session).Dispatcher);
+        Assert.AreEqual("killactive", core.Decide(new KeyPressed("W"), session).Dispatcher);
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryMatchingBindIsReturnedInConfigOrder()
     {
         var core = new WindowManager();
@@ -143,10 +144,10 @@ public class BindDecisionTests
 
         var decision = core.Decide(new KeyPressed("Q"), session);
 
-        Assert.True(decision.Consumed);
-        Assert.Equal("killactive", decision.Dispatcher);
-        Assert.Equal("", decision.Arguments);
-        Assert.Equal(
+        Assert.IsTrue(decision.Consumed);
+        Assert.AreEqual("killactive", decision.Dispatcher);
+        Assert.AreEqual("", decision.Arguments);
+        Assert.AreSequenceEqual(
             new BindDispatch[]
             {
                 new("killactive", ""),
@@ -155,15 +156,15 @@ public class BindDecisionTests
             decision.Dispatches);
     }
 
-    [Theory]
-    [InlineData("Super_L")]
-    [InlineData("Super_R")]
-    [InlineData("Alt_L")]
-    [InlineData("Alt_R")]
-    [InlineData("Control_L")]
-    [InlineData("Control_R")]
-    [InlineData("Shift_L")]
-    [InlineData("Shift_R")]
+    [TestMethod]
+    [DataRow("Super_L")]
+    [DataRow("Super_R")]
+    [DataRow("Alt_L")]
+    [DataRow("Alt_R")]
+    [DataRow("Control_L")]
+    [DataRow("Control_R")]
+    [DataRow("Shift_L")]
+    [DataRow("Shift_R")]
     public void ModifierKeyBindMatchesBeforeThatKeyJoinsTheMask(string key)
     {
         var core = new WindowManager();
@@ -172,29 +173,29 @@ public class BindDecisionTests
 
         var decision = core.Decide(new KeyPressed(key), session);
 
-        Assert.True(decision.Consumed);
-        Assert.Equal("killactive", decision.Dispatcher);
-        Assert.Equal(new BindDispatch[] { new("killactive", "") }, decision.Dispatches);
+        Assert.IsTrue(decision.Consumed);
+        Assert.AreEqual("killactive", decision.Dispatcher);
+        Assert.AreSequenceEqual(new BindDispatch[] { new("killactive", "") }, decision.Dispatches);
     }
 
-    [Fact]
+    [TestMethod]
     public void ModifierKeyBindMatchesTheOtherModifiersThatAreHeld()
     {
         var core = new WindowManager();
         core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = SUPER, Alt_L, killactive\n")));
         var session = new BindSession();
 
-        Assert.False(core.Decide(new KeyPressed("Alt_L"), session).Consumed);
+        Assert.IsFalse(core.Decide(new KeyPressed("Alt_L"), session).Consumed);
         core.Decide(new KeyReleased("Alt_L"), session);
         core.Decide(new KeyPressed("Super_L"), session);
 
         var decision = core.Decide(new KeyPressed("Alt_L"), session);
 
-        Assert.True(decision.Consumed);
-        Assert.Equal("killactive", decision.Dispatcher);
+        Assert.IsTrue(decision.Consumed);
+        Assert.AreEqual("killactive", decision.Dispatcher);
     }
 
-    [Fact]
+    [TestMethod]
     public void ModifierKeyBindKeepsTheModifierHeldForTheNextKey()
     {
         var core = new WindowManager();
@@ -204,12 +205,12 @@ public class BindDecisionTests
         var super = core.Decide(new KeyPressed("Super_L"), session);
         var next = core.Decide(new KeyPressed("Q"), session);
 
-        Assert.Equal("exec", super.Dispatcher);
-        Assert.Equal("killactive", next.Dispatcher);
-        Assert.True(next.Consumed);
+        Assert.AreEqual("exec", super.Dispatcher);
+        Assert.AreEqual("killactive", next.Dispatcher);
+        Assert.IsTrue(next.Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void OtherSideOfAModifierStaysInTheMask()
     {
         var core = new WindowManager();
@@ -219,11 +220,11 @@ public class BindDecisionTests
 
         var decision = core.Decide(new KeyPressed("Super_L"), session);
 
-        Assert.Equal("exec", decision.Dispatcher);
-        Assert.Equal(new BindDispatch[] { new("exec", "menu") }, decision.Dispatches);
+        Assert.AreEqual("exec", decision.Dispatcher);
+        Assert.AreSequenceEqual(new BindDispatch[] { new("exec", "menu") }, decision.Dispatches);
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyDispatcherConsumesTheKeyAndRunsNothing()
     {
         var core = new WindowManager();
@@ -232,13 +233,13 @@ public class BindDecisionTests
 
         var decision = core.Decide(new KeyPressed("Q"), session);
 
-        Assert.True(decision.Consumed);
-        Assert.Null(decision.Dispatcher);
-        Assert.Empty(decision.Dispatches);
-        Assert.True(core.Decide(new KeyReleased("Q"), session).Consumed);
+        Assert.IsTrue(decision.Consumed);
+        Assert.IsNull(decision.Dispatcher);
+        Assert.IsEmpty(decision.Dispatches);
+        Assert.IsTrue(core.Decide(new KeyReleased("Q"), session).Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyDispatcherDoesNotReplaceAnotherBindOnTheSameChord()
     {
         var core = new WindowManager();
@@ -247,8 +248,8 @@ public class BindDecisionTests
 
         var decision = core.Decide(new KeyPressed("Q"), session);
 
-        Assert.True(decision.Consumed);
-        Assert.Equal("killactive", decision.Dispatcher);
-        Assert.Equal(new BindDispatch[] { new("killactive", "") }, decision.Dispatches);
+        Assert.IsTrue(decision.Consumed);
+        Assert.AreEqual("killactive", decision.Dispatcher);
+        Assert.AreSequenceEqual(new BindDispatch[] { new("killactive", "") }, decision.Dispatches);
     }
 }

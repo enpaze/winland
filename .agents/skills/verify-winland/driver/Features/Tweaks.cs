@@ -1,19 +1,21 @@
 using Microsoft.Win32;
 using Windows.Win32;
 using Windows.Win32.UI.WindowsAndMessaging;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "tweaks")]
-public class Tweaks(ITestOutputHelper output)
+[TestClass]
+public class Tweaks
 {
-    private const string TouchpadKey = @"Software\Microsoft\Windows\CurrentVersion\PrecisionTouchPad";
+
+    public TestContext TestContext { get; set; } = null!;
+        private const string TouchpadKey = @"Software\Microsoft\Windows\CurrentVersion\PrecisionTouchPad";
 
     [SystemVerifyFact]
     public void TurnsSnapAndSwipesOffAndPutsThemBack()
     {
-        var install = UserInstall.Begin(output);
+        var install = UserInstall.Begin(TestContext);
         var original = Read();
         SetSnap(true);
         var before = Read();
@@ -21,16 +23,16 @@ public class Tweaks(ITestOutputHelper output)
         try
         {
             var off = install.Run(install.Paths.Daemon, "tweaks", "--off", "--touchpad");
-            Assert.Equal(0, off.ExitCode);
+            Assert.AreEqual(0, off.ExitCode);
             install.Until("Snap and both swipes are off", () => Read() == new Settings(false, 0, 0), 5_000);
             install.Say($"after tweaks --off --touchpad: {Read()}");
-            Assert.True(File.Exists(UserInstall.SettingsRecord), "tweaks --off recorded nothing to restore.");
+            Assert.IsTrue(File.Exists(UserInstall.SettingsRecord), "tweaks --off recorded nothing to restore.");
 
             var restore = install.Run(install.Paths.Daemon, "tweaks", "--restore");
-            Assert.Equal(0, restore.ExitCode);
+            Assert.AreEqual(0, restore.ExitCode);
             install.Until("Snap and both swipes are back as they were", () => Read() == before, 5_000);
             install.Say($"after tweaks --restore: {Read()}");
-            Assert.False(File.Exists(UserInstall.SettingsRecord), "tweaks --restore kept its record.");
+            Assert.IsFalse(File.Exists(UserInstall.SettingsRecord), "tweaks --restore kept its record.");
             install.Say("saw: Snap and both swipes went off, then came back exactly as they were");
         }
         finally

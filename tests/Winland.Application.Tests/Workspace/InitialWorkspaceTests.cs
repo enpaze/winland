@@ -1,10 +1,11 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class InitialWorkspaceTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void AStartedProgramOpensOnTheWorkspaceItWasStartedOn()
     {
         var core = Loaded("");
@@ -13,11 +14,11 @@ public class InitialWorkspaceTests
 
         var opened = Open(core, window: 1, pid: 500);
 
-        Assert.Equal(new WorkspaceId("1"), WorkspaceOf(opened, 1));
-        Assert.Equal(new WorkspaceId("2"), opened.State.ActiveWorkspace);
+        Assert.AreEqual(new WorkspaceId("1"), WorkspaceOf(opened, 1));
+        Assert.AreEqual(new WorkspaceId("2"), opened.State.ActiveWorkspace);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFirstWindowUsesTheTokenUp()
     {
         var core = Loaded("");
@@ -27,10 +28,10 @@ public class InitialWorkspaceTests
 
         var second = Open(core, window: 2, pid: 500);
 
-        Assert.Equal(new WorkspaceId("2"), WorkspaceOf(second, 2));
+        Assert.AreEqual(new WorkspaceId("2"), WorkspaceOf(second, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void ATokenExpiresAfterTenSeconds()
     {
         var now = 0L;
@@ -42,10 +43,10 @@ public class InitialWorkspaceTests
 
         var opened = Open(core, window: 1, pid: 500);
 
-        Assert.Equal(new WorkspaceId("2"), WorkspaceOf(opened, 1));
+        Assert.AreEqual(new WorkspaceId("2"), WorkspaceOf(opened, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void AChildOfTheStartedProgramHoldsTheTokenToo()
     {
         var core = Loaded("");
@@ -54,10 +55,10 @@ public class InitialWorkspaceTests
 
         var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { ProcessId = 600, AncestorProcessIds = [500] });
 
-        Assert.Equal(new WorkspaceId("1"), WorkspaceOf(opened, 1));
+        Assert.AreEqual(new WorkspaceId("1"), WorkspaceOf(opened, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWorkspaceRuleWinsOverTheToken()
     {
         var core = Loaded("windowrule = workspace 4 silent, class:ruled\n");
@@ -70,7 +71,7 @@ public class InitialWorkspaceTests
             Traits = WindowTraits.Normal with { Class = "ruled" },
         });
 
-        Assert.Equal(new WorkspaceId("4"), WorkspaceOf(opened, 1));
+        Assert.AreEqual(new WorkspaceId("4"), WorkspaceOf(opened, 1));
     }
 
     private static WindowManager Loaded(string config)
@@ -82,7 +83,7 @@ public class InitialWorkspaceTests
 
     private static void Start(WindowManager core, int pid)
     {
-        var launch = Assert.Single(core.Execute("dispatch exec app").Effect.Launches);
+        var launch = Assert.ContainsSingle(core.Execute("dispatch exec app").Effect.Launches);
         core.NoteLaunched(pid, launch);
     }
 

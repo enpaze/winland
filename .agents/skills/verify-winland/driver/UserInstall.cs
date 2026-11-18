@@ -1,5 +1,4 @@
 using Microsoft.Win32;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests;
 
@@ -7,9 +6,9 @@ internal sealed class UserInstall
 {
     private const string UninstallKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Winland";
 
-    private readonly ITestOutputHelper _output;
+    private readonly TestContext _output;
 
-    private UserInstall(ITestOutputHelper output)
+    private UserInstall(TestContext output)
     {
         _output = output;
         Paths = VerifyPaths.Read();
@@ -60,13 +59,13 @@ internal sealed class UserInstall
         }
     }
 
-    public static UserInstall Begin(ITestOutputHelper output)
+    public static UserInstall Begin(TestContext output)
     {
         var machine = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Winland");
-        Assert.False(Directory.Exists(Folder), $"Winland is already installed for this user at {Folder}. The driver will not replace it.");
-        Assert.False(Directory.Exists(machine), $"Winland is installed at {machine}. The driver will not install beside it.");
-        Assert.False(Registered, "Settings › Apps already lists Winland for this user. The driver will not replace it.");
-        Assert.False(File.Exists(SettingsRecord), $"{SettingsRecord} records Windows settings to restore. The driver will not touch them.");
+        Assert.IsFalse(Directory.Exists(Folder), $"Winland is already installed for this user at {Folder}. The driver will not replace it.");
+        Assert.IsFalse(Directory.Exists(machine), $"Winland is installed at {machine}. The driver will not install beside it.");
+        Assert.IsFalse(Registered, "Settings › Apps already lists Winland for this user. The driver will not replace it.");
+        Assert.IsFalse(File.Exists(SettingsRecord), $"{SettingsRecord} records Windows settings to restore. The driver will not touch them.");
         return new UserInstall(output);
     }
 
@@ -80,14 +79,14 @@ internal sealed class UserInstall
     public void Install()
     {
         var installed = Run(Paths.Daemon, "install", "--user", "--no-logon", "--no-start");
-        Assert.Equal(0, installed.ExitCode);
+        Assert.AreEqual(0, installed.ExitCode);
         Assert.Contains("Winland is installed for this user", installed.Output, StringComparison.Ordinal);
     }
 
     public void Uninstall()
     {
         var removed = Run(Executable, "uninstall");
-        Assert.Equal(0, removed.ExitCode);
+        Assert.AreEqual(0, removed.ExitCode);
         Assert.Contains("Winland is uninstalled.", removed.Output, StringComparison.Ordinal);
     }
 
@@ -107,7 +106,7 @@ internal sealed class UserInstall
         var deadline = Environment.TickCount64 + timeoutMs;
         while (!condition())
         {
-            Assert.True(Environment.TickCount64 < deadline, "Timed out waiting for: " + what);
+            Assert.IsTrue(Environment.TickCount64 < deadline, "Timed out waiting for: " + what);
             Thread.Sleep(100);
         }
 

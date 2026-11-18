@@ -1,8 +1,7 @@
 using System.Runtime.InteropServices;
 
 namespace Winland.Infrastructure.Tests;
-
-[Collection(DesktopCollection.Name)]
+[TestClass]
 public class ExitCleanupTests
 {
     private const int StyleIndex = -16;
@@ -21,8 +20,8 @@ public class ExitCleanupTests
 
         adapter.Recover(new RecoverySnapshot([left]) { Clean = true });
 
-        Assert.False(IsWindowVisible(probe.Anchor));
-        Assert.False(core.Manages(window));
+        Assert.IsFalse(IsWindowVisible(probe.Anchor));
+        Assert.IsFalse(core.Manages(window));
     }
 
     [DesktopFact]
@@ -44,9 +43,9 @@ public class ExitCleanupTests
 
             adapter.Recover(new RecoverySnapshot([left]));
 
-            Assert.True(ProbeNative.IsIconic(probe.Anchor));
-            Assert.True(IsWindowVisible(probe.Anchor));
-            Assert.False(core.Manages(window));
+            Assert.IsTrue(ProbeNative.IsIconic(probe.Anchor));
+            Assert.IsTrue(IsWindowVisible(probe.Anchor));
+            Assert.IsFalse(core.Manages(window));
         }
     }
 
@@ -77,7 +76,7 @@ public class ExitCleanupTests
             core.ReducedMotion = () => true;
             adapter.Recover(new RecoverySnapshot([left]));
 
-            Assert.Equal(original, (uint)GetWindowLong(probe.Anchor, StyleIndex));
+            Assert.AreEqual(original, (uint)GetWindowLong(probe.Anchor, StyleIndex));
         }
         finally
         {
@@ -94,7 +93,7 @@ public class ExitCleanupTests
         try
         {
             _ = ProbeNative.ShowWindow(probe.Anchor, 0);
-            Assert.False(IsWindowVisible(probe.Anchor));
+            Assert.IsFalse(IsWindowVisible(probe.Anchor));
             var left = new RecoveredClient(
                 new WindowId(probe.Anchor.ToInt64()),
                 WorkspaceId.Initial,
@@ -109,7 +108,7 @@ public class ExitCleanupTests
             core.ReducedMotion = () => true;
             adapter.Recover(new RecoverySnapshot([left]));
 
-            Assert.True(IsWindowVisible(probe.Anchor));
+            Assert.IsTrue(IsWindowVisible(probe.Anchor));
         }
         finally
         {

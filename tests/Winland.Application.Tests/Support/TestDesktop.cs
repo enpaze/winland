@@ -68,7 +68,7 @@ internal sealed class TestDesktop
         var warnings = ConfigParser.Parse(_text).Warnings.Count;
         _text += "\n" + keyword + " = " + value + "\n";
         var document = ConfigParser.Parse(_text);
-        Assert.Equal(warnings, document.Warnings.Count);
+        Assert.AreEqual(warnings, document.Warnings.Count);
         Handle(new Configure(document));
     }
 
@@ -200,7 +200,7 @@ internal sealed class TestDesktop
         Send(arguments.Length == 0 ? $"dispatch {dispatcher}" : $"dispatch {dispatcher} {arguments}");
 
     internal void Ok(string dispatcher, string arguments = "") =>
-        Assert.Equal("ok", Dispatch(dispatcher, arguments));
+        Assert.AreEqual("ok", Dispatch(dispatcher, arguments));
 
     internal JsonElement ActiveWindow() => Json(Send("j/activewindow"));
 
@@ -244,7 +244,7 @@ internal sealed class TestDesktop
         return ($"{bounds.X},{bounds.Y}", $"{bounds.Width},{bounds.Height}");
     }
 
-    internal void ExpectActive(string at, string size) => Assert.Equal((at, size), ActivePlace());
+    internal void ExpectActive(string at, string size) => Assert.AreEqual((at, size), ActivePlace());
 
     internal WindowId ActiveId() => IdOf(ActiveWindow());
 

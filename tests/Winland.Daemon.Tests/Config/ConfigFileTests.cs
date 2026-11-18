@@ -1,12 +1,13 @@
 namespace Winland.Daemon.Tests;
 
+[TestClass]
 public sealed class ConfigFileTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "winland-config-file-" + Guid.NewGuid().ToString("N"));
 
     public ConfigFileTests() => Directory.CreateDirectory(_root);
 
-    [Fact]
+    [TestMethod]
     public void ABindForAnUnknownDispatcherWarnsWithItsLineAndTheNameItIsCloseTo()
     {
         var path = Path.Combine(_root, "winland.conf");
@@ -14,10 +15,10 @@ public sealed class ConfigFileTests : IDisposable
 
         var document = ConfigFile.Read(path);
 
-        Assert.Single(document.Binds);
-        var warning = Assert.Single(document.Warnings);
-        Assert.Equal(2, warning.Line);
-        Assert.Equal("Unknown dispatcher 'killactiv'. Did you mean 'killactive'?", warning.Message);
+        Assert.ContainsSingle(document.Binds);
+        var warning = Assert.ContainsSingle(document.Warnings);
+        Assert.AreEqual(2, warning.Line);
+        Assert.AreEqual("Unknown dispatcher 'killactiv'. Did you mean 'killactive'?", warning.Message);
     }
 
     public void Dispose() => Directory.Delete(_root, recursive: true);

@@ -2,11 +2,12 @@ using Events = Windows.Win32.PInvoke;
 
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class WindowEventTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void AClientThatMovesItselfAfterOpeningIsPutBackOnItsTile()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -17,10 +18,10 @@ public class WindowEventTests
 
         windows.Adapter.Notice(Events.EVENT_OBJECT_LOCATIONCHANGE, (nint)window.Value);
 
-        Assert.Equal(tile, windows.Desktop[window.Value].Visible);
+        Assert.AreEqual(tile, windows.Desktop[window.Value].Visible);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatMovesItselfWhileAnotherIsPlacedIsPutBack()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -42,11 +43,11 @@ public class WindowEventTests
 
         windows.Dispatch("resizeactive", "10 10");
 
-        Assert.Null(windows.Desktop.OnSetBounds);
-        Assert.Equal(tile, windows.Desktop[tiled.Value].Visible);
+        Assert.IsNull(windows.Desktop.OnSetBounds);
+        Assert.AreEqual(tile, windows.Desktop[tiled.Value].Visible);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheObjectEventHooksHoldTheEventsTheAdapterReadsAndNoOthers()
     {
         uint[] read =
@@ -63,10 +64,10 @@ public class WindowEventTests
                 hooked.Add(@event);
         }
 
-        Assert.Equal(read.Order(), hooked.Order());
+        Assert.AreSequenceEqual(read.Order(), hooked.Order());
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowDestroyedMidDragLetsTheNextDragStart()
     {
         var core = new WindowManager();
@@ -75,15 +76,15 @@ public class WindowEventTests
         var dragged = new WindowId(0x7001);
         var next = new WindowId(0x7003);
 
-        Assert.True(adapter.StartDrag(dragged, sizing: false, new Point(10, 10)));
-        Assert.False(adapter.StartDrag(next, sizing: true, new Point(10, 10)));
+        Assert.IsTrue(adapter.StartDrag(dragged, sizing: false, new Point(10, 10)));
+        Assert.IsFalse(adapter.StartDrag(next, sizing: true, new Point(10, 10)));
 
         adapter.Notice(Events.EVENT_OBJECT_DESTROY, (nint)dragged.Value);
 
-        Assert.True(adapter.StartDrag(next, sizing: true, new Point(10, 10)));
+        Assert.IsTrue(adapter.StartDrag(next, sizing: true, new Point(10, 10)));
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientsTitleChangeGoesToTheCore()
     {
         var core = new WindowManager();
@@ -96,10 +97,10 @@ public class WindowEventTests
 
         adapter.Notice(Events.EVENT_OBJECT_NAMECHANGE, (nint)window.Value);
 
-        Assert.Equal("", Assert.Single(decided).State.Clients.Single().Title);
+        Assert.AreEqual("", Assert.ContainsSingle(decided).State.Clients.Single().Title);
     }
 
-    [Fact]
+    [TestMethod]
     public void AHiddenClientThatIsCloakedStaysAClient()
     {
         var core = new WindowManager();
@@ -112,10 +113,10 @@ public class WindowEventTests
 
         adapter.Notice(Events.EVENT_OBJECT_CLOAKED, (nint)window.Value);
 
-        Assert.True(core.Manages(window));
+        Assert.IsTrue(core.Manages(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientItsApplicationHidesStopsBeingAClient()
     {
         var core = new WindowManager();
@@ -126,38 +127,38 @@ public class WindowEventTests
 
         adapter.Notice(Events.EVENT_OBJECT_HIDE, (nint)window.Value);
 
-        Assert.False(core.Manages(window));
+        Assert.IsFalse(core.Manages(window));
     }
 
-    [Theory]
-    [InlineData(0x08280028, true)]
-    [InlineData(0x00080020, true)]
-    [InlineData(0x08280000, true)]
-    [InlineData(0x08000000, true)]
-    [InlineData(0x08040000, true)]
-    [InlineData(0x00040138, true)]
-    [InlineData(0x00000028, true)]
-    [InlineData(0x00040008, false)]
-    [InlineData(0x00080000, false)]
-    [InlineData(0x00000020, false)]
-    [InlineData(0x00000100, false)]
+    [TestMethod]
+    [DataRow(0x08280028, true)]
+    [DataRow(0x00080020, true)]
+    [DataRow(0x08280000, true)]
+    [DataRow(0x08000000, true)]
+    [DataRow(0x08040000, true)]
+    [DataRow(0x00040138, true)]
+    [DataRow(0x00000028, true)]
+    [DataRow(0x00040008, false)]
+    [DataRow(0x00080000, false)]
+    [DataRow(0x00000020, false)]
+    [DataRow(0x00000100, false)]
     public void AWindowThatCannotBeFocusedIsAnOverlay(int extended, bool overlay)
     {
-        Assert.Equal(overlay, WindowAdapter.IsOverlay(extended));
+        Assert.AreEqual(overlay, WindowAdapter.IsOverlay(extended));
     }
 
-    [Theory]
-    [InlineData("Shell_SecondaryTrayWnd", true)]
-    [InlineData("Shell_SecondaryTrayWndProbe", false)]
-    [InlineData("Shell_Secondary", false)]
+    [TestMethod]
+    [DataRow("Shell_SecondaryTrayWnd", true)]
+    [DataRow("Shell_SecondaryTrayWndProbe", false)]
+    [DataRow("Shell_Secondary", false)]
     public void TheTaskbarIsKnownByItsClass(string className, bool taskbar)
     {
         ProbeNative.Register(className, ProbeNative.DefWindowProc);
         var hwnd = ProbeNative.CreateWindowEx(0, className, "", 0, 0, 0, 10, 10, 0, 0, ProbeNative.Module, 0);
-        Assert.NotEqual(0, hwnd);
+        Assert.AreNotEqual(0, hwnd);
         try
         {
-            Assert.Equal(taskbar, WindowAdapter.IsShellTaskbar(new Windows.Win32.Foundation.HWND(hwnd)));
+            Assert.AreEqual(taskbar, WindowAdapter.IsShellTaskbar(new Windows.Win32.Foundation.HWND(hwnd)));
         }
         finally
         {
@@ -165,7 +166,7 @@ public class WindowEventTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientWinlandHidStaysAClient()
     {
         var core = new WindowManager();
@@ -179,6 +180,6 @@ public class WindowEventTests
 
         adapter.Notice(Events.EVENT_OBJECT_HIDE, (nint)window.Value);
 
-        Assert.True(core.Manages(window));
+        Assert.IsTrue(core.Manages(window));
     }
 }

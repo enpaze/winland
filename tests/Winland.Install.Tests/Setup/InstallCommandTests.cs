@@ -1,153 +1,154 @@
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class InstallCommandTests
 {
-    [Fact]
+    [TestMethod]
     public void InstallAsksForAnAdministratorAndCarriesTheAccount()
     {
-        var first = Assert.IsType<InstallCommand.Machine>(InstallCommand.Parse(["install"]));
-        var relayed = Assert.IsType<InstallCommand.Machine>(InstallCommand.Parse(["INSTALL", @"DESKTOP\dante"]));
+        var first = Assert.IsExactInstanceOfType<InstallCommand.Machine>(InstallCommand.Parse(["install"]));
+        var relayed = Assert.IsExactInstanceOfType<InstallCommand.Machine>(InstallCommand.Parse(["INSTALL", @"DESKTOP\dante"]));
 
-        Assert.Null(first.Account);
-        Assert.Equal(@"DESKTOP\dante", relayed.Account);
-        Assert.True(first.RequiresAdministrator(machineInstallPresent: false));
+        Assert.IsNull(first.Account);
+        Assert.AreEqual(@"DESKTOP\dante", relayed.Account);
+        Assert.IsTrue(first.RequiresAdministrator(machineInstallPresent: false));
     }
 
-    [Fact]
+    [TestMethod]
     public void UserInstallAsksForNoAdministrator()
     {
-        var command = Assert.IsType<InstallCommand.ForUser>(InstallCommand.Parse(["install", "--user"]));
+        var command = Assert.IsExactInstanceOfType<InstallCommand.ForUser>(InstallCommand.Parse(["install", "--user"]));
 
-        Assert.False(command.RequiresAdministrator(machineInstallPresent: true));
+        Assert.IsFalse(command.RequiresAdministrator(machineInstallPresent: true));
     }
 
-    [Fact]
+    [TestMethod]
     public void InstallCanLeaveOutTheLogonStartAndTheStartNow()
     {
-        var plain = Assert.IsType<InstallCommand.Machine>(InstallCommand.Parse(["install"]));
-        var both = Assert.IsType<InstallCommand.Machine>(InstallCommand.Parse(["install", "--NO-START", "--no-logon"]));
-        var user = Assert.IsType<InstallCommand.ForUser>(InstallCommand.Parse(["install", "--no-logon", "--user"]));
+        var plain = Assert.IsExactInstanceOfType<InstallCommand.Machine>(InstallCommand.Parse(["install"]));
+        var both = Assert.IsExactInstanceOfType<InstallCommand.Machine>(InstallCommand.Parse(["install", "--NO-START", "--no-logon"]));
+        var user = Assert.IsExactInstanceOfType<InstallCommand.ForUser>(InstallCommand.Parse(["install", "--no-logon", "--user"]));
 
-        Assert.True(plain.Logon);
-        Assert.True(plain.Start);
-        Assert.False(both.Logon);
-        Assert.False(both.Start);
-        Assert.Null(both.Account);
-        Assert.False(user.Logon);
-        Assert.True(user.Start);
+        Assert.IsTrue(plain.Logon);
+        Assert.IsTrue(plain.Start);
+        Assert.IsFalse(both.Logon);
+        Assert.IsFalse(both.Start);
+        Assert.IsNull(both.Account);
+        Assert.IsFalse(user.Logon);
+        Assert.IsTrue(user.Start);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheRelaunchCarriesTheAccountAndTheFlags()
     {
-        var command = Assert.IsType<InstallCommand.Machine>(InstallCommand.Parse(["install", "--no-start"]));
+        var command = Assert.IsExactInstanceOfType<InstallCommand.Machine>(InstallCommand.Parse(["install", "--no-start"]));
 
         var relay = command.Relay(@"DESKTOP\dante");
-        var relayed = Assert.IsType<InstallCommand.Machine>(InstallCommand.Parse(relay));
+        var relayed = Assert.IsExactInstanceOfType<InstallCommand.Machine>(InstallCommand.Parse(relay));
 
-        Assert.Equal(["install", @"DESKTOP\dante", "--no-start"], relay);
-        Assert.Equal(@"DESKTOP\dante", relayed.Account);
-        Assert.True(relayed.Logon);
-        Assert.False(relayed.Start);
-        Assert.Equal(["install", @"DESKTOP\dante"], new InstallCommand.Machine(null).Relay(@"DESKTOP\dante"));
+        Assert.AreSequenceEqual(["install", @"DESKTOP\dante", "--no-start"], relay);
+        Assert.AreEqual(@"DESKTOP\dante", relayed.Account);
+        Assert.IsTrue(relayed.Logon);
+        Assert.IsFalse(relayed.Start);
+        Assert.AreSequenceEqual(["install", @"DESKTOP\dante"], new InstallCommand.Machine(null).Relay(@"DESKTOP\dante"));
     }
 
-    [Fact]
+    [TestMethod]
     public void UninstallAsksForAnAdministratorOnlyWhenAMachineInstallIsPresent()
     {
-        var command = Assert.IsType<InstallCommand.Remove>(InstallCommand.Parse(["uninstall"]));
-        var purge = Assert.IsType<InstallCommand.Remove>(InstallCommand.Parse(["uninstall", "--purge"]));
+        var command = Assert.IsExactInstanceOfType<InstallCommand.Remove>(InstallCommand.Parse(["uninstall"]));
+        var purge = Assert.IsExactInstanceOfType<InstallCommand.Remove>(InstallCommand.Parse(["uninstall", "--purge"]));
 
-        Assert.False(command.Purge);
-        Assert.True(purge.Purge);
-        Assert.False(command.RequiresAdministrator(machineInstallPresent: false));
-        Assert.True(purge.RequiresAdministrator(machineInstallPresent: true));
+        Assert.IsFalse(command.Purge);
+        Assert.IsTrue(purge.Purge);
+        Assert.IsFalse(command.RequiresAdministrator(machineInstallPresent: false));
+        Assert.IsTrue(purge.RequiresAdministrator(machineInstallPresent: true));
     }
 
-    [Fact]
+    [TestMethod]
     public void UpdateAsksForNoAdministratorUntilAReplaceNeedsOne()
     {
-        var command = Assert.IsType<InstallCommand.Update>(InstallCommand.Parse(["update"]));
-        var upper = Assert.IsType<InstallCommand.Update>(InstallCommand.Parse(["UPDATE"]));
+        var command = Assert.IsExactInstanceOfType<InstallCommand.Update>(InstallCommand.Parse(["update"]));
+        var upper = Assert.IsExactInstanceOfType<InstallCommand.Update>(InstallCommand.Parse(["UPDATE"]));
 
-        Assert.False(command.RequiresAdministrator(machineInstallPresent: true));
-        Assert.False(upper.RequiresAdministrator(machineInstallPresent: false));
-        Assert.Null(command.Channel);
-        Assert.Null(upper.Channel);
+        Assert.IsFalse(command.RequiresAdministrator(machineInstallPresent: true));
+        Assert.IsFalse(upper.RequiresAdministrator(machineInstallPresent: false));
+        Assert.IsNull(command.Channel);
+        Assert.IsNull(upper.Channel);
     }
 
-    [Fact]
+    [TestMethod]
     public void UpdateCanChooseStableOrDev()
     {
-        var dev = Assert.IsType<InstallCommand.Update>(InstallCommand.Parse(["update", "--channel", "dev"]));
-        var stable = Assert.IsType<InstallCommand.Update>(InstallCommand.Parse(["UPDATE", "--CHANNEL", "STABLE"]));
+        var dev = Assert.IsExactInstanceOfType<InstallCommand.Update>(InstallCommand.Parse(["update", "--channel", "dev"]));
+        var stable = Assert.IsExactInstanceOfType<InstallCommand.Update>(InstallCommand.Parse(["UPDATE", "--CHANNEL", "STABLE"]));
 
-        Assert.Equal(UpdateChannel.Dev, dev.Channel);
-        Assert.Equal(UpdateChannel.Stable, stable.Channel);
-        Assert.False(dev.RequiresAdministrator(machineInstallPresent: true));
+        Assert.AreEqual(UpdateChannel.Dev, dev.Channel);
+        Assert.AreEqual(UpdateChannel.Stable, stable.Channel);
+        Assert.IsFalse(dev.RequiresAdministrator(machineInstallPresent: true));
     }
 
-    [Fact]
+    [TestMethod]
     public void OtherArgumentsAreNotAnInstall()
     {
-        Assert.Null(InstallCommand.Parse([]));
-        Assert.Null(InstallCommand.Parse(["--config", "winland.conf"]));
+        Assert.IsNull(InstallCommand.Parse([]));
+        Assert.IsNull(InstallCommand.Parse(["--config", "winland.conf"]));
     }
 
-    [Fact]
+    [TestMethod]
     public void TweaksTurnsOffSnapAndAsksForNoAdministrator()
     {
-        var snap = Assert.IsType<InstallCommand.Tweaks>(InstallCommand.Parse(["tweaks", "--off"]));
-        var swipes = Assert.IsType<InstallCommand.Tweaks>(InstallCommand.Parse(["TWEAKS", "--OFF", "--touchpad"]));
+        var snap = Assert.IsExactInstanceOfType<InstallCommand.Tweaks>(InstallCommand.Parse(["tweaks", "--off"]));
+        var swipes = Assert.IsExactInstanceOfType<InstallCommand.Tweaks>(InstallCommand.Parse(["TWEAKS", "--OFF", "--touchpad"]));
 
-        Assert.False(snap.Touchpad);
-        Assert.True(swipes.Touchpad);
-        Assert.False(snap.RequiresAdministrator(machineInstallPresent: true));
-        Assert.False(swipes.RequiresAdministrator(machineInstallPresent: false));
+        Assert.IsFalse(snap.Touchpad);
+        Assert.IsTrue(swipes.Touchpad);
+        Assert.IsFalse(snap.RequiresAdministrator(machineInstallPresent: true));
+        Assert.IsFalse(swipes.RequiresAdministrator(machineInstallPresent: false));
     }
 
-    [Fact]
+    [TestMethod]
     public void TweaksRestorePutsBackWhatWasRecordedAndAsksForNoAdministrator()
     {
-        var restore = Assert.IsType<InstallCommand.RestoreTweaks>(InstallCommand.Parse(["Tweaks", "--RESTORE"]));
+        var restore = Assert.IsExactInstanceOfType<InstallCommand.RestoreTweaks>(InstallCommand.Parse(["Tweaks", "--RESTORE"]));
 
-        Assert.False(restore.RequiresAdministrator(machineInstallPresent: true));
+        Assert.IsFalse(restore.RequiresAdministrator(machineInstallPresent: true));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnElevatedProcessRefusesToRestoreTweaksOrCleanUpTheUser()
     {
         var restore = new InstallCommand.RestoreTweaks().ElevatedRefusal;
         var cleanup = new InstallCommand.UserCleanup().ElevatedRefusal;
 
-        Assert.Contains("winland tweaks --restore", restore, StringComparison.Ordinal);
-        Assert.Contains("normal terminal", restore, StringComparison.Ordinal);
-        Assert.Contains("normal terminal", cleanup, StringComparison.Ordinal);
-        Assert.Null(new InstallCommand.Tweaks(true).ElevatedRefusal);
-        Assert.Null(new InstallCommand.Remove(false).ElevatedRefusal);
+        Assert.Contains("winland tweaks --restore", restore!, StringComparison.Ordinal);
+        Assert.Contains("normal terminal", restore!, StringComparison.Ordinal);
+        Assert.Contains("normal terminal", cleanup!, StringComparison.Ordinal);
+        Assert.IsNull(new InstallCommand.Tweaks(true).ElevatedRefusal);
+        Assert.IsNull(new InstallCommand.Remove(false).ElevatedRefusal);
     }
 
-    [Theory]
-    [InlineData("install", "--purge")]
-    [InlineData("uninstall", "--user")]
-    [InlineData("install", "--user", "extra")]
-    [InlineData("install", "--no-start", "--no-start")]
-    [InlineData("install", "--user", @"DESKTOP\dante")]
-    [InlineData("install", "--no-logon", @"DESKTOP\dante")]
-    [InlineData("update", "--user")]
-    [InlineData("update", "extra")]
-    [InlineData("update", "--channel")]
-    [InlineData("update", "--channel", "nightly")]
-    [InlineData("update", "--channel", "dev", "extra")]
-    [InlineData("tweaks")]
-    [InlineData("tweaks", "--touchpad")]
-    [InlineData("tweaks", "--off", "--user")]
-    [InlineData("tweaks", "--restore", "--off")]
-    [InlineData("tweaks", "--off", "--restore")]
-    [InlineData("tweaks", "--restore", "--touchpad")]
-    [InlineData("tweaks", "--off", "--touchpad", "--restore")]
+    [TestMethod]
+    [DataRow("install", "--purge")]
+    [DataRow("uninstall", "--user")]
+    [DataRow("install", "--user", "extra")]
+    [DataRow("install", "--no-start", "--no-start")]
+    [DataRow("install", "--user", @"DESKTOP\dante")]
+    [DataRow("install", "--no-logon", @"DESKTOP\dante")]
+    [DataRow("update", "--user")]
+    [DataRow("update", "extra")]
+    [DataRow("update", "--channel")]
+    [DataRow("update", "--channel", "nightly")]
+    [DataRow("update", "--channel", "dev", "extra")]
+    [DataRow("tweaks")]
+    [DataRow("tweaks", "--touchpad")]
+    [DataRow("tweaks", "--off", "--user")]
+    [DataRow("tweaks", "--restore", "--off")]
+    [DataRow("tweaks", "--off", "--restore")]
+    [DataRow("tweaks", "--restore", "--touchpad")]
+    [DataRow("tweaks", "--off", "--touchpad", "--restore")]
     public void AMisusedVerbIsRefused(params string[] args)
     {
-        Assert.Throws<ArgumentException>(() => InstallCommand.Parse(args));
+        Assert.ThrowsExactly<ArgumentException>(() => InstallCommand.Parse(args));
     }
 }

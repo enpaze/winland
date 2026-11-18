@@ -1,10 +1,11 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class DwmEffectsTests
 {
     private static readonly WindowId Window = new(42);
 
-    [Fact]
+    [TestMethod]
     public void BlurSetsTheBlurBackdropAndResetRestoresTheOriginalOne()
     {
         var surface = new FakeSurface();
@@ -12,19 +13,19 @@ public class DwmEffectsTests
         var effects = new DwmEffects(surface);
 
         effects.Apply(Window, Decorated(blur: true));
-        Assert.Equal(DwmEffects.BlurBackdrop, surface.Backdrops[Window]);
+        Assert.AreEqual(DwmEffects.BlurBackdrop, surface.Backdrops[Window]);
 
         effects.Apply(Window, Decorated(blur: false));
-        Assert.Equal(DwmEffects.NoBackdrop, surface.Backdrops[Window]);
+        Assert.AreEqual(DwmEffects.NoBackdrop, surface.Backdrops[Window]);
 
         effects.Apply(Window, Decorated(blur: false));
-        Assert.Equal(2, surface.BackdropWrites);
+        Assert.AreEqual(2, surface.BackdropWrites);
 
         effects.Reset(Window);
-        Assert.Equal(2u, surface.Backdrops[Window]);
+        Assert.AreEqual(2u, surface.Backdrops[Window]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUnreadableBackdropIsRestoredToTheSystemChoice()
     {
         var surface = new FakeSurface { ReadsBackdrop = false };
@@ -33,10 +34,10 @@ public class DwmEffectsTests
         effects.Apply(Window, Decorated(blur: true));
         effects.Reset(Window);
 
-        Assert.Equal(DwmEffects.AutoBackdrop, surface.Backdrops[Window]);
+        Assert.AreEqual(DwmEffects.AutoBackdrop, surface.Backdrops[Window]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ARegionIsCutInsideTheVisibleFrameAndClearedOnReset()
     {
         var surface = new FakeSurface();
@@ -46,20 +47,26 @@ public class DwmEffectsTests
         effects.Apply(Window, Decorated(region: new CornerRegion(10)));
 
         var outline = surface.Regions[Window];
-        Assert.Equal(new Point(7, 10), outline[0]);
-        Assert.All(outline, point => Assert.InRange(point.X, 7, 207));
-        Assert.All(outline, point => Assert.InRange(point.Y, 0, 200));
-        Assert.True(effects.CutsCorners(Window));
+        Assert.AreEqual(new Point(7, 10), outline[0]);
+        foreach (var point in outline)
+{
+    Assert.IsInRange(7, 207, point.X);
+}
+        foreach (var point in outline)
+{
+    Assert.IsInRange(0, 200, point.Y);
+}
+        Assert.IsTrue(effects.CutsCorners(Window));
 
         effects.Apply(Window, Decorated(region: new CornerRegion(10)));
-        Assert.Equal(1, surface.RegionWrites);
+        Assert.AreEqual(1, surface.RegionWrites);
 
         effects.Reset(Window);
-        Assert.Empty(surface.Regions[Window]);
-        Assert.False(effects.CutsCorners(Window));
+        Assert.IsEmpty(surface.Regions[Window]);
+        Assert.IsFalse(effects.CutsCorners(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void RefitFollowsANewSizeAndADwmCornerClearsTheRegion()
     {
         var surface = new FakeSurface();
@@ -68,19 +75,19 @@ public class DwmEffectsTests
         effects.Apply(Window, Decorated(region: new CornerRegion(10)));
 
         effects.Refit(Window);
-        Assert.Equal(1, surface.RegionWrites);
+        Assert.AreEqual(1, surface.RegionWrites);
 
         surface.Frames[Window] = (new Rectangle(0, 0, 300, 100), new Rectangle(0, 0, 300, 100));
         effects.Refit(Window);
-        Assert.Equal(2, surface.RegionWrites);
+        Assert.AreEqual(2, surface.RegionWrites);
         Assert.Contains(new Point(300, 90), surface.Regions[Window]);
 
         effects.Apply(Window, Decorated(corners: CornerPreference.Round));
-        Assert.Empty(surface.Regions[Window]);
-        Assert.False(effects.CutsCorners(Window));
+        Assert.IsEmpty(surface.Regions[Window]);
+        Assert.IsFalse(effects.CutsCorners(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowWithItsOwnRegionKeepsItAndBorderlessCutsNothing()
     {
         var surface = new FakeSurface();
@@ -90,15 +97,15 @@ public class DwmEffectsTests
 
         effects.Apply(Window, Decorated(region: new CornerRegion(10)));
         effects.Reset(Window);
-        Assert.Equal(0, surface.RegionWrites);
+        Assert.AreEqual(0, surface.RegionWrites);
 
         var other = new WindowId(7);
         surface.Frames[other] = (new Rectangle(0, 0, 200, 200), new Rectangle(0, 0, 200, 200));
         effects.Apply(other, Decorated(region: new CornerRegion(10)) with { Borderless = true });
-        Assert.Equal(0, surface.RegionWrites);
+        Assert.AreEqual(0, surface.RegionWrites);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResettingAllPutsBackEveryWindowItChanged()
     {
         var surface = new FakeSurface();
@@ -111,13 +118,13 @@ public class DwmEffectsTests
 
         effects.ResetAll();
 
-        Assert.Equal(2u, surface.Backdrops[Window]);
-        Assert.Empty(surface.Regions[Window]);
-        Assert.False(effects.CutsCorners(Window));
-        Assert.Equal(DwmEffects.AutoBackdrop, surface.Backdrops[other]);
+        Assert.AreEqual(2u, surface.Backdrops[Window]);
+        Assert.IsEmpty(surface.Regions[Window]);
+        Assert.IsFalse(effects.CutsCorners(Window));
+        Assert.AreEqual(DwmEffects.AutoBackdrop, surface.Backdrops[other]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AfterResettingAllNothingIsChanged()
     {
         var surface = new FakeSurface();
@@ -128,12 +135,12 @@ public class DwmEffectsTests
 
         effects.Apply(Window, Decorated(region: new CornerRegion(10)));
 
-        Assert.Equal(2u, surface.Backdrops[Window]);
-        Assert.Equal(0, surface.RegionWrites);
-        Assert.False(effects.CutsCorners(Window));
+        Assert.AreEqual(2u, surface.Backdrops[Window]);
+        Assert.AreEqual(0, surface.RegionWrites);
+        Assert.IsFalse(effects.CutsCorners(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void ACutRegionIsRecordedAndAfterACrashRemovedSoItIsNotTakenAsTheWindowsOwn()
     {
         var surface = new FakeSurface();
@@ -146,18 +153,18 @@ public class DwmEffectsTests
             new RecoveredClient(Window, WorkspaceId.Initial, MonitorId.Primary, false, "", "", 1),
             new RecoveredClient(new WindowId(9), WorkspaceId.Initial, MonitorId.Primary, false, "", "", 1),
         ]));
-        Assert.True(stamped.Clients[0].Region);
-        Assert.False(stamped.Clients[1].Region);
+        Assert.IsTrue(stamped.Clients[0].Region);
+        Assert.IsFalse(stamped.Clients[1].Region);
 
         var restarted = new DwmEffects(surface);
         restarted.DropLeftoverRegion(Window);
-        Assert.Empty(surface.Regions[Window]);
+        Assert.IsEmpty(surface.Regions[Window]);
 
         restarted.Apply(Window, Decorated(region: new CornerRegion(10)));
-        Assert.True(restarted.CutsCorners(Window));
+        Assert.IsTrue(restarted.CutsCorners(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatStoppedAnsweringKeepsItsCutRecorded()
     {
         var surface = new FakeSurface();
@@ -169,15 +176,15 @@ public class DwmEffectsTests
 
         effects.ResetAll();
 
-        Assert.NotEmpty(surface.Regions[Window]);
+        Assert.IsNotEmpty(surface.Regions[Window]);
         var stamped = effects.Stamp(new RecoverySnapshot(
         [
             new RecoveredClient(Window, WorkspaceId.Initial, MonitorId.Primary, false, "", "", 1),
         ]));
-        Assert.True(Assert.Single(stamped.Clients).Region);
+        Assert.IsTrue(Assert.ContainsSingle(stamped.Clients).Region);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheRegionIsShiftedByTheInvisibleFrameOnEachSide()
     {
         var surface = new FakeSurface();
@@ -186,12 +193,12 @@ public class DwmEffectsTests
 
         effects.Apply(Window, Decorated(region: new CornerRegion(10)));
 
-        Assert.Equal(new Point(10, 30), surface.Regions[Window][0]);
+        Assert.AreEqual(new Point(10, 30), surface.Regions[Window][0]);
     }
 
-    [Theory]
-    [InlineData(0, 200)]
-    [InlineData(200, 0)]
+    [TestMethod]
+    [DataRow(0, 200)]
+    [DataRow(200, 0)]
     public void AFrameWithNothingVisibleIsNotCut(int width, int height)
     {
         var surface = new FakeSurface();
@@ -200,11 +207,11 @@ public class DwmEffectsTests
 
         effects.Apply(Window, Decorated(region: new CornerRegion(10)));
 
-        Assert.Equal(0, surface.RegionWrites);
-        Assert.False(effects.CutsCorners(Window));
+        Assert.AreEqual(0, surface.RegionWrites);
+        Assert.IsFalse(effects.CutsCorners(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void ANewRadiusCutsTheWindowAgain()
     {
         var surface = new FakeSurface();
@@ -215,12 +222,12 @@ public class DwmEffectsTests
         effects.Apply(Window, Decorated(region: new CornerRegion(20)));
         effects.Apply(Window, Decorated(region: new CornerRegion(30)));
 
-        Assert.Equal(3, surface.RegionWrites);
-        Assert.Equal(1, surface.RegionChecks);
-        Assert.True(effects.CutsCorners(Window));
+        Assert.AreEqual(3, surface.RegionWrites);
+        Assert.AreEqual(1, surface.RegionChecks);
+        Assert.IsTrue(effects.CutsCorners(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowsOwnRegionIsAskedAboutOnceUntilReset()
     {
         var surface = new FakeSurface();
@@ -235,11 +242,11 @@ public class DwmEffectsTests
         surface.Owned.Remove(Window);
         effects.Apply(Window, Decorated(region: new CornerRegion(10)));
 
-        Assert.Equal(1, checks);
-        Assert.True(effects.CutsCorners(Window));
+        Assert.AreEqual(1, checks);
+        Assert.IsTrue(effects.CutsCorners(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void ResettingAWindowForgetsItsOwnRegion()
     {
         var surface = new FakeSurface();
@@ -252,10 +259,10 @@ public class DwmEffectsTests
         surface.Owned.Remove(Window);
         effects.Apply(Window, Decorated(region: new CornerRegion(10)));
 
-        Assert.True(effects.CutsCorners(Window));
+        Assert.IsTrue(effects.CutsCorners(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void ResettingAllReachesAWindowWhoseBackdropWasNeverSet()
     {
         var surface = new FakeSurface { SetsBackdrop = false };
@@ -265,11 +272,11 @@ public class DwmEffectsTests
 
         effects.ResetAll();
 
-        Assert.Empty(surface.Regions[Window]);
-        Assert.False(effects.CutsCorners(Window));
+        Assert.IsEmpty(surface.Regions[Window]);
+        Assert.IsFalse(effects.CutsCorners(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void DroppingALeftoverRegionForgetsWhatThisRunKnew()
     {
         var surface = new FakeSurface();
@@ -286,12 +293,12 @@ public class DwmEffectsTests
         surface.Owned.Remove(owned);
         effects.Apply(owned, Decorated(region: new CornerRegion(10)));
 
-        Assert.False(effects.CutsCorners(Window));
-        Assert.Empty(surface.Regions[Window]);
-        Assert.True(effects.CutsCorners(owned));
+        Assert.IsFalse(effects.CutsCorners(Window));
+        Assert.IsEmpty(surface.Regions[Window]);
+        Assert.IsTrue(effects.CutsCorners(owned));
     }
 
-    [Fact]
+    [TestMethod]
     public void StampChangesOnlyTheMarksThatAreWrong()
     {
         var surface = new FakeSurface();
@@ -312,10 +319,13 @@ public class DwmEffectsTests
         var unchanged = effects.Stamp(right);
         var corrected = effects.Stamp(wrong);
 
-        Assert.Same(right, unchanged);
-        Assert.All(corrected.Clients, client => Assert.False(client.Region));
-        Assert.Throws<ArgumentNullException>(() => effects.Stamp(null!));
-        Assert.Throws<ArgumentNullException>(() => new DwmEffects(null!));
+        Assert.AreSame(right, unchanged);
+        foreach (var client in corrected.Clients)
+{
+    Assert.IsFalse(client.Region);
+}
+        Assert.ThrowsExactly<ArgumentNullException>(() => effects.Stamp(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => new DwmEffects(null!));
     }
 
     private static Decoration Decorated(

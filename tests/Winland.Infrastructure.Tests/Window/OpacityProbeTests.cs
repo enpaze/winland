@@ -2,8 +2,7 @@ using System.Runtime.InteropServices;
 using static Winland.Infrastructure.Tests.ProbeNative;
 
 namespace Winland.Infrastructure.Tests;
-
-[Collection(DesktopCollection.Name)]
+[TestClass]
 public class OpacityProbeTests
 {
     private const uint Layered = 0x00080000;
@@ -12,50 +11,50 @@ public class OpacityProbeTests
     private const uint Popup = 0x80000000;
     private const int ExStyleIndex = -20;
 
-    [Fact]
+    [TestMethod]
     public void ProbeWindowTakesTheLayeredAlphaAndGivesTheStyleBack()
     {
         using var probe = Probe.Open();
         var original = ExStyle(probe.Handle);
-        Assert.Equal(0u, original & Layered);
+        Assert.AreEqual(0u, original & Layered);
 
         var adapter = new WindowOpacity(new Win32Desktop());
         var window = new WindowId(probe.Handle);
         adapter.Apply(window, 128);
 
-        Assert.Equal(Layered, ExStyle(probe.Handle) & Layered);
-        Assert.Equal(128, LayeredAlpha(probe.Handle));
-        Assert.True(adapter.Owns(window));
+        Assert.AreEqual(Layered, ExStyle(probe.Handle) & Layered);
+        Assert.AreEqual(128, LayeredAlpha(probe.Handle));
+        Assert.IsTrue(adapter.Owns(window));
 
         adapter.Reset(window);
 
         var restored = ExStyle(probe.Handle);
-        Assert.Equal(0u, restored & Layered);
-        Assert.Equal(original, restored);
-        Assert.False(adapter.Owns(window));
+        Assert.AreEqual(0u, restored & Layered);
+        Assert.AreEqual(original, restored);
+        Assert.IsFalse(adapter.Owns(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void ProbeWindowThatWasAlreadyLayeredIsLeftAlone()
     {
         using var probe = Probe.Open();
         var withLayer = ExStyle(probe.Handle) | Layered;
         _ = SetWindowLongPtr(probe.Handle, ExStyleIndex, (nint)withLayer);
-        Assert.True(SetLayeredWindowAttributes(probe.Handle, 0, 200, 2));
+        Assert.IsTrue(SetLayeredWindowAttributes(probe.Handle, 0, 200, 2));
 
         var adapter = new WindowOpacity(new Win32Desktop());
         adapter.Apply(new WindowId(probe.Handle), 100);
 
-        Assert.Equal(200, LayeredAlpha(probe.Handle));
-        Assert.False(adapter.Owns(new WindowId(probe.Handle)));
+        Assert.AreEqual(200, LayeredAlpha(probe.Handle));
+        Assert.IsFalse(adapter.Owns(new WindowId(probe.Handle)));
     }
 
     private static uint ExStyle(nint window) => (uint)GetWindowLongPtr(window, ExStyleIndex);
 
     private static byte LayeredAlpha(nint window)
     {
-        Assert.True(GetLayeredWindowAttributes(window, out _, out var alpha, out var flags));
-        Assert.Equal(2u, flags & 2u);
+        Assert.IsTrue(GetLayeredWindowAttributes(window, out _, out var alpha, out var flags));
+        Assert.AreEqual(2u, flags & 2u);
         return alpha;
     }
 

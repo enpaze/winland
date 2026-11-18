@@ -2,40 +2,41 @@ using System.Xml.Linq;
 
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class LogonTaskDefinitionTests
 {
-    [Fact]
+    [TestMethod]
     public void LogonTaskRunsAtLogonWithHighestPrivilegesForTheUser()
     {
         var task = LogonTaskDefinition.Build(@"C:\Tools & Games\winland.exe", @"DESKTOP\dante");
 
-        Assert.Equal("Winland", task.Name);
-        Assert.Equal(@"C:\Tools & Games\winland.exe", task.Executable);
-        Assert.Equal(@"DESKTOP\dante", task.User);
+        Assert.AreEqual("Winland", task.Name);
+        Assert.AreEqual(@"C:\Tools & Games\winland.exe", task.Executable);
+        Assert.AreEqual(@"DESKTOP\dante", task.User);
 
         var root = XDocument.Parse(task.Xml).Root;
-        Assert.NotNull(root);
-        Assert.Equal("Task", root.Name.LocalName);
-        Assert.Single(root.Descendants(), element => element.Name.LocalName == "LogonTrigger");
-        Assert.Single(root.Descendants(), element => element.Name.LocalName == "Exec");
+        Assert.IsNotNull(root);
+        Assert.AreEqual("Task", root.Name.LocalName);
+        Assert.ContainsSingle(element => element.Name.LocalName == "LogonTrigger", root.Descendants());
+        Assert.ContainsSingle(element => element.Name.LocalName == "Exec", root.Descendants());
 
         var trigger = root.Descendants().Single(element => element.Name.LocalName == "LogonTrigger");
-        Assert.Equal("true", Child(trigger, "Enabled"));
-        Assert.Equal(@"DESKTOP\dante", Child(trigger, "UserId"));
+        Assert.AreEqual("true", Child(trigger, "Enabled"));
+        Assert.AreEqual(@"DESKTOP\dante", Child(trigger, "UserId"));
 
         var principal = root.Descendants().Single(element => element.Name.LocalName == "Principal");
-        Assert.Equal(@"DESKTOP\dante", Child(principal, "UserId"));
-        Assert.Equal("InteractiveToken", Child(principal, "LogonType"));
-        Assert.Equal("HighestAvailable", Child(principal, "RunLevel"));
+        Assert.AreEqual(@"DESKTOP\dante", Child(principal, "UserId"));
+        Assert.AreEqual("InteractiveToken", Child(principal, "LogonType"));
+        Assert.AreEqual("HighestAvailable", Child(principal, "RunLevel"));
 
         var command = root.Descendants().Single(element => element.Name.LocalName == "Command");
-        Assert.Equal(@"C:\Tools & Games\winland-launcher.exe", command.Value);
+        Assert.AreEqual(@"C:\Tools & Games\winland-launcher.exe", command.Value);
 
-        Assert.Equal("Start Winland at logon.", Text(root, "Description"));
-        Assert.Equal("IgnoreNew", Text(root, "MultipleInstancesPolicy"));
-        Assert.Equal("false", Text(root, "DisallowStartIfOnBatteries"));
-        Assert.Equal("false", Text(root, "StopIfGoingOnBatteries"));
-        Assert.Equal("PT0S", Text(root, "ExecutionTimeLimit"));
+        Assert.AreEqual("Start Winland at logon.", Text(root, "Description"));
+        Assert.AreEqual("IgnoreNew", Text(root, "MultipleInstancesPolicy"));
+        Assert.AreEqual("false", Text(root, "DisallowStartIfOnBatteries"));
+        Assert.AreEqual("false", Text(root, "StopIfGoingOnBatteries"));
+        Assert.AreEqual("PT0S", Text(root, "ExecutionTimeLimit"));
     }
 
     private static string Child(XElement parent, string localName) =>

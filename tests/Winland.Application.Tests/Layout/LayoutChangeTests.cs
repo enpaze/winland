@@ -1,8 +1,9 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class LayoutChangeTests
 {
-    [Fact]
+    [TestMethod]
     public void LayoutRefreshDuringMonitorTeardown()
     {
         var desk = new TestDesktop();
@@ -23,7 +24,7 @@ public class LayoutChangeTests
         Assert.Contains("HEADLESS-5", desk.Send("monitors all"), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void PosPreserve()
     {
         var desk = new TestDesktop();
@@ -36,7 +37,7 @@ public class LayoutChangeTests
 
         desk.Ok("fullscreen", "0");
         desk.Ok("fullscreen", "0");
-        Assert.Equal("1337,69", desk.ActivePlace().Size);
+        Assert.AreEqual("1337,69", desk.ActivePlace().Size);
 
         desk.Ok("movewindow", "r");
         desk.ExpectActive("581,420", "1337,69");
@@ -54,7 +55,7 @@ public class LayoutChangeTests
         desk.ExpectActive("581,420", "1337,69");
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusPreservedLayoutChange()
     {
         var desk = new TestDesktop("general:layout = dwindle\n");
@@ -66,6 +67,6 @@ public class LayoutChangeTests
         desk.Ok("focuswindow", "class:kitty_C");
         desk.Set("general:layout", "scrolling");
 
-        Assert.Equal("kitty_C", desk.ActiveClass());
+        Assert.AreEqual("kitty_C", desk.ActiveClass());
     }
 }

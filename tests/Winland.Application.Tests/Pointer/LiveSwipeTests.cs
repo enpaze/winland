@@ -1,12 +1,13 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class LiveSwipeTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
     private const string Horizontal = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\ngesture = 3, horizontal, workspace\n";
 
-    [Fact]
+    [TestMethod]
     public void TheWorkspaceFollowsTheFingersAndItsNeighbourComesInBeside()
     {
         var core = Twin(Horizontal);
@@ -18,14 +19,14 @@ public class LiveSwipeTests
         Assert.Contains(new WindowId(2), first.Show);
         Assert.DoesNotContain(new WindowId(2), halfway.Show);
 
-        var leaving = Assert.Single(halfway.Motions, motion => motion.Window == new WindowId(1));
-        var coming = Assert.Single(halfway.Motions, motion => motion.Window == new WindowId(2));
-        Assert.Equal(-960, leaving.To.X);
-        Assert.Equal(960, coming.To.X);
-        Assert.Null(leaving.Move);
+        var leaving = Assert.ContainsSingle(motion => motion.Window == new WindowId(1), halfway.Motions);
+        var coming = Assert.ContainsSingle(motion => motion.Window == new WindowId(2), halfway.Motions);
+        Assert.AreEqual(-960, leaving.To.X);
+        Assert.AreEqual(960, coming.To.X);
+        Assert.IsNull(leaving.Move);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASwipeThatFallsShortSlidesBackAndHidesTheNeighbourAgain()
     {
         var core = Twin(Horizontal);
@@ -34,17 +35,17 @@ public class LiveSwipeTests
 
         var ended = core.Handle(new SwipeEnded());
 
-        Assert.Equal(WorkspaceId.Initial, ended.State.ActiveWorkspace);
-        var back = Assert.Single(ended.Motions, motion => motion.Window == new WindowId(1));
-        Assert.Equal(new Rectangle(-320, 0, 1920, 1080), back.From);
-        Assert.Equal(Area, back.To);
-        var away = Assert.Single(ended.Motions, motion => motion.Window == new WindowId(2));
-        Assert.Equal(MotionEnd.Hide, away.End);
-        Assert.Equal(1920, away.To.X);
+        Assert.AreEqual(WorkspaceId.Initial, ended.State.ActiveWorkspace);
+        var back = Assert.ContainsSingle(motion => motion.Window == new WindowId(1), ended.Motions);
+        Assert.AreEqual(new Rectangle(-320, 0, 1920, 1080), back.From);
+        Assert.AreEqual(Area, back.To);
+        var away = Assert.ContainsSingle(motion => motion.Window == new WindowId(2), ended.Motions);
+        Assert.AreEqual(MotionEnd.Hide, away.End);
+        Assert.AreEqual(1920, away.To.X);
         Assert.Contains(new WindowId(2), ended.Hide);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASwitchStartsFromWhereTheSwipeLeftTheWindows()
     {
         var core = Twin(Horizontal);
@@ -53,13 +54,13 @@ public class LiveSwipeTests
 
         var ended = core.Handle(new SwipeEnded());
 
-        Assert.Equal(new WorkspaceId("2"), ended.State.ActiveWorkspace);
-        var coming = Assert.Single(ended.Motions, motion => motion.Window == new WindowId(2));
-        Assert.Equal(new Rectangle(640, 0, 1920, 1080), coming.From);
-        Assert.Equal(Area, coming.To);
-        Assert.NotNull(coming.Move);
-        var leaving = Assert.Single(ended.Motions, motion => motion.Window == new WindowId(1));
-        Assert.Equal(new Rectangle(-1280, 0, 1920, 1080), leaving.From);
+        Assert.AreEqual(new WorkspaceId("2"), ended.State.ActiveWorkspace);
+        var coming = Assert.ContainsSingle(motion => motion.Window == new WindowId(2), ended.Motions);
+        Assert.AreEqual(new Rectangle(640, 0, 1920, 1080), coming.From);
+        Assert.AreEqual(Area, coming.To);
+        Assert.IsNotNull(coming.Move);
+        var leaving = Assert.ContainsSingle(motion => motion.Window == new WindowId(1), ended.Motions);
+        Assert.AreEqual(new Rectangle(-1280, 0, 1920, 1080), leaving.From);
     }
 
 

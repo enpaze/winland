@@ -1,11 +1,12 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class ClientPropsTests
 {
     private static readonly WindowId Window = new(1);
     private static readonly WindowTraits App = WindowTraits.Normal with { Class = "app" };
 
-    [Fact]
+    [TestMethod]
     public void AForgottenWindowHasNoProps()
     {
         var props = new ClientProps();
@@ -14,8 +15,8 @@ public class ClientPropsTests
 
         props.Forget(Window);
 
-        Assert.Null(props.RuleProp(Window, "border_size"));
-        Assert.Null(props.Sizes(Window));
+        Assert.IsNull(props.RuleProp(Window, "border_size"));
+        Assert.IsNull(props.Sizes(Window));
     }
 
     private static WindowDecision Decide(string config) =>

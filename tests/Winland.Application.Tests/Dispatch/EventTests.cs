@@ -1,10 +1,11 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class EventTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void OpeningAClientEmitsOpenThenFocus()
     {
         var core = new WindowManager();
@@ -14,12 +15,12 @@ public class EventTests
             Traits = WindowTraits.Normal with { Class = "kitty", Title = "terminal" },
         });
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             ["openwindow>>1,1,,kitty,terminal", "activewindow>>kitty,terminal", "activewindowv2>>1"],
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void OpeningKeepsACommaInTheTitle()
     {
         var core = new WindowManager();
@@ -29,10 +30,10 @@ public class EventTests
             Traits = WindowTraits.Normal with { Class = "app", Title = "a,b" },
         });
 
-        Assert.Equal("openwindow>>1,1,,app,a,b", Lines(outcome)[0]);
+        Assert.AreEqual("openwindow>>1,1,,app,a,b", Lines(outcome)[0]);
     }
 
-    [Fact]
+    [TestMethod]
     public void OpeningFlattensANewlineInTheTitle()
     {
         var core = new WindowManager();
@@ -42,10 +43,10 @@ public class EventTests
             Traits = WindowTraits.Normal with { Title = "a\nb" },
         });
 
-        Assert.Equal("openwindow>>1,1,,,a b", Lines(outcome)[0]);
+        Assert.AreEqual("openwindow>>1,1,,,a b", Lines(outcome)[0]);
     }
 
-    [Fact]
+    [TestMethod]
     public void RejectedWindowEmitsNothing()
     {
         var core = new WindowManager();
@@ -55,10 +56,10 @@ public class EventTests
             Traits = WindowTraits.Normal with { Tool = true },
         });
 
-        Assert.Empty(outcome.Events);
+        Assert.IsEmpty(outcome.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void SilentWorkspaceOpenDoesNotChangeFocus()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:kitty\n"));
@@ -68,12 +69,12 @@ public class EventTests
             Traits = WindowTraits.Normal with { Class = "kitty", Title = "term" },
         });
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             ["createworkspace>>2,", "createworkspacev2>>2,2,", "openwindow>>1,2,,kitty,term"],
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspaceRuleOpenSwitchesThenFocuses()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2, class:kitty\n"));
@@ -83,7 +84,7 @@ public class EventTests
             Traits = WindowTraits.Normal with { Class = "kitty", Title = "term" },
         });
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 "createworkspace>>2,",
                 "createworkspacev2>>2,2,",
@@ -98,7 +99,7 @@ public class EventTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosingTheFocusedClientEmitsCloseThenTheNextFocus()
     {
         var core = new WindowManager();
@@ -107,10 +108,10 @@ public class EventTests
 
         var outcome = core.Handle(new WindowClosed(new WindowId(2)));
 
-        Assert.Equal(["closewindow>>2", "activewindow>>,", "activewindowv2>>1"], Lines(outcome));
+        Assert.AreSequenceEqual(["closewindow>>2", "activewindow>>,", "activewindowv2>>1"], Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosingAnUnfocusedClientEmitsOnlyClose()
     {
         var core = new WindowManager();
@@ -119,10 +120,10 @@ public class EventTests
 
         var outcome = core.Handle(new WindowClosed(new WindowId(1)));
 
-        Assert.Equal(["closewindow>>1"], Lines(outcome));
+        Assert.AreSequenceEqual(["closewindow>>1"], Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosingTheLastClientOnAHiddenWorkspaceDestroysIt()
     {
         var core = new WindowManager();
@@ -131,10 +132,10 @@ public class EventTests
 
         var closed = core.Handle(new WindowClosed(new WindowId(7)));
 
-        Assert.Equal(["destroyworkspace>>1,", "destroyworkspacev2>>1,1,", "closewindow>>7"], Lines(closed));
+        Assert.AreSequenceEqual(["destroyworkspace>>1,", "destroyworkspacev2>>1,1,", "closewindow>>7"], Lines(closed));
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosingTheLastClientClearsFocus()
     {
         var core = new WindowManager();
@@ -142,10 +143,10 @@ public class EventTests
 
         var outcome = core.Handle(new WindowClosed(new WindowId(1)));
 
-        Assert.Equal(["closewindow>>1", "activewindow>>,", "activewindowv2>>"], Lines(outcome));
+        Assert.AreSequenceEqual(["closewindow>>1", "activewindow>>,", "activewindowv2>>"], Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void KillActiveWaitsForTheWindowToClose()
     {
         var core = new WindowManager();
@@ -154,11 +155,11 @@ public class EventTests
         var killed = core.Execute("dispatch killactive");
         var closed = core.Handle(new WindowClosed(new WindowId(1)));
 
-        Assert.Empty(killed.Effect.Events);
-        Assert.Equal(["closewindow>>1", "activewindow>>,", "activewindowv2>>"], Lines(closed));
+        Assert.IsEmpty(killed.Effect.Events);
+        Assert.AreSequenceEqual(["closewindow>>1", "activewindow>>,", "activewindowv2>>"], Lines(closed));
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusDispatcherEmitsTheNewAddress()
     {
         var core = new WindowManager();
@@ -167,11 +168,11 @@ public class EventTests
 
         var outcome = core.Handle(new Dispatch("movefocus", "l"));
 
-        Assert.Equal(new WindowId(1), outcome.Focus);
-        Assert.Equal(["activewindow>>,", "activewindowv2>>1"], Lines(outcome));
+        Assert.AreEqual(new WindowId(1), outcome.Focus);
+        Assert.AreSequenceEqual(["activewindow>>,", "activewindowv2>>1"], Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void ReportedFocusEmitsActiveWindow()
     {
         var core = new WindowManager();
@@ -180,10 +181,10 @@ public class EventTests
 
         var outcome = core.Handle(new WindowFocused(new WindowId(1)));
 
-        Assert.Equal(["activewindow>>,", "activewindowv2>>1"], Lines(outcome));
+        Assert.AreSequenceEqual(["activewindow>>,", "activewindowv2>>1"], Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusingTheSameClientEmitsNothing()
     {
         var core = new WindowManager();
@@ -191,10 +192,10 @@ public class EventTests
 
         var outcome = core.Handle(new WindowFocused(new WindowId(1)));
 
-        Assert.Empty(outcome.Events);
+        Assert.IsEmpty(outcome.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspaceSwitchEmitsTheDeskThenClearsFocus()
     {
         var core = new WindowManager();
@@ -202,7 +203,7 @@ public class EventTests
 
         var outcome = core.Execute("dispatch workspace 2");
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 "createworkspace>>2,",
                 "createworkspacev2>>2,2,",
@@ -214,7 +215,7 @@ public class EventTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void SwitchingBackRestoresFocusAfterTheDeskEvent()
     {
         var core = new WindowManager();
@@ -223,7 +224,7 @@ public class EventTests
 
         var outcome = core.Execute("dispatch workspace 1");
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 "destroyworkspace>>2,",
                 "destroyworkspacev2>>2,2,",
@@ -235,17 +236,17 @@ public class EventTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void StayingOnTheSameWorkspaceEmitsNothing()
     {
         var core = new WindowManager();
 
         var outcome = core.Execute("dispatch workspace 1");
 
-        Assert.Empty(outcome.Effect.Events);
+        Assert.IsEmpty(outcome.Effect.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void SilentMoveEmitsTheDestinationThenTheReplacementFocus()
     {
         var core = new WindowManager();
@@ -254,7 +255,7 @@ public class EventTests
 
         var outcome = core.Execute("dispatch movetoworkspacesilent 3");
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 "createworkspace>>3,",
                 "createworkspacev2>>3,3,",
@@ -266,7 +267,7 @@ public class EventTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void FollowingAMoveEmitsTheMoveThenTheDesk()
     {
         var core = new WindowManager();
@@ -275,7 +276,7 @@ public class EventTests
 
         var outcome = core.Execute("dispatch movetoworkspace 4");
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 "createworkspace>>4,",
                 "createworkspacev2>>4,4,",
@@ -287,7 +288,7 @@ public class EventTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void MinimizeAndRestoreEmitTheFlag()
     {
         var core = new WindowManager();
@@ -296,11 +297,11 @@ public class EventTests
         var minimized = core.Handle(new WindowMinimized(new WindowId(1)));
         var restored = core.Handle(new WindowRestored(new WindowId(1)));
 
-        Assert.Equal(["minimized>>1,1"], Lines(minimized));
-        Assert.Equal(["minimized>>1,0"], Lines(restored));
+        Assert.AreSequenceEqual(["minimized>>1,1"], Lines(minimized));
+        Assert.AreSequenceEqual(["minimized>>1,0"], Lines(restored));
     }
 
-    [Fact]
+    [TestMethod]
     public void TogglingFloatEmitsTheMode()
     {
         var core = new WindowManager();
@@ -312,11 +313,11 @@ public class EventTests
         core.Execute("dispatch focuswindow address:0x1");
         var dropped = core.Execute("dispatch togglefloating");
 
-        Assert.Equal(["changefloatingmode>>1,1"], Lines(lifted));
-        Assert.Equal(["changefloatingmode>>1,0"], Lines(dropped));
+        Assert.AreSequenceEqual(["changefloatingmode>>1,1"], Lines(lifted));
+        Assert.AreSequenceEqual(["changefloatingmode>>1,0"], Lines(dropped));
     }
 
-    [Fact]
+    [TestMethod]
     public void EventAddressesAreBareHexAndTheReadKeepsThePrefix()
     {
         var core = new WindowManager();
@@ -325,19 +326,19 @@ public class EventTests
             Traits = WindowTraits.Normal with { Class = "kitty", Title = "term" },
         });
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             ["openwindow>>2a,1,,kitty,term", "activewindow>>kitty,term", "activewindowv2>>2a"],
             Lines(outcome));
         using var active = System.Text.Json.JsonDocument.Parse(core.Execute("j/activewindow").Text);
-        Assert.Equal("0x2a", active.RootElement.GetProperty("address").GetString());
+        Assert.AreEqual("0x2a", active.RootElement.GetProperty("address").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void ConfigWarningsEmitInOrder()
     {
         var outcome = new WindowManager().Handle(new ConfigLoaded(ConfigParser.Parse("ghostkeyword = path\nnope = 1\n")));
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 "warning>>1,,Unsupported keyword 'ghostkeyword'.",
                 "warning>>2,,Unsupported keyword 'nope'.",
@@ -346,7 +347,7 @@ public class EventTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void SourcedWarningKeepsTheFileAndFlattensNewlines()
     {
         var document = new ConfigDocument(
@@ -356,10 +357,10 @@ public class EventTests
 
         var outcome = new WindowManager().Handle(new ConfigLoaded(document));
 
-        Assert.Equal(["warning>>4,bad.conf,bad line, still", "configreloaded>>"], Lines(outcome));
+        Assert.AreSequenceEqual(["warning>>4,bad.conf,bad line, still", "configreloaded>>"], Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void ConnectingMonitorsEmitsAddedThenTheDescribedForm()
     {
         var core = new WindowManager();
@@ -369,7 +370,7 @@ public class EventTests
             new Monitor(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1, true, new Rectangle(1920, 0, 1280, 1024)),
         ]));
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 @"createworkspace>>1,\\.\DISPLAY2",
                 @"createworkspacev2>>1,1,\\.\DISPLAY2",
@@ -381,7 +382,7 @@ public class EventTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void UnpluggingAMonitorEmitsRemovedThenTheDescribedForm()
     {
         var core = new WindowManager();
@@ -392,7 +393,7 @@ public class EventTests
 
         var outcome = core.Handle(new MonitorsChanged([left]));
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 @"moveworkspace>>2,\\.\DISPLAY1",
                 @"moveworkspacev2>>2,2,\\.\DISPLAY1",
@@ -402,7 +403,7 @@ public class EventTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void UnpluggingAMonitorDestroysItsEmptyWorkspace()
     {
         var core = new WindowManager();
@@ -412,7 +413,7 @@ public class EventTests
 
         var outcome = core.Handle(new MonitorsChanged([left]));
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 @"destroyworkspace>>1,\\.\DISPLAY2",
                 @"destroyworkspacev2>>1,1,\\.\DISPLAY2",
@@ -420,10 +421,10 @@ public class EventTests
                 @"monitorremovedv2>>1,\\.\DISPLAY2,Samsung",
             ],
             Lines(outcome));
-        Assert.DoesNotContain(outcome.State.Workspaces, workspace => workspace.Id == new WorkspaceId("1", 1));
+        Assert.DoesNotContain(workspace => workspace.Id == new WorkspaceId("1", 1), outcome.State.Workspaces);
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusingAWorkspaceOnAnotherMonitorEmitsTheMonitor()
     {
         var core = new WindowManager();
@@ -441,7 +442,7 @@ public class EventTests
 
         var outcome = core.Execute(@"dispatch focusmonitor \\.\DISPLAY2");
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 @"focusedmon>>\\.\DISPLAY2,1",
                 @"focusedmonv2>>\\.\DISPLAY2,1",
@@ -451,7 +452,7 @@ public class EventTests
             Lines(outcome));
     }
 
-    [Fact]
+    [TestMethod]
     public void ReportingTheSameMonitorsEmitsNothing()
     {
         var core = new WindowManager();
@@ -460,10 +461,10 @@ public class EventTests
 
         var outcome = core.Handle(new MonitorsChanged([display]));
 
-        Assert.Empty(outcome.Events);
+        Assert.IsEmpty(outcome.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void EventsCommandIsAStreamAndLeavesTheDeskAlone()
     {
         var core = new WindowManager();
@@ -471,11 +472,11 @@ public class EventTests
 
         var reply = core.Execute("events");
 
-        Assert.True(reply.Stream);
-        Assert.Equal("", reply.Text);
-        Assert.Empty(reply.Effect.Events);
-        Assert.Single(reply.Effect.State.Clients);
-        Assert.Equal("error: unknown request", core.Execute("events extra").Text);
+        Assert.IsTrue(reply.Stream);
+        Assert.AreEqual("", reply.Text);
+        Assert.IsEmpty(reply.Effect.Events);
+        Assert.ContainsSingle(reply.Effect.State.Clients);
+        Assert.AreEqual("error: unknown request", core.Execute("events extra").Text);
     }
 
     private static IReadOnlyList<string> Lines(Outcome outcome) =>

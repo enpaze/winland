@@ -1,41 +1,42 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class UrgencyTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void AFlashingClientIsReportedUrgentAndKeepsFocusWhereItIs()
     {
         var core = TwoClients();
 
         var flashed = core.Handle(new WindowFlashed(new WindowId(1)));
 
-        Assert.Equal(["urgent>>1"], Lines(flashed));
-        Assert.Null(flashed.Focus);
+        Assert.AreSequenceEqual(["urgent>>1"], Lines(flashed));
+        Assert.IsNull(flashed.Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFocusedClientFlashingIsNotUrgent()
     {
         var core = TwoClients();
 
         var flashed = core.Handle(new WindowFlashed(new WindowId(2)));
 
-        Assert.Empty(flashed.Events);
+        Assert.IsEmpty(flashed.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUnmanagedWindowFlashingIsNotUrgent()
     {
         var core = TwoClients();
 
         var flashed = core.Handle(new WindowFlashed(new WindowId(99)));
 
-        Assert.Empty(flashed.Events);
+        Assert.IsEmpty(flashed.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientOnAHiddenWorkspaceTheUserFocusesBringsItsWorkspace()
     {
         var core = TwoClients();
@@ -44,8 +45,8 @@ public class UrgencyTests
 
         var outcome = core.Handle(new WindowFocused(new WindowId(1), FocusCause.User));
 
-        Assert.Equal(new WindowId(1), outcome.Focus);
-        Assert.Equal(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
+        Assert.AreEqual(new WindowId(1), outcome.Focus);
+        Assert.AreEqual(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
         Assert.Contains(new WindowId(1), outcome.Show);
     }
 

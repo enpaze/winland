@@ -1,19 +1,20 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class ProcessLauncherTests
 {
-    [Fact]
+    [TestMethod]
     public void AShellCommandIsQuotedWholeForCmd()
     {
         var shell = Path.Combine(Environment.SystemDirectory, "cmd.exe");
         var launch = new Launch("\"C:\\Program Files\\App\\app.exe\" \"a b\" && echo done", null);
 
-        Assert.Equal(
+        Assert.AreEqual(
             "\"" + shell + "\" /d /s /c \"\"C:\\Program Files\\App\\app.exe\" \"a b\" && echo done\"",
             ProcessLauncher.CommandLine(launch));
     }
 
-    [Fact]
+    [TestMethod]
     public void AShellCommandThatStartsWithAQuoteAndHasMoreQuotesRuns()
     {
         var directory = Path.Combine(Path.GetTempPath(), "winland-quote-" + Guid.NewGuid().ToString("N"));
@@ -26,7 +27,7 @@ public class ProcessLauncherTests
         {
             var pid = ProcessLauncher.LaunchHere(launch);
             WaitForExit(pid);
-            Assert.True(File.Exists(file), "The command did not run as written.");
+            Assert.IsTrue(File.Exists(file), "The command did not run as written.");
             Assert.Contains("cmd.exe", File.ReadAllText(file), StringComparison.OrdinalIgnoreCase);
         }
         finally
@@ -36,7 +37,7 @@ public class ProcessLauncherTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AncestorsStartWithTheParent()
     {
         using var child = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), "/d /c ping -n 30 127.0.0.1 >nul")
@@ -48,12 +49,15 @@ public class ProcessLauncherTests
         {
             var ancestors = ProcessLauncher.Ancestors(child.Id);
 
-            Assert.Equal(Environment.ProcessId, ancestors[0]);
+            Assert.AreEqual(Environment.ProcessId, ancestors[0]);
             Assert.DoesNotContain(child.Id, ancestors);
-            Assert.All(ancestors, id => Assert.True(id > 0));
-            Assert.Equal(ancestors.Count, ancestors.Distinct().Count());
-            Assert.InRange(ancestors.Count, 1, 25);
-            Assert.Equal(ancestors.Skip(1), ProcessLauncher.Ancestors(Environment.ProcessId).Take(ancestors.Count - 1));
+            foreach (var id in ancestors)
+{
+    Assert.IsTrue(id > 0);
+}
+            Assert.AreEqual(ancestors.Count, ancestors.Distinct().Count());
+            Assert.IsInRange(1, 25, ancestors.Count);
+            Assert.AreSequenceEqual(ancestors.Skip(1), ProcessLauncher.Ancestors(Environment.ProcessId).Take(ancestors.Count - 1));
         }
         finally
         {
@@ -61,12 +65,12 @@ public class ProcessLauncherTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void NoProcessHasNoAncestors()
     {
-        Assert.Empty(ProcessLauncher.Ancestors(0));
-        Assert.Empty(ProcessLauncher.Ancestors(-4));
-        Assert.Throws<ArgumentNullException>(() => ProcessLauncher.LaunchHere(null!));
+        Assert.IsEmpty(ProcessLauncher.Ancestors(0));
+        Assert.IsEmpty(ProcessLauncher.Ancestors(-4));
+        Assert.ThrowsExactly<ArgumentNullException>(() => ProcessLauncher.LaunchHere(null!));
     }
 
     private static void WaitForExit(int pid, int milliseconds = 10_000)

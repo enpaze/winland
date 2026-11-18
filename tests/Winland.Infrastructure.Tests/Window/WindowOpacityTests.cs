@@ -1,11 +1,10 @@
 using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure.Tests;
-
-[Collection("Console")]
+[TestClass]
 public class WindowOpacityTests
 {
-    [Fact]
+    [TestMethod]
     public void AlphaBelowOpaqueAddsLayeredAndResetRestoresTheOriginalStyle()
     {
         var styles = new FakeStyles();
@@ -14,26 +13,26 @@ public class WindowOpacityTests
         var adapter = new WindowOpacity(styles);
 
         adapter.Apply(window, 255);
-        Assert.Equal(0, styles.Writes);
-        Assert.False(adapter.Owns(window));
+        Assert.AreEqual(0, styles.Writes);
+        Assert.IsFalse(adapter.Owns(window));
 
         adapter.Apply(window, 128);
-        Assert.Equal((uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80, styles.ExStyle[window]);
-        Assert.Equal(128, styles.Alpha[window]);
-        Assert.Equal(1, styles.Writes);
-        Assert.True(adapter.Owns(window));
+        Assert.AreEqual((uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80, styles.ExStyle[window]);
+        Assert.AreEqual(128, styles.Alpha[window]);
+        Assert.AreEqual(1, styles.Writes);
+        Assert.IsTrue(adapter.Owns(window));
 
         adapter.Apply(window, 64);
-        Assert.Equal((uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80, styles.ExStyle[window]);
-        Assert.Equal(64, styles.Alpha[window]);
-        Assert.Equal(1, styles.Writes);
+        Assert.AreEqual((uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80, styles.ExStyle[window]);
+        Assert.AreEqual(64, styles.Alpha[window]);
+        Assert.AreEqual(1, styles.Writes);
 
         adapter.Reset(window);
-        Assert.Equal(0x80u, styles.ExStyle[window]);
-        Assert.False(adapter.Owns(window));
+        Assert.AreEqual(0x80u, styles.ExStyle[window]);
+        Assert.IsFalse(adapter.Owns(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void ResetTakesOffOnlyTheLayeredStyle()
     {
         var styles = new FakeStyles();
@@ -45,10 +44,10 @@ public class WindowOpacityTests
 
         adapter.Reset(window);
 
-        Assert.Equal(0x88u, styles.ExStyle[window]);
+        Assert.AreEqual(0x88u, styles.ExStyle[window]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReturningToOpaqueRestoresTheStyleWithoutASeparateReset()
     {
         var styles = new FakeStyles();
@@ -59,11 +58,11 @@ public class WindowOpacityTests
         adapter.Apply(window, 100);
         adapter.Apply(window, 255);
 
-        Assert.Equal(0x80u, styles.ExStyle[window]);
-        Assert.False(adapter.Owns(window));
+        Assert.AreEqual(0x80u, styles.ExStyle[window]);
+        Assert.IsFalse(adapter.Owns(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnAlreadyLayeredWindowIsLeftAloneAndReportedOnce()
     {
         var styles = new FakeStyles();
@@ -80,20 +79,20 @@ public class WindowOpacityTests
         {
             adapter.Apply(window, 10);
             adapter.Apply(window, 10);
-            Assert.Equal("Window 0x2a was already layered and was left alone." + Environment.NewLine, log.ToString());
+            Assert.AreEqual("Window 0x2a was already layered and was left alone." + Environment.NewLine, log.ToString());
         }
         finally
         {
             Console.SetError(stderr);
         }
 
-        Assert.Equal(200, styles.Alpha[window]);
-        Assert.Equal(0, styles.Writes);
-        Assert.Equal(0, styles.AlphaWrites);
-        Assert.False(adapter.Owns(window));
+        Assert.AreEqual(200, styles.Alpha[window]);
+        Assert.AreEqual(0, styles.Writes);
+        Assert.AreEqual(0, styles.AlphaWrites);
+        Assert.IsFalse(adapter.Owns(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatCannotBeLayeredIsNotTriedAgain()
     {
         var styles = new FakeStyles { FailAlpha = true };
@@ -106,14 +105,14 @@ public class WindowOpacityTests
         var alphaWrites = styles.AlphaWrites;
         adapter.Apply(window, 128);
 
-        Assert.Equal(writes, styles.Writes);
-        Assert.Equal(alphaWrites, styles.AlphaWrites);
-        Assert.Equal(0u, styles.ExStyle[window]);
-        Assert.False(adapter.Owns(window));
-        Assert.True(adapter.Failed(window));
+        Assert.AreEqual(writes, styles.Writes);
+        Assert.AreEqual(alphaWrites, styles.AlphaWrites);
+        Assert.AreEqual(0u, styles.ExStyle[window]);
+        Assert.IsFalse(adapter.Owns(window));
+        Assert.IsTrue(adapter.Failed(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void StampRecordsAddedLayeredWindowsAndReleaseClearsTheBit()
     {
         var styles = new FakeStyles();
@@ -127,14 +126,14 @@ public class WindowOpacityTests
             new RecoveredClient(window, WorkspaceId.Initial, MonitorId.Primary, false, "Notepad", "Notes", 10),
         ]);
         var stamped = adapter.Stamp(snapshot);
-        Assert.True(Assert.Single(stamped.Clients).Layered);
+        Assert.IsTrue(Assert.ContainsSingle(stamped.Clients).Layered);
 
         var restarted = new WindowOpacity(styles);
         restarted.ReleaseAdded(window);
-        Assert.Equal(0x80u, styles.ExStyle[window]);
+        Assert.AreEqual(0x80u, styles.ExStyle[window]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReleasingARecoveredHungWindowDefersTheStyleWriteAndKeepsItRecorded()
     {
         var styles = new FakeStyles();
@@ -146,20 +145,20 @@ public class WindowOpacityTests
 
         adapter.ReleaseAdded(window);
 
-        Assert.Equal(0, styles.Writes);
-        Assert.Equal(255, styles.Alpha[window]);
-        Assert.True(adapter.Owns(window));
-        Assert.Equal(window, Assert.Single(adapter.Stamp(new RecoverySnapshot([])).Held).Window);
+        Assert.AreEqual(0, styles.Writes);
+        Assert.AreEqual(255, styles.Alpha[window]);
+        Assert.IsTrue(adapter.Owns(window));
+        Assert.AreEqual(window, Assert.ContainsSingle(adapter.Stamp(new RecoverySnapshot([])).Held).Window);
 
         hung = false;
         adapter.ReleaseAdded(window);
 
-        Assert.Equal(0x80u, styles.ExStyle[window]);
-        Assert.False(adapter.Owns(window));
-        Assert.Empty(adapter.Stamp(new RecoverySnapshot([])).Held);
+        Assert.AreEqual(0x80u, styles.ExStyle[window]);
+        Assert.IsFalse(adapter.Owns(window));
+        Assert.IsEmpty(adapter.Stamp(new RecoverySnapshot([])).Held);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResetAllLeavesAWindowThatStoppedAnsweringOpaqueAndRecorded()
     {
         var styles = new FakeStyles();
@@ -173,18 +172,18 @@ public class WindowOpacityTests
 
         adapter.ResetAll();
 
-        Assert.Equal(writes, styles.Writes);
-        Assert.Equal(255, styles.Alpha[window]);
+        Assert.AreEqual(writes, styles.Writes);
+        Assert.AreEqual(255, styles.Alpha[window]);
         var clean = new RecoverySnapshot(
         [
             new RecoveredClient(window, WorkspaceId.Initial, MonitorId.Primary, false, "Notepad", "Notes", 10),
         ]) { Clean = true };
         var stamped = adapter.Stamp(clean);
-        Assert.True(Assert.Single(stamped.Clients).Layered);
-        Assert.True(stamped.Clean);
+        Assert.IsTrue(Assert.ContainsSingle(stamped.Clients).Layered);
+        Assert.IsTrue(stamped.Clean);
     }
 
-    [Fact]
+    [TestMethod]
     public void StampRecordsAHeldWindowThatIsNoClient()
     {
         var styles = new FakeStyles();
@@ -201,11 +200,11 @@ public class WindowOpacityTests
             new RecoveredClient(client, WorkspaceId.Initial, MonitorId.Primary, false, "Notepad", "Notes", 10),
         ]));
 
-        Assert.Equal([held], stamped.Held.Select(window => window.Window));
-        Assert.True(Assert.Single(stamped.Clients).Layered);
+        Assert.AreSequenceEqual([held], stamped.Held.Select(window => window.Window));
+        Assert.IsTrue(Assert.ContainsSingle(stamped.Clients).Layered);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResetAllRestoresEveryOwnedWindow()
     {
         var styles = new FakeStyles();
@@ -219,13 +218,13 @@ public class WindowOpacityTests
 
         adapter.ResetAll();
 
-        Assert.Equal(0x80u, styles.ExStyle[first]);
-        Assert.Equal(0x80u, styles.ExStyle[second]);
-        Assert.False(adapter.Owns(first));
-        Assert.False(adapter.Owns(second));
+        Assert.AreEqual(0x80u, styles.ExStyle[first]);
+        Assert.AreEqual(0x80u, styles.ExStyle[second]);
+        Assert.IsFalse(adapter.Owns(first));
+        Assert.IsFalse(adapter.Owns(second));
     }
 
-    [Fact]
+    [TestMethod]
     public void AfterResetAllNoWindowIsMadeLayered()
     {
         var styles = new FakeStyles();
@@ -236,11 +235,11 @@ public class WindowOpacityTests
 
         adapter.Apply(window, 128);
 
-        Assert.Equal(0x80u, styles.ExStyle[window]);
-        Assert.False(adapter.Owns(window));
+        Assert.AreEqual(0x80u, styles.ExStyle[window]);
+        Assert.IsFalse(adapter.Owns(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatRefusesTheLayeredStyleIsNotOwned()
     {
         var styles = new FakeStyles { FailStyle = true };
@@ -250,12 +249,12 @@ public class WindowOpacityTests
 
         adapter.Apply(window, 128);
 
-        Assert.False(adapter.Owns(window));
-        Assert.True(adapter.Failed(window));
-        Assert.Equal(0, styles.AlphaWrites);
+        Assert.IsFalse(adapter.Owns(window));
+        Assert.IsTrue(adapter.Failed(window));
+        Assert.AreEqual(0, styles.AlphaWrites);
     }
 
-    [Fact]
+    [TestMethod]
     public void AResetForgetsAFailureAndAWindowLeftAlone()
     {
         var styles = new FakeStyles { FailStyle = true };
@@ -274,12 +273,12 @@ public class WindowOpacityTests
         adapter.Apply(failed, 128);
         adapter.Apply(layered, 128);
 
-        Assert.False(adapter.Failed(failed));
-        Assert.True(adapter.Owns(failed));
-        Assert.True(adapter.Owns(layered));
+        Assert.IsFalse(adapter.Failed(failed));
+        Assert.IsTrue(adapter.Owns(failed));
+        Assert.IsTrue(adapter.Owns(layered));
     }
 
-    [Fact]
+    [TestMethod]
     public void RestoringTheStyleSetsNoAlpha()
     {
         var styles = new FakeStyles();
@@ -291,11 +290,11 @@ public class WindowOpacityTests
 
         adapter.Reset(window);
 
-        Assert.Equal(alphaWrites, styles.AlphaWrites);
-        Assert.Equal(0x80u, styles.ExStyle[window]);
+        Assert.AreEqual(alphaWrites, styles.AlphaWrites);
+        Assert.AreEqual(0x80u, styles.ExStyle[window]);
     }
 
-    [Fact]
+    [TestMethod]
     public void StampChangesOnlyTheMarksThatAreWrong()
     {
         var styles = new FakeStyles();
@@ -318,14 +317,17 @@ public class WindowOpacityTests
         var unchanged = adapter.Stamp(right);
         var corrected = adapter.Stamp(wrong);
 
-        Assert.Same(wrong, beforeAny);
-        Assert.Same(right, unchanged);
-        Assert.All(corrected.Clients, client => Assert.False(client.Layered));
-        Assert.Throws<ArgumentNullException>(() => adapter.Stamp(null!));
-        Assert.Throws<ArgumentNullException>(() => new WindowOpacity(null!));
+        Assert.AreSame(wrong, beforeAny);
+        Assert.AreSame(right, unchanged);
+        foreach (var client in corrected.Clients)
+{
+    Assert.IsFalse(client.Layered);
+}
+        Assert.ThrowsExactly<ArgumentNullException>(() => adapter.Stamp(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => new WindowOpacity(null!));
     }
 
-    [Fact]
+    [TestMethod]
     public void ReleasingForgetsTheWindowAndLeavesAnUnlayeredOneAlone()
     {
         var styles = new FakeStyles { FailStyle = true };
@@ -347,13 +349,13 @@ public class WindowOpacityTests
         var plainWrites = styles.Writes - writes;
         adapter.ReleaseAdded(owned);
 
-        Assert.Equal(0, plainWrites);
-        Assert.False(adapter.Failed(failed));
-        Assert.False(adapter.Owns(owned));
-        Assert.Equal(0x80u, styles.ExStyle[owned]);
+        Assert.AreEqual(0, plainWrites);
+        Assert.IsFalse(adapter.Failed(failed));
+        Assert.IsFalse(adapter.Owns(owned));
+        Assert.AreEqual(0x80u, styles.ExStyle[owned]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AForgottenWindowIsNotTouchedAndStartsOverIfItComesBack()
     {
         var styles = new FakeStyles();
@@ -365,12 +367,12 @@ public class WindowOpacityTests
 
         adapter.Forget(window);
 
-        Assert.Equal(writes, styles.Writes);
-        Assert.False(adapter.Owns(window));
-        Assert.Equal(255, adapter.Wanted(window));
+        Assert.AreEqual(writes, styles.Writes);
+        Assert.IsFalse(adapter.Owns(window));
+        Assert.AreEqual(255, adapter.Wanted(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AVeiledWindowIsTransparentAndKeepsTheAlphaItIsGivenForLater()
     {
         var styles = new FakeStyles();
@@ -379,20 +381,20 @@ public class WindowOpacityTests
         var adapter = new WindowOpacity(styles);
         adapter.Apply(window, 200);
 
-        Assert.True(adapter.Veil(window));
-        Assert.Equal(0, styles.Alpha[window]);
-        Assert.Equal(200, adapter.Wanted(window));
+        Assert.IsTrue(adapter.Veil(window));
+        Assert.AreEqual(0, styles.Alpha[window]);
+        Assert.AreEqual(200, adapter.Wanted(window));
 
         adapter.Apply(window, 150);
-        Assert.Equal(0, styles.Alpha[window]);
-        Assert.Equal(150, adapter.Wanted(window));
+        Assert.AreEqual(0, styles.Alpha[window]);
+        Assert.AreEqual(150, adapter.Wanted(window));
 
         adapter.Unveil(window);
-        Assert.Equal(150, styles.Alpha[window]);
-        Assert.Equal(150, adapter.Wanted(window));
+        Assert.AreEqual(150, styles.Alpha[window]);
+        Assert.AreEqual(150, adapter.Wanted(window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOpaqueWindowIsLayeredToBeVeiledAndGetsItsStyleBackAfter()
     {
         var styles = new FakeStyles();
@@ -400,19 +402,19 @@ public class WindowOpacityTests
         styles.ExStyle[window] = 0x80;
         var adapter = new WindowOpacity(styles);
 
-        Assert.True(adapter.Veil(window));
-        Assert.Equal((uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80, styles.ExStyle[window]);
-        Assert.Equal(255, adapter.Wanted(window));
+        Assert.IsTrue(adapter.Veil(window));
+        Assert.AreEqual((uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80, styles.ExStyle[window]);
+        Assert.AreEqual(255, adapter.Wanted(window));
 
         adapter.Unveil(window);
-        Assert.Equal(0x80u, styles.ExStyle[window]);
-        Assert.False(adapter.Owns(window));
+        Assert.AreEqual(0x80u, styles.ExStyle[window]);
+        Assert.IsFalse(adapter.Owns(window));
 
         adapter.Unveil(window);
-        Assert.Equal(0x80u, styles.ExStyle[window]);
+        Assert.AreEqual(0x80u, styles.ExStyle[window]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowItsProgramLayeredCannotBeVeiled()
     {
         var styles = new FakeStyles();
@@ -421,12 +423,12 @@ public class WindowOpacityTests
         styles.Alpha[window] = 255;
         var adapter = new WindowOpacity(styles);
 
-        Assert.False(adapter.Veil(window));
-        Assert.Equal(255, styles.Alpha[window]);
-        Assert.Equal(0, styles.AlphaWrites);
+        Assert.IsFalse(adapter.Veil(window));
+        Assert.AreEqual(255, styles.Alpha[window]);
+        Assert.AreEqual(0, styles.AlphaWrites);
     }
 
-    [Fact]
+    [TestMethod]
     public void NoWindowIsVeiledAfterResetAllAndAResetForgetsTheVeil()
     {
         var styles = new FakeStyles();
@@ -436,14 +438,14 @@ public class WindowOpacityTests
         styles.ExStyle[second] = 0;
         var adapter = new WindowOpacity(styles);
 
-        Assert.True(adapter.Veil(first));
+        Assert.IsTrue(adapter.Veil(first));
         adapter.Reset(first);
-        Assert.Equal(0u, styles.ExStyle[first]);
-        Assert.Equal(255, adapter.Wanted(first));
+        Assert.AreEqual(0u, styles.ExStyle[first]);
+        Assert.AreEqual(255, adapter.Wanted(first));
 
         adapter.ResetAll();
-        Assert.False(adapter.Veil(second));
-        Assert.Equal(0u, styles.ExStyle[second]);
+        Assert.IsFalse(adapter.Veil(second));
+        Assert.AreEqual(0u, styles.ExStyle[second]);
     }
 
     private sealed class FakeStyles : IWindowStyles

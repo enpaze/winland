@@ -1,8 +1,9 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class MonitorTests
 {
-    [Fact]
+    [TestMethod]
     public void AWindowOpensOnTheFallbackMonitorWhenEveryMonitorIsDisabled()
     {
         var core = new WindowManager(ConfigParser.Parse("""
@@ -15,11 +16,11 @@ public class MonitorTests
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), display.WorkArea));
 
-        Assert.Single(outcome.State.Clients);
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
+        Assert.ContainsSingle(outcome.State.Clients);
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void EachMonitorOwnsItsOwnLayout()
     {
         var core = new WindowManager();
@@ -30,13 +31,13 @@ public class MonitorTests
         var first = core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         var second = core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
 
-        Assert.Equal(left.WorkArea, BoundsOf(first, 1));
-        Assert.Equal(right.WorkArea, BoundsOf(second, 2));
-        Assert.Equal(2, second.State.Clients.Count);
-        Assert.DoesNotContain(second.Placements, placement => placement.Client == first.State.Clients[0].Id);
+        Assert.AreEqual(left.WorkArea, BoundsOf(first, 1));
+        Assert.AreEqual(right.WorkArea, BoundsOf(second, 2));
+        Assert.AreEqual(2, second.State.Clients.Count);
+        Assert.DoesNotContain(placement => placement.Client == first.State.Clients[0].Id, second.Placements);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatOpensGoesToTheFocusedMonitorWhereverItsProgramPutIt()
     {
         var core = new WindowManager();
@@ -48,10 +49,10 @@ public class MonitorTests
 
         var opened = core.Handle(new WindowAppeared(new WindowId(2), left.WorkArea) { Bounds = new Rectangle(100, 100, 800, 600), Opened = true });
 
-        Assert.Equal(right.WorkArea, BoundsOf(opened, 2));
+        Assert.AreEqual(right.WorkArea, BoundsOf(opened, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFramelessWindowOpensWhereItsProgramPutIt()
     {
         var core = new WindowManager();
@@ -71,14 +72,14 @@ public class MonitorTests
             Traits = WindowTraits.Normal with { Resizable = false, Frameless = true },
         });
 
-        var client = Assert.Single(opened.State.Clients, client => client.Window == new WindowId(3));
-        Assert.True(client.Floating);
-        Assert.False(client.Pinned);
-        Assert.Equal(flyout, client.Bounds);
-        Assert.Equal(new WorkspaceId("1"), client.Workspace);
+        var client = Assert.ContainsSingle(client => client.Window == new WindowId(3), opened.State.Clients);
+        Assert.IsTrue(client.Floating);
+        Assert.IsFalse(client.Pinned);
+        Assert.AreEqual(flyout, client.Bounds);
+        Assert.AreEqual(new WorkspaceId("1"), client.Workspace);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowWithAnOwnerOpensOnItsOwnersMonitor()
     {
         var core = new WindowManager();
@@ -90,10 +91,10 @@ public class MonitorTests
 
         var opened = core.Handle(new WindowAppeared(new WindowId(2), left.WorkArea) { Owner = new WindowId(1), Opened = true });
 
-        Assert.True(BoundsOf(opened, 2).X >= right.WorkArea.X);
+        Assert.IsTrue(BoundsOf(opened, 2).X >= right.WorkArea.X);
     }
 
-    [Fact]
+    [TestMethod]
     public void TwoClientsOnOneMonitorStillSplit()
     {
         var core = new WindowManager();
@@ -104,11 +105,11 @@ public class MonitorTests
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(2), left.WorkArea));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void HotplugReflowsTheMonitorThatChanged()
     {
         var core = new WindowManager();
@@ -121,11 +122,11 @@ public class MonitorTests
             display with { Width = 2000, Height = 1000, WorkArea = new Rectangle(0, 0, 2000, 1000) },
         ]));
 
-        Assert.Equal(new Rectangle(0, 0, 1000, 1000), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(1000, 0, 1000, 1000), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 1000, 1000), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(1000, 0, 1000, 1000), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void UnpluggingAMonitorMovesItsClients()
     {
         var core = new WindowManager();
@@ -137,13 +138,13 @@ public class MonitorTests
 
         var outcome = core.Handle(new MonitorsChanged([left]));
 
-        Assert.Single(outcome.State.Monitors);
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
-        Assert.Contains(outcome.State.Hidden, client => client.Window == new WindowId(2) && client.Workspace == new WorkspaceId("2"));
-        Assert.Contains(outcome.State.Workspaces, workspace => workspace.Id == new WorkspaceId("2") && workspace.Monitor == new MonitorId(0));
+        Assert.ContainsSingle(outcome.State.Monitors);
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
+        Assert.Contains(client => client.Window == new WindowId(2) && client.Workspace == new WorkspaceId("2"), outcome.State.Hidden);
+        Assert.Contains(workspace => workspace.Id == new WorkspaceId("2") && workspace.Monitor == new MonitorId(0), outcome.State.Workspaces);
     }
 
-    [Fact]
+    [TestMethod]
     public void MixedDpiPlacementsUseThePhysicalWorkAreaAndScaleGaps()
     {
         var core = new WindowManager();
@@ -161,8 +162,8 @@ public class MonitorTests
         var second = core.Handle(new WindowAppeared(new WindowId(2), high.WorkArea));
         var third = core.Handle(new WindowAppeared(new WindowId(3), mid.WorkArea));
 
-        Assert.Equal(new Rectangle(10, 10, 1900, 1060), BoundsOf(first, 1));
-        Assert.Equal(new Rectangle(1940, 20, 3800, 2120), BoundsOf(second, 2));
-        Assert.Equal(new Rectangle(5775, 15, 1890, 1050), BoundsOf(third, 3));
+        Assert.AreEqual(new Rectangle(10, 10, 1900, 1060), BoundsOf(first, 1));
+        Assert.AreEqual(new Rectangle(1940, 20, 3800, 2120), BoundsOf(second, 2));
+        Assert.AreEqual(new Rectangle(5775, 15, 1890, 1050), BoundsOf(third, 3));
     }
 }

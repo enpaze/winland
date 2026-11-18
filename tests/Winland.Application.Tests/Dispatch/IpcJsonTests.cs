@@ -2,9 +2,10 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class IpcJsonTests
 {
-    [Fact]
+    [TestMethod]
     public void ClientsAndActiveWindowMatchTheStatusBarShape()
     {
         var core = new WindowManager();
@@ -19,12 +20,12 @@ public class IpcJsonTests
             {"address":"0x2a","mapped":true,"hidden":false,"visible":true,"acceptsInput":true,"at":[0,0],"size":[800,600],"workspace":{"address":"1","id":1,"type":"normal","name":"1","monitor":""},"floating":false,"monitor":0,"class":"kitty","title":"term","initialClass":"kitty","initialTitle":"term","pid":4242,"pinned":false,"fullscreen":0,"fullscreenClient":0,"fullscreenHandler":"default","allowedOverFullscreen":true,"grouped":[],"stableId":"2a"}
             """;
 
-        Assert.Equal("[" + Client + "]", core.Execute("j/clients").Text);
-        Assert.Equal(Client, core.Execute("j/activewindow").Text);
-        Assert.Equal(4242, core.Recovery().Clients[0].ProcessId);
+        Assert.AreEqual("[" + Client + "]", core.Execute("j/clients").Text);
+        Assert.AreEqual(Client, core.Execute("j/activewindow").Text);
+        Assert.AreEqual(4242, core.Recovery().Clients[0].ProcessId);
     }
 
-    [Fact]
+    [TestMethod]
     public void FloatingClientReportsItsOwnRectangleAndAHiddenClientIsNotVisible()
     {
         var core = new WindowManager();
@@ -39,31 +40,31 @@ public class IpcJsonTests
 
         var clients = Json(core.Execute("j/clients").Text).EnumerateArray().ToArray();
 
-        Assert.Equal("0x1", clients[0].GetProperty("address").GetString());
-        Assert.True(clients[0].GetProperty("hidden").GetBoolean());
-        Assert.False(clients[0].GetProperty("mapped").GetBoolean());
-        Assert.False(clients[0].GetProperty("visible").GetBoolean());
-        Assert.False(clients[0].GetProperty("acceptsInput").GetBoolean());
-        Assert.Equal(0, clients[0].GetProperty("monitor").GetInt32());
+        Assert.AreEqual("0x1", clients[0].GetProperty("address").GetString());
+        Assert.IsTrue(clients[0].GetProperty("hidden").GetBoolean());
+        Assert.IsFalse(clients[0].GetProperty("mapped").GetBoolean());
+        Assert.IsFalse(clients[0].GetProperty("visible").GetBoolean());
+        Assert.IsFalse(clients[0].GetProperty("acceptsInput").GetBoolean());
+        Assert.AreEqual(0, clients[0].GetProperty("monitor").GetInt32());
 
-        Assert.Equal("0x7", clients[1].GetProperty("address").GetString());
-        Assert.True(clients[1].GetProperty("floating").GetBoolean());
-        Assert.True(clients[1].GetProperty("hidden").GetBoolean());
-        Assert.Equal(250, clients[1].GetProperty("at")[0].GetInt32());
-        Assert.Equal(200, clients[1].GetProperty("at")[1].GetInt32());
-        Assert.Equal(300, clients[1].GetProperty("size")[0].GetInt32());
-        Assert.Equal(200, clients[1].GetProperty("size")[1].GetInt32());
-        Assert.Equal(99, clients[1].GetProperty("pid").GetInt64());
-        Assert.Equal("dialog", clients[1].GetProperty("initialClass").GetString());
-        Assert.Equal("Save", clients[1].GetProperty("initialTitle").GetString());
-        Assert.Equal(JsonValueKind.Array, clients[1].GetProperty("grouped").ValueKind);
-        Assert.Equal(0, clients[1].GetProperty("grouped").GetArrayLength());
-        Assert.Equal(JsonValueKind.Number, clients[1].GetProperty("fullscreen").ValueKind);
-        Assert.Equal(0, clients[1].GetProperty("fullscreen").GetInt32());
-        Assert.Equal(0, clients[1].GetProperty("fullscreenClient").GetInt32());
+        Assert.AreEqual("0x7", clients[1].GetProperty("address").GetString());
+        Assert.IsTrue(clients[1].GetProperty("floating").GetBoolean());
+        Assert.IsTrue(clients[1].GetProperty("hidden").GetBoolean());
+        Assert.AreEqual(250, clients[1].GetProperty("at")[0].GetInt32());
+        Assert.AreEqual(200, clients[1].GetProperty("at")[1].GetInt32());
+        Assert.AreEqual(300, clients[1].GetProperty("size")[0].GetInt32());
+        Assert.AreEqual(200, clients[1].GetProperty("size")[1].GetInt32());
+        Assert.AreEqual(99, clients[1].GetProperty("pid").GetInt64());
+        Assert.AreEqual("dialog", clients[1].GetProperty("initialClass").GetString());
+        Assert.AreEqual("Save", clients[1].GetProperty("initialTitle").GetString());
+        Assert.AreEqual(JsonValueKind.Array, clients[1].GetProperty("grouped").ValueKind);
+        Assert.AreEqual(0, clients[1].GetProperty("grouped").GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Number, clients[1].GetProperty("fullscreen").ValueKind);
+        Assert.AreEqual(0, clients[1].GetProperty("fullscreen").GetInt32());
+        Assert.AreEqual(0, clients[1].GetProperty("fullscreenClient").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspacesAndActiveWorkspaceMatchTheStatusBarShape()
     {
         var core = new WindowManager();
@@ -77,31 +78,31 @@ public class IpcJsonTests
             {"address":"1","id":1,"type":"normal","name":"1","monitor":"","monitorID":0,"windows":1,"hasfullscreen":false,"lastwindow":"0x2a","lastwindowtitle":"term","ispersistent":false,"tiledLayout":"dwindle"}
             """;
 
-        Assert.Equal("[" + Workspace + "]", core.Execute("j/workspaces").Text);
-        Assert.Equal(Workspace, core.Execute("j/activeworkspace").Text);
+        Assert.AreEqual("[" + Workspace + "]", core.Execute("j/workspaces").Text);
+        Assert.AreEqual(Workspace, core.Execute("j/activeworkspace").Text);
     }
 
-    [Theory]
-    [InlineData("scrolling")]
-    [InlineData("dwindle")]
+    [TestMethod]
+    [DataRow("scrolling")]
+    [DataRow("dwindle")]
     public void WorkspacesReportTheirTiledLayout(string layout)
     {
         var core = new WindowManager(ConfigParser.Parse("general:layout = " + layout));
         core.Handle(new WindowAppeared(new WindowId(42), new Rectangle(0, 0, 800, 600)));
 
-        var workspace = Assert.Single(Json(core.Execute("j/workspaces").Text).EnumerateArray());
+        var workspace = Assert.ContainsSingle(Json(core.Execute("j/workspaces").Text).EnumerateArray());
 
-        Assert.Equal(layout, workspace.GetProperty("tiledLayout").GetString());
-        Assert.Equal(layout, Json(core.Execute("j/activeworkspace").Text).GetProperty("tiledLayout").GetString());
+        Assert.AreEqual(layout, workspace.GetProperty("tiledLayout").GetString());
+        Assert.AreEqual(layout, Json(core.Execute("j/activeworkspace").Text).GetProperty("tiledLayout").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void ActiveWorkspaceRejectsTrailingArguments()
     {
-        Assert.Equal("error: unknown request", new WindowManager().Execute("j/activeworkspace extra").Text);
+        Assert.AreEqual("error: unknown request", new WindowManager().Execute("j/activeworkspace extra").Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void MonitorsMatchTheStatusBarShape()
     {
         var core = new WindowManager();
@@ -128,11 +129,11 @@ public class IpcJsonTests
             {"id":0,"name":"Dell","description":"DEL U2720Q ABC123","make":"DEL","model":"U2720Q","serial":"ABC123","width":1920,"height":1080,"physicalWidth":597,"physicalHeight":336,"refreshRate":60,"x":0,"y":0,"activeWorkspace":{"address":"1","id":1,"type":"normal","name":"1","monitor":"Dell"},"specialWorkspace":{"address":"","type":"","name":"","monitor":""},"reserved":[0,0,0,40],"scale":1,"transform":0,"focused":true,"dpmsStatus":true,"vrr":false,"solitary":"0","solitaryBlockedBy":null,"activelyTearing":false,"tearingBlockedBy":null,"directScanoutTo":"0","directScanoutBlockedBy":null,"disabled":false,"currentFormat":"","mirrorOf":"none","availableModes":["1920x1080@60.00Hz"],"colorManagementPreset":"srgb","sdrBrightness":1,"sdrSaturation":1,"sdrMinLuminance":0.2,"sdrMaxLuminance":80,"hardwareCursorsInUse":false,"hardwareDetails":{"backend":"windows","hdr":false,"chroma":false,"bt2020":false,"vrrCapable":false}}
             """;
 
-        Assert.Equal("[" + Monitor + "]", core.Execute("j/monitors").Text);
-        Assert.Equal("[" + Monitor + "]", core.Execute("j/monitors all").Text);
+        Assert.AreEqual("[" + Monitor + "]", core.Execute("j/monitors").Text);
+        Assert.AreEqual("[" + Monitor + "]", core.Execute("j/monitors all").Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClientMonitorIdAgreesWithTheMonitorItIsOn()
     {
         var core = new WindowManager();
@@ -145,15 +146,15 @@ public class IpcJsonTests
         var monitors = Json(core.Execute("j/monitors").Text).EnumerateArray().ToArray();
         var clients = Json(core.Execute("j/clients").Text).EnumerateArray().ToArray();
 
-        Assert.Equal(monitors[0].GetProperty("id").GetInt32(), clients[0].GetProperty("monitor").GetInt32());
-        Assert.Equal(monitors[1].GetProperty("id").GetInt32(), clients[1].GetProperty("monitor").GetInt32());
-        Assert.Equal(1, clients[1].GetProperty("monitor").GetInt32());
-        Assert.Equal("1920x1080@60.00Hz", monitors[0].GetProperty("availableModes")[0].GetString());
-        Assert.Equal(144, monitors[1].GetProperty("refreshRate").GetDouble());
-        Assert.Equal(1.5, monitors[1].GetProperty("scale").GetDouble());
+        Assert.AreEqual(monitors[0].GetProperty("id").GetInt32(), clients[0].GetProperty("monitor").GetInt32());
+        Assert.AreEqual(monitors[1].GetProperty("id").GetInt32(), clients[1].GetProperty("monitor").GetInt32());
+        Assert.AreEqual(1, clients[1].GetProperty("monitor").GetInt32());
+        Assert.AreEqual("1920x1080@60.00Hz", monitors[0].GetProperty("availableModes")[0].GetString());
+        Assert.AreEqual(144, monitors[1].GetProperty("refreshRate").GetDouble());
+        Assert.AreEqual(1.5, monitors[1].GetProperty("scale").GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void MonitorsAllIncludesDisabledMonitors()
     {
         var core = new WindowManager();
@@ -164,24 +165,24 @@ public class IpcJsonTests
         var shown = Json(core.Execute("j/monitors").Text).EnumerateArray().ToArray();
         var all = Json(core.Execute("j/monitors all").Text).EnumerateArray().ToArray();
 
-        var enabled = Assert.Single(shown);
-        Assert.Equal(@"\\.\DISPLAY1", enabled.GetProperty("name").GetString());
-        Assert.False(enabled.GetProperty("disabled").GetBoolean());
-        Assert.True(enabled.GetProperty("dpmsStatus").GetBoolean());
+        var enabled = Assert.ContainsSingle(shown);
+        Assert.AreEqual(@"\\.\DISPLAY1", enabled.GetProperty("name").GetString());
+        Assert.IsFalse(enabled.GetProperty("disabled").GetBoolean());
+        Assert.IsTrue(enabled.GetProperty("dpmsStatus").GetBoolean());
 
-        Assert.Equal(2, all.Length);
-        var disabled = Assert.Single(all, monitor => monitor.GetProperty("name").GetString() == @"\\.\DISPLAY2");
-        Assert.True(disabled.GetProperty("disabled").GetBoolean());
-        Assert.False(disabled.GetProperty("dpmsStatus").GetBoolean());
-        Assert.False(disabled.GetProperty("focused").GetBoolean());
-        Assert.Equal(JsonValueKind.Array, disabled.GetProperty("reserved").ValueKind);
-        Assert.Equal(4, disabled.GetProperty("reserved").GetArrayLength());
-        Assert.Equal(JsonValueKind.Object, disabled.GetProperty("specialWorkspace").ValueKind);
-        Assert.False(disabled.GetProperty("specialWorkspace").TryGetProperty("id", out _));
-        Assert.Equal("", disabled.GetProperty("specialWorkspace").GetProperty("name").GetString());
+        Assert.AreEqual(2, all.Length);
+        var disabled = Assert.ContainsSingle(monitor => monitor.GetProperty("name").GetString() == @"\\.\DISPLAY2", all);
+        Assert.IsTrue(disabled.GetProperty("disabled").GetBoolean());
+        Assert.IsFalse(disabled.GetProperty("dpmsStatus").GetBoolean());
+        Assert.IsFalse(disabled.GetProperty("focused").GetBoolean());
+        Assert.AreEqual(JsonValueKind.Array, disabled.GetProperty("reserved").ValueKind);
+        Assert.AreEqual(4, disabled.GetProperty("reserved").GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Object, disabled.GetProperty("specialWorkspace").ValueKind);
+        Assert.IsFalse(disabled.GetProperty("specialWorkspace").TryGetProperty("id", out _));
+        Assert.AreEqual("", disabled.GetProperty("specialWorkspace").GetProperty("name").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void MonitorsWithoutADisplayStillReportsTheActiveWorkspace()
     {
         const string Monitor =
@@ -189,6 +190,6 @@ public class IpcJsonTests
             {"id":0,"name":"","description":"","make":"","model":"","serial":"","width":0,"height":0,"physicalWidth":0,"physicalHeight":0,"refreshRate":0,"x":0,"y":0,"activeWorkspace":{"address":"1","id":1,"type":"normal","name":"1","monitor":""},"specialWorkspace":{"address":"","type":"","name":"","monitor":""},"reserved":[0,0,0,0],"scale":1,"transform":0,"focused":true,"dpmsStatus":true,"vrr":false,"solitary":"0","solitaryBlockedBy":null,"activelyTearing":false,"tearingBlockedBy":null,"directScanoutTo":"0","directScanoutBlockedBy":null,"disabled":false,"currentFormat":"","mirrorOf":"none","availableModes":[],"colorManagementPreset":"srgb","sdrBrightness":1,"sdrSaturation":1,"sdrMinLuminance":0.2,"sdrMaxLuminance":80,"hardwareCursorsInUse":false,"hardwareDetails":{"backend":"windows","hdr":false,"chroma":false,"bt2020":false,"vrrCapable":false}}
             """;
 
-        Assert.Equal("[" + Monitor + "]", new WindowManager().Execute("j/monitors").Text);
+        Assert.AreEqual("[" + Monitor + "]", new WindowManager().Execute("j/monitors").Text);
     }
 }

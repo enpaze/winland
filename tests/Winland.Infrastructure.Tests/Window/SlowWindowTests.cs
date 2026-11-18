@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public sealed class SlowWindowTests : IDisposable
 {
     private const int Delay = 60;
@@ -11,14 +12,14 @@ public sealed class SlowWindowTests : IDisposable
 
     public SlowWindowTests() => _window.Open();
 
-    [Fact]
+    [TestMethod]
     public async Task AFrameDoesNotWaitForTheWindowAndTheWindowStillGetsThere()
     {
         var window = new WindowId(_window.Handle.ToInt64());
 
         var warm = new Rectangle(240, 220, 500, 400);
         _adapter.QuickPlace(window, warm, borderless: true);
-        Assert.True(SpinWait.SpinUntil(() => _window.Outer == warm, TimeSpan.FromSeconds(3)), $"the window is at {_window.Outer}");
+        Assert.IsTrue(SpinWait.SpinUntil(() => _window.Outer == warm, TimeSpan.FromSeconds(3)), $"the window is at {_window.Outer}");
 
         var target = new Rectangle(300, 260, 520, 410);
         SlowWindow.Gate.Reset();
@@ -26,14 +27,14 @@ public sealed class SlowWindowTests : IDisposable
         {
             var placing = Task.Run(() => _adapter.QuickPlace(window, target, borderless: true));
             await placing.WaitAsync(TimeSpan.FromSeconds(5));
-            Assert.NotEqual(target, _window.Outer);
+            Assert.AreNotEqual(target, _window.Outer);
         }
         finally
         {
             SlowWindow.Gate.Set();
         }
 
-        Assert.True(SpinWait.SpinUntil(() => _window.Outer == target, TimeSpan.FromSeconds(3)), $"the window is at {_window.Outer}");
+        Assert.IsTrue(SpinWait.SpinUntil(() => _window.Outer == target, TimeSpan.FromSeconds(3)), $"the window is at {_window.Outer}");
     }
 
     public void Dispose()

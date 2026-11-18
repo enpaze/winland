@@ -3,11 +3,12 @@ using System.Reflection;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class WindowStateTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void ClosingAWindowLeavesNoPerWindowStateBehind()
     {
         var core = new WindowManager(ConfigParser.Parse("""
@@ -71,11 +72,11 @@ public class WindowStateTests
             core.Handle(new WindowClosed(window));
             forgotten.Add(window);
             var left = Leftovers(core, [.. forgotten]);
-            Assert.True(left.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", left));
+            Assert.IsTrue(left.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", left));
         }
 
         var kept = Leftovers(core, closed);
-        Assert.True(kept.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", kept));
+        Assert.IsTrue(kept.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", kept));
     }
 
     private static List<string> Leftovers(WindowManager core, WindowId[] closed)

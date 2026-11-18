@@ -1,8 +1,9 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class FrameInsetsTests
 {
-    [Fact]
+    [TestMethod]
     public void InvisibleBorderIsRemovedFromTheVisibleFrame()
     {
         var outer = new Rectangle(93, 40, 814, 607);
@@ -10,28 +11,28 @@ public class FrameInsetsTests
 
         var insets = FrameInsets.Between(outer, visible);
 
-        Assert.Equal(new FrameInsets(7, 0, 7, 7), insets);
+        Assert.AreEqual(new FrameInsets(7, 0, 7, 7), insets);
     }
 
-    [Fact]
+    [TestMethod]
     public void PlacementExpandsTheOuterRectangleSoTheVisibleFrameFillsTheLayout()
     {
         var insets = new FrameInsets(7, 0, 7, 7);
 
         var outer = insets.OuterFor(new Rectangle(100, 40, 800, 600));
 
-        Assert.Equal(new Rectangle(93, 40, 814, 607), outer);
+        Assert.AreEqual(new Rectangle(93, 40, 814, 607), outer);
     }
 
-    [Fact]
+    [TestMethod]
     public void NoInvisibleBorderLeavesTheLayoutRectangleAlone()
     {
         var outer = FrameInsets.None.OuterFor(new Rectangle(10, 20, 300, 200));
 
-        Assert.Equal(new Rectangle(10, 20, 300, 200), outer);
+        Assert.AreEqual(new Rectangle(10, 20, 300, 200), outer);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScaledInsetsDifferOnEachEdge()
     {
         var outer = new Rectangle(-1927, 8, 822, 611);
@@ -39,11 +40,11 @@ public class FrameInsetsTests
 
         var insets = FrameInsets.Between(outer, visible);
 
-        Assert.Equal(new FrameInsets(7, 0, 15, 11), insets);
-        Assert.Equal(new Rectangle(100, 50, 830, 411), insets.OuterFor(new Rectangle(107, 50, 808, 400)));
+        Assert.AreEqual(new FrameInsets(7, 0, 15, 11), insets);
+        Assert.AreEqual(new Rectangle(100, 50, 830, 411), insets.OuterFor(new Rectangle(107, 50, 808, 400)));
     }
 
-    [Fact]
+    [TestMethod]
     public void AVisibleFrameThatAlreadyMatchesNeedsNoCorrection()
     {
         var target = new Rectangle(100, 40, 800, 600);
@@ -51,10 +52,10 @@ public class FrameInsetsTests
 
         var correction = FrameInsets.Correct(target, requested, requested, target);
 
-        Assert.Equal(new FrameInsets.Correction(requested, false), correction);
+        Assert.AreEqual(new FrameInsets.Correction(requested, false), correction);
     }
 
-    [Fact]
+    [TestMethod]
     public void AShortVisibleFrameIsCorrectedOnceFromTheLandedFrame()
     {
         var target = new Rectangle(100, 200, 800, 600);
@@ -64,10 +65,10 @@ public class FrameInsetsTests
 
         var correction = FrameInsets.Correct(target, requested, landedOuter, landedVisible);
 
-        Assert.Equal(new FrameInsets.Correction(new Rectangle(93, 200, 814, 607), false), correction);
+        Assert.AreEqual(new FrameInsets.Correction(new Rectangle(93, 200, 814, 607), false), correction);
     }
 
-    [Fact]
+    [TestMethod]
     public void AClampedWindowKeepsItsSizeAndIsMovedOnce()
     {
         var target = new Rectangle(10, 10, 400, 300);
@@ -77,10 +78,10 @@ public class FrameInsetsTests
 
         var correction = FrameInsets.Correct(target, requested, landedOuter, landedVisible);
 
-        Assert.Equal(new FrameInsets.Correction(new Rectangle(3, 10, 500, 400), true), correction);
+        Assert.AreEqual(new FrameInsets.Correction(new Rectangle(3, 10, 500, 400), true), correction);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowClampedOnOneAxisIsStillCorrectedOnTheOther()
     {
         var target = new Rectangle(100, 200, 800, 600);
@@ -90,14 +91,14 @@ public class FrameInsetsTests
 
         var correction = FrameInsets.Correct(target, requested, landedOuter, landedVisible);
 
-        Assert.Equal(new FrameInsets.Correction(new Rectangle(93, 200, 500, 607), true), correction);
+        Assert.AreEqual(new FrameInsets.Correction(new Rectangle(93, 200, 500, 607), true), correction);
     }
 
-    [Fact]
+    [TestMethod]
     public void InsetsStayCachedUntilTheDpiChanges()
     {
-        Assert.True(FrameInsets.AppliesAt(96, 96));
-        Assert.False(FrameInsets.AppliesAt(96, 144));
-        Assert.False(FrameInsets.AppliesAt(144, 96));
+        Assert.IsTrue(FrameInsets.AppliesAt(96, 96));
+        Assert.IsFalse(FrameInsets.AppliesAt(96, 144));
+        Assert.IsFalse(FrameInsets.AppliesAt(144, 96));
     }
 }
