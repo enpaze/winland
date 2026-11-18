@@ -132,13 +132,14 @@ public class TextRepliesTests
     [TestMethod]
     public void VersionAnswersOneLine()
     {
-        var version = new WindowManager().Execute("version").Text;
+        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["version"], out var version));
 
         Assert.StartsWith("winland " + BuildStamp.Version, version, StringComparison.Ordinal);
         Assert.DoesNotContain('\n', version);
         if (BuildStamp.Commit.Length > 0)
             Assert.Contains(BuildStamp.Commit[..Math.Min(7, BuildStamp.Commit.Length)], version, StringComparison.Ordinal);
-        Assert.StartsWith("{", new WindowManager().Execute("j/version").Text, StringComparison.Ordinal);
+        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["version", "-j"], out var json));
+        Assert.StartsWith("{", json, StringComparison.Ordinal);
     }
 
     [TestMethod]

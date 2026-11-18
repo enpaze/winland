@@ -21,7 +21,7 @@ The script builds the driver project in Release, which builds `winland.exe`, the
 
 Add `-NoBuild` to reuse the last Release build. Omit `-Feature` to drive every feature in turn, as CI does.
 
-To explore by hand instead, start an isolated dev build as [Run a dev build](../../../docs/development.md#run-a-dev-build) says, with your own `WINLAND_PIPE`, `WINLAND_STATE` and a `-Config` that ignores every window but yours. It is ready when `winland version` answers on that pipe. Stop it with `scripts/run.ps1 -Stop` from the same shell.
+To explore by hand instead, start an isolated dev build as [Run a dev build](../../../docs/development.md#run-a-dev-build) says, with your own `WINLAND_PIPE`, `WINLAND_STATE` and a `-Config` that ignores every window but yours. It is ready when `winland clients` answers on that pipe. Stop it with `scripts/run.ps1 -Stop` from the same shell.
 
 ## Doctor
 

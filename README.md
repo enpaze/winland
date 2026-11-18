@@ -118,6 +118,7 @@ The default install runs as administrator and writes no log file. After a crash,
 | `winland --config <file>` | Start Winland with that `.conf` file in place of your config |
 | `winland check [file]` | Validate a config and its sources without starting or changing Winland |
 | `winland [-j] dispatch` | List this binary's Dispatcher names without a Daemon |
+| `winland [-j] version` | Show this binary's version without a Daemon |
 | `winland install` | Install for this PC, running as administrator. Asks for one approval |
 | `winland install --user` | Install for you only, without administrator rights |
 | `winland install --no-logon` | Install without starting Winland at logon. Works with `--user` |
@@ -150,7 +151,6 @@ These talk to the running Winland.
 | `winland binds` | List the hotkeys, one config line each |
 | `winland configerrors` | List the config's warnings, each with its file and line |
 | `winland files` | Show the config Winland read and the log it writes |
-| `winland version` | Show the version |
 | `winland events` | Print every event as it happens, one per line |
 
 | Flag | Does |

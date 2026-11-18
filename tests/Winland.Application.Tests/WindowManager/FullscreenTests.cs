@@ -78,7 +78,7 @@ public class FullscreenTests
         Assert.AreEqual(1, warning.Line);
         Assert.StartsWith("Unknown dispatcher 'maximize'", warning.Message, StringComparison.Ordinal);
         Assert.AreEqual("fullscreen", Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds)).Dispatcher);
-        Assert.IsTrue(ControlInvocation.TryListNames(["dispatch"], out var names));
+        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["dispatch"], out var names));
         Assert.DoesNotContain("maximize", names.Split('\n'));
     }
 

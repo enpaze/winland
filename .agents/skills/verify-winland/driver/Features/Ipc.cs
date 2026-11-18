@@ -10,7 +10,6 @@ public class Ipc
     [VerifyFact]
     public void AnswersQueriesInspectsWindowsAndStreamsEvents() => VerifyRun.Drive(TestContext, run =>
     {
-        Assert.MatchesRegex(@"^winland \S+ \(\S+\)$", run.Ask("version"));
         Assert.AreEqual("no open windows", run.Ask("clients"));
         Assert.AreEqual("Invalid", run.Ask("activewindow"));
         Assert.AreEqual("{}", run.Ask("-j", "activewindow"));
@@ -42,5 +41,10 @@ public class Ipc
         var names = run.Cli("dispatch");
         Assert.AreEqual(0, names.ExitCode);
         Assert.Contains("workspace", names.Output.Split('\n', StringSplitOptions.TrimEntries));
+
+        run.StopEvents();
+        Assert.IsTrue(run.Daemon.TryStopClean(), "winland did not stop cleanly. " + run.Daemon.Logs());
+        Assert.AreEqual(1, run.Cli("clients").ExitCode);
+        Assert.MatchesRegex(@"^winland \S+ \(\S+\)$", run.Ask("version"));
     });
 }

@@ -222,6 +222,8 @@ A command for the running Winland, such as `winland dispatch workspace 2` or `wi
 
 `winland dispatch` without a name lists this binary's Dispatcher names locally, sorted one per line, or as a sorted JSON array with `-j`. It needs no Daemon and describes the invoked binary, which may differ from the running Daemon. A named request still goes down the pipe. An unknown Dispatcher's reply keeps its `error:` prefix and appends a close-name hint when exactly one known name is within two edits.
 
+`winland version` prints this binary's version locally, as one line such as `winland 0.0.0 (a1b2c3d)`, or as JSON with `-j`. It needs no Daemon, so it still answers after a crash. The pipe has no `version` request.
+
 `layout dwindle`, `layout scrolling` and `layout floating` select the Layout of the focused Monitor's Shown workspace, or its open Special workspace. Selecting the running kind changes nothing: column widths and splits stay as they are. Another name answers `error: unknown layout '<name>'`, with a close-name hint when unambiguous, and leaves the Layout unchanged. A kind change uses the ordinary handover and keeps Clients, Group membership, focus, fullscreen, minimized, floating, pin and what the window's rules give it. It does not retain an old Layout tree or width history.
 
 `cyclelayout` changes the Layout of the Special workspace when one is open on the focused Monitor, and otherwise the focused Workspace. It goes from dwindle to scrolling to floating and back to dwindle. `back` goes the other way, and any other argument goes forward. A Client that was tiled floats while the Workspace is floating, and tiles again when the Workspace leaves floating. One that was already floating stays floating. The Workspace keeps that Layout until the config is loaded again, which puts it back on the Layout the config names, and a restart does too. `activeworkspace` reports the Layout as `tiledLayout`.
@@ -379,7 +381,7 @@ Admission reason codes are `default`, `rule`, `hidden`, `child`, `untitled_tool`
 
 ### Other queries
 
-`binds` answers one config line per bind, such as `bind = SUPER, minus, resizeactive, -40 0`, that the config reads back as the same bind. `version` answers one line, such as `winland 0.0.0 (a1b2c3d)`, and `configerrors` one `file:line: message` per warning. With nothing to list they reply `no binds` and `no config errors`. With `j/` they reply in JSON, which is `[]` when empty.
+`binds` answers one config line per bind, such as `bind = SUPER, minus, resizeactive, -40 0`, that the config reads back as the same bind. `configerrors` answers one `file:line: message` per warning. With nothing to list they reply `no binds` and `no config errors`. With `j/` they reply in JSON, which is `[]` when empty.
 
 `files` answers the config Winland read, as `config: PATH`, and the log it writes now, as `log: PATH`, each a full path. The config is the one `--config` named, or `winland.conf` in `.winland`. The log is `none` while Winland writes none: with `debug:disable_logs` true, when it runs elevated, or when the file could not be opened. With `j/` it replies `{"config": PATH, "log": PATH}`, with `null` for none. A shell that draws Winland's notification-area menu reads it to open the same files as Winland's Edit config and Open log.
 

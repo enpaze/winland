@@ -1,23 +1,37 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Winland.Application;
 
 public static class ControlInvocation
 {
     public static string Usage { get; } =
-        string.Concat(CommandProtocol.VerbForms.Select(form => "       winland " + (form == "events" ? "" : "[-j] ") + form + "\n"));
+        string.Concat(CommandProtocol.VerbForms.Select(form => "       winland " + (form == "events" ? "" : "[-j] ") + form + "\n"))
+        + "       winland [-j] version\n";
 
-    public static bool TryListNames(string[] args, out string list)
+    public static bool TryAnswerLocally(string[] args, out string reply)
     {
         ArgumentNullException.ThrowIfNull(args);
-        list = "";
+        reply = "";
         var words = args.Where(arg => arg != "-j").ToArray();
-        if (words.Length != 1 || !words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase))
+        if (words.Length != 1)
             return false;
 
-        var sorted = WindowManager.DispatcherNames.Order(StringComparer.Ordinal).ToArray();
-        list = words.Length < args.Length ? JsonSerializer.Serialize(sorted) : string.Join('\n', sorted);
-        return true;
+        var json = words.Length < args.Length;
+        if (words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase))
+        {
+            var sorted = WindowManager.DispatcherNames.Order(StringComparer.Ordinal).ToArray();
+            reply = json ? JsonSerializer.Serialize(sorted) : string.Join('\n', sorted);
+            return true;
+        }
+
+        if (words[0].Equals("version", StringComparison.OrdinalIgnoreCase))
+        {
+            reply = json ? VersionJson() : VersionText();
+            return true;
+        }
+
+        return false;
     }
 
     public static bool TryCreate(string[] args, out string line, out bool events)
@@ -112,4 +126,31 @@ public static class ControlInvocation
 
         return true;
     }
+
+    private static string VersionJson() =>
+        JsonSerializer.Serialize(new VersionView("", BuildStamp.Commit, BuildStamp.Version, BuildStamp.Dirty, "", "", "", "", []));
+
+    private static string VersionText()
+    {
+        var details = new List<string>();
+        if (BuildStamp.Commit.Length > 0)
+            details.Add(BuildStamp.Commit.Length > 7 ? BuildStamp.Commit[..7] : BuildStamp.Commit);
+
+        if (BuildStamp.Dirty)
+            details.Add("dirty");
+
+        var version = "winland " + BuildStamp.Version;
+        return details.Count == 0 ? version : version + " (" + string.Join(", ", details) + ")";
+    }
+
+    private sealed record VersionView(
+        [property: JsonPropertyName("branch")] string Branch,
+        [property: JsonPropertyName("commit")] string Commit,
+        [property: JsonPropertyName("version")] string Version,
+        [property: JsonPropertyName("dirty")] bool Dirty,
+        [property: JsonPropertyName("commit_message")] string CommitMessage,
+        [property: JsonPropertyName("commit_date")] string CommitDate,
+        [property: JsonPropertyName("tag")] string Tag,
+        [property: JsonPropertyName("commits")] string Commits,
+        [property: JsonPropertyName("flags")] string[] Flags);
 }

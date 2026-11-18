@@ -32,7 +32,6 @@ public sealed partial class WindowManager
             BindsRequest binds => Json(binds)
                 ? CommandProtocol.FormatBinds(_config.Binds.Binds)
                 : Text(CommandProtocol.FormatBindsText(_config.Binds.Binds), "no binds"),
-            VersionRequest version => Json(version) ? CommandProtocol.FormatVersion() : CommandProtocol.FormatVersionText(),
             ConfigErrorsRequest errors => Json(errors)
                 ? CommandProtocol.FormatErrors(_loaded?.Warnings ?? [])
                 : Text(CommandProtocol.FormatErrorsText(_loaded?.Warnings ?? [], _loaded?.Path), "no config errors"),

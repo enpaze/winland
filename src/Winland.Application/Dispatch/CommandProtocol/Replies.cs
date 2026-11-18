@@ -28,31 +28,6 @@ public static partial class CommandProtocol
         return string.Join('\n', lines);
     }
 
-    public static string FormatVersion() =>
-        JsonSerializer.Serialize(new VersionJson(
-            "",
-            BuildStamp.Commit,
-            BuildStamp.Version,
-            BuildStamp.Dirty,
-            "",
-            "",
-            "",
-            "",
-            []));
-
-    public static string FormatVersionText()
-    {
-        var details = new List<string>();
-        if (BuildStamp.Commit.Length > 0)
-            details.Add(BuildStamp.Commit.Length > 7 ? BuildStamp.Commit[..7] : BuildStamp.Commit);
-
-        if (BuildStamp.Dirty)
-            details.Add("dirty");
-
-        var version = "winland " + BuildStamp.Version;
-        return details.Count == 0 ? version : version + " (" + string.Join(", ", details) + ")";
-    }
-
     public static string FormatErrors(IReadOnlyList<ConfigWarning> warnings)
     {
         ArgumentNullException.ThrowIfNull(warnings);
@@ -148,15 +123,4 @@ public static partial class CommandProtocol
     private sealed record FilesJson(
         [property: JsonPropertyName("config")] string? Config,
         [property: JsonPropertyName("log")] string? Log);
-
-    private sealed record VersionJson(
-        [property: JsonPropertyName("branch")] string Branch,
-        [property: JsonPropertyName("commit")] string Commit,
-        [property: JsonPropertyName("version")] string Version,
-        [property: JsonPropertyName("dirty")] bool Dirty,
-        [property: JsonPropertyName("commit_message")] string CommitMessage,
-        [property: JsonPropertyName("commit_date")] string CommitDate,
-        [property: JsonPropertyName("tag")] string Tag,
-        [property: JsonPropertyName("commits")] string Commits,
-        [property: JsonPropertyName("flags")] string[] Flags);
 }

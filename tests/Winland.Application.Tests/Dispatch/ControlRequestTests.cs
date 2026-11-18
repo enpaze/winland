@@ -15,7 +15,7 @@ public class ControlRequestTests
     [TestMethod]
     public void ABareDispatchListsInOrderEveryDispatcherWinlandRuns()
     {
-        Assert.IsTrue(ControlInvocation.TryListNames(["dispatch"], out var list));
+        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["dispatch"], out var list));
 
         var names = list.Split('\n');
         Assert.AreSequenceEqual(names.Order(StringComparer.Ordinal), names);
@@ -30,8 +30,8 @@ public class ControlRequestTests
     [TestMethod]
     public void TheDispatcherListWithJIsAJsonArrayOfTheSameNames()
     {
-        Assert.IsTrue(ControlInvocation.TryListNames(["dispatch"], out var plain));
-        Assert.IsTrue(ControlInvocation.TryListNames(["-j", "dispatch"], out var json));
+        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["dispatch"], out var plain));
+        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["-j", "dispatch"], out var json));
 
         Assert.AreSequenceEqual(plain.Split('\n'), JsonSerializer.Deserialize<string[]>(json));
     }
@@ -43,7 +43,7 @@ public class ControlRequestTests
     {
         var args = request.Split(' ');
 
-        Assert.IsFalse(ControlInvocation.TryListNames(args, out _));
+        Assert.IsFalse(ControlInvocation.TryAnswerLocally(args, out _));
         Assert.IsTrue(ControlInvocation.TryCreate(args, out var line, out _));
         Assert.AreEqual(request, line);
     }
