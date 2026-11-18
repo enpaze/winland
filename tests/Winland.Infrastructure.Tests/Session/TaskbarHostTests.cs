@@ -1,63 +1,64 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class TaskbarHostTests
 {
-    [Fact]
+    [TestMethod]
     public void ReloadLeavesTheTaskbarAloneUntilTheOptionTurnsOn()
     {
         using var files = new ConfigDir("\n");
         var bars = new RecordingTaskbar();
         using var host = Host(files, bars);
 
-        Assert.Equal("ok", host.Reload().Text);
-        Assert.Equal(0, bars.Hides);
-        Assert.Equal(0, bars.Restores);
+        Assert.AreEqual("ok", host.Reload().Text);
+        Assert.AreEqual(0, bars.Hides);
+        Assert.AreEqual(0, bars.Restores);
 
         files.Write("general:hide_taskbar = true\n");
-        Assert.Equal("ok", host.Reload().Text);
-        Assert.Equal(1, bars.Hides);
+        Assert.AreEqual("ok", host.Reload().Text);
+        Assert.AreEqual(1, bars.Hides);
 
-        Assert.Equal("ok", host.Reload().Text);
-        Assert.Equal(1, bars.Hides);
+        Assert.AreEqual("ok", host.Reload().Text);
+        Assert.AreEqual(1, bars.Hides);
 
         files.Write("general:hide_taskbar = false\n");
-        Assert.Equal("ok", host.Reload().Text);
-        Assert.Equal(1, bars.Restores);
+        Assert.AreEqual("ok", host.Reload().Text);
+        Assert.AreEqual(1, bars.Restores);
     }
 
-    [Fact]
+    [TestMethod]
     public void ACrashMarkerIsPutBackWhenTheOptionIsOff()
     {
         using var files = new ConfigDir("\n");
         var bars = new RecordingTaskbar { Marker = true };
         using var host = Host(files, bars);
 
-        Assert.Equal("ok", host.Reload().Text);
-        Assert.Equal(0, bars.Hides);
-        Assert.Equal(1, bars.Restores);
+        Assert.AreEqual("ok", host.Reload().Text);
+        Assert.AreEqual(0, bars.Hides);
+        Assert.AreEqual(1, bars.Restores);
 
-        Assert.Equal("ok", host.Reload().Text);
-        Assert.Equal(1, bars.Restores);
+        Assert.AreEqual("ok", host.Reload().Text);
+        Assert.AreEqual(1, bars.Restores);
     }
 
-    [Fact]
+    [TestMethod]
     public void ACleanExitRestoresATaskbarThisRunHidAndLeavesOneItDidNot()
     {
         using var files = new ConfigDir("general:hide_taskbar = true\n");
         var hidden = new RecordingTaskbar();
         var host = Host(files, hidden);
-        Assert.Equal("ok", host.Reload().Text);
+        Assert.AreEqual("ok", host.Reload().Text);
         host.Dispose();
-        Assert.Equal(1, hidden.Hides);
-        Assert.Equal(1, hidden.Restores);
+        Assert.AreEqual(1, hidden.Hides);
+        Assert.AreEqual(1, hidden.Restores);
 
         files.Write("\n");
         var left = new RecordingTaskbar();
         var untouched = Host(files, left);
-        Assert.Equal("ok", untouched.Reload().Text);
+        Assert.AreEqual("ok", untouched.Reload().Text);
         untouched.Dispose();
-        Assert.Equal(0, left.Hides);
-        Assert.Equal(0, left.Restores);
+        Assert.AreEqual(0, left.Hides);
+        Assert.AreEqual(0, left.Restores);
     }
 
     private static SessionLoop Host(ConfigDir files, RecordingTaskbar bars)

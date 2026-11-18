@@ -1,12 +1,14 @@
 using Windows.Win32.UI.Input.KeyboardAndMouse;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "mouse-drag")]
-public class MouseDrag(ITestOutputHelper output)
+[TestClass]
+public class MouseDrag
 {
-    private const string Config =
+
+    public TestContext TestContext { get; set; } = null!;
+        private const string Config =
         """
         bindm = CTRL ALT SHIFT, mouse:272, movewindow
         bindm = CTRL ALT SHIFT, mouse:273, resizewindow
@@ -17,7 +19,7 @@ public class MouseDrag(ITestOutputHelper output)
     private static readonly VIRTUAL_KEY[] Modifiers = [VIRTUAL_KEY.VK_CONTROL, VIRTUAL_KEY.VK_MENU, VIRTUAL_KEY.VK_SHIFT];
 
     [VerifyFact]
-    public void MovesAndResizesAFloatingWindowWithTheMouse() => VerifyRun.Drive(output, Config, run =>
+    public void MovesAndResizesAFloatingWindowWithTheMouse() => VerifyRun.Drive(TestContext, Config, run =>
     {
         var window = run.OpenTitled("WinlandDrag", 400, 300);
         run.Until("the window floats", () => run.Client(window)?.GetProperty("floating").GetBoolean() == true);

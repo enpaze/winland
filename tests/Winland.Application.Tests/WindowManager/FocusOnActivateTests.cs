@@ -1,41 +1,42 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class FocusOnActivateTests
 {
     private const string Source = "xdg-activation-source";
     private const string Target = "xdg-activation-target";
 
-    [Fact]
+    [TestMethod]
     public void ActivationIsHonoredOnlyAfterUserInput()
     {
         var desk = new TestDesktop("misc:focus_on_activate = true\ninput:follow_mouse = 0\n");
         desk.Spawn(Source);
         var target = desk.Spawn(Target);
-        Assert.Equal(2, desk.Clients().Length);
+        Assert.AreEqual(2, desk.Clients().Length);
         FocusSource(desk);
 
         desk.Handle(new WindowFocused(target, FocusCause.Activated));
-        Assert.Equal(Source, desk.ActiveClass());
-        Assert.Equal(2, desk.Clients().Length);
+        Assert.AreEqual(Source, desk.ActiveClass());
+        Assert.AreEqual(2, desk.Clients().Length);
 
         FocusSource(desk);
         MoveCursorToSource(desk);
         desk.Click();
-        Assert.Equal(Source, desk.ActiveClass());
+        Assert.AreEqual(Source, desk.ActiveClass());
 
         desk.Handle(new WindowFocused(target, FocusCause.User));
-        Assert.Equal(Target, desk.ActiveClass());
+        Assert.AreEqual(Target, desk.ActiveClass());
 
         FocusSource(desk);
         desk.Handle(new WindowFocused(target, FocusCause.Activated));
-        Assert.Equal(Source, desk.ActiveClass());
-        Assert.Equal(2, desk.Clients().Length);
+        Assert.AreEqual(Source, desk.ActiveClass());
+        Assert.AreEqual(2, desk.Clients().Length);
     }
 
     private static void FocusSource(TestDesktop desk)
     {
         desk.Ok("focuswindow", $"class:^{Source}$");
-        Assert.Equal(Source, desk.ActiveClass());
+        Assert.AreEqual(Source, desk.ActiveClass());
     }
 
     private static void MoveCursorToSource(TestDesktop desk)

@@ -2,25 +2,26 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class CursorShapeTests
 {
-    [Theory]
-    [InlineData("grabbing", (int)SYSTEM_CURSOR_ID.OCR_SIZEALL)]
-    [InlineData("top_side", (int)SYSTEM_CURSOR_ID.OCR_SIZENS)]
-    [InlineData("bottom_side", (int)SYSTEM_CURSOR_ID.OCR_SIZENS)]
-    [InlineData("left_side", (int)SYSTEM_CURSOR_ID.OCR_SIZEWE)]
-    [InlineData("right_side", (int)SYSTEM_CURSOR_ID.OCR_SIZEWE)]
-    [InlineData("top_left_corner", (int)SYSTEM_CURSOR_ID.OCR_SIZENWSE)]
-    [InlineData("bottom_right_corner", (int)SYSTEM_CURSOR_ID.OCR_SIZENWSE)]
-    [InlineData("top_right_corner", (int)SYSTEM_CURSOR_ID.OCR_SIZENESW)]
-    [InlineData("bottom_left_corner", (int)SYSTEM_CURSOR_ID.OCR_SIZENESW)]
+    [TestMethod]
+    [DataRow("grabbing", (int)SYSTEM_CURSOR_ID.OCR_SIZEALL)]
+    [DataRow("top_side", (int)SYSTEM_CURSOR_ID.OCR_SIZENS)]
+    [DataRow("bottom_side", (int)SYSTEM_CURSOR_ID.OCR_SIZENS)]
+    [DataRow("left_side", (int)SYSTEM_CURSOR_ID.OCR_SIZEWE)]
+    [DataRow("right_side", (int)SYSTEM_CURSOR_ID.OCR_SIZEWE)]
+    [DataRow("top_left_corner", (int)SYSTEM_CURSOR_ID.OCR_SIZENWSE)]
+    [DataRow("bottom_right_corner", (int)SYSTEM_CURSOR_ID.OCR_SIZENWSE)]
+    [DataRow("top_right_corner", (int)SYSTEM_CURSOR_ID.OCR_SIZENESW)]
+    [DataRow("bottom_left_corner", (int)SYSTEM_CURSOR_ID.OCR_SIZENESW)]
     public void EachNameTheCoreReportsHasAWindowsCursor(string name, int cursor) =>
-        Assert.Equal((SYSTEM_CURSOR_ID)cursor, CursorShape.For(name));
+        Assert.AreEqual((SYSTEM_CURSOR_ID)cursor, CursorShape.For(name));
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("pirate")]
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
+    [DataRow("pirate")]
     public void NoNameOrAnUnknownOneIsTheUsersOwnCursor(string? name) =>
-        Assert.Null(CursorShape.For(name));
+        Assert.IsNull(CursorShape.For(name));
 }

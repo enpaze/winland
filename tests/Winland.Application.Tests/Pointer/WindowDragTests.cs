@@ -1,5 +1,6 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class WindowDragTests
 {
     private const string DragOnLeftButton = """
@@ -7,12 +8,12 @@ public class WindowDragTests
         bindm = , mouse:272, movewindow
         """;
 
-    [Fact]
+    [TestMethod]
     public void DragTiledCentered()
     {
         var desk = new TestDesktop(DragOnLeftButton);
         desk.Spawn("kitty");
-        Assert.Single(desk.Clients());
+        Assert.ContainsSingle(desk.Clients());
         desk.Ok("focuswindow", "class:kitty");
 
         var (grabX, grabY) = Grab(desk);
@@ -21,18 +22,18 @@ public class WindowDragTests
         MoveCursor(desk, 700, 500);
 
         var moved = Active(desk);
-        Assert.True(Nearly(moved.X + (moved.Width / 2), 700));
-        Assert.True(Nearly(moved.Y + (moved.Height / 2), 500));
+        Assert.IsTrue(Nearly(moved.X + (moved.Width / 2), 700));
+        Assert.IsTrue(Nearly(moved.Y + (moved.Height / 2), 500));
 
         Click(desk, pressed: false);
     }
 
-    [Fact]
+    [TestMethod]
     public void DragFullscreenCentered()
     {
         var desk = new TestDesktop(DragOnLeftButton);
         desk.Spawn("kitty");
-        Assert.Single(desk.Clients());
+        Assert.ContainsSingle(desk.Clients());
         desk.Ok("focuswindow", "class:kitty");
         desk.Ok("togglefloating");
         desk.Place("kitty", 100, 100, 600, 400);
@@ -44,9 +45,9 @@ public class WindowDragTests
         MoveCursor(desk, 700, 500);
 
         var moved = Active(desk);
-        Assert.Equal(0, TestDesktop.Fullscreen(desk.ActiveWindow()));
-        Assert.True(Nearly(moved.X + (moved.Width / 2), 700));
-        Assert.True(Nearly(moved.Y + (moved.Height / 2), 500));
+        Assert.AreEqual(0, TestDesktop.Fullscreen(desk.ActiveWindow()));
+        Assert.IsTrue(Nearly(moved.X + (moved.Width / 2), 700));
+        Assert.IsTrue(Nearly(moved.Y + (moved.Height / 2), 500));
 
         Click(desk, pressed: false);
     }

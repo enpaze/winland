@@ -1,8 +1,9 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public partial class CursorIdleTests
 {
-    [Fact]
+    [TestMethod]
     public void KeyPressHidesUntilThePointerMoves()
     {
         var cursor = new FakeCursor();
@@ -10,13 +11,13 @@ public partial class CursorIdleTests
         idle.Configure(new CursorBehavior(true));
 
         idle.KeyPressed();
-        Assert.True(cursor.Hidden);
+        Assert.IsTrue(cursor.Hidden);
 
         idle.Moved();
-        Assert.False(cursor.Hidden);
+        Assert.IsFalse(cursor.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void KeyPressDoesNothingWhenHidingIsOff()
     {
         var cursor = new FakeCursor();
@@ -25,11 +26,11 @@ public partial class CursorIdleTests
 
         idle.KeyPressed();
 
-        Assert.Equal(0, cursor.Hides);
-        Assert.False(cursor.Hidden);
+        Assert.AreEqual(0, cursor.Hides);
+        Assert.IsFalse(cursor.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void WarpMovesTheCursorAndKeepsItHiddenUntilTheMouseMoves()
     {
         var cursor = new FakeCursor();
@@ -41,12 +42,12 @@ public partial class CursorIdleTests
         var hiddenAfterWarp = cursor.Hidden;
         idle.Moved();
 
-        Assert.Equal(new Point(12, 34), cursor.Warped);
-        Assert.True(hiddenAfterWarp);
-        Assert.False(cursor.Hidden);
+        Assert.AreEqual(new Point(12, 34), cursor.Warped);
+        Assert.IsTrue(hiddenAfterWarp);
+        Assert.IsFalse(cursor.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheCursorNeverHidesForBeingStill()
     {
         var cursor = new FakeCursor();
@@ -55,11 +56,11 @@ public partial class CursorIdleTests
 
         idle.Moved();
 
-        Assert.Equal(0, cursor.Hides);
-        Assert.False(cursor.Hidden);
+        Assert.AreEqual(0, cursor.Hides);
+        Assert.IsFalse(cursor.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void TurningHideOnKeyOffShowsTheCursor()
     {
         var cursor = new FakeCursor();
@@ -69,10 +70,10 @@ public partial class CursorIdleTests
 
         idle.Configure(new CursorBehavior(false));
 
-        Assert.False(cursor.Hidden);
+        Assert.IsFalse(cursor.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void RevealShowsTheCursorHoweverItWasHidden()
     {
         var cursor = new FakeCursor();
@@ -83,12 +84,12 @@ public partial class CursorIdleTests
 
         idle.Reveal();
 
-        Assert.False(cursor.Hidden);
-        Assert.Equal(1, cursor.Hides);
-        Assert.Equal(1, cursor.Shows);
+        Assert.IsFalse(cursor.Hidden);
+        Assert.AreEqual(1, cursor.Hides);
+        Assert.AreEqual(1, cursor.Shows);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnotherSurfaceTakesOverTheCursor()
     {
         var first = new FakeCursor();
@@ -99,11 +100,11 @@ public partial class CursorIdleTests
         idle.Use(second);
         idle.KeyPressed();
 
-        Assert.False(first.Hidden);
-        Assert.True(second.Hidden);
-        Assert.Throws<ArgumentNullException>(() => idle.Use(null!));
-        Assert.Throws<ArgumentNullException>(() => idle.Configure(null!));
-        Assert.Throws<ArgumentNullException>(() => new CursorIdle(null!));
+        Assert.IsFalse(first.Hidden);
+        Assert.IsTrue(second.Hidden);
+        Assert.ThrowsExactly<ArgumentNullException>(() => idle.Use(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => idle.Configure(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => new CursorIdle(null!));
     }
 
     private sealed class FakeCursor : ICursorSurface

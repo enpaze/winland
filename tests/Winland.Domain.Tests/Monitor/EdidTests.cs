@@ -1,8 +1,9 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class EdidTests
 {
-    [Fact]
+    [TestMethod]
     public void NameAndSerialDescriptorsAreTheModelAndSerial()
     {
         var bytes = Block();
@@ -22,12 +23,12 @@ public class EdidTests
 
         var edid = Edid.Parse(bytes);
 
-        Assert.Equal("DEL", edid.Make);
-        Assert.Equal("DELL U2723QE", edid.Model);
-        Assert.Equal("ABC123", edid.Serial);
+        Assert.AreEqual("DEL", edid.Make);
+        Assert.AreEqual("DELL U2723QE", edid.Model);
+        Assert.AreEqual("ABC123", edid.Serial);
     }
 
-    [Fact]
+    [TestMethod]
     public void ATimingDescriptorIsNotAName()
     {
         var bytes = Block();
@@ -38,10 +39,10 @@ public class EdidTests
         Descriptor(bytes, 72, 0xFC, "DELL U2723QE");
         Finish(bytes);
 
-        Assert.Equal("DELL U2723QE", Edid.Parse(bytes).Model);
+        Assert.AreEqual("DELL U2723QE", Edid.Parse(bytes).Model);
     }
 
-    [Fact]
+    [TestMethod]
     public void TextStopsAtANewlineAndDropsThePadding()
     {
         var bytes = Block();
@@ -52,10 +53,10 @@ public class EdidTests
         bytes[59 + 5] = (byte)'X';
         Finish(bytes);
 
-        Assert.Equal("DELL", Edid.Parse(bytes).Model);
+        Assert.AreEqual("DELL", Edid.Parse(bytes).Model);
     }
 
-    [Fact]
+    [TestMethod]
     public void ProductCodeAndBinarySerialFillInForMissingDescriptors()
     {
         var bytes = Block();
@@ -71,12 +72,12 @@ public class EdidTests
 
         var edid = Edid.Parse(bytes);
 
-        Assert.Equal("SAM", edid.Make);
-        Assert.Equal("0x40C4", edid.Model);
-        Assert.Equal("0x12345678", edid.Serial);
+        Assert.AreEqual("SAM", edid.Make);
+        Assert.AreEqual("0x40C4", edid.Model);
+        Assert.AreEqual("0x12345678", edid.Serial);
     }
 
-    [Fact]
+    [TestMethod]
     public void AZeroProductCodeAndBinarySerialAreEmpty()
     {
         var bytes = Block();
@@ -86,24 +87,24 @@ public class EdidTests
 
         var edid = Edid.Parse(bytes);
 
-        Assert.Equal("DEL", edid.Make);
-        Assert.Equal("", edid.Model);
-        Assert.Equal("", edid.Serial);
+        Assert.AreEqual("DEL", edid.Make);
+        Assert.AreEqual("", edid.Model);
+        Assert.AreEqual("", edid.Serial);
     }
 
-    [Fact]
+    [TestMethod]
     public void AShortOrHeaderlessBlockIsEmpty()
     {
-        Assert.Equal(new Edid("", "", ""), Edid.Parse([]));
+        Assert.AreEqual(new Edid("", "", ""), Edid.Parse([]));
         var shortBlock = Block()[..127];
-        Assert.Equal(new Edid("", "", ""), Edid.Parse(shortBlock));
+        Assert.AreEqual(new Edid("", "", ""), Edid.Parse(shortBlock));
         var broken = Block();
         broken[0] = 0x01;
         Finish(broken);
-        Assert.Equal(new Edid("", "", ""), Edid.Parse(broken));
+        Assert.AreEqual(new Edid("", "", ""), Edid.Parse(broken));
     }
 
-    [Fact]
+    [TestMethod]
     public void LettersOutsideTheAlphabetAreNotAMake()
     {
         var bytes = Block();
@@ -114,8 +115,8 @@ public class EdidTests
 
         var edid = Edid.Parse(bytes);
 
-        Assert.Equal("", edid.Make);
-        Assert.Equal("PANEL", edid.Model);
+        Assert.AreEqual("", edid.Make);
+        Assert.AreEqual("PANEL", edid.Model);
     }
 
     private static byte[] Block()

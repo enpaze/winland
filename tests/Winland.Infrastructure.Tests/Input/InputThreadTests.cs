@@ -3,11 +3,12 @@ using Windows.Win32;
 
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class InputThreadTests
 {
     private const uint Probe = 0x8000 + 90;
 
-    [Fact]
+    [TestMethod]
     public void StartRunsOnItsOwnThreadAndReturnsOnceStarted()
     {
         var caller = Environment.CurrentManagedThreadId;
@@ -16,21 +17,21 @@ public class InputThreadTests
 
         thread.Start();
 
-        Assert.NotNull(started);
-        Assert.NotEqual(caller, started);
+        Assert.IsNotNull(started);
+        Assert.AreNotEqual(caller, started);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFailedStartIsThrownToTheCaller()
     {
         using var thread = new InputThread(() => throw new InvalidOperationException("no hook"), _ => false, () => { });
 
-        var error = Assert.Throws<InvalidOperationException>(thread.Start);
+        var error = Assert.ThrowsExactly<InvalidOperationException>(thread.Start);
 
-        Assert.Equal("no hook", error.Message);
+        Assert.AreEqual("no hook", error.Message);
     }
 
-    [Fact]
+    [TestMethod]
     public void ThreadMessagesAreServicedOnTheInputThread()
     {
         int? startedOn = null;
@@ -45,14 +46,14 @@ public class InputThreadTests
             () => { });
         thread.Start();
 
-        Assert.True(PInvoke.PostThreadMessage(thread.Id, Probe, default, default));
+        Assert.IsTrue(PInvoke.PostThreadMessage(thread.Id, Probe, default, default));
 
-        Assert.True(serviced.TryTake(out var seen, TimeSpan.FromSeconds(10)));
-        Assert.Equal(Probe, seen.Message);
-        Assert.Equal(startedOn, seen.Thread);
+        Assert.IsTrue(serviced.TryTake(out var seen, TimeSpan.FromSeconds(10)));
+        Assert.AreEqual(Probe, seen.Message);
+        Assert.AreEqual(startedOn, seen.Thread);
     }
 
-    [Fact]
+    [TestMethod]
     public void DisposeStopsOnTheInputThread()
     {
         int? startedOn = null;
@@ -65,7 +66,7 @@ public class InputThreadTests
 
         thread.Dispose();
 
-        Assert.NotNull(stoppedOn);
-        Assert.Equal(startedOn, stoppedOn);
+        Assert.IsNotNull(stoppedOn);
+        Assert.AreEqual(startedOn, stoppedOn);
     }
 }

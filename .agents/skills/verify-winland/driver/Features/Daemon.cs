@@ -1,12 +1,14 @@
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "daemon")]
-public class Daemon(ITestOutputHelper output)
+[TestClass]
+public class Daemon
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void RunsOncePerSessionRecoversFromACrashAndExits() => VerifyRun.Drive(output, run =>
+    public void RunsOncePerSessionRecoversFromACrashAndExits() => VerifyRun.Drive(TestContext, run =>
     {
         var second = VerifyCli.Run(
             run.Paths.Daemon,
@@ -17,11 +19,11 @@ public class Daemon(ITestOutputHelper output)
             TimeSpan.FromSeconds(20),
             new Dictionary<string, string> { ["WINLAND_STATE"] = run.Daemon.State });
         run.Say("started a second winland on the same pipe -> " + second);
-        Assert.Equal(1, second.ExitCode);
+        Assert.AreEqual(1, second.ExitCode);
         Assert.Contains("Winland is already running in this session.", second.Error, StringComparison.Ordinal);
 
         var usage = run.Cli("update", "--channel", "nightly");
-        Assert.Equal(2, usage.ExitCode);
+        Assert.AreEqual(2, usage.ExitCode);
 
         var (left, right) = run.OpenPair();
         run.Dispatch("workspace 2");
@@ -30,7 +32,7 @@ public class Daemon(ITestOutputHelper output)
         Thread.Sleep(500);
 
         run.Kill();
-        Assert.False(VerifyRun.Visible(left) || VerifyRun.Visible(right), "The windows came back without a restart.");
+        Assert.IsFalse(VerifyRun.Visible(left) || VerifyRun.Visible(right), "The windows came back without a restart.");
         run.Restart();
         run.Until("the next start shows what the killed winland left hidden and manages both windows again", () =>
             VerifyRun.Visible(left) && VerifyRun.Visible(right) && run.Client(left) is not null && run.Client(right) is not null);

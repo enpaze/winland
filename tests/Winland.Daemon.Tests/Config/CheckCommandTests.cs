@@ -1,5 +1,6 @@
 namespace Winland.Daemon.Tests;
 
+[TestClass]
 public sealed class CheckCommandTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "winland-check-" + Guid.NewGuid().ToString("N"));
@@ -8,7 +9,7 @@ public sealed class CheckCommandTests : IDisposable
 
     private string Default => Path.Combine(_root, "default", "winland.conf");
 
-    [Fact]
+    [TestMethod]
     public void AConfigAndItsSourcesWithNoWarningsPass()
     {
         var path = Write("winland.conf", "source = binds.conf\ngeneral:gaps_in = 4\n");
@@ -16,11 +17,11 @@ public sealed class CheckCommandTests : IDisposable
 
         var (exit, error) = Check(path);
 
-        Assert.Equal(0, exit);
-        Assert.Equal("", error);
+        Assert.AreEqual(0, exit);
+        Assert.AreEqual("", error);
     }
 
-    [Fact]
+    [TestMethod]
     public void EachWarningIsPrintedWithItsFileAndLineAndTheCheckFails()
     {
         var marker = Path.Combine(_root, "launched");
@@ -34,25 +35,25 @@ public sealed class CheckCommandTests : IDisposable
 
         var (exit, error) = Check(path);
 
-        Assert.Equal(1, exit);
-        Assert.Equal(
+        Assert.AreEqual(1, exit);
+        Assert.AreEqual(
             $"{binds}:1: Unknown dispatcher 'killactiv'. Did you mean 'killactive'?\n{path}:3: Unsupported keyword 'ghostkeyword'.\n",
             error);
-        Assert.False(File.Exists(marker));
+        Assert.IsFalse(File.Exists(marker));
     }
 
-    [Fact]
+    [TestMethod]
     public void AMissingSourceFailsTheCheck()
     {
         var path = Write("winland.conf", "source = absent.conf\n");
 
         var (exit, error) = Check(path);
 
-        Assert.Equal(1, exit);
-        Assert.Equal($"{path}:1: Could not read source '{Path.Combine(_root, "absent.conf")}'.\n", error);
+        Assert.AreEqual(1, exit);
+        Assert.AreEqual($"{path}:1: Could not read source '{Path.Combine(_root, "absent.conf")}'.\n", error);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASourceWindowsCannotNameWarnsOnItsLineAndTheRestIsStillRead()
     {
         Directory.CreateDirectory(Path.Combine(_root, "conf"));
@@ -68,8 +69,8 @@ public sealed class CheckCommandTests : IDisposable
 
         var (exit, error) = Check(path);
 
-        Assert.Equal(1, exit);
-        Assert.Equal(
+        Assert.AreEqual(1, exit);
+        Assert.AreEqual(
             $"""
             {path}:1: Could not read source '{_root}\bad{'\0'}name.conf'.
             {path}:2: Could not read source '{_root}\bad{'\0'}folder/*.conf'.
@@ -79,57 +80,57 @@ public sealed class CheckCommandTests : IDisposable
 
             """.ReplaceLineEndings("\n"),
             error);
-        Assert.Equal(before, File.ReadAllBytes(path));
+        Assert.AreSequenceEqual(before, File.ReadAllBytes(path));
     }
 
-    [Fact]
+    [TestMethod]
     public void AMissingConfigFailsWithoutWritingOne()
     {
         var named = Path.Combine(_root, "absent.conf");
 
-        Assert.Equal((1, $"Could not read config '{named}'.\n"), Check(named));
-        Assert.Equal((1, $"Could not read config '{Default}'.\n"), Check());
-        Assert.False(File.Exists(named));
-        Assert.False(File.Exists(Default));
+        Assert.AreEqual((1, $"Could not read config '{named}'.\n"), Check(named));
+        Assert.AreEqual((1, $"Could not read config '{Default}'.\n"), Check());
+        Assert.IsFalse(File.Exists(named));
+        Assert.IsFalse(File.Exists(Default));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnEmptyDefaultConfigPassesAndStaysEmpty()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(Default)!);
         File.WriteAllBytes(Default, []);
 
-        Assert.Equal((0, ""), Check());
-        Assert.Empty(File.ReadAllBytes(Default));
+        Assert.AreEqual((0, ""), Check());
+        Assert.IsEmpty(File.ReadAllBytes(Default));
     }
 
-    [Theory]
-    [InlineData("a.conf", "b.conf")]
-    [InlineData("-j")]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData("\t")]
+    [TestMethod]
+    [DataRow("a.conf", "b.conf")]
+    [DataRow("-j")]
+    [DataRow("")]
+    [DataRow(" ")]
+    [DataRow("\t")]
     public void AnythingButOneFileIsAUsageError(params string[] arguments)
     {
         var (exit, error) = Check(arguments);
 
-        Assert.Equal(2, exit);
-        Assert.Equal("usage: winland check [file]\n", error);
-        Assert.Empty(Directory.EnumerateFileSystemEntries(_root));
+        Assert.AreEqual(2, exit);
+        Assert.AreEqual("usage: winland check [file]\n", error);
+        Assert.IsEmpty(Directory.EnumerateFileSystemEntries(_root));
     }
 
-    [Fact]
+    [TestMethod]
     public void APathWindowsCannotNameFailsTheCheckWithoutWritingAnything()
     {
         var invalid = Path.Combine(_root, "bad\0name.conf");
 
         var (exit, error) = Check(invalid);
 
-        Assert.Equal(1, exit);
+        Assert.AreEqual(1, exit);
         Assert.StartsWith($"Could not read config '{invalid}': ", error, StringComparison.Ordinal);
         Assert.EndsWith("\n", error, StringComparison.Ordinal);
-        Assert.Single(error.Split('\n', StringSplitOptions.RemoveEmptyEntries));
-        Assert.Empty(Directory.EnumerateFileSystemEntries(_root));
+        Assert.ContainsSingle(error.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+        Assert.IsEmpty(Directory.EnumerateFileSystemEntries(_root));
     }
 
     private (int Exit, string Error) Check(params string[] arguments)

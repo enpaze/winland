@@ -1,5 +1,6 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class AnimationTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
@@ -8,28 +9,28 @@ public class AnimationTests
     private static readonly Timing WindowTiming = new(Bezier.Default, 300);
     private static readonly Timing TransitionTiming = new(Bezier.Default, 800);
 
-    [Fact]
+    [TestMethod]
     public void AnOpenedWindowPopsInAndFadesIn()
     {
         var core = new WindowManager();
 
         var outcome = Appear(core, 1);
 
-        Assert.Equal(Area, BoundsOf(outcome, 1));
-        var motion = Assert.Single(outcome.Motions);
-        Assert.Equal(new WindowId(1), motion.Window);
-        Assert.Equal(Area, motion.To);
-        Assert.Equal(new Rectangle(957, 537, 5, 5), motion.From);
-        Assert.True(motion.Warp);
-        Assert.Equal(WindowTiming, motion.Move);
-        Assert.Equal(0, motion.FadeFrom);
-        Assert.Equal(1, motion.FadeTo);
-        Assert.Equal(TransitionTiming, motion.Fade);
-        Assert.Equal(MotionEnd.None, motion.End);
-        Assert.Equal(Area, motion.Rest);
+        Assert.AreEqual(Area, BoundsOf(outcome, 1));
+        var motion = Assert.ContainsSingle(outcome.Motions);
+        Assert.AreEqual(new WindowId(1), motion.Window);
+        Assert.AreEqual(Area, motion.To);
+        Assert.AreEqual(new Rectangle(957, 537, 5, 5), motion.From);
+        Assert.IsTrue(motion.Warp);
+        Assert.AreEqual(WindowTiming, motion.Move);
+        Assert.AreEqual(0, motion.FadeFrom);
+        Assert.AreEqual(1, motion.FadeTo);
+        Assert.AreEqual(TransitionTiming, motion.Fade);
+        Assert.AreEqual(MotionEnd.None, motion.End);
+        Assert.AreEqual(Area, motion.Rest);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatMakesRoomMovesFromItsOldRectangle()
     {
         var core = new WindowManager();
@@ -37,17 +38,17 @@ public class AnimationTests
 
         var outcome = Appear(core, 2);
 
-        Assert.Equal(Left, BoundsOf(outcome, 1));
-        var moved = Assert.Single(outcome.Motions, motion => motion.Window == new WindowId(1));
-        Assert.Equal(Left, moved.To);
-        Assert.Equal(Area, moved.From);
-        Assert.False(moved.Warp);
-        Assert.Equal(WindowTiming, moved.Move);
-        Assert.Null(moved.Fade);
-        Assert.Contains(outcome.Motions, motion => motion.Window == new WindowId(2) && motion.FadeFrom == 0);
+        Assert.AreEqual(Left, BoundsOf(outcome, 1));
+        var moved = Assert.ContainsSingle(motion => motion.Window == new WindowId(1), outcome.Motions);
+        Assert.AreEqual(Left, moved.To);
+        Assert.AreEqual(Area, moved.From);
+        Assert.IsFalse(moved.Warp);
+        Assert.AreEqual(WindowTiming, moved.Move);
+        Assert.IsNull(moved.Fade);
+        Assert.Contains(motion => motion.Window == new WindowId(2) && motion.FadeFrom == 0, outcome.Motions);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResizingADwindleTileAnimatesItAndItsNeighbour()
     {
         var core = Load("");
@@ -56,10 +57,10 @@ public class AnimationTests
 
         var resized = core.Handle(new Dispatch("resizeactive", "-100 0"));
 
-        Assert.Equal(2, resized.Motions.Count(motion => !motion.Warp && motion.Move is not null));
+        Assert.AreEqual(2, resized.Motions.Count(motion => !motion.Warp && motion.Move is not null));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASwitchToAHigherWorkspaceSlidesTheOldOneOutToTheLeft()
     {
         var core = Load("""
@@ -72,19 +73,19 @@ public class AnimationTests
 
         var outcome = Tap(core, "2");
 
-        Assert.Equal([new WindowId(1), new WindowId(2)], outcome.Hide);
-        var first = Assert.Single(outcome.Motions, motion => motion.Window == new WindowId(1));
-        Assert.Equal(Left with { X = -1920 }, first.To);
-        Assert.Equal(Left, first.Rest);
-        Assert.Equal(MotionEnd.Hide, first.End);
-        Assert.Equal(TransitionTiming, first.Move);
-        Assert.Null(first.Fade);
-        var second = Assert.Single(outcome.Motions, motion => motion.Window == new WindowId(2));
-        Assert.Equal(Right with { X = 960 - 1920 }, second.To);
-        Assert.Equal(Right, second.Rest);
+        Assert.AreSequenceEqual([new WindowId(1), new WindowId(2)], outcome.Hide);
+        var first = Assert.ContainsSingle(motion => motion.Window == new WindowId(1), outcome.Motions);
+        Assert.AreEqual(Left with { X = -1920 }, first.To);
+        Assert.AreEqual(Left, first.Rest);
+        Assert.AreEqual(MotionEnd.Hide, first.End);
+        Assert.AreEqual(TransitionTiming, first.Move);
+        Assert.IsNull(first.Fade);
+        var second = Assert.ContainsSingle(motion => motion.Window == new WindowId(2), outcome.Motions);
+        Assert.AreEqual(Right with { X = 960 - 1920 }, second.To);
+        Assert.AreEqual(Right, second.Rest);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowSlidingOutKeepsItsBorderUntilItHides()
     {
         var core = Load("""
@@ -97,11 +98,11 @@ public class AnimationTests
 
         var away = Tap(core, "2");
 
-        Assert.Equal(MotionEnd.Hide, Assert.Single(away.Motions).End);
-        Assert.NotNull(Assert.Single(away.Decorations).Ring);
+        Assert.AreEqual(MotionEnd.Hide, Assert.ContainsSingle(away.Motions).End);
+        Assert.IsNotNull(Assert.ContainsSingle(away.Decorations).Ring);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowHiddenWithoutMotionLosesItsBorderAtOnce()
     {
         var core = Load("""
@@ -112,10 +113,10 @@ public class AnimationTests
         Appear(core, 1);
         HoldSuper(core);
 
-        Assert.Null(Assert.Single(Tap(core, "2").Decorations).Ring);
+        Assert.IsNull(Assert.ContainsSingle(Tap(core, "2").Decorations).Ring);
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientGoingIntoFullscreenMovesFromItsTileToTheMonitor()
     {
         var core = Load("");
@@ -123,13 +124,13 @@ public class AnimationTests
         Appear(core, 2);
 
         var into = core.Handle(new Dispatch("fullscreen", "0"));
-        var grown = Assert.Single(into.Motions, motion => motion.Window == new WindowId(2));
-        Assert.Equal(Right, grown.From);
-        Assert.Equal(Area, grown.To);
-        Assert.Equal(WindowTiming, grown.Move);
+        var grown = Assert.ContainsSingle(motion => motion.Window == new WindowId(2), into.Motions);
+        Assert.AreEqual(Right, grown.From);
+        Assert.AreEqual(Area, grown.To);
+        Assert.AreEqual(WindowTiming, grown.Move);
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientLeavingFullscreenMovesBackToItsTile()
     {
         var core = Load("");
@@ -139,12 +140,12 @@ public class AnimationTests
 
         var back = core.Handle(new Dispatch("fullscreen", "0"));
 
-        var shrunk = Assert.Single(back.Motions, motion => motion.Window == new WindowId(2));
-        Assert.Equal(Area, shrunk.From);
-        Assert.Equal(Right, shrunk.To);
+        var shrunk = Assert.ContainsSingle(motion => motion.Window == new WindowId(2), back.Motions);
+        Assert.AreEqual(Area, shrunk.From);
+        Assert.AreEqual(Right, shrunk.To);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASwitchBackSlidesInFromTheLeftAndKeepsTheLayoutRectangles()
     {
         var core = Load("""
@@ -159,20 +160,20 @@ public class AnimationTests
 
         var back = Tap(core, "1");
 
-        Assert.Equal(Left, BoundsOf(back, 1));
-        Assert.Equal([new WindowId(1), new WindowId(2)], back.Show);
-        var entering = Assert.Single(back.Motions, motion => motion.Window == new WindowId(1));
-        Assert.Equal(Left with { X = -1920 }, entering.From);
-        Assert.False(entering.Warp);
-        Assert.Equal(Left, entering.To);
-        Assert.Equal(MotionEnd.None, entering.End);
-        var leaving = Assert.Single(back.Motions, motion => motion.Window == new WindowId(3));
-        Assert.Equal(Area with { X = 1920 }, leaving.To);
-        Assert.Equal(Area, leaving.Rest);
-        Assert.Equal(MotionEnd.Hide, leaving.End);
+        Assert.AreEqual(Left, BoundsOf(back, 1));
+        Assert.AreSequenceEqual([new WindowId(1), new WindowId(2)], back.Show);
+        var entering = Assert.ContainsSingle(motion => motion.Window == new WindowId(1), back.Motions);
+        Assert.AreEqual(Left with { X = -1920 }, entering.From);
+        Assert.IsFalse(entering.Warp);
+        Assert.AreEqual(Left, entering.To);
+        Assert.AreEqual(MotionEnd.None, entering.End);
+        var leaving = Assert.ContainsSingle(motion => motion.Window == new WindowId(3), back.Motions);
+        Assert.AreEqual(Area with { X = 1920 }, leaving.To);
+        Assert.AreEqual(Area, leaving.Rest);
+        Assert.AreEqual(MotionEnd.Hide, leaving.End);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnimationsOffPlansNoMotion()
     {
         var core = Load("""
@@ -180,27 +181,27 @@ public class AnimationTests
             animations:enabled = false
             bind = SUPER, 2, workspace, 2
             """);
-        Assert.Empty(Appear(core, 1).Motions);
-        Assert.Empty(Appear(core, 2).Motions);
+        Assert.IsEmpty(Appear(core, 1).Motions);
+        Assert.IsEmpty(Appear(core, 2).Motions);
         HoldSuper(core);
 
         var outcome = Tap(core, "2");
 
-        Assert.Equal(2, outcome.Hide.Count);
-        Assert.Empty(outcome.Motions);
-        Assert.Empty(core.Handle(new Dispatch("killactive", "")).Motions);
+        Assert.AreEqual(2, outcome.Hide.Count);
+        Assert.IsEmpty(outcome.Motions);
+        Assert.IsEmpty(core.Handle(new Dispatch("killactive", "")).Motions);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReducedMotionPlansNoMotion()
     {
         var core = new WindowManager { ReducedMotion = () => true };
 
-        Assert.Empty(Appear(core, 1).Motions);
-        Assert.Empty(Appear(core, 2).Motions);
+        Assert.IsEmpty(Appear(core, 1).Motions);
+        Assert.IsEmpty(Appear(core, 2).Motions);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReloadingWithAnimationsOffStopsThem()
     {
         var core = new WindowManager();
@@ -208,10 +209,10 @@ public class AnimationTests
 
         core.Handle(new Configure(ConfigParser.Parse("animations:enabled = no")));
 
-        Assert.Empty(Appear(core, 2).Motions);
+        Assert.IsEmpty(Appear(core, 2).Motions);
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusMovesTheAlphaAndBorderOfBothClients()
     {
         var core = Load("""
@@ -222,39 +223,39 @@ public class AnimationTests
 
         var outcome = core.Handle(new Dispatch("movefocus", "l"));
 
-        Assert.Equal(new WindowId(1), outcome.Focus);
-        var focused = Assert.Single(outcome.Motions, motion => motion.Window == new WindowId(1));
-        var left = Assert.Single(outcome.Motions, motion => motion.Window == new WindowId(2));
-        Assert.Equal((byte)255, focused.AlphaTo);
-        Assert.True(focused.AlphaFrom < 255);
-        Assert.Equal(TransitionTiming, focused.Alpha);
-        Assert.Equal(left.AlphaFrom, focused.AlphaTo);
-        Assert.Equal(focused.AlphaFrom, left.AlphaTo);
-        Assert.Equal(DecorationOptions.Documented.InactiveBorder, focused.BorderFrom);
-        Assert.Equal(DecorationOptions.Documented.ActiveBorder, focused.BorderTo);
-        Assert.Equal(TransitionTiming, focused.Border);
-        Assert.Null(focused.Move);
-        Assert.Equal(Left, focused.To);
+        Assert.AreEqual(new WindowId(1), outcome.Focus);
+        var focused = Assert.ContainsSingle(motion => motion.Window == new WindowId(1), outcome.Motions);
+        var left = Assert.ContainsSingle(motion => motion.Window == new WindowId(2), outcome.Motions);
+        Assert.AreEqual((byte)255, focused.AlphaTo);
+        Assert.IsTrue(focused.AlphaFrom < 255);
+        Assert.AreEqual(TransitionTiming, focused.Alpha);
+        Assert.AreEqual(left.AlphaFrom, focused.AlphaTo);
+        Assert.AreEqual(focused.AlphaFrom, left.AlphaTo);
+        Assert.AreEqual(DecorationOptions.Documented.InactiveBorder, focused.BorderFrom);
+        Assert.AreEqual(DecorationOptions.Documented.ActiveBorder, focused.BorderTo);
+        Assert.AreEqual(TransitionTiming, focused.Border);
+        Assert.IsNull(focused.Move);
+        Assert.AreEqual(Left, focused.To);
     }
 
-    [Fact]
+    [TestMethod]
     public void ADraggedWindowMovesAtOnce()
     {
         var core = Load("bindm = SUPER, mouse:272, movewindow");
         Appear(core, 1);
         var floated = core.Handle(new Dispatch("togglefloating"));
-        var bounds = Assert.Single(floated.Placements).Bounds;
+        var bounds = Assert.ContainsSingle(floated.Placements).Bounds;
         var grab = new Point(bounds.X + 10, bounds.Y + 20);
         HoldSuper(core);
         core.Handle(new PointerButtonPressed("mouse:272") { Position = grab });
 
         var moved = core.Handle(new PointerMoved(new Point(grab.X + 50, grab.Y + 30)));
 
-        Assert.NotEmpty(moved.Placements);
-        Assert.DoesNotContain(moved.Motions, motion => motion.Move is not null);
+        Assert.IsNotEmpty(moved.Placements);
+        Assert.DoesNotContain(motion => motion.Move is not null, moved.Motions);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheTileThatMakesRoomForALiftedTileAnimatesWhileTheLiftedOneFollowsThePointer()
     {
         var core = Load("bindm = SUPER, mouse:272, movewindow");
@@ -265,15 +266,15 @@ public class AnimationTests
 
         var lifted = core.Handle(new PointerMoved(new Point(1450, 520)));
 
-        Assert.True(lifted.Live);
-        var grown = Assert.Single(lifted.Motions, motion => motion.Move is not null);
-        Assert.Equal(new WindowId(1), grown.Window);
-        Assert.Equal(Left, grown.From);
-        Assert.Equal(Area, grown.To);
-        Assert.DoesNotContain(core.Handle(new PointerMoved(new Point(1500, 540))).Motions, motion => motion.Move is not null);
+        Assert.IsTrue(lifted.Live);
+        var grown = Assert.ContainsSingle(motion => motion.Move is not null, lifted.Motions);
+        Assert.AreEqual(new WindowId(1), grown.Window);
+        Assert.AreEqual(Left, grown.From);
+        Assert.AreEqual(Area, grown.To);
+        Assert.DoesNotContain(motion => motion.Move is not null, core.Handle(new PointerMoved(new Point(1500, 540))).Motions);
     }
 
-    [Fact]
+    [TestMethod]
     public void AMouseResizeOfATileMovesItsNeighborAtOnce()
     {
         var core = Load("bindm = SUPER, mouse:273, resizewindow");
@@ -284,11 +285,11 @@ public class AnimationTests
 
         var resized = core.Handle(new PointerMoved(new Point(1100, 500)));
 
-        Assert.NotEmpty(resized.Placements);
-        Assert.DoesNotContain(resized.Motions, motion => motion.Move is not null);
+        Assert.IsNotEmpty(resized.Placements);
+        Assert.DoesNotContain(motion => motion.Move is not null, resized.Motions);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnInterruptedSwitchLandsOnTheFinalRectangles()
     {
         var core = Load("""
@@ -305,11 +306,17 @@ public class AnimationTests
         Play(animator, Tap(core, "1"), now: 400);
         var landed = animator.Step(400 + TransitionTiming.Milliseconds);
 
-        Assert.All(landed, frame => Assert.True(frame.Done));
-        Assert.Equal(Left, Assert.Single(landed, frame => frame.Window == new WindowId(1)).Bounds);
-        Assert.Equal(Right, Assert.Single(landed, frame => frame.Window == new WindowId(2)).Bounds);
-        Assert.All(landed, frame => Assert.Equal(MotionEnd.None, frame.End));
-        Assert.Equal(0, animator.Count);
+        foreach (var frame in landed)
+{
+    Assert.IsTrue(frame.Done);
+}
+        Assert.AreEqual(Left, Assert.ContainsSingle(frame => frame.Window == new WindowId(1), landed).Bounds);
+        Assert.AreEqual(Right, Assert.ContainsSingle(frame => frame.Window == new WindowId(2), landed).Bounds);
+        foreach (var frame in landed)
+{
+    Assert.AreEqual(MotionEnd.None, frame.End);
+}
+        Assert.AreEqual(0, animator.Count);
     }
 
     private static void Play(Animator animator, Outcome outcome, double now)
@@ -318,7 +325,7 @@ public class AnimationTests
             animator.Start(motion, now);
     }
 
-    [Fact]
+    [TestMethod]
     public void ADroppedWindowSlidesIntoItsTileFromWhereTheSystemLeftIt()
     {
         var core = Load("""
@@ -333,9 +340,9 @@ public class AnimationTests
 
         var dropped = core.Handle(new WindowMoveEnded(new WindowId(2), new Point(100, 500), left));
 
-        var motion = Assert.Single(dropped.Motions, candidate => candidate.Window == new WindowId(2));
-        Assert.Equal(left, motion.From);
-        Assert.Equal(Left, motion.To);
+        var motion = Assert.ContainsSingle(candidate => candidate.Window == new WindowId(2), dropped.Motions);
+        Assert.AreEqual(left, motion.From);
+        Assert.AreEqual(Left, motion.To);
     }
 
     private const string Gapless = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n";

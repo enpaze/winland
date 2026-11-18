@@ -1,6 +1,5 @@
 namespace Winland.Infrastructure.Tests;
-
-[Collection(DesktopCollection.Name)]
+[TestClass]
 public class MinimizeMaximizeTests
 {
     private const int Minimize = 6;
@@ -20,15 +19,15 @@ public class MinimizeMaximizeTests
             adapter.AdoptExisting([probe.Anchor, probe.Wide]);
 
             _ = ProbeNative.ShowWindow(probe.Anchor, Minimize);
-            Assert.True(ProbeNative.IsIconic(probe.Anchor));
+            Assert.IsTrue(ProbeNative.IsIconic(probe.Anchor));
             adapter.UndoMinimize(probe.Anchor);
-            Assert.False(ProbeNative.IsIconic(probe.Anchor));
+            Assert.IsFalse(ProbeNative.IsIconic(probe.Anchor));
 
             _ = ProbeNative.ShowWindow(probe.Wide, Maximize);
-            Assert.True(ProbeNative.IsZoomed(probe.Wide));
+            Assert.IsTrue(ProbeNative.IsZoomed(probe.Wide));
             var outcome = adapter.RequestMaximize(probe.Wide);
-            Assert.False(ProbeNative.IsZoomed(probe.Wide));
-            Assert.Equal(FullscreenMode.Maximized, Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(probe.Wide.ToInt64())).Fullscreen);
+            Assert.IsFalse(ProbeNative.IsZoomed(probe.Wide));
+            Assert.AreEqual(FullscreenMode.Maximized, Assert.ContainsSingle(candidate => candidate.Window == new WindowId(probe.Wide.ToInt64()), outcome.State.Clients).Fullscreen);
         }
         finally
         {

@@ -100,7 +100,7 @@ Every lane is a step in one Windows job, because each job pays its own setup.
 | Drive | `.agents/skills/verify-winland/drive.ps1 -NoBuild` with `WINLAND_VERIFY_SYSTEM=1`: every driver in [the feature map](../.agents/skills/verify-winland/features/README.md), on the runner's desktop. A failure uploads `TestResults/`. | Whenever Test runs. |
 
 - A test project that fails runs once more on the same build. If it passes the second time, `scripts/test.ps1` names the flaky tests in a `FLAKY:` line, and CI adds a warning and a job summary line. Fix flaky tests by waiting for a condition instead of a fixed time.
-- The unit tests that open real windows are in one xunit collection (`DesktopCollection` in `tests/Winland.Infrastructure.Tests`) that runs alone. The ones a running Winland would disturb skip while any `winland` process runs, including builds on custom pipes. Run them with the daemon stopped.
+- The unit tests that open real windows skip while any `winland` process runs, including builds on custom pipes. Run them with the daemon stopped. Test methods in one project run one at a time.
 - A feature driver that fails runs once more, and a pass the second time is named in a `FLAKY:` line and a warning, as for unit tests. A driver whose every test skipped fails, because it verified nothing.
 - The Workflows workflow runs zizmor when `.github/` changes. CI also runs actionlint.
 

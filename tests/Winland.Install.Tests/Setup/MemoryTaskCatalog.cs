@@ -9,7 +9,7 @@ sealed class MemoryTaskCatalog : ITaskCatalog
 
     public void Seed(LogonTask task) => tasks[task.Name] = task;
 
-    public LogonTask Only() => Assert.Single(tasks.Values);
+    public LogonTask Only() => Assert.ContainsSingle(tasks.Values);
 
     public bool Contains(string taskName) => tasks.ContainsKey(taskName);
 

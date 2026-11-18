@@ -1,10 +1,11 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class FocusStateTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void TakingFocusIsRememberedByTheWorkspace()
     {
         var focus = new FocusState(_ => true);
@@ -12,12 +13,12 @@ public class FocusStateTests
 
         focus.Take(Window(1), desk);
 
-        Assert.Equal(Window(1), focus.Focused);
-        Assert.Equal(Window(1), desk.Focus);
-        Assert.Equal(Window(1), focus.Remembered(desk));
+        Assert.AreEqual(Window(1), focus.Focused);
+        Assert.AreEqual(Window(1), desk.Focus);
+        Assert.AreEqual(Window(1), focus.Remembered(desk));
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusWithoutAWorkspaceLeavesEveryWorkspaceAsItWas()
     {
         var focus = new FocusState(_ => true);
@@ -26,30 +27,30 @@ public class FocusStateTests
 
         focus.Take(Window(2));
 
-        Assert.Equal(Window(2), focus.Focused);
-        Assert.Equal(Window(1), desk.Focus);
+        Assert.AreEqual(Window(2), focus.Focused);
+        Assert.AreEqual(Window(1), desk.Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWorkspaceDoesNotGiveFocusBackToAWindowThatTakesNone()
     {
         var focus = new FocusState(window => window != Window(2));
         var desk = Desk(1, 2);
         FocusState.Remember(desk, Window(2));
 
-        Assert.Null(focus.Remembered(desk));
+        Assert.IsNull(focus.Remembered(desk));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWorkspaceWithNothingRememberedGivesFocusToItsLastVisibleClient()
     {
         var focus = new FocusState(_ => true);
         var desk = Desk(1, 2);
 
-        Assert.Equal(desk.LastVisible(), focus.Remembered(desk));
+        Assert.AreEqual(desk.LastVisible(), focus.Remembered(desk));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheHistoryIsNewestFirstAndRanksRecency()
     {
         var focus = new FocusState(_ => true);
@@ -57,12 +58,12 @@ public class FocusStateTests
         focus.Confirm(Window(2));
         focus.Confirm(Window(1));
 
-        Assert.Equal([Window(1), Window(2)], focus.History);
-        Assert.True(focus.Recency(Window(1)) > focus.Recency(Window(2)));
-        Assert.Equal(0, focus.Recency(Window(3)));
+        Assert.AreSequenceEqual([Window(1), Window(2)], focus.History);
+        Assert.IsTrue(focus.Recency(Window(1)) > focus.Recency(Window(2)));
+        Assert.AreEqual(0, focus.Recency(Window(3)));
     }
 
-    [Fact]
+    [TestMethod]
     public void RecentIsTheNewestOnTheWorkspaceThatCanTakeFocus()
     {
         var focus = new FocusState(window => window != Window(2));
@@ -71,21 +72,21 @@ public class FocusStateTests
         focus.Confirm(Window(9));
         focus.Confirm(Window(2));
 
-        Assert.Equal(Window(1), focus.Recent(desk));
+        Assert.AreEqual(Window(1), focus.Recent(desk));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUnmanagedWindowThatBecomesAClientHandsBackThePriorFocusOnce()
     {
         var focus = new FocusState(_ => true);
         focus.Take(Window(1));
         focus.UnmanagedTook(Window(5));
 
-        Assert.Equal(Window(1), focus.Adopted(Window(5)));
-        Assert.Null(focus.Adopted(Window(5)));
+        Assert.AreEqual(Window(1), focus.Adopted(Window(5)));
+        Assert.IsNull(focus.Adopted(Window(5)));
     }
 
-    [Fact]
+    [TestMethod]
     public void AClosedWindowLeavesTheHistoryAndTheUnmanagedMarks()
     {
         var focus = new FocusState(_ => true);
@@ -96,12 +97,12 @@ public class FocusStateTests
         focus.Forget(Window(1));
         focus.Forget(Window(5));
 
-        Assert.Empty(focus.History);
-        Assert.Null(focus.Unmanaged);
-        Assert.Null(focus.BeforeUnmanaged);
+        Assert.IsEmpty(focus.History);
+        Assert.IsNull(focus.Unmanaged);
+        Assert.IsNull(focus.BeforeUnmanaged);
     }
 
-    [Fact]
+    [TestMethod]
     public void ForgettingAnotherWindowKeepsTheUnmanagedMarks()
     {
         var focus = new FocusState(_ => true);
@@ -110,22 +111,22 @@ public class FocusStateTests
 
         focus.Forget(Window(9));
 
-        Assert.Equal(Window(5), focus.Unmanaged);
-        Assert.Equal(Window(1), focus.BeforeUnmanaged);
+        Assert.AreEqual(Window(5), focus.Unmanaged);
+        Assert.AreEqual(Window(1), focus.BeforeUnmanaged);
 
         focus.Forget(Window(1));
-        Assert.Equal(Window(5), focus.Unmanaged);
-        Assert.Null(focus.BeforeUnmanaged);
+        Assert.AreEqual(Window(5), focus.Unmanaged);
+        Assert.IsNull(focus.BeforeUnmanaged);
     }
 
-    [Fact]
+    [TestMethod]
     public void AfterLeavingTheOneRevealedWindowTakesFocusAndOtherwiseTheLastVisible()
     {
         var desk = Desk(1, 2, 3);
 
-        Assert.Equal(Window(2), FocusState.AfterLeaving(desk, [Window(2)]));
-        Assert.Equal(desk.LastVisible(), FocusState.AfterLeaving(desk, []));
-        Assert.Equal(desk.LastVisible(), FocusState.AfterLeaving(desk, [Window(1), Window(2)]));
+        Assert.AreEqual(Window(2), FocusState.AfterLeaving(desk, [Window(2)]));
+        Assert.AreEqual(desk.LastVisible(), FocusState.AfterLeaving(desk, []));
+        Assert.AreEqual(desk.LastVisible(), FocusState.AfterLeaving(desk, [Window(1), Window(2)]));
     }
 
     private static LiveWorkspace Desk(params long[] windows)
@@ -138,7 +139,7 @@ public class FocusStateTests
         return new LiveWorkspace(WorkspaceId.Initial, MonitorId.Primary, layout);
     }
 
-    [Fact]
+    [TestMethod]
     public void RecentSkipsAGroupMemberThatIsWaitingHidden()
     {
         var focus = new FocusState(_ => true);
@@ -148,7 +149,7 @@ public class FocusStateTests
         focus.Confirm(Window(1));
         focus.Confirm(Window(2));
 
-        Assert.Equal(Window(1), focus.Recent(desk));
+        Assert.AreEqual(Window(1), focus.Recent(desk));
     }
 
     private static WindowId Window(long id) => new(id);

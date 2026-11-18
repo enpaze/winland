@@ -1,5 +1,6 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class OptionSetTests
 {
     private static readonly string[] Kept =
@@ -29,18 +30,18 @@ public class OptionSetTests
         "scrolling:column_width",
     ];
 
-    [Fact]
+    [TestMethod]
     public void TheOptionsAreTheOnesTheReferenceLists()
     {
-        Assert.Equal(Kept, OptionTable.Names.Order(StringComparer.Ordinal));
+        Assert.AreSequenceEqual(Kept, OptionTable.Names.Order(StringComparer.Ordinal));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnythingElseWarnsAndIsSkipped()
     {
         var document = ConfigParser.Parse("general:gaps_in = 3\nmisc:no_such_option = 1\n");
 
-        Assert.Equal("Unsupported keyword 'misc:no_such_option'.", Assert.Single(document.Warnings).Message);
-        Assert.Equal([new Setting("general:gaps_in", "3")], document.Settings);
+        Assert.AreEqual("Unsupported keyword 'misc:no_such_option'.", Assert.ContainsSingle(document.Warnings).Message);
+        Assert.AreSequenceEqual([new Setting("general:gaps_in", "3")], document.Settings);
     }
 }

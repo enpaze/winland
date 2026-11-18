@@ -1,15 +1,16 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class HookDeliveryTests
 {
-    [Fact]
+    [TestMethod]
     public void RepeatsAndReleaseKeepTheNameFromThePress()
     {
         using var keys = new KeyboardHook(new WindowManager(), _ => { });
 
-        Assert.Equal("Q", keys.KeyName(0x51, false, false, () => "Q"));
-        Assert.Equal("Q", keys.KeyName(0x51, false, false, () => "й"));
-        Assert.Equal("Q", keys.KeyName(0x51, false, true, () => "й"));
-        Assert.Equal("й", keys.KeyName(0x51, false, false, () => "й"));
+        Assert.AreEqual("Q", keys.KeyName(0x51, false, false, () => "Q"));
+        Assert.AreEqual("Q", keys.KeyName(0x51, false, false, () => "й"));
+        Assert.AreEqual("Q", keys.KeyName(0x51, false, true, () => "й"));
+        Assert.AreEqual("й", keys.KeyName(0x51, false, false, () => "й"));
     }
 }

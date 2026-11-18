@@ -1,8 +1,9 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class StuckModifierTests
 {
-    [Fact]
+    [TestMethod]
     public void SuperReleaseAfterAChordPassesAndTheChordMasksSuper()
     {
         var (core, session) = Load("bind = SUPER, T, exec, teams");
@@ -12,18 +13,18 @@ public class StuckModifierTests
         var tUp = core.Decide(new KeyReleased("T"), session);
         var superUp = core.Decide(new KeyReleased("Super_L"), session);
 
-        Assert.False(super.Consumed);
-        Assert.False(super.Mask);
-        Assert.True(t.Consumed);
-        Assert.True(t.Mask);
-        Assert.Equal("exec", t.Dispatcher);
-        Assert.True(tUp.Consumed);
-        Assert.False(tUp.Mask);
-        Assert.False(superUp.Consumed);
-        Assert.False(superUp.Mask);
+        Assert.IsFalse(super.Consumed);
+        Assert.IsFalse(super.Mask);
+        Assert.IsTrue(t.Consumed);
+        Assert.IsTrue(t.Mask);
+        Assert.AreEqual("exec", t.Dispatcher);
+        Assert.IsTrue(tUp.Consumed);
+        Assert.IsFalse(tUp.Mask);
+        Assert.IsFalse(superUp.Consumed);
+        Assert.IsFalse(superUp.Mask);
     }
 
-    [Fact]
+    [TestMethod]
     public void SuperReleasedBeforeTheKeyStillPasses()
     {
         var (core, session) = Load("bind = SUPER, T, exec, teams");
@@ -33,30 +34,30 @@ public class StuckModifierTests
         var superUp = core.Decide(new KeyReleased("Super_L"), session);
         var tUp = core.Decide(new KeyReleased("T"), session);
 
-        Assert.False(superUp.Consumed);
-        Assert.True(tUp.Consumed);
-        Assert.False(core.Decide(new KeyPressed("T"), session).Consumed);
+        Assert.IsFalse(superUp.Consumed);
+        Assert.IsTrue(tUp.Consumed);
+        Assert.IsFalse(core.Decide(new KeyPressed("T"), session).Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryHeldModifierReleasePasses()
     {
         var (core, session) = Load("bind = SUPER CTRL ALT SHIFT, T, killactive");
         foreach (var key in new[] { "Super_L", "Control_L", "Alt_L", "Shift_L" })
-            Assert.False(core.Decide(new KeyPressed(key), session).Consumed);
+            Assert.IsFalse(core.Decide(new KeyPressed(key), session).Consumed);
 
         var t = core.Decide(new KeyPressed("T"), session);
-        Assert.True(t.Consumed);
-        Assert.True(t.Mask);
-        Assert.True(core.Decide(new KeyReleased("T"), session).Consumed);
+        Assert.IsTrue(t.Consumed);
+        Assert.IsTrue(t.Mask);
+        Assert.IsTrue(core.Decide(new KeyReleased("T"), session).Consumed);
 
         foreach (var key in new[] { "Super_L", "Control_L", "Alt_L", "Shift_L" })
-            Assert.False(core.Decide(new KeyReleased(key), session).Consumed);
+            Assert.IsFalse(core.Decide(new KeyReleased(key), session).Consumed);
     }
 
-    [Theory]
-    [InlineData("CTRL", "Control_L")]
-    [InlineData("SHIFT", "Shift_R")]
+    [TestMethod]
+    [DataRow("CTRL", "Control_L")]
+    [DataRow("SHIFT", "Shift_R")]
     public void ChordWithoutSuperOrAltIsNotMasked(string modifier, string key)
     {
         var (core, session) = Load($"bind = {modifier}, T, killactive");
@@ -64,22 +65,22 @@ public class StuckModifierTests
 
         var t = core.Decide(new KeyPressed("T"), session);
 
-        Assert.True(t.Consumed);
-        Assert.False(t.Mask);
-        Assert.False(core.Decide(new KeyReleased(key), session).Consumed);
+        Assert.IsTrue(t.Consumed);
+        Assert.IsFalse(t.Mask);
+        Assert.IsFalse(core.Decide(new KeyReleased(key), session).Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void AltChordIsMasked()
     {
         var (core, session) = Load("bind = ALT, T, killactive");
         core.Decide(new KeyPressed("Alt_R"), session);
 
-        Assert.True(core.Decide(new KeyPressed("T"), session).Mask);
-        Assert.False(core.Decide(new KeyReleased("Alt_R"), session).Consumed);
+        Assert.IsTrue(core.Decide(new KeyPressed("T"), session).Mask);
+        Assert.IsFalse(core.Decide(new KeyReleased("Alt_R"), session).Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void SuperIsMaskedOncePerHold()
     {
         var (core, session) = Load("bind = SUPER, T, killactive");
@@ -93,12 +94,12 @@ public class StuckModifierTests
         core.Decide(new KeyPressed("Super_L"), session);
         var third = core.Decide(new KeyPressed("T"), session);
 
-        Assert.True(first.Mask);
-        Assert.False(second.Mask);
-        Assert.True(third.Mask);
+        Assert.IsTrue(first.Mask);
+        Assert.IsFalse(second.Mask);
+        Assert.IsTrue(third.Mask);
     }
 
-    [Fact]
+    [TestMethod]
     public void SuperAloneIsNotMasked()
     {
         var (core, session) = Load("bind = SUPER, T, killactive");
@@ -106,12 +107,12 @@ public class StuckModifierTests
         var down = core.Decide(new KeyPressed("Super_L"), session);
         var up = core.Decide(new KeyReleased("Super_L"), session);
 
-        Assert.False(down.Mask);
-        Assert.False(up.Consumed);
-        Assert.False(up.Mask);
+        Assert.IsFalse(down.Mask);
+        Assert.IsFalse(up.Consumed);
+        Assert.IsFalse(up.Mask);
     }
 
-    [Fact]
+    [TestMethod]
     public void MouseChordWithSuperMasksSuperAndPassesItsRelease()
     {
         var (core, session) = Load("bindm = SUPER, mouse:272, movewindow");
@@ -122,13 +123,13 @@ public class StuckModifierTests
         var superUp = core.Decide(new KeyReleased("Super_L"), session);
         var buttonUp = core.Decide(new PointerButtonReleased("mouse:272") { Position = new Point(200, 200) }, session);
 
-        Assert.True(down.Consumed);
-        Assert.True(down.Mask);
-        Assert.False(superUp.Consumed);
-        Assert.True(buttonUp.Consumed);
+        Assert.IsTrue(down.Consumed);
+        Assert.IsTrue(down.Mask);
+        Assert.IsFalse(superUp.Consumed);
+        Assert.IsTrue(buttonUp.Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void WheelChordWithSuperMasksSuper()
     {
         var (core, session) = Load("bind = SUPER, mouse_down, workspace, m+1");
@@ -136,12 +137,12 @@ public class StuckModifierTests
 
         var wheel = core.Decide(new WheelTurned("mouse_down", 1000), session);
 
-        Assert.True(wheel.Consumed);
-        Assert.True(wheel.Mask);
-        Assert.False(core.Decide(new KeyReleased("Super_L"), session).Consumed);
+        Assert.IsTrue(wheel.Consumed);
+        Assert.IsTrue(wheel.Mask);
+        Assert.IsFalse(core.Decide(new KeyReleased("Super_L"), session).Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void InhibitedSessionPassesTheModifierRelease()
     {
         var (core, session) = Load("bind = SUPER, T, killactive");
@@ -151,10 +152,10 @@ public class StuckModifierTests
 
         var up = core.Decide(new KeyReleased("Super_L"), session);
 
-        Assert.False(up.Consumed);
+        Assert.IsFalse(up.Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void ForgetDropsKeysThatAreNoLongerDown()
     {
         var (core, session) = Load("bind = SUPER, T, killactive");
@@ -163,11 +164,11 @@ public class StuckModifierTests
 
         session.Forget(_ => false);
 
-        Assert.False(core.Decide(new KeyPressed("T"), session).Consumed);
-        Assert.False(core.Decide(new KeyReleased("T"), session).Consumed);
+        Assert.IsFalse(core.Decide(new KeyPressed("T"), session).Consumed);
+        Assert.IsFalse(core.Decide(new KeyReleased("T"), session).Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void ForgetKeepsKeysThatAreStillDown()
     {
         var (core, session) = Load("bind = SUPER, T, killactive");
@@ -175,10 +176,10 @@ public class StuckModifierTests
 
         session.Forget(key => key == "Super_L");
 
-        Assert.True(core.Decide(new KeyPressed("T"), session).Consumed);
+        Assert.IsTrue(core.Decide(new KeyPressed("T"), session).Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void SuperMouseChordAfterASuperKeyChordIsNotMaskedTwice()
     {
         var (core, session) = Load("bind = SUPER, F23, killactive\nbindm = SUPER, mouse:272, movewindow\n");
@@ -188,14 +189,14 @@ public class StuckModifierTests
         core.Decide(new KeyReleased("F23"), session);
         var button = core.Decide(new PointerButtonPressed("mouse:272"), session);
 
-        Assert.True(key.Mask);
-        Assert.True(button.Consumed);
-        Assert.False(button.Mask);
-        Assert.True(core.Decide(new PointerButtonReleased("mouse:272"), session).Consumed);
-        Assert.False(core.Decide(new KeyReleased("Super_L"), session).Consumed);
+        Assert.IsTrue(key.Mask);
+        Assert.IsTrue(button.Consumed);
+        Assert.IsFalse(button.Mask);
+        Assert.IsTrue(core.Decide(new PointerButtonReleased("mouse:272"), session).Consumed);
+        Assert.IsFalse(core.Decide(new KeyReleased("Super_L"), session).Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void ModifierOnlyBindSwallowsBothEdgesAndTheChordsUnderIt()
     {
         var (core, session) = Load("bind = , Super_L, exec, menu\nbind = SUPER, F23, killactive\n");
@@ -205,13 +206,13 @@ public class StuckModifierTests
         core.Decide(new KeyReleased("F23"), session);
         var up = core.Decide(new KeyReleased("Super_L"), session);
 
-        Assert.Equal("exec", down.Dispatcher);
-        Assert.True(down.Consumed);
-        Assert.False(down.Mask);
-        Assert.True(chord.Consumed);
-        Assert.False(chord.Mask);
-        Assert.True(up.Consumed);
-        Assert.False(core.Decide(new KeyPressed("F23"), session).Consumed);
+        Assert.AreEqual("exec", down.Dispatcher);
+        Assert.IsTrue(down.Consumed);
+        Assert.IsFalse(down.Mask);
+        Assert.IsTrue(chord.Consumed);
+        Assert.IsFalse(chord.Mask);
+        Assert.IsTrue(up.Consumed);
+        Assert.IsFalse(core.Decide(new KeyPressed("F23"), session).Consumed);
     }
 
     private static (WindowManager WindowManager, BindSession Session) Load(string config)

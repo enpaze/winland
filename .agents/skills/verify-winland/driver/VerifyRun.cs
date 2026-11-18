@@ -8,7 +8,6 @@ using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.HiDpi;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests;
 
@@ -28,13 +27,13 @@ internal sealed class VerifyRun
 
         """;
 
-    private readonly ITestOutputHelper _output;
+    private readonly TestContext _output;
     private readonly List<VerifyDaemon> _daemons = [];
     private VerifyWindows? _windows;
     private EventLog? _events;
     private bool _taskbarsShown = true;
 
-    private VerifyRun(ITestOutputHelper output, VerifyPaths paths, string dotnetRoot, VerifyDaemon daemon)
+    private VerifyRun(TestContext output, VerifyPaths paths, string dotnetRoot, VerifyDaemon daemon)
     {
         _output = output;
         Paths = paths;
@@ -51,9 +50,9 @@ internal sealed class VerifyRun
 
     public VerifyWindows Windows => _windows ??= new VerifyWindows();
 
-    public static void Drive(ITestOutputHelper output, Action<VerifyRun> body) => Drive(output, "", body);
+    public static void Drive(TestContext output, Action<VerifyRun> body) => Drive(output, "", body);
 
-    public static void Drive(ITestOutputHelper output, string config, Action<VerifyRun> body)
+    public static void Drive(TestContext output, string config, Action<VerifyRun> body)
     {
         _ = PInvoke.SetProcessDpiAwarenessContext((DPI_AWARENESS_CONTEXT)(nint)(-4));
         AssertNoneRunning("before the driver started");
@@ -74,7 +73,7 @@ internal sealed class VerifyRun
             run.StopEvents();
             if (!run.Daemon.Exited)
             {
-                Assert.True(run.Daemon.TryStopClean(), "winland did not stop cleanly. " + run.Daemon.Logs());
+                Assert.IsTrue(run.Daemon.TryStopClean(), "winland did not stop cleanly. " + run.Daemon.Logs());
                 run.Say("winland stopped cleanly");
             }
 
@@ -82,7 +81,7 @@ internal sealed class VerifyRun
             if (taskbarsShown)
                 run.Until("the taskbars are visible again", () => Taskbars.AllVisible(out _), 5_000, () => Taskbars.AllVisible(out var taskbars) ? "" : taskbars);
             AssertNoneRunning("after the driver stopped winland");
-            Assert.Equal(userState, UserState.Stamp());
+            Assert.AreEqual(userState, UserState.Stamp());
             run.Say("every test window is visible again, the taskbars are visible, and no winland process remains");
         }
         catch (Exception exception)
@@ -113,7 +112,7 @@ internal sealed class VerifyRun
     public string Ask(params string[] arguments)
     {
         var result = Cli(arguments);
-        Assert.True(result.ExitCode == 0, $"winland {string.Join(' ', arguments)} failed: {result} {Daemon.Logs()}");
+        Assert.IsTrue(result.ExitCode == 0, $"winland {string.Join(' ', arguments)} failed: {result} {Daemon.Logs()}");
         return result.Output.Trim();
     }
 
@@ -121,13 +120,13 @@ internal sealed class VerifyRun
     {
         var words = new List<string> { "dispatch" };
         words.AddRange(arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-        Assert.Equal("ok", Ask([.. words]));
+        Assert.AreEqual("ok", Ask([.. words]));
     }
 
     public JsonElement Json(params string[] arguments)
     {
         var result = Daemon.Cli(["-j", .. arguments]);
-        Assert.True(result.ExitCode == 0, $"winland -j {string.Join(' ', arguments)} failed: {result} {Daemon.Logs()}");
+        Assert.IsTrue(result.ExitCode == 0, $"winland -j {string.Join(' ', arguments)} failed: {result} {Daemon.Logs()}");
         using var document = JsonDocument.Parse(result.Output);
         return document.RootElement.Clone();
     }
@@ -210,7 +209,7 @@ internal sealed class VerifyRun
         var deadline = Environment.TickCount64 + durationMs;
         while (Environment.TickCount64 < deadline)
         {
-            Assert.True(condition(), $"This stopped holding: {what}. clients: {SafeClients()} {Daemon.Logs()}");
+            Assert.IsTrue(condition(), $"This stopped holding: {what}. clients: {SafeClients()} {Daemon.Logs()}");
             Thread.Sleep(50);
         }
 
@@ -330,7 +329,7 @@ internal sealed class VerifyRun
         foreach (var hwnd in _windows.Opened)
         {
             if (PInvoke.IsWindow(hwnd))
-                Assert.True(PInvoke.IsWindowVisible(hwnd), $"Test window {Address(hwnd)} stayed hidden after winland stopped.");
+                Assert.IsTrue(PInvoke.IsWindowVisible(hwnd), $"Test window {Address(hwnd)} stayed hidden after winland stopped.");
         }
     }
 

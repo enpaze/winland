@@ -2,11 +2,12 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class OwnedWindowTests
 {
     private static readonly WindowTraits Child = WindowTraits.Normal with { Dialog = true };
 
-    [Fact]
+    [TestMethod]
     public void OwnedWindowFloatsAndStaysOutOfGroups()
     {
         var desk = new TestDesktop();
@@ -19,24 +20,24 @@ public class OwnedWindowTests
 
         desk.Spawn("child-test-child", traits: Child, owner: parent);
         desk.Ok("focuswindow", "class:child-test-child");
-        Assert.Equal(2, desk.Clients().Length);
-        Assert.Equal(2, desk.Clients().Count(TestDesktop.Pinned));
+        Assert.AreEqual(2, desk.Clients().Length);
+        Assert.AreEqual(2, desk.Clients().Count(TestDesktop.Pinned));
 
-        Assert.Equal("ok", desk.Send("reload"));
+        Assert.AreEqual("ok", desk.Send("reload"));
         desk.Close("child-test-child");
         desk.Close("child-test-parent");
-        Assert.Empty(desk.Clients());
+        Assert.IsEmpty(desk.Clients());
 
         desk.Spawn("a");
         desk.Ok("togglegroup");
 
         var second = desk.Spawn("child-test-parent");
-        Assert.Equal(2, desk.Clients().Length);
+        Assert.AreEqual(2, desk.Clients().Length);
         desk.Spawn("child-test-child", traits: Child, owner: second);
         desk.Ok("focuswindow", "class:child-test-child");
-        Assert.Equal(3, desk.Clients().Length);
+        Assert.AreEqual(3, desk.Clients().Length);
 
-        Assert.Equal(1, desk.Clients().Count(Ungrouped));
+        Assert.AreEqual(1, desk.Clients().Count(Ungrouped));
     }
 
     private static bool Ungrouped(JsonElement client) => client.GetProperty("grouped").GetArrayLength() == 0;

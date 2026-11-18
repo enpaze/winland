@@ -3,6 +3,7 @@ using System.Text.Json;
 
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class TweakRecordTests
 {
     private readonly FakeTweaks windows = new();
@@ -14,21 +15,21 @@ public class TweakRecordTests
         settings = new TweakRecord(windows, file);
     }
 
-    [Fact]
+    [TestMethod]
     public void TurnOffReadsSnapOnceThenWritesIt()
     {
         windows.Arranging = true;
 
         settings.TurnOff(touchpad: false);
 
-        Assert.Equal(["get arranging", "set arranging False"], windows.Log);
-        Assert.False(windows.Arranging);
-        Assert.Equal(true, RecordedArranging());
-        Assert.False(RecordedProperty(TweakRecord.ThreeFingerName));
-        Assert.False(RecordedProperty(TweakRecord.FourFingerName));
+        Assert.AreSequenceEqual(["get arranging", "set arranging False"], windows.Log);
+        Assert.IsFalse(windows.Arranging);
+        Assert.AreEqual(true, RecordedArranging());
+        Assert.IsFalse(RecordedProperty(TweakRecord.ThreeFingerName));
+        Assert.IsFalse(RecordedProperty(TweakRecord.FourFingerName));
     }
 
-    [Fact]
+    [TestMethod]
     public void TurnOffReadsEverySwipeOnceThenWritesThem()
     {
         windows.Arranging = true;
@@ -37,7 +38,7 @@ public class TweakRecordTests
 
         settings.TurnOff(touchpad: true);
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 "get arranging",
                 "get three",
@@ -47,12 +48,12 @@ public class TweakRecordTests
                 "set four 0",
             ],
             windows.Log);
-        Assert.Equal(true, RecordedArranging());
-        Assert.Equal(1, RecordedSlide(TweakRecord.ThreeFingerName));
-        Assert.Equal(2, RecordedSlide(TweakRecord.FourFingerName));
+        Assert.AreEqual(true, RecordedArranging());
+        Assert.AreEqual(1, RecordedSlide(TweakRecord.ThreeFingerName));
+        Assert.AreEqual(2, RecordedSlide(TweakRecord.FourFingerName));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnAbsentSwipeIsRecordedAsAbsentAndThenSetOff()
     {
         windows.Three = null;
@@ -60,13 +61,13 @@ public class TweakRecordTests
 
         settings.TurnOff(touchpad: true);
 
-        Assert.Equal(JsonValueKind.Null, SlideKind(TweakRecord.ThreeFingerName));
-        Assert.Equal(3, RecordedSlide(TweakRecord.FourFingerName));
-        Assert.Equal(0, windows.Three);
-        Assert.Equal(0, windows.Four);
+        Assert.AreEqual(JsonValueKind.Null, SlideKind(TweakRecord.ThreeFingerName));
+        Assert.AreEqual(3, RecordedSlide(TweakRecord.FourFingerName));
+        Assert.AreEqual(0, windows.Three);
+        Assert.AreEqual(0, windows.Four);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASecondTurnOffKeepsTheOriginalValues()
     {
         windows.Arranging = true;
@@ -77,15 +78,15 @@ public class TweakRecordTests
 
         settings.TurnOff(touchpad: true);
 
-        Assert.Equal(true, RecordedArranging());
-        Assert.Equal(1, RecordedSlide(TweakRecord.ThreeFingerName));
-        Assert.Equal(2, RecordedSlide(TweakRecord.FourFingerName));
-        Assert.Equal(
+        Assert.AreEqual(true, RecordedArranging());
+        Assert.AreEqual(1, RecordedSlide(TweakRecord.ThreeFingerName));
+        Assert.AreEqual(2, RecordedSlide(TweakRecord.FourFingerName));
+        Assert.AreSequenceEqual(
             ["get arranging", "get three", "get four", "set arranging False", "set three 0", "set four 0"],
             windows.Log);
     }
 
-    [Fact]
+    [TestMethod]
     public void RestorePutsTheRecordedValuesBackAndDeletesTheRecord()
     {
         windows.Arranging = true;
@@ -94,54 +95,54 @@ public class TweakRecordTests
         settings.TurnOff(touchpad: true);
         windows.Log.Clear();
 
-        Assert.True(settings.Restore());
+        Assert.IsTrue(settings.Restore());
 
-        Assert.True(windows.Arranging);
-        Assert.Equal(1, windows.Three);
-        Assert.Null(windows.Four);
-        Assert.True(file.Deleted);
-        Assert.Null(file.Text);
-        Assert.Equal(["set arranging True", "set three 1", "set four "], windows.Log);
+        Assert.IsTrue(windows.Arranging);
+        Assert.AreEqual(1, windows.Three);
+        Assert.IsNull(windows.Four);
+        Assert.IsTrue(file.Deleted);
+        Assert.IsNull(file.Text);
+        Assert.AreSequenceEqual(["set arranging True", "set three 1", "set four "], windows.Log);
     }
 
-    [Fact]
+    [TestMethod]
     public void RestoreWithNoRecordChangesNothing()
     {
-        Assert.False(settings.Restore());
+        Assert.IsFalse(settings.Restore());
 
-        Assert.Empty(windows.Log);
-        Assert.False(file.Deleted);
+        Assert.IsEmpty(windows.Log);
+        Assert.IsFalse(file.Deleted);
     }
 
-    [Fact]
+    [TestMethod]
     public void ACorruptRecordIsLeftAlone()
     {
         file.Text = "{";
         windows.Arranging = true;
 
-        var error = Assert.Throws<InvalidOperationException>(() => settings.TurnOff(touchpad: false));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => settings.TurnOff(touchpad: false));
 
         Assert.Contains(".winland", error.Message, StringComparison.Ordinal);
-        Assert.Equal(["get arranging"], windows.Log);
-        Assert.True(windows.Arranging);
-        Assert.Equal("{", file.Text);
+        Assert.AreSequenceEqual(["get arranging"], windows.Log);
+        Assert.IsTrue(windows.Arranging);
+        Assert.AreEqual("{", file.Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void RestoreLeavesACorruptRecordInPlace()
     {
         file.Text = "not json";
 
-        var error = Assert.Throws<InvalidOperationException>(() => settings.Restore());
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => settings.Restore());
 
         Assert.Contains(".winland", error.Message, StringComparison.Ordinal);
         Assert.DoesNotContain("uninstall", error.Message, StringComparison.Ordinal);
-        Assert.Empty(windows.Log);
-        Assert.Equal("not json", file.Text);
-        Assert.False(file.Deleted);
+        Assert.IsEmpty(windows.Log);
+        Assert.AreEqual("not json", file.Text);
+        Assert.IsFalse(file.Deleted);
     }
 
-    [Fact]
+    [TestMethod]
     public void ARestoreThatFailsPartWayKeepsTheWholeRecordForARetry()
     {
         windows.Arranging = true;
@@ -151,19 +152,19 @@ public class TweakRecordTests
         var record = file.Text;
         windows.FailingSet = "set three 1";
 
-        Assert.Throws<IOException>(() => settings.Restore());
+        Assert.ThrowsExactly<IOException>(() => settings.Restore());
 
-        Assert.True(windows.Arranging);
-        Assert.Equal(record, file.Text);
-        Assert.False(file.Deleted);
+        Assert.IsTrue(windows.Arranging);
+        Assert.AreEqual(record, file.Text);
+        Assert.IsFalse(file.Deleted);
 
         windows.FailingSet = null;
-        Assert.True(settings.Restore());
+        Assert.IsTrue(settings.Restore());
 
-        Assert.True(windows.Arranging);
-        Assert.Equal(1, windows.Three);
-        Assert.Equal(2, windows.Four);
-        Assert.True(file.Deleted);
+        Assert.IsTrue(windows.Arranging);
+        Assert.AreEqual(1, windows.Three);
+        Assert.AreEqual(2, windows.Four);
+        Assert.IsTrue(file.Deleted);
     }
 
     private bool? RecordedArranging() =>

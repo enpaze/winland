@@ -1,12 +1,13 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class LayoutRegressionTests
 {
     private static readonly Rectangle Area = new(0, 0, 1000, 800);
 
-    [Theory]
-    [InlineData("dwindle")]
-    [InlineData("scrolling")]
+    [TestMethod]
+    [DataRow("dwindle")]
+    [DataRow("scrolling")]
     public void FloatingResizeAndPlacementKeepTheClientsLimits(string name)
     {
         var core = Configured($"general:layout = {name}");
@@ -17,15 +18,15 @@ public class LayoutRegressionTests
         });
 
         var resized = core.Handle(new Dispatch("resizeactive", "1000 1000"));
-        Assert.Equal(new Size(400, 300), SizeOf(BoundsOf(resized, 1)));
+        Assert.AreEqual(new Size(400, 300), SizeOf(BoundsOf(resized, 1)));
 
         var placed = Place(core, 1, new Rectangle(100, 100, 50, 50));
-        Assert.Equal(new Size(200, 100), SizeOf(Client(placed, 1).Bounds));
+        Assert.AreEqual(new Size(200, 100), SizeOf(Client(placed, 1).Bounds));
     }
 
     private static Size SizeOf(Rectangle box) => new(box.Width, box.Height);
 
-    [Fact]
+    [TestMethod]
     public void AScrollingColumnCannotCoverTheNeighbouringMonitorsClients()
     {
         var core = Configured("general:layout = scrolling");
@@ -35,11 +36,11 @@ public class LayoutRegressionTests
 
         var moved = core.Handle(new Dispatch("layoutmsg", "move +100"));
 
-        Assert.DoesNotContain(moved.Placements, item => item.Bounds.X + item.Bounds.Width > 1000);
+        Assert.DoesNotContain(item => item.Bounds.X + item.Bounds.Width > 1000, moved.Placements);
         Assert.Contains(new WindowId(3), moved.Hide);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollingFullscreenKeepsTheWholeMonitorAfterItsWorkAreaChanges()
     {
         var core = Configured("general:layout = scrolling");
@@ -50,10 +51,10 @@ public class LayoutRegressionTests
 
         var changed = core.Handle(new MonitorsChanged([screen with { WorkArea = new Rectangle(0, 0, 1000, 740) }]));
 
-        Assert.Equal(Area, BoundsOf(changed, 1));
+        Assert.AreEqual(Area, BoundsOf(changed, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ExpandingTheFirstColumnKeepsThatColumnInView()
     {
         var layout = Tape();
@@ -63,10 +64,10 @@ public class LayoutRegressionTests
 
         var expanded = layout.LayoutMessage(new WindowId(1), "fit expand");
 
-        Assert.Equal(new Rectangle(0, 0, 500, 800), Assert.Single(expanded, item => item.Client == new ClientId(1)).Bounds);
+        Assert.AreEqual(new Rectangle(0, 0, 500, 800), Assert.ContainsSingle(item => item.Client == new ClientId(1), expanded).Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void GrowingAColumnPastTheViewportDoesNotShrinkIt()
     {
         var layout = Tape();
@@ -76,7 +77,7 @@ public class LayoutRegressionTests
         layout.ResizeActive(new WindowId(3), "100 0");
         layout.TryBounds(new WindowId(3), out var after);
 
-        Assert.Equal(before.Width, after.Width);
+        Assert.AreEqual(before.Width, after.Width);
     }
 
     private static ScrollingLayout Tape()
@@ -87,7 +88,7 @@ public class LayoutRegressionTests
         return layout;
     }
 
-    [Fact]
+    [TestMethod]
     public void DwindleAdoptionWithoutAMonitorKeepsTheFullMonitorForSizePrediction()
     {
         var layout = new DwindleLayout();
@@ -96,12 +97,12 @@ public class LayoutRegressionTests
 
         layout.Add(new WindowId(2), work, null, false, default, WorkspaceId.Initial, maxSize: new Size(1000, 770));
 
-        Assert.True(Assert.Single(layout.Clients, client => client.Window == new WindowId(2)).Floating);
+        Assert.IsTrue(Assert.ContainsSingle(client => client.Window == new WindowId(2), layout.Clients).Floating);
     }
 
-    [Theory]
-    [InlineData("dwindle")]
-    [InlineData("scrolling")]
+    [TestMethod]
+    [DataRow("dwindle")]
+    [DataRow("scrolling")]
     public void FloatingPointerResizeKeepsTheClientsLimits(string name)
     {
         var core = Configured($"general:layout = {name}\n");
@@ -114,8 +115,8 @@ public class LayoutRegressionTests
 
         var grown = core.Handle(new PointerGesture("resizewindow", new Point(900, 700), PointerDragPhase.Move, "mouse:273"));
 
-        Assert.Equal(new Size(400, 300), SizeOf(Client(grown, 1).Bounds));
+        Assert.AreEqual(new Size(400, 300), SizeOf(Client(grown, 1).Bounds));
         var shrunk = core.Handle(new PointerGesture("resizewindow", new Point(400, 350), PointerDragPhase.Move, "mouse:273"));
-        Assert.Equal(new Size(200, 100), SizeOf(Client(shrunk, 1).Bounds));
+        Assert.AreEqual(new Size(200, 100), SizeOf(Client(shrunk, 1).Bounds));
     }
 }

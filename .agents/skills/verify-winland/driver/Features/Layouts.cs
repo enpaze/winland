@@ -1,15 +1,17 @@
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "layouts")]
-public class Layouts(ITestOutputHelper output)
+[TestClass]
+public class Layouts
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void TilesSplitsResizesAndSwitchesLayouts() => VerifyRun.Drive(output, "general:layout = dwindle\n", run =>
+    public void TilesSplitsResizesAndSwitchesLayouts() => VerifyRun.Drive(TestContext, "general:layout = dwindle\n", run =>
     {
         var (left, right) = run.OpenPair();
-        Assert.Equal("dwindle", run.Json("activeworkspace").GetProperty("tiledLayout").GetString());
+        Assert.AreEqual("dwindle", run.Json("activeworkspace").GetProperty("tiledLayout").GetString());
 
         run.Dispatch("togglesplit");
         run.Until("togglesplit stacks the two tiles", () => VerifyRun.Stacked(VerifyRun.Frame(left), VerifyRun.Frame(right), VerifyRun.WorkArea(left)));

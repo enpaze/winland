@@ -1,14 +1,16 @@
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "notification-area")]
-public class NotificationArea(ITestOutputHelper output)
+[TestClass]
+public class NotificationArea
 {
-    private const uint Callback = 0x8000 + 0x71;
+
+    public TestContext TestContext { get; set; } = null!;
+        private const uint Callback = 0x8000 + 0x71;
     private const uint ContextMenu = 0x007B;
     private const uint IconId = 1;
     private const uint GetMenu = 0x01E1;
@@ -16,7 +18,7 @@ public class NotificationArea(ITestOutputHelper output)
     private const uint KeyUp = 0x0101;
 
     [VerifyFact]
-    public void OpensTheIconMenuAndRunsReloadAndQuit() => VerifyRun.Drive(output, run =>
+    public void OpensTheIconMenuAndRunsReloadAndQuit() => VerifyRun.Drive(TestContext, run =>
     {
         run.FollowEvents();
         var window = run.OpenManaged("1");
@@ -46,8 +48,8 @@ public class NotificationArea(ITestOutputHelper output)
     private static void Press(VerifyRun menu, char key)
     {
         var window = Desktop.WindowsOf(menu.Daemon.Id, "#32768").First(hwnd => PInvoke.IsWindowVisible(hwnd));
-        Assert.True(PInvoke.PostMessage(window, KeyDown, key, 0), "The menu did not take the key.");
-        Assert.True(PInvoke.PostMessage(window, KeyUp, key, 0), "The menu did not take the key.");
+        Assert.IsTrue(PInvoke.PostMessage(window, KeyDown, key, 0), "The menu did not take the key.");
+        Assert.IsTrue(PInvoke.PostMessage(window, KeyUp, key, 0), "The menu did not take the key.");
         menu.Say($"pressed {key} in the menu");
     }
 
@@ -56,7 +58,7 @@ public class NotificationArea(ITestOutputHelper output)
         Thread.Sleep(500);
         var (x, y) = Desktop.Cursor();
         var at = (nuint)(((uint)(ushort)y << 16) | (ushort)x);
-        Assert.True(PInvoke.PostMessage(tray, Callback, at, (nint)((IconId << 16) | ContextMenu)), "The icon window did not take the click.");
+        Assert.IsTrue(PInvoke.PostMessage(tray, Callback, at, (nint)((IconId << 16) | ContextMenu)), "The icon window did not take the click.");
         run.Say("right-clicked the notification-area icon");
         HWND menu = default;
         run.Until("the icon's menu opens", () =>

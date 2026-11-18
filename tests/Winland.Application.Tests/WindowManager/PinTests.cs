@@ -1,11 +1,12 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class PinTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
     private static readonly WindowId Window = new(1);
 
-    [Fact]
+    [TestMethod]
     public void PinnedClientStaysVisibleAcrossWorkspaceSwitches()
     {
         var core = Floating();
@@ -13,17 +14,17 @@ public class PinTests
 
         var switched = core.Execute("dispatch workspace 2");
 
-        Assert.Equal("ok", switched.Text);
-        Assert.DoesNotContain(switched.Effect.Hide, window => window == Window);
-        Assert.DoesNotContain(switched.Effect.State.Hidden, client => client.Window == Window);
+        Assert.AreEqual("ok", switched.Text);
+        Assert.DoesNotContain(window => window == Window, switched.Effect.Hide);
+        Assert.DoesNotContain(client => client.Window == Window, switched.Effect.State.Hidden);
         var client = ClientOf(switched.Effect, Window);
-        Assert.True(client.Pinned);
-        Assert.True(client.Floating);
-        Assert.Equal(new WorkspaceId("2"), client.Workspace);
-        Assert.Equal(new WorkspaceId("2"), switched.Effect.State.ActiveWorkspace);
+        Assert.IsTrue(client.Pinned);
+        Assert.IsTrue(client.Floating);
+        Assert.AreEqual(new WorkspaceId("2"), client.Workspace);
+        Assert.AreEqual(new WorkspaceId("2"), switched.Effect.State.ActiveWorkspace);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnpinningLeavesTheClientOnTheShownWorkspace()
     {
         var core = Floating();
@@ -32,18 +33,18 @@ public class PinTests
 
         var unpinned = core.Execute("dispatch pin");
         var client = ClientOf(unpinned.Effect, Window);
-        Assert.False(client.Pinned);
-        Assert.Equal(new WorkspaceId("2"), client.Workspace);
-        Assert.DoesNotContain(unpinned.Effect.State.Hidden, hidden => hidden.Window == Window);
+        Assert.IsFalse(client.Pinned);
+        Assert.AreEqual(new WorkspaceId("2"), client.Workspace);
+        Assert.DoesNotContain(hidden => hidden.Window == Window, unpinned.Effect.State.Hidden);
 
         var left = core.Execute("dispatch workspace 3");
 
-        Assert.Contains(left.Effect.Hide, window => window == Window);
-        Assert.Contains(left.Effect.State.Hidden, hidden => hidden.Window == Window);
-        Assert.Equal(new WorkspaceId("2"), ClientOf(left.Effect, Window).Workspace);
+        Assert.Contains(window => window == Window, left.Effect.Hide);
+        Assert.Contains(hidden => hidden.Window == Window, left.Effect.State.Hidden);
+        Assert.AreEqual(new WorkspaceId("2"), ClientOf(left.Effect, Window).Workspace);
     }
 
-    [Fact]
+    [TestMethod]
     public void PinDispatcherEmitsThePinEvent()
     {
         var core = Floating();
@@ -52,13 +53,13 @@ public class PinTests
         var again = core.Execute("dispatch pin on");
         var cleared = core.Execute("dispatch pin disable");
 
-        Assert.Equal(["pin>>1,1"], Lines(pinned));
-        Assert.Empty(again.Effect.Events);
-        Assert.Equal(["pin>>1,0"], Lines(cleared));
-        Assert.Equal("ok", pinned.Text);
+        Assert.AreSequenceEqual(["pin>>1,1"], Lines(pinned));
+        Assert.IsEmpty(again.Effect.Events);
+        Assert.AreSequenceEqual(["pin>>1,0"], Lines(cleared));
+        Assert.AreEqual("ok", pinned.Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void TiledClientDoesNotQualify()
     {
         var core = new WindowManager();
@@ -66,23 +67,23 @@ public class PinTests
 
         var reply = core.Execute("dispatch pin");
 
-        Assert.Equal("error: window does not qualify to be pinned", reply.Text);
-        Assert.Empty(reply.Effect.Events);
-        Assert.False(ClientOf(reply.Effect, Window).Pinned);
+        Assert.AreEqual("error: window does not qualify to be pinned", reply.Text);
+        Assert.IsEmpty(reply.Effect.Events);
+        Assert.IsFalse(ClientOf(reply.Effect, Window).Pinned);
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingClientIsLeftAlone()
     {
         var core = new WindowManager();
 
         var reply = core.Execute("dispatch pin");
 
-        Assert.Equal("ok", reply.Text);
-        Assert.Empty(reply.Effect.Events);
+        Assert.AreEqual("ok", reply.Text);
+        Assert.IsEmpty(reply.Effect.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void PinRuleKeepsAFloatingClientAndSkipsATiledOne()
     {
         var pinned = new WindowManager(ConfigParser.Parse("""
@@ -94,32 +95,32 @@ public class PinTests
             Traits = WindowTraits.Normal with { Class = "stick" },
         });
 
-        Assert.True(ClientOf(opened, Window).Pinned);
-        Assert.DoesNotContain(opened.Events, stream => stream is ClientPinned);
+        Assert.IsTrue(ClientOf(opened, Window).Pinned);
+        Assert.DoesNotContain(stream => stream is ClientPinned, opened.Events);
         var stayed = pinned.Execute("dispatch workspace 2");
-        Assert.DoesNotContain(stayed.Effect.Hide, window => window == Window);
-        Assert.True(ClientOf(stayed.Effect, Window).Pinned);
+        Assert.DoesNotContain(window => window == Window, stayed.Effect.Hide);
+        Assert.IsTrue(ClientOf(stayed.Effect, Window).Pinned);
 
         var tiled = new WindowManager(ConfigParser.Parse("windowrule = pin, class:stick\n"));
         var plain = tiled.Handle(new WindowAppeared(Window, Area)
         {
             Traits = WindowTraits.Normal with { Class = "stick" },
         });
-        Assert.False(ClientOf(plain, Window).Pinned);
-        Assert.Contains(tiled.Execute("dispatch workspace 2").Effect.Hide, window => window == Window);
+        Assert.IsFalse(ClientOf(plain, Window).Pinned);
+        Assert.Contains(window => window == Window, tiled.Execute("dispatch workspace 2").Effect.Hide);
     }
 
-    [Fact]
+    [TestMethod]
     public void TrailingZeroClearsThePinRule()
     {
         var document = ConfigParser.Parse("windowrule = pin 0, class:kitty\nwindowrule = pin maybe, class:kitty\n");
 
-        Assert.Equal(WindowRuleEffect.Pin, Assert.Single(document.WindowRules).Effect);
-        Assert.False(document.WindowRules[0].Enabled);
-        Assert.Equal(new ConfigWarning(2, "Malformed window rule."), Assert.Single(document.Warnings));
+        Assert.AreEqual(WindowRuleEffect.Pin, Assert.ContainsSingle(document.WindowRules).Effect);
+        Assert.IsFalse(document.WindowRules[0].Enabled);
+        Assert.AreEqual(new ConfigWarning(2, "Malformed window rule."), Assert.ContainsSingle(document.Warnings));
     }
 
-    [Fact]
+    [TestMethod]
     public void SilentPinnedClientIsShownOnTheCurrentWorkspace()
     {
         var core = new WindowManager(ConfigParser.Parse("""
@@ -133,14 +134,14 @@ public class PinTests
             Traits = WindowTraits.Normal with { Class = "stick" },
         });
 
-        Assert.Equal(new WorkspaceId("1"), opened.State.ActiveWorkspace);
-        Assert.Equal(new WorkspaceId("2"), ClientOf(opened, Window).Workspace);
-        Assert.Contains(opened.Show, window => window == Window);
-        Assert.DoesNotContain(opened.Hide, window => window == Window);
-        Assert.DoesNotContain(opened.State.Hidden, client => client.Window == Window);
+        Assert.AreEqual(new WorkspaceId("1"), opened.State.ActiveWorkspace);
+        Assert.AreEqual(new WorkspaceId("2"), ClientOf(opened, Window).Workspace);
+        Assert.Contains(window => window == Window, opened.Show);
+        Assert.DoesNotContain(window => window == Window, opened.Hide);
+        Assert.DoesNotContain(client => client.Window == Window, opened.State.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusStaysOnAPinnedClient()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = float, class:stick\n"));
@@ -153,7 +154,7 @@ public class PinTests
 
         var switched = core.Execute("dispatch workspace 2");
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 "createworkspace>>2,",
                 "createworkspacev2>>2,2,",
@@ -163,12 +164,12 @@ public class PinTests
                 "workspacev2>>2,2,",
             ],
             Lines(switched));
-        Assert.Contains(switched.Effect.Hide, window => window == new WindowId(2));
-        Assert.DoesNotContain(switched.Effect.Hide, window => window == Window);
+        Assert.Contains(window => window == new WindowId(2), switched.Effect.Hide);
+        Assert.DoesNotContain(window => window == Window, switched.Effect.Hide);
         Assert.Contains("\"pinned\":true", core.Execute("j/clients").Text, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void TilingClearsPinWithoutAnEvent()
     {
         var core = Floating();
@@ -176,12 +177,12 @@ public class PinTests
 
         var tiled = core.Execute("dispatch togglefloating");
 
-        Assert.DoesNotContain(tiled.Effect.Events, stream => stream is ClientPinned);
-        Assert.False(ClientOf(tiled.Effect, Window).Pinned);
-        Assert.Contains(core.Execute("dispatch workspace 2").Effect.Hide, window => window == Window);
+        Assert.DoesNotContain(stream => stream is ClientPinned, tiled.Effect.Events);
+        Assert.IsFalse(ClientOf(tiled.Effect, Window).Pinned);
+        Assert.Contains(window => window == Window, core.Execute("dispatch workspace 2").Effect.Hide);
     }
 
-    [Fact]
+    [TestMethod]
     public void APinnedClientIsNotMovedButTheSpecialWorkspaceStillOpens()
     {
         var core = Floating();
@@ -190,14 +191,14 @@ public class PinTests
         var opened = core.Execute("dispatch movetoworkspace special:scratch");
 
         var client = ClientOf(opened.Effect, Window);
-        Assert.True(client.Pinned);
-        Assert.Equal(new WorkspaceId("1"), client.Workspace);
-        Assert.Equal(new WorkspaceId("special:scratch"), opened.Effect.State.SpecialWorkspace);
-        Assert.Equal(Window, opened.Effect.Focus);
+        Assert.IsTrue(client.Pinned);
+        Assert.AreEqual(new WorkspaceId("1"), client.Workspace);
+        Assert.AreEqual(new WorkspaceId("special:scratch"), opened.Effect.State.SpecialWorkspace);
+        Assert.AreEqual(Window, opened.Effect.Focus);
     }
 
-    [Theory]
-    [InlineData("movetoworkspacesilent")]
+    [TestMethod]
+    [DataRow("movetoworkspacesilent")]
     public void APinnedClientIsNotMovedOntoASpecialWorkspace(string dispatcher)
     {
         var core = Floating();
@@ -206,18 +207,18 @@ public class PinTests
         var refused = core.Execute($"dispatch {dispatcher} special:scratch");
 
         var client = ClientOf(refused.Effect, Window);
-        Assert.True(client.Pinned);
-        Assert.Equal(new WorkspaceId("1"), client.Workspace);
-        Assert.Null(refused.Effect.State.SpecialWorkspace);
-        Assert.DoesNotContain(refused.Effect.State.Workspaces, workspace => workspace.Id.IsSpecial);
-        Assert.Empty(refused.Effect.Hide);
+        Assert.IsTrue(client.Pinned);
+        Assert.AreEqual(new WorkspaceId("1"), client.Workspace);
+        Assert.IsNull(refused.Effect.State.SpecialWorkspace);
+        Assert.DoesNotContain(workspace => workspace.Id.IsSpecial, refused.Effect.State.Workspaces);
+        Assert.IsEmpty(refused.Effect.Hide);
 
         var normal = core.Execute($"dispatch {dispatcher} 3");
 
-        Assert.Equal(new WorkspaceId("3"), ClientOf(normal.Effect, Window).Workspace);
+        Assert.AreEqual(new WorkspaceId("3"), ClientOf(normal.Effect, Window).Workspace);
     }
 
-    [Fact]
+    [TestMethod]
     public void APinnedClientDoesNotGoFullscreenWhenPinsCannotGoFullscreen()
     {
         var core = Floating();
@@ -226,8 +227,8 @@ public class PinTests
         var fullscreen = core.Execute("dispatch fullscreen 1");
 
         var client = ClientOf(fullscreen.Effect, Window);
-        Assert.Equal(FullscreenMode.None, client.Fullscreen);
-        Assert.True(client.Pinned);
+        Assert.AreEqual(FullscreenMode.None, client.Fullscreen);
+        Assert.IsTrue(client.Pinned);
     }
 
     private static WindowManager Floating()

@@ -1,10 +1,11 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class TrayBadgeTests
 {
     private const int Size = 16;
 
-    [Fact]
+    [TestMethod]
     public void TheLabelIsCenteredByItsInk()
     {
         var pixels = new uint[Size * Size];
@@ -13,22 +14,22 @@ public class TrayBadgeTests
 
         TrayBadge.Compose(pixels, Size);
 
-        Assert.Equal(0xFFFFFFFFu, pixels[(5 * Size) + 8]);
-        Assert.Equal(0xFFFFFFFFu, pixels[(10 * Size) + 8]);
-        Assert.NotEqual(0xFFFFFFFFu, pixels[(4 * Size) + 8]);
-        Assert.NotEqual(0xFFFFFFFFu, pixels[(11 * Size) + 8]);
-        Assert.NotEqual(0xFFFFFFFFu, pixels[(7 * Size) + 3]);
+        Assert.AreEqual(0xFFFFFFFFu, pixels[(5 * Size) + 8]);
+        Assert.AreEqual(0xFFFFFFFFu, pixels[(10 * Size) + 8]);
+        Assert.AreNotEqual(0xFFFFFFFFu, pixels[(4 * Size) + 8]);
+        Assert.AreNotEqual(0xFFFFFFFFu, pixels[(11 * Size) + 8]);
+        Assert.AreNotEqual(0xFFFFFFFFu, pixels[(7 * Size) + 3]);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheDiscIsOpaqueInsideClearOutsideAndPartlyCoveredOnItsEdge()
     {
         var pixels = new uint[Size * Size];
 
         TrayBadge.Compose(pixels, Size);
 
-        Assert.Equal(0xFF2F6FEDu, pixels[(8 * Size) + 8]);
-        Assert.True(TrayBadge.Clear(pixels[0]));
-        Assert.Contains(pixels, pixel => pixel >> 24 is > 0 and < 255);
+        Assert.AreEqual(0xFF2F6FEDu, pixels[(8 * Size) + 8]);
+        Assert.IsTrue(TrayBadge.Clear(pixels[0]));
+        Assert.Contains(pixel => pixel >> 24 is > 0 and < 255, pixels);
     }
 }

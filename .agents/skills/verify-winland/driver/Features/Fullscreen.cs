@@ -1,12 +1,14 @@
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "fullscreen")]
-public class Fullscreen(ITestOutputHelper output)
+[TestClass]
+public class Fullscreen
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void TogglesFullscreenAndMaximize() => VerifyRun.Drive(output, run =>
+    public void TogglesFullscreenAndMaximize() => VerifyRun.Drive(TestContext, run =>
     {
         var (left, right) = run.OpenPair();
         run.Focus(left);
@@ -14,7 +16,7 @@ public class Fullscreen(ITestOutputHelper output)
         run.Dispatch("fullscreen");
         run.Until("fullscreen covers the whole monitor", () =>
             VerifyRun.Frame(left).Near(VerifyRun.MonitorArea(left), 2) && run.ClientOf(left).GetProperty("fullscreen").GetInt32() == 2);
-        Assert.False(run.ClientOf(right).GetProperty("allowedOverFullscreen").GetBoolean());
+        Assert.IsFalse(run.ClientOf(right).GetProperty("allowedOverFullscreen").GetBoolean());
 
         run.Dispatch("fullscreen");
         run.Until("fullscreen again puts the window back in its tile", () =>

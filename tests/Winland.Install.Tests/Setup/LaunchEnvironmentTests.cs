@@ -3,9 +3,10 @@ using Winland.Launcher;
 
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class LaunchEnvironmentTests
 {
-    [Fact]
+    [TestMethod]
     public void RuntimeInjectionAndTracingVariablesAreRemovedBeforeStartingTheDaemon()
     {
         var start = new ProcessStartInfo();
@@ -19,8 +20,8 @@ public class LaunchEnvironmentTests
 
         LaunchEnvironment.Clean(start);
 
-        Assert.Equal(2, start.Environment.Count);
-        Assert.Equal("user path", start.Environment["PATH"]);
-        Assert.Equal("isolated", start.Environment["WINLAND_PIPE"]);
+        Assert.AreEqual(2, start.Environment.Count);
+        Assert.AreEqual("user path", start.Environment["PATH"]);
+        Assert.AreEqual("isolated", start.Environment["WINLAND_PIPE"]);
     }
 }

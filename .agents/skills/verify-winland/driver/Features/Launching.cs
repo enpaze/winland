@@ -1,10 +1,12 @@
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "launching")]
-public class Launching(ITestOutputHelper output)
+[TestClass]
+public class Launching
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
     public void RunsExecOnceAtStartAndExecOnRequest()
     {
@@ -14,12 +16,12 @@ public class Launching(ITestOutputHelper output)
         var exec = Path.Combine(folder, "exec.txt");
         try
         {
-            VerifyRun.Drive(output, $"exec-once = echo started> \"{once}\"\nexec-once = [float] echo skipped> \"{once}.block\"\n", run =>
+            VerifyRun.Drive(TestContext, $"exec-once = echo started> \"{once}\"\nexec-once = [float] echo skipped> \"{once}.block\"\n", run =>
             {
                 run.Until("exec-once ran its command through cmd when winland started", () => Read(once) == "started");
                 run.Holds("a launch line with a rule block does not launch", () => !File.Exists(once + ".block"), 500);
 
-                Assert.Equal("ok", run.Ask("dispatch", "exec", $"echo first&& echo second> \"{exec}\""));
+                Assert.AreEqual("ok", run.Ask("dispatch", "exec", $"echo first&& echo second> \"{exec}\""));
                 run.Until("dispatch exec ran the command line through cmd, with && and redirection", () => Read(exec) == "second");
             });
         }

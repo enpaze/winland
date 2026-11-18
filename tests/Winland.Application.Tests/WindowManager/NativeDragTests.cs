@@ -1,8 +1,9 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class NativeDragTests
 {
-    [Fact]
+    [TestMethod]
     public void NativeMoveAndResizeFollowThePointer()
     {
         var desk = new TestDesktop();
@@ -27,14 +28,14 @@ public class NativeDragTests
         Near(startMove.Height, endMove.Height, 2);
 
         SetClientGeometry(desk, pid, new Rectangle(400, 300, 500, 400));
-        Assert.True(TestDesktop.Floating(desk.ActiveWindow()));
+        Assert.IsTrue(TestDesktop.Floating(desk.ActiveWindow()));
         var startResize = ActiveGeometry(desk);
         desk.MovePointer(startResize.X + 250, startResize.Y + 200);
         Press(desk);
         desk.Handle(new WindowSizeStarted(client, desk.Pointer));
         desk.MovePointer(startResize.X + 410, startResize.Y + 200);
         desk.Handle(new WindowSizing(client, desk.Pointer, startResize with { Width = startResize.Width + 160 }));
-        Assert.True(ActiveGeometry(desk).Width >= startResize.Width + 150, "The resize did not change the frame before the release.");
+        Assert.IsTrue(ActiveGeometry(desk).Width >= startResize.Width + 150, "The resize did not change the frame before the release.");
 
         Release(desk);
         desk.Handle(new WindowSizeEnded(client, desk.Pointer, startResize with { Width = startResize.Width + 160 }));
@@ -59,7 +60,7 @@ public class NativeDragTests
 
         desk.MovePointer(afterStale.X + 250, afterStale.Y + 200);
         desk.Click();
-        Assert.NotEqual("", desk.Send("clients"));
+        Assert.AreNotEqual("", desk.Send("clients"));
     }
 
     private static void SetClientGeometry(TestDesktop desk, long pid, Rectangle geometry)
@@ -70,7 +71,7 @@ public class NativeDragTests
 
         desk.Place(desk.ActiveId(), geometry.X, geometry.Y, geometry.Width, geometry.Height);
         desk.Ok("focuswindow", $"pid:{pid}");
-        Assert.Equal(geometry, ActiveGeometry(desk));
+        Assert.AreEqual(geometry, ActiveGeometry(desk));
     }
 
     private static Rectangle ActiveGeometry(TestDesktop desk)
@@ -88,5 +89,5 @@ public class NativeDragTests
         desk.Handle(new PointerButtonReleased("mouse:272") { Position = desk.Pointer });
 
     private static void Near(int expected, int actual, int delta) =>
-        Assert.InRange(actual, expected - delta, expected + delta);
+        Assert.IsInRange(expected - delta, expected + delta, actual);
 }

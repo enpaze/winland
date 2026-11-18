@@ -1,9 +1,11 @@
+using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 
 namespace Winland.Daemon.Tests;
 
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+[TestClass]
 public class AdministratorFolderTests
 {
     [ElevatedFact(true)]
@@ -14,7 +16,7 @@ public class AdministratorFolderTests
             var folder = AdministratorFolder.CreateNew(parent, "task-");
 
             Assert.StartsWith(Path.Combine(parent, "task-"), folder, StringComparison.OrdinalIgnoreCase);
-            Assert.Null(WindowsAccessReader.FirstNonAdministrator(folder));
+            Assert.IsNull(WindowsAccessReader.FirstNonAdministrator(folder));
         });
     }
 
@@ -23,7 +25,7 @@ public class AdministratorFolderTests
     {
         InParent(parent =>
         {
-            var refused = Assert.Throws<InvalidOperationException>(() => AdministratorFolder.CreateNew(parent, "task-"));
+            var refused = Assert.ThrowsExactly<InvalidOperationException>(() => AdministratorFolder.CreateNew(parent, "task-"));
 
             Assert.Contains("non-administrator", refused.Message, StringComparison.Ordinal);
         });
@@ -46,13 +48,31 @@ public class AdministratorFolderTests
         }
     }
 
-    private sealed class ElevatedFactAttribute : FactAttribute
+    private sealed class ElevatedFactAttribute : TestMethodAttribute
     {
-        public ElevatedFactAttribute(bool elevated)
+        private readonly bool _elevated;
+
+        public ElevatedFactAttribute(bool elevated, [CallerFilePath] string callerFilePath = "", [CallerLineNumber] int callerLineNumber = -1)
+            : base(callerFilePath, callerLineNumber)
+        {
+            _elevated = elevated;
+        }
+
+        public override Task<TestResult[]> ExecuteAsync(ITestMethod testMethod)
         {
             using var identity = WindowsIdentity.GetCurrent();
-            if (new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator) != elevated)
-                Skip = elevated ? "Needs an elevated test run." : "Needs a test run without elevation.";
+            if (new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator) == _elevated)
+                return base.ExecuteAsync(testMethod);
+
+            var message = _elevated ? "Needs an elevated test run." : "Needs a test run without elevation.";
+            return Task.FromResult<TestResult[]>(
+            [
+                new TestResult
+                {
+                    Outcome = UnitTestOutcome.Ignored,
+                    TestFailureException = new AssertInconclusiveException(message),
+                },
+            ]);
         }
     }
 

@@ -1,16 +1,12 @@
 using System.IO.Pipes;
 
 namespace Winland.Infrastructure.Tests;
-
-[CollectionDefinition("Command failures", DisableParallelization = true)]
-public class CommandFailureCollection;
-
-[Collection("Command failures")]
+[TestClass]
 public class CommandFailureTests
 {
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void FailedCommandsLogTheException(bool afterCommand)
     {
         var name = "winland-test-" + Guid.NewGuid().ToString("N");
@@ -29,8 +25,16 @@ public class CommandFailureTests
             };
             server.Start();
 
-            var failure = Record.Exception(() => CommandClient.Transact("dispatch workspace 2", name));
-            Assert.True(failure is null or IOException, failure?.ToString());
+            Exception? failure = null;
+            try
+            {
+                CommandClient.Transact("dispatch workspace 2", name);
+            }
+            catch (Exception caught)
+            {
+                failure = caught;
+            }
+            Assert.IsTrue(failure is null or IOException, failure?.ToString());
             Assert.Contains(afterCommand ? "after command failed" : "apply failed", error.ToString(), StringComparison.Ordinal);
         }
         finally
@@ -39,7 +43,7 @@ public class CommandFailureTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AProcessIdProbeDoesNotApplyACommand()
     {
         var name = "winland-test-" + Guid.NewGuid().ToString("N");
@@ -51,16 +55,16 @@ public class CommandFailureTests
         };
         server.Start();
 
-        Assert.Equal(Environment.ProcessId, CommandClient.ProcessId(name));
-        Assert.False(SpinWait.SpinUntil(() => Volatile.Read(ref followed) != 0, TimeSpan.FromMilliseconds(500)));
-        Assert.Equal(0, Volatile.Read(ref applied));
-        Assert.Equal("ok", CommandClient.Transact("dispatch workspace 2", name));
-        Assert.Equal(1, Volatile.Read(ref applied));
+        Assert.AreEqual(Environment.ProcessId, CommandClient.ProcessId(name));
+        Assert.IsFalse(SpinWait.SpinUntil(() => Volatile.Read(ref followed) != 0, TimeSpan.FromMilliseconds(500)));
+        Assert.AreEqual(0, Volatile.Read(ref applied));
+        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 2", name));
+        Assert.AreEqual(1, Volatile.Read(ref applied));
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("#10\nabc")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("#10\nabc")]
     public async Task AConnectedServerThatStopsAnsweringHasAReplyDeadline(string partialReply)
     {
         var name = "winland-test-" + Guid.NewGuid().ToString("N");
@@ -68,15 +72,15 @@ public class CommandFailureTests
         var connected = server.WaitForConnectionAsync();
         var request = Task.Run(() => CommandClient.Transact("clients", name, replyTimeoutMs: 200));
         await connected.WaitAsync(TimeSpan.FromSeconds(5));
-        Assert.Equal("clients", await PipeFrame.ReadLineAsync(server, PipeFrame.RequestLimit));
+        Assert.AreEqual("clients", await PipeFrame.ReadLineAsync(server, PipeFrame.RequestLimit));
         await server.WriteAsync(System.Text.Encoding.UTF8.GetBytes(partialReply));
 
         var finished = SpinWait.SpinUntil(() => request.IsCompleted, TimeSpan.FromSeconds(5));
         if (!finished)
             server.Dispose();
 
-        Assert.True(finished);
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => request);
-        Assert.Equal("Winland is not answering.", error.Message);
+        Assert.IsTrue(finished);
+        var error = await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => request);
+        Assert.AreEqual("Winland is not answering.", error.Message);
     }
 }

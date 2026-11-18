@@ -5,12 +5,12 @@ namespace Winland.Application.Tests;
 internal static class TestOutcomes
 {
     public static Client Client(Outcome outcome, long window) =>
-        Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(window));
+        Assert.ContainsSingle(candidate => candidate.Window == new WindowId(window), outcome.State.Clients);
 
     public static Rectangle BoundsOf(Outcome outcome, long window)
     {
         var client = Client(outcome, window);
-        return Assert.Single(outcome.Placements, placement => placement.Client == client.Id).Bounds;
+        return Assert.ContainsSingle(placement => placement.Client == client.Id, outcome.Placements).Bounds;
     }
 
     public static Outcome Place(WindowManager core, long window, Rectangle bounds)

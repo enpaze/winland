@@ -1,32 +1,33 @@
 namespace Winland.Daemon.Tests;
 
+[TestClass]
 public class SchtasksArgumentsTests
 {
-    [Fact]
+    [TestMethod]
     public void CreateRegistersTheTaskXmlWithoutReplacing()
     {
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             ["/Create", "/TN", "Winland", "/XML", @"C:\temp\winland.xml"],
             SchtasksCatalog.Arguments.Create("Winland", @"C:\temp\winland.xml"));
     }
 
-    [Fact]
+    [TestMethod]
     public void UpdateForcesTheSameTaskXmlSoASecondInstallReplacesIt()
     {
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             ["/Create", "/TN", "Winland", "/XML", @"C:\temp\winland.xml", "/F"],
             SchtasksCatalog.Arguments.Update("Winland", @"C:\temp\winland.xml"));
     }
 
-    [Fact]
+    [TestMethod]
     public void DeleteRemovesTheTaskWithoutAPrompt()
     {
-        Assert.Equal(["/Delete", "/TN", "Winland", "/F"], SchtasksCatalog.Arguments.Delete("Winland"));
+        Assert.AreSequenceEqual(["/Delete", "/TN", "Winland", "/F"], SchtasksCatalog.Arguments.Delete("Winland"));
     }
 
-    [Fact]
+    [TestMethod]
     public void QueryLooksUpTheTaskByName()
     {
-        Assert.Equal(["/Query", "/TN", "Winland"], SchtasksCatalog.Arguments.Query("Winland"));
+        Assert.AreSequenceEqual(["/Query", "/TN", "Winland"], SchtasksCatalog.Arguments.Query("Winland"));
     }
 }

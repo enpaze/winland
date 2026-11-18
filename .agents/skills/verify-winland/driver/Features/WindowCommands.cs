@@ -1,13 +1,15 @@
 using Windows.Win32;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "window-commands")]
-public class WindowCommands(ITestOutputHelper output)
+[TestClass]
+public class WindowCommands
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void SwapsMovesFloatsPinsAndCloses() => VerifyRun.Drive(output, run =>
+    public void SwapsMovesFloatsPinsAndCloses() => VerifyRun.Drive(TestContext, run =>
     {
         var (left, right) = run.OpenPair();
 
@@ -26,7 +28,7 @@ public class WindowCommands(ITestOutputHelper output)
         run.Until("pin pins the floating window", () => run.ClientOf(left).GetProperty("pinned").GetBoolean());
         run.Dispatch("workspace 2");
         run.Until("workspace 2 hides the tile and keeps the pinned window shown", () => !VerifyRun.Visible(right) && VerifyRun.Visible(left));
-        Assert.Equal(2, run.ClientOf(left).GetProperty("workspace").GetProperty("id").GetInt32());
+        Assert.AreEqual(2, run.ClientOf(left).GetProperty("workspace").GetProperty("id").GetInt32());
 
         run.Dispatch("pin");
         run.Until("pin again unpins it", () => !run.ClientOf(left).GetProperty("pinned").GetBoolean());

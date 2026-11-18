@@ -1,11 +1,10 @@
 namespace Winland.Daemon.Tests;
-
-[Collection("Console")]
+[TestClass]
 public class GuardTests
 {
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void ARunFailureIsPrintedAndRethrownAfterCleanup(bool invalidOperation)
     {
         var stderr = Console.Error;
@@ -15,7 +14,7 @@ public class GuardTests
         Exception failure = invalidOperation ? new InvalidOperationException("loop failed") : new IOException("loop failed");
         try
         {
-            var thrown = Assert.ThrowsAny<Exception>(() => Program.Guard(() =>
+            var thrown = Assert.Throws<Exception>(() => Program.Guard(() =>
             {
                 try
                 {
@@ -27,8 +26,8 @@ public class GuardTests
                 }
             }, rethrow: true));
 
-            Assert.Same(failure, thrown);
-            Assert.True(cleaned);
+            Assert.AreSame(failure, thrown);
+            Assert.IsTrue(cleaned);
             Assert.Contains(failure.GetType().FullName + ": loop failed", log.ToString(), StringComparison.Ordinal);
             Assert.Contains(nameof(ARunFailureIsPrintedAndRethrownAfterCleanup), log.ToString(), StringComparison.Ordinal);
             Assert.Contains("   at ", log.ToString(), StringComparison.Ordinal);
@@ -39,9 +38,9 @@ public class GuardTests
         }
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void ExpectedInstallFailuresStayPlainMessages(bool argument)
     {
         var stderr = Console.Error;
@@ -49,8 +48,8 @@ public class GuardTests
         Console.SetError(log);
         try
         {
-            Assert.Equal(1, Program.Guard(() => throw (argument ? new ArgumentException("install failed") : new InvalidOperationException("install failed"))));
-            Assert.Equal("install failed" + Environment.NewLine, log.ToString());
+            Assert.AreEqual(1, Program.Guard(() => throw (argument ? new ArgumentException("install failed") : new InvalidOperationException("install failed"))));
+            Assert.AreEqual("install failed" + Environment.NewLine, log.ToString());
         }
         finally
         {

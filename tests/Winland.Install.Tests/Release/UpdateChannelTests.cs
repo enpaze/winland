@@ -1,49 +1,50 @@
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class UpdateChannelTests
 {
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("  \n")]
-    [InlineData("stable")]
-    [InlineData("STABLE\n")]
-    [InlineData("\uFEFFstable\n")]
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
+    [DataRow("  \n")]
+    [DataRow("stable")]
+    [DataRow("STABLE\n")]
+    [DataRow("\uFEFFstable\n")]
     public void AMissingOrStableFileUsesStable(string? text)
     {
-        Assert.Equal(UpdateChannel.Stable, UpdateChannelFile.Read(text));
-        Assert.Equal(UpdateChannel.Stable, UpdateChannelFile.Choose(null, text));
+        Assert.AreEqual(UpdateChannel.Stable, UpdateChannelFile.Read(text));
+        Assert.AreEqual(UpdateChannel.Stable, UpdateChannelFile.Choose(null, text));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASavedDevChannelIsUsedWhenTheCommandDoesNotChoose()
     {
-        Assert.Equal(UpdateChannel.Dev, UpdateChannelFile.Read("dev\n"));
-        Assert.Equal(UpdateChannel.Dev, UpdateChannelFile.Choose(null, " DEV "));
+        Assert.AreEqual(UpdateChannel.Dev, UpdateChannelFile.Read("dev\n"));
+        Assert.AreEqual(UpdateChannel.Dev, UpdateChannelFile.Choose(null, " DEV "));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnExplicitChannelWinsOverTheSavedOne()
     {
-        Assert.Equal(UpdateChannel.Stable, UpdateChannelFile.Choose(UpdateChannel.Stable, "dev\n"));
-        Assert.Equal(UpdateChannel.Dev, UpdateChannelFile.Choose(UpdateChannel.Dev, "stable\n"));
+        Assert.AreEqual(UpdateChannel.Stable, UpdateChannelFile.Choose(UpdateChannel.Stable, "dev\n"));
+        Assert.AreEqual(UpdateChannel.Dev, UpdateChannelFile.Choose(UpdateChannel.Dev, "stable\n"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheSavedWordRoundTripsAndLivesUnderTheWinlandFolder()
     {
-        Assert.Equal(UpdateChannel.Dev, UpdateChannelFile.Read(UpdateChannelFile.Text(UpdateChannel.Dev)));
-        Assert.Equal(UpdateChannel.Stable, UpdateChannelFile.Read(UpdateChannelFile.Text(UpdateChannel.Stable)));
-        Assert.Equal("dev\n", UpdateChannelFile.Text(UpdateChannel.Dev));
-        Assert.Equal(
+        Assert.AreEqual(UpdateChannel.Dev, UpdateChannelFile.Read(UpdateChannelFile.Text(UpdateChannel.Dev)));
+        Assert.AreEqual(UpdateChannel.Stable, UpdateChannelFile.Read(UpdateChannelFile.Text(UpdateChannel.Stable)));
+        Assert.AreEqual("dev\n", UpdateChannelFile.Text(UpdateChannel.Dev));
+        Assert.AreEqual(
             Path.Combine(@"C:\Users\me", ".winland", "channel"),
             UpdateChannelFile.PathFor(@"C:\Users\me"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnythingOtherThanTheTwoChannelsIsRefused()
     {
-        var error = Assert.Throws<InvalidOperationException>(() => UpdateChannelFile.Read("nightly"));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => UpdateChannelFile.Read("nightly"));
 
         Assert.Contains("not stable or dev", error.Message, StringComparison.Ordinal);
     }

@@ -1,25 +1,26 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class OffWindowAxisTests
 {
     private static readonly Rectangle Wide = new(0, 0, 1920, 1080);
 
-    [Theory]
-    [InlineData(0, 0, 0, 0)]
-    [InlineData(100, 50, 100, 50)]
-    [InlineData(-30, 50, 0, 50)]
-    [InlineData(130, 50, 109, 50)]
-    [InlineData(50, -5, 50, 0)]
-    [InlineData(50, 700, 50, 59)]
-    [InlineData(500, 700, 109, 59)]
+    [TestMethod]
+    [DataRow(0, 0, 0, 0)]
+    [DataRow(100, 50, 100, 50)]
+    [DataRow(-30, 50, 0, 50)]
+    [DataRow(130, 50, 109, 50)]
+    [DataRow(50, -5, 50, 0)]
+    [DataRow(50, 700, 50, 59)]
+    [DataRow(500, 700, 109, 59)]
     public void ThePointIsClampedOnePixelInFromTheFarEdges(int x, int y, int clampedX, int clampedY) =>
-        Assert.Equal(new Point(clampedX, clampedY), BorderPointer.Clamp(new Rectangle(0, 0, 110, 60), new Point(x, y)));
+        Assert.AreEqual(new Point(clampedX, clampedY), BorderPointer.Clamp(new Rectangle(0, 0, 110, 60), new Point(x, y)));
 
-    [Fact]
+    [TestMethod]
     public void ABoxWithNoSizeClampsToItsCorner() =>
-        Assert.Equal(new Point(5, 6), BorderPointer.Clamp(new Rectangle(5, 6, 0, 0), new Point(50, 60)));
+        Assert.AreEqual(new Point(5, 6), BorderPointer.Clamp(new Rectangle(5, 6, 0, 0), new Point(50, 60)));
 
-    [Fact]
+    [TestMethod]
     public void AFloatingWindowsRingIsItsOffWindowTargetAndTheNearestPointInsideIsClamped()
     {
         var core = CoreWith("general:border_size = 4\n");
@@ -27,23 +28,23 @@ public class OffWindowAxisTests
 
         var target = core.OffWindowTarget(new Point(1282, 500));
 
-        Assert.Equal(new OffWindowScroll(new WindowId(1), new Point(1279, 500)), target);
-        Assert.Equal(new OffWindowScroll(new WindowId(1), new Point(1279, 739)), core.OffWindowTarget(new Point(1283, 743)));
+        Assert.AreEqual(new OffWindowScroll(new WindowId(1), new Point(1279, 500)), target);
+        Assert.AreEqual(new OffWindowScroll(new WindowId(1), new Point(1279, 739)), core.OffWindowTarget(new Point(1283, 743)));
     }
 
-    [Fact]
+    [TestMethod]
     public void InsideTheWindowBeyondTheRingOrWithNoBorderThereIsNoTarget()
     {
         var core = CoreWith("general:border_size = 4\n");
         Float(core, 1);
 
-        Assert.Null(core.OffWindowTarget(new Point(900, 500)));
-        Assert.Null(core.OffWindowTarget(new Point(1290, 500)));
-        Assert.Null(core.OffWindowTarget(new Point(10, 10)));
+        Assert.IsNull(core.OffWindowTarget(new Point(900, 500)));
+        Assert.IsNull(core.OffWindowTarget(new Point(1290, 500)));
+        Assert.IsNull(core.OffWindowTarget(new Point(10, 10)));
 
         var bare = CoreWith("general:border_size = 0\n");
         Float(bare, 1);
-        Assert.Null(bare.OffWindowTarget(new Point(1280, 500)));
+        Assert.IsNull(bare.OffWindowTarget(new Point(1280, 500)));
     }
 
     private static WindowManager CoreWith(string config)

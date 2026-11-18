@@ -1,13 +1,14 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class DisplayColorTests
 {
-    [Fact]
+    [TestMethod]
     public void TheReplyNamesTheDepthWindowsReports()
     {
-        Assert.Equal("XRGB2101010", DisplayColors.Format(10));
-        Assert.Equal("XRGB8888", DisplayColors.Format(8));
-        Assert.Equal("", DisplayColors.Format(0));
-        Assert.Equal("srgb", DisplayColors.StandardPreset);
+        Assert.AreEqual("XRGB2101010", DisplayColors.Format(10));
+        Assert.AreEqual("XRGB8888", DisplayColors.Format(8));
+        Assert.AreEqual("", DisplayColors.Format(0));
+        Assert.AreEqual("srgb", DisplayColors.StandardPreset);
     }
 }

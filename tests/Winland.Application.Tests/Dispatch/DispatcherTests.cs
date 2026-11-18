@@ -1,30 +1,31 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class DispatcherTests
 {
     private static readonly Rectangle Wide = new(0, 0, 1920, 1080);
     private static readonly Rectangle Tall = new(0, 0, 1080, 1920);
 
-    [Fact]
+    [TestMethod]
     public void MoveFocusReachesTheNeighborInEachDirection()
     {
         var core = TwoWindows();
 
         var left = core.Handle(new Dispatch("movefocus", "l"));
 
-        Assert.Equal(new WindowId(1), left.Focus);
-        Assert.Empty(left.Placements);
+        Assert.AreEqual(new WindowId(1), left.Focus);
+        Assert.IsEmpty(left.Placements);
 
         var right = core.Handle(new Dispatch("movefocus", "right"));
 
-        Assert.Equal(new WindowId(2), right.Focus);
+        Assert.AreEqual(new WindowId(2), right.Focus);
 
         var stacked = ThreeWindows();
-        Assert.Equal(new WindowId(2), FocusToward(stacked, "u"));
-        Assert.Null(FocusToward(stacked, "r"));
-        Assert.Equal(new WindowId(3), FocusToward(stacked, "d"));
-        Assert.Equal(new WindowId(1), FocusToward(stacked, "l"));
-        Assert.Null(FocusToward(stacked, "l"));
+        Assert.AreEqual(new WindowId(2), FocusToward(stacked, "u"));
+        Assert.IsNull(FocusToward(stacked, "r"));
+        Assert.AreEqual(new WindowId(3), FocusToward(stacked, "d"));
+        Assert.AreEqual(new WindowId(1), FocusToward(stacked, "l"));
+        Assert.IsNull(FocusToward(stacked, "l"));
     }
 
     private static WindowId? Active(WindowManager core)
@@ -33,27 +34,27 @@ public class DispatcherTests
         return address.Length > 2 ? new WindowId(Convert.ToInt64(address[2..], 16)) : null;
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveFocusPicksTheNeighborFocusedLast()
     {
         var core = ThreeWindows();
         core.Handle(new WindowFocused(new WindowId(1), FocusCause.User));
 
-        Assert.Equal(new WindowId(3), core.Handle(new Dispatch("movefocus", "r")).Focus);
+        Assert.AreEqual(new WindowId(3), core.Handle(new Dispatch("movefocus", "r")).Focus);
     }
 
-    [Theory]
-    [InlineData("dwindle")]
+    [TestMethod]
+    [DataRow("dwindle")]
     public void MoveFocusFromAFloatingClientLooksByAngle(string layout)
     {
         var core = Floats("general:layout = " + layout + "\n");
         ShowFloat(core, 2, 400, 150);
         ShowFloat(core, 1, 100, 100);
 
-        Assert.Equal(new WindowId(2), FocusToward(core, "r"));
+        Assert.AreEqual(new WindowId(2), FocusToward(core, "r"));
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveFocusFromAFloatingClientNeverPicksATile()
     {
         var core = Floats("");
@@ -61,10 +62,10 @@ public class DispatcherTests
         Appear(core, 2);
         ShowFloat(core, 3, 760, 100);
 
-        Assert.Null(FocusToward(core, "r"));
+        Assert.IsNull(FocusToward(core, "r"));
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveFocusStopsWhenNothingLiesThatWay()
     {
         var core = TwoWindows();
@@ -72,11 +73,11 @@ public class DispatcherTests
 
         var outcome = core.Handle(new Dispatch("movefocus", "l"));
 
-        Assert.Null(outcome.Focus);
-        Assert.Equal(new WindowId(1), core.Handle(new Dispatch("killactive")).Close);
+        Assert.IsNull(outcome.Focus);
+        Assert.AreEqual(new WindowId(1), core.Handle(new Dispatch("killactive")).Close);
     }
 
-    [Fact]
+    [TestMethod]
     public void BoundMoveFocusRequestsFocusAndLaterDispatchersUseIt()
     {
         var core = Load("""
@@ -89,12 +90,12 @@ public class DispatcherTests
 
         var focused = Press(core, "H");
 
-        Assert.True(focused.Consumed);
-        Assert.Equal(new WindowId(1), focused.Focus);
-        Assert.Equal(new WindowId(1), Press(core, "Q").Close);
+        Assert.IsTrue(focused.Consumed);
+        Assert.AreEqual(new WindowId(1), focused.Focus);
+        Assert.AreEqual(new WindowId(1), Press(core, "Q").Close);
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveFocusBecomesTheWindowNewClientsSplit()
     {
         var core = TwoWindows();
@@ -102,35 +103,35 @@ public class DispatcherTests
 
         var outcome = Appear(core, 3);
 
-        Assert.Equal(new Rectangle(0, 0, 960, 540), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 540, 960, 540), BoundsOf(outcome, 3));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 540), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(0, 540, 960, 540), BoundsOf(outcome, 3));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveWindowSwapsTheActiveClientWithTheNeighbor()
     {
         var core = TwoWindows();
 
         var outcome = core.Handle(new Dispatch("movewindow", "l"));
 
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveWindowUpSwapsAVerticalPair()
     {
         var core = ThreeWindows();
 
         var outcome = core.Handle(new Dispatch("movewindow", "up"));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(960, 540, 960, 540), BoundsOf(outcome, 2));
-        Assert.Equal(new Rectangle(960, 0, 960, 540), BoundsOf(outcome, 3));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(960, 540, 960, 540), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 540), BoundsOf(outcome, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void BoundMoveWindowRearrangesTheTree()
     {
         var core = Load("bind = SUPER, L, movewindow, l");
@@ -140,23 +141,23 @@ public class DispatcherTests
 
         var outcome = Press(core, "L");
 
-        Assert.True(outcome.Consumed);
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 2));
+        Assert.IsTrue(outcome.Consumed);
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveWindowWithoutADirectionLeavesTheTreeAlone()
     {
         var core = TwoWindows();
 
         var outcome = core.Handle(new Dispatch("movewindow"));
 
-        Assert.Empty(outcome.Placements);
-        Assert.Equal(new WindowId(2), core.Handle(new Dispatch("killactive")).Close);
+        Assert.IsEmpty(outcome.Placements);
+        Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("killactive")).Close);
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveWindowSnapsAFloatingClientToTheWorkAreaEdge()
     {
         var core = new WindowManager();
@@ -167,21 +168,21 @@ public class DispatcherTests
         });
 
         var right = core.Handle(new Dispatch("movewindow", "r"));
-        Assert.Equal(new Rectangle(1720, 465, 200, 150), BoundsOf(right, 1));
+        Assert.AreEqual(new Rectangle(1720, 465, 200, 150), BoundsOf(right, 1));
 
         var down = core.Handle(new Dispatch("movewindow", "bottom"));
-        Assert.Equal(new Rectangle(1720, 930, 200, 150), BoundsOf(down, 1));
+        Assert.AreEqual(new Rectangle(1720, 930, 200, 150), BoundsOf(down, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ResizeActiveChangesTheSplitRatioOnTheFreeAxis()
     {
         var sideBySide = TwoWindows();
 
         var wider = sideBySide.Handle(new Dispatch("resizeactive", "480 0"));
 
-        Assert.Equal(new Rectangle(0, 0, 480, 1080), BoundsOf(wider, 1));
-        Assert.Equal(new Rectangle(480, 0, 1440, 1080), BoundsOf(wider, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 480, 1080), BoundsOf(wider, 1));
+        Assert.AreEqual(new Rectangle(480, 0, 1440, 1080), BoundsOf(wider, 2));
 
         var stacked = new WindowManager();
         Appear(stacked, 1, Tall);
@@ -189,12 +190,12 @@ public class DispatcherTests
 
         var taller = stacked.Handle(new Dispatch("resizeactive", "0 480"));
 
-        Assert.Equal(new Rectangle(0, 0, 1080, 480), BoundsOf(taller, 1));
-        Assert.Equal(new Rectangle(0, 480, 1080, 1440), BoundsOf(taller, 2));
-        Assert.Equal(new Rectangle(0, 0, 1080, 480), BoundsOf(stacked.Handle(new Dispatch("resizeactive", "20 0")), 1));
+        Assert.AreEqual(new Rectangle(0, 0, 1080, 480), BoundsOf(taller, 1));
+        Assert.AreEqual(new Rectangle(0, 480, 1080, 1440), BoundsOf(taller, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 1080, 480), BoundsOf(stacked.Handle(new Dispatch("resizeactive", "20 0")), 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ResizeActiveOnAFloatingClientGrowsItFromTheCenter()
     {
         var core = new WindowManager();
@@ -206,10 +207,10 @@ public class DispatcherTests
 
         var outcome = core.Handle(new Dispatch("resizeactive", "20 10"));
 
-        Assert.Equal(new Rectangle(850, 460, 220, 160), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(850, 460, 220, 160), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void BoundResizeActiveChangesTheSplit()
     {
         var core = Load("bind = SUPER, H, resizeactive, 480 0");
@@ -219,31 +220,31 @@ public class DispatcherTests
 
         var outcome = Press(core, "H");
 
-        Assert.True(outcome.Consumed);
-        Assert.Equal(new Rectangle(0, 0, 480, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(480, 0, 1440, 1080), BoundsOf(outcome, 2));
+        Assert.IsTrue(outcome.Consumed);
+        Assert.AreEqual(new Rectangle(0, 0, 480, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(480, 0, 1440, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void ToggleFloatingLiftsTheActiveClientOutAndBack()
     {
         var core = TwoWindows();
 
         var floating = core.Handle(new Dispatch("togglefloating"));
 
-        Assert.True(Client(floating, 2).Floating);
-        Assert.False(Client(floating, 1).Floating);
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(floating, 1));
-        Assert.Equal(new Rectangle(1120, 340, 640, 400), BoundsOf(floating, 2));
+        Assert.IsTrue(Client(floating, 2).Floating);
+        Assert.IsFalse(Client(floating, 1).Floating);
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 1080), BoundsOf(floating, 1));
+        Assert.AreEqual(new Rectangle(1120, 340, 640, 400), BoundsOf(floating, 2));
 
         var tiled = core.Handle(new Dispatch("togglefloating"));
 
-        Assert.False(Client(tiled, 2).Floating);
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(tiled, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(tiled, 2));
+        Assert.IsFalse(Client(tiled, 2).Floating);
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(tiled, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(tiled, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void ToggleFloatingRecentersATiledClientAtItsLastFloatingSize()
     {
         var core = Flat("");
@@ -254,8 +255,8 @@ public class DispatcherTests
 
         var floated = core.Handle(new Dispatch("togglefloating"));
 
-        Assert.True(Client(floated, 1).Floating);
-        Assert.Equal(new Rectangle(560, 240, 800, 600), BoundsOf(floated, 1));
+        Assert.IsTrue(Client(floated, 1).Floating);
+        Assert.AreEqual(new Rectangle(560, 240, 800, 600), BoundsOf(floated, 1));
 
         var same = Flat("");
         same.Handle(new WindowAppeared(new WindowId(1), Wide)
@@ -265,10 +266,10 @@ public class DispatcherTests
 
         var grown = same.Handle(new Dispatch("togglefloating"));
 
-        Assert.Equal(new Rectangle(-10, -10, 1930, 1090), BoundsOf(grown, 1));
+        Assert.AreEqual(new Rectangle(-10, -10, 1930, 1090), BoundsOf(grown, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void BoundToggleFloatingSwitchesTheActiveClient()
     {
         var core = Load("bind = SUPER, Space, togglefloating");
@@ -278,12 +279,12 @@ public class DispatcherTests
 
         var outcome = Press(core, "Space");
 
-        Assert.True(outcome.Consumed);
-        Assert.True(Client(outcome, 2).Floating);
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
+        Assert.IsTrue(outcome.Consumed);
+        Assert.IsTrue(Client(outcome, 2).Floating);
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ToggleSplitFlipsTheCurrentSplitWhenItIsPreserved()
     {
         var core = Flat("");
@@ -292,11 +293,11 @@ public class DispatcherTests
 
         var outcome = core.Handle(new Dispatch("layoutmsg", "togglesplit"));
 
-        Assert.Equal(new Rectangle(0, 0, 1920, 540), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 540, 1920, 540), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 540), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(0, 540, 1920, 540), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void BoundLayoutMessageRuns()
     {
         var core = new WindowManager();
@@ -314,35 +315,35 @@ public class DispatcherTests
 
         var outcome = Press(core, "T");
 
-        Assert.True(outcome.Consumed);
-        Assert.Equal(new Rectangle(0, 0, 1920, 540), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(0, 540, 1920, 540), BoundsOf(outcome, 2));
+        Assert.IsTrue(outcome.Consumed);
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 540), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(0, 540, 1920, 540), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void DispatchRunsKillActiveOnTheSamePath()
     {
         var core = TwoWindows();
 
         var outcome = core.Handle(new Dispatch("killactive"));
 
-        Assert.Equal(new WindowId(2), outcome.Close);
-        Assert.Contains(outcome.State.Clients, client => client.Window == new WindowId(2));
-        Assert.Null(outcome.Focus);
+        Assert.AreEqual(new WindowId(2), outcome.Close);
+        Assert.Contains(client => client.Window == new WindowId(2), outcome.State.Clients);
+        Assert.IsNull(outcome.Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnknownDispatcherIsReportedWithoutAnEffect()
     {
         var core = TwoWindows();
 
         var outcome = core.Handle(new Dispatch("nosuch", "notepad"));
 
-        Assert.False(outcome.Consumed);
-        Assert.Null(outcome.Close);
-        Assert.Null(outcome.Focus);
-        Assert.Empty(outcome.Placements);
-        Assert.Equal(2, outcome.State.Clients.Count);
+        Assert.IsFalse(outcome.Consumed);
+        Assert.IsNull(outcome.Close);
+        Assert.IsNull(outcome.Focus);
+        Assert.IsEmpty(outcome.Placements);
+        Assert.AreEqual(2, outcome.State.Clients.Count);
     }
 
     private static WindowId? FocusToward(WindowManager core, string direction) =>

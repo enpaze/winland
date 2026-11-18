@@ -1,5 +1,6 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class ConfigDispatchersTests
 {
     private static readonly string[] Known = ["killactive", "workspace"];
@@ -10,13 +11,13 @@ public class ConfigDispatchersTests
         bind = SUPER, E, teleport
         """;
 
-    [Fact]
+    [TestMethod]
     public void ABindForANameOutsideTheGivenOnesWarnsOnItsLine()
     {
         var document = ConfigParser.Parse(Binds, dispatchers: Known);
 
-        Assert.Single(document.Binds);
-        Assert.Equal(
+        Assert.ContainsSingle(document.Binds);
+        Assert.AreSequenceEqual(
             [
                 new ConfigWarning(2, "Unknown dispatcher 'killactiv'. Did you mean 'killactive'?"),
                 new ConfigWarning(3, "Unknown dispatcher 'teleport'."),
@@ -24,21 +25,21 @@ public class ConfigDispatchersTests
             document.Warnings);
     }
 
-    [Fact]
+    [TestMethod]
     public void ACaseThatDiffersStillMatches()
     {
         var document = ConfigParser.Parse("bind = SUPER, Q, KillActive", dispatchers: Known);
 
-        Assert.Empty(document.Warnings);
-        Assert.Single(document.Binds);
+        Assert.IsEmpty(document.Warnings);
+        Assert.ContainsSingle(document.Binds);
     }
 
-    [Fact]
+    [TestMethod]
     public void WithNoNamesGivenABindIsNotChecked()
     {
         var document = ConfigParser.Parse(Binds);
 
-        Assert.Empty(document.Warnings);
-        Assert.Equal(3, document.Binds.Count);
+        Assert.IsEmpty(document.Warnings);
+        Assert.AreEqual(3, document.Binds.Count);
     }
 }

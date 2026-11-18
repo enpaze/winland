@@ -1,26 +1,27 @@
 namespace Winland.Install.Tests;
 
+[TestClass]
 public sealed class TextFileTests : IDisposable
 {
     private readonly string directory = Path.Combine(Path.GetTempPath(), "winland-settings-" + Guid.NewGuid().ToString("N"));
 
-    [Fact]
+    [TestMethod]
     public void WriteCreatesTheFolderAndDeleteRemovesOnlyTheFile()
     {
         var path = Path.Combine(directory, ".winland", "windows-settings.json");
         var file = new TextFile(path);
 
-        Assert.Null(file.Read());
+        Assert.IsNull(file.Read());
 
         file.Write("{\"windowArranging\":true}");
 
-        Assert.Equal("{\"windowArranging\":true}", file.Read());
-        Assert.True(Directory.Exists(Path.Combine(directory, ".winland")));
+        Assert.AreEqual("{\"windowArranging\":true}", file.Read());
+        Assert.IsTrue(Directory.Exists(Path.Combine(directory, ".winland")));
 
         file.Delete();
 
-        Assert.Null(file.Read());
-        Assert.True(Directory.Exists(Path.Combine(directory, ".winland")));
+        Assert.IsNull(file.Read());
+        Assert.IsTrue(Directory.Exists(Path.Combine(directory, ".winland")));
     }
 
     public void Dispose()

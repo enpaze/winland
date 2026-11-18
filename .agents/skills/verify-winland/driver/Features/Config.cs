@@ -1,12 +1,14 @@
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "config")]
-public class Config(ITestOutputHelper output)
+[TestClass]
+public class Config
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void ChecksFilesAndReloadsWhenTheConfigChanges() => VerifyRun.Drive(output, "general:gaps_out = 0\n", run =>
+    public void ChecksFilesAndReloadsWhenTheConfigChanges() => VerifyRun.Drive(TestContext, "general:gaps_out = 0\n", run =>
     {
         var folder = run.Daemon.Folder;
         var good = Path.Combine(folder, "good.conf");
@@ -16,18 +18,18 @@ public class Config(ITestOutputHelper output)
         File.WriteAllText(bad, "general:gaps_in = 3\ngeneral:gaps_inn = 4\n");
 
         var clean = run.Cli("check", good);
-        Assert.Equal(0, clean.ExitCode);
-        Assert.Equal("", clean.Output + clean.Error);
+        Assert.AreEqual(0, clean.ExitCode);
+        Assert.AreEqual("", clean.Output + clean.Error);
         var warned = run.Cli("check", bad);
-        Assert.Equal(1, warned.ExitCode);
+        Assert.AreEqual(1, warned.ExitCode);
         Assert.Contains("bad.conf:2:", warned.Error, StringComparison.Ordinal);
         Assert.Contains("Did you mean 'general:gaps_in'?", warned.Error, StringComparison.Ordinal);
-        Assert.Equal(2, run.Cli("check", good, bad).ExitCode);
-        Assert.Equal(1, run.Cli("check", Path.Combine(folder, "missing.conf")).ExitCode);
+        Assert.AreEqual(2, run.Cli("check", good, bad).ExitCode);
+        Assert.AreEqual(1, run.Cli("check", Path.Combine(folder, "missing.conf")).ExitCode);
 
         var files = run.Json("files");
-        Assert.Equal(run.Daemon.ConfigPath, files.GetProperty("config").GetString(), ignoreCase: true);
-        Assert.Equal("no config errors", run.Ask("configerrors"));
+        Assert.AreEqual(run.Daemon.ConfigPath, files.GetProperty("config").GetString(), StringComparer.OrdinalIgnoreCase);
+        Assert.AreEqual("no config errors", run.Ask("configerrors"));
 
         var window = run.OpenManaged("1");
         run.Until("the window fills the work area with gaps_out 0", () => VerifyRun.Frame(window).Near(VerifyRun.WorkArea(window), 4));
@@ -44,7 +46,7 @@ public class Config(ITestOutputHelper output)
         });
         Assert.Contains("general:nosuchoption", run.Ask("configerrors"), StringComparison.Ordinal);
 
-        Assert.Equal("ok", run.Ask("reload"));
+        Assert.AreEqual("ok", run.Ask("reload"));
         run.UntilEvent("configreloaded");
     });
 }

@@ -86,6 +86,6 @@ It stops only the test hosts and `winland.exe` processes this checkout's driver 
 | `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1` | Drives every feature, and runs a failed driver once more. A pass on the second run prints `FLAKY:`. |
 | `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Cleanup` | Stops what an interrupted run left and puts windows back. |
 
-The drivers are in `.agents/skills/verify-winland/driver/`, an xunit project in `Winland.slnx`. `FeatureMapTests` there runs with the unit tests in `scripts/test.ps1` and fails when the map and the code disagree. Its message says what to add or fix.
+The drivers are in `.agents/skills/verify-winland/driver/`, an MSTest project in `Winland.slnx`. `FeatureMapTests` there runs with the unit tests in `scripts/test.ps1` and fails when the map and the code disagree. Its message says what to add or fix.
 
 Claude Code reads a copy of this file at `.claude/skills/verify-winland/SKILL.md`, because Windows checkouts do not keep symlinks. Change this file, then copy it over that one. `FeatureMapTests` fails until they match.

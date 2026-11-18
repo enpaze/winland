@@ -1,5 +1,6 @@
 namespace Winland.Daemon.Tests;
 
+[TestClass]
 public class DefaultConfigTests
 {
     private const string Binds = """
@@ -105,39 +106,42 @@ public class DefaultConfigTests
         SUPER SHIFT|N|exec|notepad|
         """;
 
-    [Fact]
+    [TestMethod]
     public void TheEmbeddedDefaultParsesWithNoWarnings()
     {
         var document = ConfigParser.Parse(DefaultConfig.Text, dispatchers: WindowManager.DispatcherNames);
 
-        Assert.True(
+        Assert.IsTrue(
             document.Warnings.Count == 0,
             string.Join('\n', document.Warnings.Select(warning => $"{warning.Line}: {warning.Message}")));
-        Assert.Equal(Lines(Binds), document.Binds.Select(Describe));
-        var gesture = Assert.Single(document.Gestures);
-        Assert.Equal(new TrackpadGesture(3, GestureAxis.Horizontal), gesture);
+        Assert.AreSequenceEqual(Lines(Binds), document.Binds.Select(Describe));
+        var gesture = Assert.ContainsSingle(document.Gestures);
+        Assert.AreEqual(new TrackpadGesture(3, GestureAxis.Horizontal), gesture);
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryDefaultBindReadsBackFromTheLineBindsPrints()
     {
         var binds = ConfigParser.Parse(DefaultConfig.Text).Binds.OfType<Bind>().ToArray();
 
         var again = ConfigParser.Parse(CommandProtocol.FormatBindsText(binds));
 
-        Assert.Empty(again.Warnings);
-        Assert.Equal(binds, again.Binds);
+        Assert.IsEmpty(again.Warnings);
+        Assert.AreSequenceEqual(binds, again.Binds);
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryDefaultBindSaysWhatItDoes()
     {
         var binds = ConfigParser.Parse(DefaultConfig.Text).Binds.OfType<Bind>();
 
-        Assert.All(binds, bind => Assert.False(string.IsNullOrWhiteSpace(bind.Description), BindText.Line(bind)));
+        foreach (var bind in binds)
+{
+    Assert.IsFalse(string.IsNullOrWhiteSpace(bind.Description), BindText.Line(bind));
+}
     }
 
-    [Fact]
+    [TestMethod]
     public void OneAssignmentChangesTheMainModifierOfEveryDefaultBind()
     {
         const string assignment = "$mainMod = SUPER";
@@ -146,10 +150,13 @@ public class DefaultConfigTests
         var binds = ConfigParser.Parse(DefaultConfig.Text.Replace(assignment, "$mainMod = CTRL", StringComparison.Ordinal))
             .Binds.OfType<Bind>();
 
-        Assert.All(binds, bind => Assert.False(bind.Modifiers.HasFlag(Modifier.Super), BindText.Line(bind)));
+        foreach (var bind in binds)
+{
+    Assert.IsFalse(bind.Modifiers.HasFlag(Modifier.Super), BindText.Line(bind));
+}
     }
 
-    [Fact]
+    [TestMethod]
     public void OnlyWinOHasTwoDefaultBinds()
     {
         var shared = ConfigParser.Parse(DefaultConfig.Text).Binds.OfType<Bind>()
@@ -157,10 +164,10 @@ public class DefaultConfigTests
             .Where(chord => chord.Count() > 1)
             .Select(chord => $"{chord.Key.Modifiers}|{chord.Key.Key}|{string.Join(' ', chord.Select(bind => bind.Dispatcher))}");
 
-        Assert.Equal(["Super|O|togglefloating pin"], shared);
+        Assert.AreSequenceEqual(["Super|O|togglefloating pin"], shared);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheDefaultParsesWithNoWarningsOnAGermanLayout()
     {
         var german = KeyLayout.From(
@@ -183,29 +190,29 @@ public class DefaultConfigTests
 
         var document = ConfigParser.Parse(DefaultConfig.Text, layout: german, dispatchers: WindowManager.DispatcherNames);
 
-        Assert.True(
+        Assert.IsTrue(
             document.Warnings.Count == 0,
             string.Join('\n', document.Warnings.Select(warning => $"{warning.Line}: {warning.Message}")));
-        Assert.Equal(Lines(Binds).Count(), document.Binds.Count);
+        Assert.AreEqual(Lines(Binds).Count(), document.Binds.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheDefaultIsWrittenOnlyWhenTheFileIsMissing()
     {
         var root = Path.Combine(Path.GetTempPath(), "winland-default-config-" + Guid.NewGuid().ToString("N"));
         var path = Path.Combine(root, "winland", "winland.conf");
         try
         {
-            Assert.True(DefaultConfig.WriteIfMissing(path));
-            Assert.Equal(DefaultConfig.Text, File.ReadAllText(path));
+            Assert.IsTrue(DefaultConfig.WriteIfMissing(path));
+            Assert.AreEqual(DefaultConfig.Text, File.ReadAllText(path));
 
             File.WriteAllText(path, "");
-            Assert.True(DefaultConfig.WriteIfMissing(path));
-            Assert.Equal(DefaultConfig.Text, File.ReadAllText(path));
+            Assert.IsTrue(DefaultConfig.WriteIfMissing(path));
+            Assert.AreEqual(DefaultConfig.Text, File.ReadAllText(path));
 
             File.WriteAllText(path, "bind = SUPER, Q, killactive\n");
-            Assert.False(DefaultConfig.WriteIfMissing(path));
-            Assert.Equal("bind = SUPER, Q, killactive\n", File.ReadAllText(path));
+            Assert.IsFalse(DefaultConfig.WriteIfMissing(path));
+            Assert.AreEqual("bind = SUPER, Q, killactive\n", File.ReadAllText(path));
         }
         finally
         {
@@ -219,7 +226,7 @@ public class DefaultConfigTests
 
     private static string Describe(BindDirective directive)
     {
-        var bind = Assert.IsType<Bind>(directive);
+        var bind = Assert.IsExactInstanceOfType<Bind>(directive);
         Assert.Contains(bind.Dispatcher, WindowManager.DispatcherNames, StringComparer.OrdinalIgnoreCase);
         return $"{Modifiers(bind.Modifiers)}|{bind.Key}|{bind.Dispatcher}|{bind.Arguments}|{Flags(bind.Flags)}";
     }

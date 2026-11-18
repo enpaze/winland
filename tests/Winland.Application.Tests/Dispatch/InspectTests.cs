@@ -2,9 +2,10 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class InspectTests
 {
-    [Fact]
+    [TestMethod]
     public void ATiledClientUnderThePointerIsExplainedWithARuleToFloatIt()
     {
         var desktop = new TestDesktop();
@@ -14,10 +15,10 @@ public class InspectTests
             """
             {"status":"found","target":"pointer","address":"0x1","class":"term","title":"shell","exe":"term.exe","aumid":null,"pid":1001,"managed":true,"floating":false,"reason":"default","reasonAt":"adoption","floatingReason":"default","rule":"windowrule = float, exe:term.exe","ruleNote":null}
             """;
-        Assert.Equal(Expected, desktop.Send("j/inspect"));
+        Assert.AreEqual(Expected, desktop.Send("j/inspect"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientOnAnotherWorkspaceIsInspectedBySelectorWithoutChangingAnything()
     {
         var desktop = new TestDesktop();
@@ -29,19 +30,19 @@ public class InspectTests
 
         var reply = desktop.WindowManager.Execute("inspect class:b");
 
-        Assert.Equal(
+        Assert.AreEqual(
             "Window 1 -> b:\n\tclass: b\n\ttitle: b\n\texe: unavailable\n\taumid: unavailable\n\tpid: 1001\n"
             + "\tmanaged: yes (when adopted: Winland manages a window like this)\n"
             + "\tfloating: no (when adopted: a window like this tiles)\n"
             + "\trule: windowrule = float, class:b\n",
             reply.Text);
-        Assert.Empty(reply.Effect.Placements);
-        Assert.Null(reply.Effect.Focus);
-        Assert.Equal("a", desktop.ActiveClass());
-        Assert.Equal(clients, desktop.Send("j/clients"));
+        Assert.IsEmpty(reply.Effect.Placements);
+        Assert.IsNull(reply.Effect.Focus);
+        Assert.AreEqual("a", desktop.ActiveClass());
+        Assert.AreEqual(clients, desktop.Send("j/clients"));
     }
 
-    [Fact]
+    [TestMethod]
     public void ADialogFloatsOnItsOwnAndARuleFloatsKitty()
     {
         var desktop = new TestDesktop();
@@ -51,14 +52,14 @@ public class InspectTests
         var dialog = Inspect(desktop, "class:save");
         var kitty = Inspect(desktop, "class:wr_kitty");
 
-        Assert.True(dialog.GetProperty("floating").GetBoolean());
-        Assert.Equal("dialog", dialog.GetProperty("floatingReason").GetString());
-        Assert.Equal("windowrule = tile, class:save", dialog.GetProperty("rule").GetString());
-        Assert.Equal("rule", kitty.GetProperty("floatingReason").GetString());
-        Assert.Equal("default", kitty.GetProperty("reason").GetString());
+        Assert.IsTrue(dialog.GetProperty("floating").GetBoolean());
+        Assert.AreEqual("dialog", dialog.GetProperty("floatingReason").GetString());
+        Assert.AreEqual("windowrule = tile, class:save", dialog.GetProperty("rule").GetString());
+        Assert.AreEqual("rule", kitty.GetProperty("floatingReason").GetString());
+        Assert.AreEqual("default", kitty.GetProperty("reason").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AFloatToggledAfterAdoptionHasNoReasonItCannotKnow()
     {
         var desktop = new TestDesktop();
@@ -67,13 +68,13 @@ public class InspectTests
 
         var inspected = Inspect(desktop, "class:term");
 
-        Assert.True(inspected.GetProperty("floating").GetBoolean());
-        Assert.Equal(JsonValueKind.Null, inspected.GetProperty("floatingReason").ValueKind);
-        Assert.Equal("default", inspected.GetProperty("reason").GetString());
+        Assert.IsTrue(inspected.GetProperty("floating").GetBoolean());
+        Assert.AreEqual(JsonValueKind.Null, inspected.GetProperty("floatingReason").ValueKind);
+        Assert.AreEqual("default", inspected.GetProperty("reason").GetString());
         Assert.Contains("\tfloating: yes (changed since it was adopted; the cause is not recorded)\n", desktop.Send("inspect class:term"), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOverlayUnderThePointerIsLeftAloneAndNoRuleIsOffered()
     {
         var desktop = new TestDesktop();
@@ -81,19 +82,19 @@ public class InspectTests
 
         var inspected = Inspect(desktop);
 
-        Assert.Empty(desktop.Clients());
-        Assert.False(inspected.GetProperty("managed").GetBoolean());
-        Assert.Equal(JsonValueKind.Null, inspected.GetProperty("floating").ValueKind);
-        Assert.Equal("overlay", inspected.GetProperty("reason").GetString());
-        Assert.Equal("now", inspected.GetProperty("reasonAt").GetString());
-        Assert.Equal(JsonValueKind.Null, inspected.GetProperty("rule").ValueKind);
-        Assert.Equal("native", inspected.GetProperty("ruleNote").GetString());
+        Assert.IsEmpty(desktop.Clients());
+        Assert.IsFalse(inspected.GetProperty("managed").GetBoolean());
+        Assert.AreEqual(JsonValueKind.Null, inspected.GetProperty("floating").ValueKind);
+        Assert.AreEqual("overlay", inspected.GetProperty("reason").GetString());
+        Assert.AreEqual("now", inspected.GetProperty("reasonAt").GetString());
+        Assert.AreEqual(JsonValueKind.Null, inspected.GetProperty("rule").ValueKind);
+        Assert.AreEqual("native", inspected.GetProperty("ruleNote").GetString());
         var text = desktop.Send("inspect");
         Assert.Contains("\tmanaged: no (now: it is an overlay that takes no input or activation)\n", text, StringComparison.Ordinal);
         Assert.EndsWith("\trule: none (no window rule can make it a Client)\n", text, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void AShellWindowHasNoDraftWithoutClaimingARuleCannotAdoptIt()
     {
         var desktop = new TestDesktop();
@@ -101,13 +102,13 @@ public class InspectTests
 
         var inspected = Inspect(desktop);
 
-        Assert.Equal("shell", inspected.GetProperty("reason").GetString());
-        Assert.Equal(JsonValueKind.Null, inspected.GetProperty("rule").ValueKind);
-        Assert.Equal("shell", inspected.GetProperty("ruleNote").GetString());
+        Assert.AreEqual("shell", inspected.GetProperty("reason").GetString());
+        Assert.AreEqual(JsonValueKind.Null, inspected.GetProperty("rule").ValueKind);
+        Assert.AreEqual("shell", inspected.GetProperty("ruleNote").GetString());
         Assert.EndsWith("\trule: none (it is part of the Windows shell)\n", desktop.Send("inspect"), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void AToolWindowGetsARuleThatAdoptsTheNextOneLikeIt()
     {
         var desktop = new TestDesktop();
@@ -116,16 +117,16 @@ public class InspectTests
 
         var inspected = Inspect(desktop);
 
-        Assert.Equal("tool", inspected.GetProperty("reason").GetString());
+        Assert.AreEqual("tool", inspected.GetProperty("reason").GetString());
         var rule = inspected.GetProperty("rule").GetString()!;
-        Assert.Equal("windowrule = float, exe:paint.exe", rule);
+        Assert.AreEqual("windowrule = float, exe:paint.exe", rule);
         desktop.Set("windowrule", rule["windowrule = ".Length..]);
         desktop.Spawn("palette", traits: tool);
-        Assert.True(TestDesktop.Floating(desktop.Client("palette")));
-        Assert.Equal("rule", Inspect(desktop, "class:palette").GetProperty("reason").GetString());
+        Assert.IsTrue(TestDesktop.Floating(desktop.Client("palette")));
+        Assert.AreEqual("rule", Inspect(desktop, "class:palette").GetProperty("reason").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void WindowTextCannotForgeLinesInTheTextReply()
     {
         var desktop = new TestDesktop();
@@ -133,12 +134,12 @@ public class InspectTests
 
         var lines = desktop.Send("inspect").Split('\n');
 
-        Assert.Equal("Window 1 -> title \tmanaged: no:", lines[0]);
-        Assert.Single(lines, line => line.StartsWith("\tmanaged:", StringComparison.Ordinal));
-        Assert.Equal("\trule: none (none of its executable, class, or title can be written as a rule)", lines[^2]);
+        Assert.AreEqual("Window 1 -> title \tmanaged: no:", lines[0]);
+        Assert.ContainsSingle(line => line.StartsWith("\tmanaged:", StringComparison.Ordinal), lines);
+        Assert.AreEqual("\trule: none (none of its executable, class, or title can be written as a rule)", lines[^2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnIgnoredWindowIsLeftAloneByARule()
     {
         var desktop = new TestDesktop("windowrule = ignore, class:pip");
@@ -146,27 +147,27 @@ public class InspectTests
 
         var inspected = Inspect(desktop);
 
-        Assert.False(inspected.GetProperty("managed").GetBoolean());
-        Assert.Equal("rule", inspected.GetProperty("reason").GetString());
-        Assert.Equal("windowrule = float, class:pip", inspected.GetProperty("rule").GetString());
+        Assert.IsFalse(inspected.GetProperty("managed").GetBoolean());
+        Assert.AreEqual("rule", inspected.GetProperty("reason").GetString());
+        Assert.AreEqual("windowrule = float, class:pip", inspected.GetProperty("rule").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowTheRulesNowAdoptIsNotClaimedToBeManaged()
     {
         var desktop = new TestDesktop("windowrule = ignore, class:pip");
         desktop.UnderPointer = desktop.Spawn("pip");
         desktop.ReloadWithoutExtra();
-        Assert.Equal("ok", desktop.Send("reload"));
+        Assert.AreEqual("ok", desktop.Send("reload"));
 
         var inspected = Inspect(desktop);
 
-        Assert.False(inspected.GetProperty("managed").GetBoolean());
-        Assert.Equal("not_adopted", inspected.GetProperty("reason").GetString());
-        Assert.Equal(JsonValueKind.Null, inspected.GetProperty("rule").ValueKind);
+        Assert.IsFalse(inspected.GetProperty("managed").GetBoolean());
+        Assert.AreEqual("not_adopted", inspected.GetProperty("reason").GetString());
+        Assert.AreEqual(JsonValueKind.Null, inspected.GetProperty("rule").ValueKind);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFloatGivenBackAfterARestartSaysSo()
     {
         var before = new TestDesktop();
@@ -178,46 +179,46 @@ public class InspectTests
 
         var inspected = Inspect(after, "class:term");
 
-        Assert.True(inspected.GetProperty("floating").GetBoolean());
-        Assert.Equal("restored", inspected.GetProperty("floatingReason").GetString());
+        Assert.IsTrue(inspected.GetProperty("floating").GetBoolean());
+        Assert.AreEqual("restored", inspected.GetProperty("floatingReason").GetString());
     }
 
-    [Theory]
-    [InlineData("class:[", "'[' is not a valid pattern")]
-    [InlineData("[", "'[' is not a valid pattern")]
-    [InlineData("title:(a", "'(a' is not a valid pattern")]
-    [InlineData("pid:12a", "pid: takes a process id, such as pid:1234")]
-    [InlineData("address:zz", "address: takes a window address, such as address:0x2a")]
-    [InlineData("stableid:xyz", "stableid: takes the stableID clients reports, such as stableid:2a")]
+    [TestMethod]
+    [DataRow("class:[", "'[' is not a valid pattern")]
+    [DataRow("[", "'[' is not a valid pattern")]
+    [DataRow("title:(a", "'(a' is not a valid pattern")]
+    [DataRow("pid:12a", "pid: takes a process id, such as pid:1234")]
+    [DataRow("address:zz", "address: takes a window address, such as address:0x2a")]
+    [DataRow("stableid:xyz", "stableid: takes the stableID clients reports, such as stableid:2a")]
     public void AMalformedSelectorIsAnErrorEvenWithNoClients(string selector, string problem)
     {
         var desktop = new TestDesktop();
 
-        Assert.Equal("error: invalid selector: " + problem, desktop.Send("inspect " + selector));
-        Assert.Equal("error: invalid selector: " + problem, desktop.Send("j/inspect " + selector));
+        Assert.AreEqual("error: invalid selector: " + problem, desktop.Send("inspect " + selector));
+        Assert.AreEqual("error: invalid selector: " + problem, desktop.Send("j/inspect " + selector));
         desktop.Spawn("term");
-        Assert.Equal("error: invalid selector: " + problem, desktop.Send("j/inspect " + selector));
+        Assert.AreEqual("error: invalid selector: " + problem, desktop.Send("j/inspect " + selector));
     }
 
-    [Theory]
-    [InlineData("class:nothing")]
-    [InlineData("nothing")]
-    [InlineData("pid:999")]
-    [InlineData("address:0x999")]
-    [InlineData("0x999")]
-    [InlineData("stableid:ff")]
+    [TestMethod]
+    [DataRow("class:nothing")]
+    [DataRow("nothing")]
+    [DataRow("pid:999")]
+    [DataRow("address:0x999")]
+    [DataRow("0x999")]
+    [DataRow("stableid:ff")]
     public void AWellFormedSelectorThatMatchesNoClientIsNotFound(string selector)
     {
         var desktop = new TestDesktop();
 
-        Assert.Equal("window not found: no Client matches", desktop.Send("inspect " + selector));
-        Assert.Equal("no_client", Inspect(desktop, selector).GetProperty("reason").GetString());
+        Assert.AreEqual("window not found: no Client matches", desktop.Send("inspect " + selector));
+        Assert.AreEqual("no_client", Inspect(desktop, selector).GetProperty("reason").GetString());
     }
 
-    [Theory]
-    [InlineData("", "pointer", "no_window", "window not found: no window under the pointer")]
-    [InlineData("class:nothing", "selector", "no_client", "window not found: no Client matches")]
-    [InlineData("class:gone", "selector", "closed", "window not found: the window closed")]
+    [TestMethod]
+    [DataRow("", "pointer", "no_window", "window not found: no window under the pointer")]
+    [DataRow("class:nothing", "selector", "no_client", "window not found: no Client matches")]
+    [DataRow("class:gone", "selector", "closed", "window not found: the window closed")]
     public void AWindowThatIsNotThereIsNotFoundInTextAndJson(string selector, string target, string reason, string text)
     {
         var desktop = new TestDesktop();
@@ -225,28 +226,28 @@ public class InspectTests
 
         var inspected = Inspect(desktop, selector);
 
-        Assert.Equal("not_found", inspected.GetProperty("status").GetString());
-        Assert.Equal(target, inspected.GetProperty("target").GetString());
-        Assert.Equal(reason, inspected.GetProperty("reason").GetString());
-        Assert.Equal(JsonValueKind.Null, inspected.GetProperty("address").ValueKind);
-        Assert.Equal(JsonValueKind.Null, inspected.GetProperty("managed").ValueKind);
-        Assert.Equal(text, desktop.Send(("inspect " + selector).Trim()));
+        Assert.AreEqual("not_found", inspected.GetProperty("status").GetString());
+        Assert.AreEqual(target, inspected.GetProperty("target").GetString());
+        Assert.AreEqual(reason, inspected.GetProperty("reason").GetString());
+        Assert.AreEqual(JsonValueKind.Null, inspected.GetProperty("address").ValueKind);
+        Assert.AreEqual(JsonValueKind.Null, inspected.GetProperty("managed").ValueKind);
+        Assert.AreEqual(text, desktop.Send(("inspect " + selector).Trim()));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheCommandLineSendsInspectWithItsWholeSelector()
     {
         var desktop = new TestDesktop();
         desktop.Spawn("doc", "My Doc");
 
-        Assert.True(ControlInvocation.TryCreate(["-j", "inspect", "title:My Doc"], out var line, out var events));
+        Assert.IsTrue(ControlInvocation.TryCreate(["-j", "inspect", "title:My Doc"], out var line, out var events));
 
-        Assert.Equal("j/inspect title:My Doc", line);
-        Assert.False(events);
-        Assert.Equal("found", JsonElement.Parse(desktop.Send(line)).GetProperty("status").GetString());
-        Assert.True(ControlInvocation.TryCreate(["inspect"], out var pointer, out _));
-        Assert.Equal("inspect", pointer);
-        Assert.False(ControlInvocation.TryCreate(["inspect", "-x"], out _, out _));
+        Assert.AreEqual("j/inspect title:My Doc", line);
+        Assert.IsFalse(events);
+        Assert.AreEqual("found", JsonElement.Parse(desktop.Send(line)).GetProperty("status").GetString());
+        Assert.IsTrue(ControlInvocation.TryCreate(["inspect"], out var pointer, out _));
+        Assert.AreEqual("inspect", pointer);
+        Assert.IsFalse(ControlInvocation.TryCreate(["inspect", "-x"], out _, out _));
         Assert.Contains("winland [-j] inspect [selector]\n", ControlInvocation.Usage, StringComparison.Ordinal);
     }
 

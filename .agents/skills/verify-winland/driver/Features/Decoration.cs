@@ -1,12 +1,14 @@
 using Windows.Win32;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "decoration")]
-public class Decoration(ITestOutputHelper output)
+[TestClass]
+public class Decoration
 {
-    private const string Config =
+
+    public TestContext TestContext { get; set; } = null!;
+        private const string Config =
         """
         general:border_size = 6
         general:col.active_border = 0xffff0000
@@ -16,7 +18,7 @@ public class Decoration(ITestOutputHelper output)
         """;
 
     [VerifyFact]
-    public void DrawsBordersAndDimsInactiveWindows() => VerifyRun.Drive(output, Config, run =>
+    public void DrawsBordersAndDimsInactiveWindows() => VerifyRun.Drive(TestContext, Config, run =>
     {
         var (left, right) = run.OpenPair();
         run.Focus(left);

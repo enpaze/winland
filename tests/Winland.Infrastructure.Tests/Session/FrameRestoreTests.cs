@@ -1,8 +1,9 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class FrameRestoreTests
 {
-    [Fact]
+    [TestMethod]
     public void ResettingDecorationsPutsBackTheFrameOfAFullscreenClient()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -10,14 +11,14 @@ public class FrameRestoreTests
         var original = windows.Desktop[1].Style;
 
         windows.Dispatch("fullscreen", "2");
-        Assert.NotEqual(original, windows.Desktop[1].Style);
+        Assert.AreNotEqual(original, windows.Desktop[1].Style);
 
         windows.Adapter.ResetDecorations();
 
-        Assert.Equal(original, windows.Desktop[1].Style);
+        Assert.AreEqual(original, windows.Desktop[1].Style);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOutcomeAfterTheCleanupDoesNotStripTheFrameAgain()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -25,12 +26,12 @@ public class FrameRestoreTests
         var original = windows.Desktop[1].Style;
         windows.Dispatch("fullscreen", "2");
         windows.Dispatch("fullscreen", "2");
-        Assert.Equal(original, windows.Desktop[1].Style);
+        Assert.AreEqual(original, windows.Desktop[1].Style);
 
         windows.Adapter.RevealHidden();
         windows.Adapter.ResetDecorations();
         windows.Dispatch("fullscreen", "2");
 
-        Assert.Equal(original, windows.Desktop[1].Style);
+        Assert.AreEqual(original, windows.Desktop[1].Style);
     }
 }

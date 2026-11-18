@@ -2,9 +2,10 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class PersistentWorkspaceTests
 {
-    [Fact]
+    [TestMethod]
     public void WorkspaceLifecycleReleasesEmptyWorkspaces()
     {
         var desk = new TestDesktop();
@@ -13,7 +14,7 @@ public class PersistentWorkspaceTests
         Assert.Contains("HEADLESS-LIFECYCLE-OWNERSHIP", MonitorNames(desk));
         desk.Ok("focusmonitor", "HEADLESS-LIFECYCLE-OWNERSHIP");
         desk.Ok("workspace", "410");
-        Assert.Equal("410 (410)", Label(desk.ActiveWorkspace()));
+        Assert.AreEqual("410 (410)", Label(desk.ActiveWorkspace()));
 
         desk.RemoveMonitor("HEADLESS-LIFECYCLE-OWNERSHIP");
         Assert.DoesNotContain("HEADLESS-LIFECYCLE-OWNERSHIP", MonitorNames(desk));
@@ -23,7 +24,7 @@ public class PersistentWorkspaceTests
         Assert.Contains("HEADLESS-LIFECYCLE-OWNERSHIP", MonitorNames(desk));
         Assert.Contains("410 (410)", Labels(desk));
         desk.Ok("focusmonitor", "HEADLESS-LIFECYCLE-OWNERSHIP");
-        Assert.Equal("410 (410)", Label(desk.ActiveWorkspace()));
+        Assert.AreEqual("410 (410)", Label(desk.ActiveWorkspace()));
 
         desk.RemoveMonitor("HEADLESS-LIFECYCLE-OWNERSHIP");
         Assert.DoesNotContain("HEADLESS-LIFECYCLE-OWNERSHIP", MonitorNames(desk));

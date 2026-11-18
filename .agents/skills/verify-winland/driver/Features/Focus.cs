@@ -1,12 +1,14 @@
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "focus")]
-public class Focus(ITestOutputHelper output)
+[TestClass]
+public class Focus
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void FocusesByAddressAndByDirection() => VerifyRun.Drive(output, run =>
+    public void FocusesByAddressAndByDirection() => VerifyRun.Drive(TestContext, run =>
     {
         var (left, right) = run.OpenPair();
 
@@ -16,7 +18,7 @@ public class Focus(ITestOutputHelper output)
         run.Until("movefocus r focuses the right window", () => run.Active() == VerifyRun.Address(right));
         var frame = VerifyRun.Frame(right);
         var (x, y) = Desktop.Cursor();
-        Assert.True(Math.Abs(x - ((frame.Left + frame.Right) / 2)) <= 4 && Math.Abs(y - ((frame.Top + frame.Bottom) / 2)) <= 4, $"movefocus left the cursor at {x},{y}, not the middle of {frame}.");
+        Assert.IsTrue(Math.Abs(x - ((frame.Left + frame.Right) / 2)) <= 4 && Math.Abs(y - ((frame.Top + frame.Bottom) / 2)) <= 4, $"movefocus left the cursor at {x},{y}, not the middle of {frame}.");
         run.Say($"saw: movefocus put the cursor in the middle of the window it focused ({x},{y})");
 
         run.Dispatch("movefocus l");

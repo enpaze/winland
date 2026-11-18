@@ -1,12 +1,13 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class DispatcherRegressionTests
 {
     private static readonly Rectangle Area = new(0, 0, 1000, 800);
 
-    [Theory]
-    [InlineData("resizeactive", "10 0")]
-    [InlineData("killactive", "")]
+    [TestMethod]
+    [DataRow("resizeactive", "10 0")]
+    [DataRow("killactive", "")]
     public void APreviousLayoutMessageDoesNotOverrideFocusOnAnotherDispatcher(string name, string argument)
     {
         var core = Configured("general:layout = scrolling");
@@ -17,11 +18,11 @@ public class DispatcherRegressionTests
 
         var result = core.Handle(new Dispatch(name, argument));
 
-        Assert.Null(result.Focus);
-        Assert.Equal("0x3", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        Assert.IsNull(result.Focus);
+        Assert.AreEqual("0x3", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void MovefocusUsesTheOpenSpecialWorkspace()
     {
         var core = new WindowManager();
@@ -29,10 +30,10 @@ public class DispatcherRegressionTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
-        Assert.Equal(new WindowId(1), core.Handle(new Dispatch("movefocus", "l")).Focus);
+        Assert.AreEqual(new WindowId(1), core.Handle(new Dispatch("movefocus", "l")).Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void FocuswindowRefusesANoFocusClient()
     {
         var core = Configured("windowrule = no_focus, class:quiet");
@@ -41,11 +42,11 @@ public class DispatcherRegressionTests
 
         var result = core.Handle(new Dispatch("focuswindow", "address:0x2"));
 
-        Assert.Null(result.Focus);
-        Assert.Equal("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        Assert.IsNull(result.Focus);
+        Assert.AreEqual("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void ANativeFloatingMoveJoinsTheMonitorUnderItsMiddle()
     {
         var core = new WindowManager();
@@ -54,11 +55,11 @@ public class DispatcherRegressionTests
 
         var moved = Place(core, 1, new Rectangle(1200, 100, 300, 200));
 
-        Assert.Equal(1, Client(moved, 1).Workspace.Monitor);
-        Assert.Equal(new Rectangle(1200, 100, 300, 200), Client(moved, 1).Bounds);
+        Assert.AreEqual(1, Client(moved, 1).Workspace.Monitor);
+        Assert.AreEqual(new Rectangle(1200, 100, 300, 200), Client(moved, 1).Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void LayoutMessagesUseTheLayoutmsgDispatcher()
     {
         var core = new WindowManager();
@@ -67,7 +68,7 @@ public class DispatcherRegressionTests
 
         var refused = core.Handle(new Dispatch("layout", "togglesplit"));
 
-        Assert.Equal("error: unknown layout 'togglesplit'", refused.Error);
-        Assert.Empty(refused.Placements);
+        Assert.AreEqual("error: unknown layout 'togglesplit'", refused.Error);
+        Assert.IsEmpty(refused.Placements);
     }
 }

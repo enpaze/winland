@@ -1,8 +1,9 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class TouchpadSwipeTests
 {
-    [Fact]
+    [TestMethod]
     public void ThreeFingersThatTravelStartASwipeAndTheirMeanMovementUpdatesIt()
     {
         var swipe = new TouchpadSwipe();
@@ -11,39 +12,39 @@ public class TouchpadSwipeTests
         var began = swipe.Report(3, Fingers((0, 8, 11), (1, 18, 11), (2, 28, 11)));
         var moved = swipe.Report(3, Fingers((0, 7, 11), (1, 17, 11), (2, 27, 11)));
 
-        Assert.Empty(down);
-        Assert.Equal(new SwipeBegan(3), began[0]);
-        var first = Assert.IsType<SwipeUpdated>(began[1]);
-        Assert.Equal(-2 * TouchpadSwipe.PixelsPerMillimetre, first.DeltaX, 6);
-        Assert.Equal(TouchpadSwipe.PixelsPerMillimetre, first.DeltaY, 6);
-        var update = Assert.IsType<SwipeUpdated>(Assert.Single(moved));
-        Assert.Equal(3, update.Fingers);
-        Assert.Equal(-TouchpadSwipe.PixelsPerMillimetre, update.DeltaX, 6);
-        Assert.Equal(0, update.DeltaY, 6);
+        Assert.IsEmpty(down);
+        Assert.AreEqual(new SwipeBegan(3), began[0]);
+        var first = Assert.IsExactInstanceOfType<SwipeUpdated>(began[1]);
+        Assert.AreEqual(-2 * TouchpadSwipe.PixelsPerMillimetre, first.DeltaX, 5E-07);
+        Assert.AreEqual(TouchpadSwipe.PixelsPerMillimetre, first.DeltaY, 5E-07);
+        var update = Assert.IsExactInstanceOfType<SwipeUpdated>(Assert.ContainsSingle(moved));
+        Assert.AreEqual(3, update.Fingers);
+        Assert.AreEqual(-TouchpadSwipe.PixelsPerMillimetre, update.DeltaX, 5E-07);
+        Assert.AreEqual(0, update.DeltaY, 5E-07);
     }
 
-    [Fact]
+    [TestMethod]
     public void TwoFingersThatTravelAreScrollNotASwipe()
     {
         var swipe = new TouchpadSwipe();
 
-        Assert.Empty(swipe.Report(2, Fingers((0, 10, 10), (1, 20, 10))));
-        Assert.Empty(swipe.Report(2, Fingers((0, 5, 10), (1, 15, 10))));
-        Assert.Empty(swipe.Report(2, Fingers((0, 7, 10), (1, 25, 10))));
+        Assert.IsEmpty(swipe.Report(2, Fingers((0, 10, 10), (1, 20, 10))));
+        Assert.IsEmpty(swipe.Report(2, Fingers((0, 5, 10), (1, 15, 10))));
+        Assert.IsEmpty(swipe.Report(2, Fingers((0, 7, 10), (1, 25, 10))));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFrameSpreadOverReportsIsAssembledFirst()
     {
         var swipe = new TouchpadSwipe();
         swipe.Report(3, Fingers((0, 10, 10), (1, 20, 10), (2, 30, 10)));
 
-        Assert.Empty(swipe.Report(3, Fingers((0, 12, 10))));
-        Assert.Empty(swipe.Report(0, Fingers((1, 22, 10))));
-        Assert.Equal(new SwipeBegan(3), swipe.Report(0, Fingers((2, 32, 10)))[0]);
+        Assert.IsEmpty(swipe.Report(3, Fingers((0, 12, 10))));
+        Assert.IsEmpty(swipe.Report(0, Fingers((1, 22, 10))));
+        Assert.AreEqual(new SwipeBegan(3), swipe.Report(0, Fingers((2, 32, 10)))[0]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ALiftedFingerEndsTheSwipeAndTheNextWaitsForEveryFingerUp()
     {
         var swipe = new TouchpadSwipe();
@@ -56,13 +57,13 @@ public class TouchpadSwipeTests
         swipe.Report(3, Fingers((3, 10, 10), (4, 20, 10), (5, 30, 10)));
         var fresh = swipe.Report(3, Fingers((3, 12, 10), (4, 22, 10), (5, 32, 10)));
 
-        Assert.True(Assert.IsType<SwipeEnded>(Assert.Single(lifted)).TimeMs > 0);
-        Assert.Equal([new SwipeEnded()], Untimed(lifted));
-        Assert.Empty(again);
-        Assert.Equal(new SwipeBegan(3), fresh[0]);
+        Assert.IsTrue(Assert.IsExactInstanceOfType<SwipeEnded>(Assert.ContainsSingle(lifted)).TimeMs > 0);
+        Assert.AreSequenceEqual([new SwipeEnded()], Untimed(lifted));
+        Assert.IsEmpty(again);
+        Assert.AreEqual(new SwipeBegan(3), fresh[0]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnotherFingerCancelsTheSwipeAndStartsOneWithMore()
     {
         var swipe = new TouchpadSwipe();
@@ -72,36 +73,36 @@ public class TouchpadSwipeTests
         var more = swipe.Report(4, Fingers((0, 12, 10), (1, 22, 10), (2, 32, 10), (3, 42, 10)));
         var moved = swipe.Report(4, Fingers((0, 14, 10), (1, 24, 10), (2, 34, 10), (3, 44, 10)));
 
-        Assert.Equal([new SwipeEnded(Cancelled: true)], Untimed(more));
-        Assert.Equal(new SwipeBegan(4), moved[0]);
+        Assert.AreSequenceEqual([new SwipeEnded(Cancelled: true)], Untimed(more));
+        Assert.AreEqual(new SwipeBegan(4), moved[0]);
     }
 
-    [Fact]
+    [TestMethod]
     public void EachFinishedFrameIsHandedOnWithTheFingersDown()
     {
         var frames = new List<IReadOnlyDictionary<int, (double X, double Y)>>();
         var swipe = new TouchpadSwipe { Framed = down => frames.Add(new Dictionary<int, (double X, double Y)>(down)) };
 
         _ = swipe.Report(2, [new TouchContact(0, true, 1, 2)]);
-        Assert.Empty(frames);
+        Assert.IsEmpty(frames);
         _ = swipe.Report(0, [new TouchContact(1, false, 3, 4)]);
 
-        Assert.Equal((1d, 2d), Assert.Single(Assert.Single(frames)).Value);
+        Assert.AreEqual((1d, 2d), Assert.ContainsSingle(Assert.ContainsSingle(frames)).Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheMouseHookSeesTheFingersTheTouchpadLastReported()
     {
         TouchpadFingers.Note(1, 1000);
-        Assert.True(TouchpadFingers.Moves(1000 + TouchpadPointer.StaleMs));
-        Assert.False(TouchpadFingers.Moves(1001 + TouchpadPointer.StaleMs));
-        Assert.False(TouchpadFingers.Scrolls(1000, 30));
+        Assert.IsTrue(TouchpadFingers.Moves(1000 + TouchpadPointer.StaleMs));
+        Assert.IsFalse(TouchpadFingers.Moves(1001 + TouchpadPointer.StaleMs));
+        Assert.IsFalse(TouchpadFingers.Scrolls(1000, 30));
 
         TouchpadFingers.Note(2, 2000);
         TouchpadFingers.Note(0, 2100);
-        Assert.False(TouchpadFingers.Moves(2100));
-        Assert.True(TouchpadFingers.Scrolls(2100, 30));
-        Assert.False(TouchpadFingers.Scrolls(2100, 120));
+        Assert.IsFalse(TouchpadFingers.Moves(2100));
+        Assert.IsTrue(TouchpadFingers.Scrolls(2100, 30));
+        Assert.IsFalse(TouchpadFingers.Scrolls(2100, 120));
     }
 
     private static Input[] Untimed(IEnumerable<Input> inputs) =>

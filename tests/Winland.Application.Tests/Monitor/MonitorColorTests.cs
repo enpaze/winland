@@ -2,9 +2,10 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class MonitorColorTests
 {
-    [Fact]
+    [TestMethod]
     public void MonitorsColorManagement()
     {
         var desk = new TestDesktop();
@@ -17,6 +18,6 @@ public class MonitorColorTests
     {
         using var monitors = JsonDocument.Parse(desk.Send("j/monitors"));
         foreach (var field in fields)
-            Assert.Contains(monitors.RootElement.EnumerateArray(), monitor => monitor.TryGetProperty(field, out _));
+            Assert.Contains(monitor => monitor.TryGetProperty(field, out _), monitors.RootElement.EnumerateArray());
     }
 }

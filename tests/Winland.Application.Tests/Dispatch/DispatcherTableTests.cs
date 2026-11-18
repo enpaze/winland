@@ -1,16 +1,17 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class DispatcherTableTests
 {
-    [Fact]
+    [TestMethod]
     public void AnUnknownDispatcherIsAnError()
     {
         var reply = new WindowManager().Execute("dispatch notadispatcher");
 
-        Assert.Equal("error: unknown dispatcher 'notadispatcher'", reply.Text);
+        Assert.AreEqual("error: unknown dispatcher 'notadispatcher'", reply.Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void TogglesplitRunsAsALayoutMessageAndAsADispatcher()
     {
         var desk = new TestDesktop();

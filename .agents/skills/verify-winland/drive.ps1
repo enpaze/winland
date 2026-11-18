@@ -116,7 +116,7 @@ function Invoke-Driver([string]$id) {
     $name = "feature-$id.trx"
     $report = Join-Path $results $name
     if (Test-Path -LiteralPath $report) { Remove-Item -LiteralPath $report -Force }
-    dotnet test $project --configuration Release --nologo --no-build --filter "Feature=$id" --logger 'console;verbosity=detailed' --logger "trx;LogFileName=$name" --results-directory $results | Out-Host
+    dotnet test $project --configuration Release --nologo --no-build --results-directory $results -- --filter "Feature=$id" --report-trx --report-trx-filename $name | Out-Host
     $code = $LASTEXITCODE
     if (-not (Test-Path -LiteralPath $report)) {
         Write-Host "The driver for '$id' wrote no test report, so no test has [Trait(""Feature"", ""$id"")]."

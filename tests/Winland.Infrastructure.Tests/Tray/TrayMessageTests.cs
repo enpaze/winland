@@ -1,14 +1,15 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class TrayMessageTests
 {
-    [Fact]
+    [TestMethod]
     public void OnlyTheCallbackIsAllowedWhenTheBroadcastIsNotRegistered()
     {
-        Assert.Equal([TrayMessages.Callback], TrayMessages.Allowed(0));
+        Assert.AreSequenceEqual([TrayMessages.Callback], TrayMessages.Allowed(0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheCallbackAndTaskbarCreatedAreAllowedTogether()
     {
         const uint taskbarCreated = 0xC000;
@@ -17,6 +18,6 @@ public class TrayMessageTests
 
         Assert.Contains(TrayMessages.Callback, allowed);
         Assert.Contains(taskbarCreated, allowed);
-        Assert.Equal(2, allowed.Length);
+        Assert.AreEqual(2, allowed.Length);
     }
 }

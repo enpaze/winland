@@ -40,7 +40,10 @@ internal sealed class TestWindows : IDisposable
 
     internal void Apply(Outcome outcome)
     {
-        Assert.All(outcome.Decorations, decoration => Assert.Null(decoration.Ring));
+        foreach (var decoration in outcome.Decorations)
+{
+    Assert.IsNull(decoration.Ring);
+}
         Adapter.Apply(outcome);
     }
 

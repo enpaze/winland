@@ -1,18 +1,19 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class ConfigFileOnlyTests
 {
-    [Theory]
-    [InlineData("keyword general:hide_taskbar true")]
-    [InlineData("keyword general:gaps_out 0")]
-    [InlineData("keyword windowrule float, class:b")]
-    [InlineData("getoption general:gaps_out")]
-    [InlineData("setprop address:0x1 border_size 9")]
-    [InlineData("getprop address:0x1 border_size")]
-    [InlineData("dispatch setprop address:0x1 border_size 9")]
-    [InlineData("[[BATCH]]keyword general:gaps_out 0 ; keyword general:border_size 9")]
-    [InlineData("[[BATCH]]j/clients")]
-    [InlineData("[[BATCH]]/reload")]
+    [TestMethod]
+    [DataRow("keyword general:hide_taskbar true")]
+    [DataRow("keyword general:gaps_out 0")]
+    [DataRow("keyword windowrule float, class:b")]
+    [DataRow("getoption general:gaps_out")]
+    [DataRow("setprop address:0x1 border_size 9")]
+    [DataRow("getprop address:0x1 border_size")]
+    [DataRow("dispatch setprop address:0x1 border_size 9")]
+    [DataRow("[[BATCH]]keyword general:gaps_out 0 ; keyword general:border_size 9")]
+    [DataRow("[[BATCH]]j/clients")]
+    [DataRow("[[BATCH]]/reload")]
     public void NoRequestReadsOrChangesASetting(string line)
     {
         var desk = new TestDesktop();
@@ -25,14 +26,14 @@ public class ConfigFileOnlyTests
         Assert.StartsWith("error:", desk.Send(line), StringComparison.Ordinal);
 
         desk.Spawn("b");
-        Assert.False(TestDesktop.Floating(desk.Client("b")));
+        Assert.IsFalse(TestDesktop.Floating(desk.Client("b")));
         desk.Close("b");
-        Assert.Equal(applied, (core.HideTaskbar, core.RuleRevision));
-        Assert.Equal(placed, desk.PlaceOf("a"));
-        Assert.Equal(windows, desk.Send("j/clients"));
+        Assert.AreEqual(applied, (core.HideTaskbar, core.RuleRevision));
+        Assert.AreEqual(placed, desk.PlaceOf("a"));
+        Assert.AreEqual(windows, desk.Send("j/clients"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AReloadGivesEveryWindowTheRuleEffectsOfTheFileAsItIsNow()
     {
         const string options = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 2\n";
@@ -46,11 +47,11 @@ public class ConfigFileOnlyTests
         rules = "windowrule = opacity 0.5, class:a\n";
         var reloaded = core.Execute("reload");
 
-        Assert.Equal((255, 128), (AlphaOf(opened, 1), AlphaOf(opened, 2)));
-        Assert.Equal("ok", reloaded.Text);
-        Assert.Equal((128, 255), (AlphaOf(reloaded.Effect, 1), AlphaOf(reloaded.Effect, 2)));
+        Assert.AreEqual((255, 128), (AlphaOf(opened, 1), AlphaOf(opened, 2)));
+        Assert.AreEqual("ok", reloaded.Text);
+        Assert.AreEqual((128, 255), (AlphaOf(reloaded.Effect, 1), AlphaOf(reloaded.Effect, 2)));
     }
 
     private static int AlphaOf(Outcome outcome, long window) =>
-        Assert.Single(outcome.Decorations, decoration => decoration.Client == new ClientId(window)).Alpha;
+        Assert.ContainsSingle(decoration => decoration.Client == new ClientId(window), outcome.Decorations).Alpha;
 }

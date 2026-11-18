@@ -2,49 +2,53 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class ControlRequestTests
 {
-    [Fact]
+    [TestMethod]
     public void JsonErrors()
     {
         var desk = new TestDesktop();
 
     }
 
-    [Fact]
+    [TestMethod]
     public void ABareDispatchListsInOrderEveryDispatcherWinlandRuns()
     {
-        Assert.True(ControlInvocation.TryListNames(["dispatch"], out var list));
+        Assert.IsTrue(ControlInvocation.TryListNames(["dispatch"], out var list));
 
         var names = list.Split('\n');
-        Assert.Equal(names.Order(StringComparer.Ordinal), names);
+        Assert.AreSequenceEqual(names.Order(StringComparer.Ordinal), names);
         Assert.Contains("killactive", names);
         var core = new WindowManager();
-        Assert.All(names, name => Assert.DoesNotContain("unknown dispatcher", core.Execute("dispatch " + name).Text, StringComparison.Ordinal));
+        foreach (var name in names)
+{
+    Assert.DoesNotContain("unknown dispatcher", core.Execute("dispatch " + name).Text, StringComparison.Ordinal);
+}
     }
 
-    [Fact]
+    [TestMethod]
     public void TheDispatcherListWithJIsAJsonArrayOfTheSameNames()
     {
-        Assert.True(ControlInvocation.TryListNames(["dispatch"], out var plain));
-        Assert.True(ControlInvocation.TryListNames(["-j", "dispatch"], out var json));
+        Assert.IsTrue(ControlInvocation.TryListNames(["dispatch"], out var plain));
+        Assert.IsTrue(ControlInvocation.TryListNames(["-j", "dispatch"], out var json));
 
-        Assert.Equal(plain.Split('\n'), JsonSerializer.Deserialize<string[]>(json));
+        Assert.AreSequenceEqual(plain.Split('\n'), JsonSerializer.Deserialize<string[]>(json));
     }
 
-    [Theory]
-    [InlineData("dispatch killactive")]
-    [InlineData("clients")]
+    [TestMethod]
+    [DataRow("dispatch killactive")]
+    [DataRow("clients")]
     public void ANamedRequestStillGoesToTheRunningWinland(string request)
     {
         var args = request.Split(' ');
 
-        Assert.False(ControlInvocation.TryListNames(args, out _));
-        Assert.True(ControlInvocation.TryCreate(args, out var line, out _));
-        Assert.Equal(request, line);
+        Assert.IsFalse(ControlInvocation.TryListNames(args, out _));
+        Assert.IsTrue(ControlInvocation.TryCreate(args, out var line, out _));
+        Assert.AreEqual(request, line);
     }
 
-    [Fact]
+    [TestMethod]
     public void BindsJson()
     {
         const string description = "hyprctl binds JSON regression";
@@ -52,11 +56,11 @@ public class ControlRequestTests
         desk.Set("bindd", $"SUPER, F12, {description}, exec, true");
 
         var binds = Json(desk.Send("j/binds")).EnumerateArray().ToArray();
-        Assert.Single(binds, bind => bind.GetProperty("key").GetString() == "F12");
-        Assert.Contains(binds, bind =>
+        Assert.ContainsSingle(bind => bind.GetProperty("key").GetString() == "F12", binds);
+        Assert.Contains(bind =>
             bind.GetProperty("key").GetString() == "F12"
             && bind.GetProperty("has_description").GetBoolean()
-            && bind.GetProperty("description").GetString() == description);
+            && bind.GetProperty("description").GetString() == description, binds);
 
         Assert.Contains($"bindd = SUPER, F12, {description}, exec, true", desk.Send("binds").Split('\n'));
 
@@ -69,16 +73,16 @@ public class ControlRequestTests
 
     private static void ExpectNormal(JsonElement workspace, int id, string name)
     {
-        Assert.Equal(id, workspace.GetProperty("id").GetInt32());
-        Assert.Equal(name, Text(workspace, "name"));
-        Assert.Equal("normal", Text(workspace, "type"));
+        Assert.AreEqual(id, workspace.GetProperty("id").GetInt32());
+        Assert.AreEqual(name, Text(workspace, "name"));
+        Assert.AreEqual("normal", Text(workspace, "type"));
     }
 
     private static void ExpectSpecial(JsonElement workspace, string name)
     {
-        Assert.False(workspace.TryGetProperty("id", out _));
-        Assert.Equal(name, Text(workspace, "name"));
-        Assert.Equal("special", Text(workspace, "type"));
+        Assert.IsFalse(workspace.TryGetProperty("id", out _));
+        Assert.AreEqual(name, Text(workspace, "name"));
+        Assert.AreEqual("special", Text(workspace, "type"));
     }
 
     private static string? Text(JsonElement element, string property) =>
