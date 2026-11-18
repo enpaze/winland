@@ -33,7 +33,7 @@ Preconditions:
 - **Invalid usage and a missing file.** `winland check good.conf bad.conf` exits 2. `winland check missing.conf` exits 1.
 - **Files and errors.** `winland -j get files` reports the run's config path as `config`. `winland get errors` replies `no config errors`.
 - **Open a window.** The driver opens `WinlandVerify 1`. It becomes a Client and fills the work area, because `gaps_out` is 0.
-- **Save the config.** The driver starts `winland events` and appends `gaps_out = 40` and `nosuchoption = 1` to the config. The Event stream holds `configreloaded`, and the window moves in 40 pixels from the left and right of the work area.
+- **Save the config.** The driver starts `winland events` and appends `gaps_out = 40` and `nosuchoption = 1` to the config. The Event stream holds `configreloaded`, and the window moves in from the left and right of the work area by 40 pixels times its Monitor's `scale` from `winland -j get monitors`.
 - **List the warning.** Once `configreloaded` arrives, before the window moves, `winland get errors` names `nosuchoption`. `winland -j get errors` holds an entry whose `file` is the run's config path, whose `line` is above 0, and whose `message` names `nosuchoption`.
 - **Reload by hand.** The driver runs `winland reload`. It replies `ok`.
 

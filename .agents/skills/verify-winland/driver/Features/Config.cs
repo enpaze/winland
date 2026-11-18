@@ -1,3 +1,4 @@
+using System.Globalization;
 
 namespace Winland.Verify.Tests.Features;
 
@@ -45,11 +46,14 @@ public class Config
             && error.GetProperty("message").GetString()!.Contains("nosuchoption", StringComparison.Ordinal),
             run.Json("get", "errors").EnumerateArray());
         run.Say("saw: get errors names nosuchoption with its file and line, in text and JSON");
-        run.Until("saving the config reloaded it and the window moved in by gaps_out 40", () =>
+        var monitor = run.ClientOf(window).GetProperty("monitor").GetString();
+        var scale = run.Json("get", "monitors").EnumerateArray().Single(screen => screen.GetProperty("name").GetString() == monitor).GetProperty("scale").GetDouble();
+        var gap = (int)Math.Round(40 * scale, MidpointRounding.AwayFromZero);
+        run.Until($"saving the config reloaded it and the window moved in by gaps_out 40 at scale {scale.ToString(CultureInfo.InvariantCulture)}, {gap} pixels", () =>
         {
             var frame = VerifyRun.Frame(window);
             var work = VerifyRun.WorkArea(window);
-            return Math.Abs(frame.Left - work.Left - 40) <= 4 && Math.Abs(work.Right - frame.Right - 40) <= 4;
+            return Math.Abs(frame.Left - work.Left - gap) <= 4 && Math.Abs(work.Right - frame.Right - gap) <= 4;
         });
 
         Assert.AreEqual("ok", run.Ask("reload"));
