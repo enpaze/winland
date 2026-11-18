@@ -29,7 +29,7 @@ Preconditions:
 - **Switch back.** The driver runs `winland dispatch workspace 1`. Both windows show and tile side by side again.
 - **Move and stay.** The driver focuses the second window with `winland dispatch focuswindow address:<hwnd>` and runs `winland dispatch movetoworkspacesilent 3`. The second window hides and its Client reports Workspace `3`, Workspace 1 stays active, and the first window fills the work area alone.
 - **Move and follow.** The driver focuses the first window and runs `winland dispatch movetoworkspace 3`. `winland -j activeworkspace` reports `3`, and both windows are visible there.
-- **Events.** The Event stream from `winland events` holds `openwindow` for `WinlandVerifyWindow,WinlandVerify 1`, a `workspacev2` line, and `movewindowv2` for the second window to Workspace `3`.
+- **Events.** The Event stream from `winland events` holds `openwindow` for `WinlandVerifyWindow,WinlandVerify 1`, a `workspace` line for Workspace `3`, `movewindow` for the second window to Workspace `3`, and a `focus` line for Workspace `3` and the first window, `WinlandVerify 1`.
 
 ## Gotchas
 

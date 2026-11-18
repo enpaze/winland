@@ -26,8 +26,8 @@ Preconditions:
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature special-workspaces`. It prints `== feature special-workspaces: passed`.
 - **Tile two windows.** The driver follows `winland events`, then opens `WinlandVerify 1` and `WinlandVerify 2`, which tile side by side.
 - **Send a window away.** The driver focuses the right window with `winland dispatch focuswindow address:<hwnd>` and runs `winland dispatch movetoworkspacesilent special`. The right window hides, and its Client reports Workspace name `special:special`.
-- **Show it.** The driver runs `winland dispatch togglespecialworkspace`. Both windows are visible, the Event stream holds an `activespecial` line with `special:special,`, and `winland -j activeworkspace` still reports id `1`.
-- **Hide it.** The driver runs `winland dispatch togglespecialworkspace` again. The right window hides, the left window stays shown, and the Event stream holds an `activespecial` line with an empty name.
+- **Show it.** The driver runs `winland dispatch togglespecialworkspace`. Both windows are visible, the Event stream holds an `activespecial` line with `-99,special:special,`, and `winland -j activeworkspace` still reports id `1`.
+- **Hide it.** The driver runs `winland dispatch togglespecialworkspace` again. The right window hides, the left window stays shown, and the Event stream holds an `activespecial` line with an empty id and name.
 
 ## Gotchas
 
