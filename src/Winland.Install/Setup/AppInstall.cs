@@ -15,7 +15,7 @@ public sealed class AppInstall
     private readonly IRegistry registry;
     private readonly IStartMenu shortcuts;
     private readonly IDaemonSession session;
-    private readonly IDesktopRestore desktop;
+    private readonly ITweakRestore tweaks;
 
     public AppInstall(
         InstallLayout layout,
@@ -24,7 +24,7 @@ public sealed class AppInstall
         IRegistry registry,
         IStartMenu shortcuts,
         IDaemonSession session,
-        IDesktopRestore? desktop = null)
+        ITweakRestore? tweaks = null)
     {
         ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(tasks);
@@ -38,7 +38,7 @@ public sealed class AppInstall
         this.registry = registry;
         this.shortcuts = shortcuts;
         this.session = session;
-        this.desktop = desktop ?? NoDesktopRestore.Instance;
+        this.tweaks = tweaks ?? NoTweakRestore.Instance;
     }
 
     public bool MachinePresent() =>
@@ -120,7 +120,7 @@ public sealed class AppInstall
         Exception? unrestored = null;
         try
         {
-            desktop.Restore();
+            tweaks.Restore();
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -144,9 +144,9 @@ public sealed class AppInstall
         files.DeleteTree(layout.UserDirectory);
     }
 
-    private sealed class NoDesktopRestore : IDesktopRestore
+    private sealed class NoTweakRestore : ITweakRestore
     {
-        public static readonly NoDesktopRestore Instance = new();
+        public static readonly NoTweakRestore Instance = new();
 
         public void Restore()
         {

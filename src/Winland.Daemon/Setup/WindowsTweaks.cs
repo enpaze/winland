@@ -4,7 +4,7 @@ using Winland.Install;
 
 namespace Winland.Daemon;
 
-sealed class WindowsDesktop : IWindowsDesktop
+sealed class WindowsTweaks : IWindowsTweaks
 {
     private const uint GetWindowArranging = 0x0082;
 

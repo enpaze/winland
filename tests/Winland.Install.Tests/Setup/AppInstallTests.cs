@@ -488,7 +488,7 @@ public class AppInstallTests
         Assert.Empty(tasks.Operations);
     }
 
-    private sealed class WatchingRestore(Action onRestore) : IDesktopRestore
+    private sealed class WatchingRestore(Action onRestore) : ITweakRestore
     {
         public void Restore() => onRestore();
     }

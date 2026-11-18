@@ -67,13 +67,13 @@ static class MaintenanceCommand
             case InstallCommand.Update update:
                 return UpdateInstalled(update.Channel);
             case InstallCommand.Tweaks tweaks:
-                RecordedSettings().TurnOff(tweaks.Touchpad);
+                RecordedTweaks().TurnOff(tweaks.Touchpad);
                 Console.WriteLine(tweaks.Touchpad
                     ? "Snap windows and the three- and four-finger touchpad swipes are off."
                     : "Snap windows is off.");
                 return 0;
             case InstallCommand.RestoreTweaks:
-                Console.WriteLine(RecordedSettings().Restore()
+                Console.WriteLine(RecordedTweaks().Restore()
                     ? "The Windows settings winland tweaks --off recorded are back as they were."
                     : "winland tweaks --off recorded no settings for this user. Nothing changed.");
                 return 0;
@@ -169,10 +169,10 @@ static class MaintenanceCommand
         new WindowsInstallRegistry(),
         new ShellStartMenu(),
         new DaemonSession(),
-        RecordedSettings());
+        RecordedTweaks());
 
-    private static DesktopSettings RecordedSettings() => new(
-        new WindowsDesktop(),
+    private static TweakRecord RecordedTweaks() => new(
+        new WindowsTweaks(),
         new FileSettingsText(InstallLocations.SettingsFile(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))));
 

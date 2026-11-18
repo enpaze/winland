@@ -3,15 +3,15 @@ using System.Text.Json;
 
 namespace Winland.Install.Tests;
 
-public class DesktopSettingsTests
+public class TweakRecordTests
 {
-    private readonly FakeDesktop windows = new();
+    private readonly FakeTweaks windows = new();
     private readonly MemorySettingsText file = new();
-    private readonly DesktopSettings settings;
+    private readonly TweakRecord settings;
 
-    public DesktopSettingsTests()
+    public TweakRecordTests()
     {
-        settings = new DesktopSettings(windows, file);
+        settings = new TweakRecord(windows, file);
     }
 
     [Fact]
@@ -24,8 +24,8 @@ public class DesktopSettingsTests
         Assert.Equal(["get arranging", "set arranging False"], windows.Log);
         Assert.False(windows.Arranging);
         Assert.Equal(true, RecordedArranging());
-        Assert.False(RecordedProperty(DesktopSettings.ThreeFingerName));
-        Assert.False(RecordedProperty(DesktopSettings.FourFingerName));
+        Assert.False(RecordedProperty(TweakRecord.ThreeFingerName));
+        Assert.False(RecordedProperty(TweakRecord.FourFingerName));
     }
 
     [Fact]
@@ -48,8 +48,8 @@ public class DesktopSettingsTests
             ],
             windows.Log);
         Assert.Equal(true, RecordedArranging());
-        Assert.Equal(1, RecordedSlide(DesktopSettings.ThreeFingerName));
-        Assert.Equal(2, RecordedSlide(DesktopSettings.FourFingerName));
+        Assert.Equal(1, RecordedSlide(TweakRecord.ThreeFingerName));
+        Assert.Equal(2, RecordedSlide(TweakRecord.FourFingerName));
     }
 
     [Fact]
@@ -60,8 +60,8 @@ public class DesktopSettingsTests
 
         settings.TurnOff(touchpad: true);
 
-        Assert.Equal(JsonValueKind.Null, SlideKind(DesktopSettings.ThreeFingerName));
-        Assert.Equal(3, RecordedSlide(DesktopSettings.FourFingerName));
+        Assert.Equal(JsonValueKind.Null, SlideKind(TweakRecord.ThreeFingerName));
+        Assert.Equal(3, RecordedSlide(TweakRecord.FourFingerName));
         Assert.Equal(0, windows.Three);
         Assert.Equal(0, windows.Four);
     }
@@ -78,8 +78,8 @@ public class DesktopSettingsTests
         settings.TurnOff(touchpad: true);
 
         Assert.Equal(true, RecordedArranging());
-        Assert.Equal(1, RecordedSlide(DesktopSettings.ThreeFingerName));
-        Assert.Equal(2, RecordedSlide(DesktopSettings.FourFingerName));
+        Assert.Equal(1, RecordedSlide(TweakRecord.ThreeFingerName));
+        Assert.Equal(2, RecordedSlide(TweakRecord.FourFingerName));
         Assert.Equal(
             ["get arranging", "get three", "get four", "set arranging False", "set three 0", "set four 0"],
             windows.Log);
@@ -167,7 +167,7 @@ public class DesktopSettingsTests
     }
 
     private bool? RecordedArranging() =>
-        Root().GetProperty(DesktopSettings.WindowArrangingName).GetBoolean();
+        Root().GetProperty(TweakRecord.WindowArrangingName).GetBoolean();
 
     private bool RecordedProperty(string name) =>
         Root().TryGetProperty(name, out _);
@@ -184,7 +184,7 @@ public class DesktopSettingsTests
         return document.RootElement.Clone();
     }
 
-    private sealed class FakeDesktop : IWindowsDesktop
+    private sealed class FakeTweaks : IWindowsTweaks
     {
         public bool Arranging { get; set; } = true;
 

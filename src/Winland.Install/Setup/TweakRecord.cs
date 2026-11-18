@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Winland.Install;
 
-public interface IWindowsDesktop
+public interface IWindowsTweaks
 {
     bool WindowArranging { get; set; }
 
@@ -21,12 +21,12 @@ public interface ISettingsText
     void Delete();
 }
 
-public interface IDesktopRestore
+public interface ITweakRestore
 {
     void Restore();
 }
 
-public sealed class DesktopSettings : IDesktopRestore
+public sealed class TweakRecord : ITweakRestore
 {
     public const int SwipeOff = 0;
 
@@ -39,10 +39,10 @@ public sealed class DesktopSettings : IDesktopRestore
     private const string Corrupt =
         "The settings record in .winland could not be read. It was left in place. Fix that file and try again.";
 
-    private readonly IWindowsDesktop windows;
+    private readonly IWindowsTweaks windows;
     private readonly ISettingsText file;
 
-    public DesktopSettings(IWindowsDesktop windows, ISettingsText file)
+    public TweakRecord(IWindowsTweaks windows, ISettingsText file)
     {
         ArgumentNullException.ThrowIfNull(windows);
         ArgumentNullException.ThrowIfNull(file);
@@ -106,7 +106,7 @@ public sealed class DesktopSettings : IDesktopRestore
         return true;
     }
 
-    void IDesktopRestore.Restore() => Restore();
+    void ITweakRestore.Restore() => Restore();
 
     private Record Load() => Parse(file.Read());
 
