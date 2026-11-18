@@ -93,11 +93,7 @@ public closed record InstallCommand
     public bool RequiresAdministrator(bool machineInstallPresent) => this switch
     {
         Machine => true,
-        ForUser => false,
         Remove => machineInstallPresent,
-        Update => false,
-        Tweaks => false,
-        RestoreTweaks => false,
         _ => false,
     };
 
