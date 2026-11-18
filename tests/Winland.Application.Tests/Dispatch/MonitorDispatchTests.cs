@@ -17,10 +17,7 @@ public class MonitorDispatchTests
         Assert.AreEqual(WorkspaceId.FromNumber(1, new MonitorId(1)), Client(outcome, 2).Workspace);
         Assert.AreSequenceEqual(
             [
-                @"focusedmon>>\\.\DISPLAY2,1",
-                @"focusedmonv2>>\\.\DISPLAY2,1",
-                "activewindow>>,",
-                "activewindowv2>>2",
+                @"focus>>\\.\DISPLAY2,1,1,2,",
             ],
             Lines(outcome));
     }
@@ -41,10 +38,8 @@ public class MonitorDispatchTests
         Assert.AreEqual(new Rectangle(2880, 0, 960, 1080), BoundsOf(outcome, 2));
         Assert.AreSequenceEqual(
             [
-                @"movewindow>>1,1,\\.\DISPLAY2",
-                @"movewindowv2>>1,1,1,\\.\DISPLAY2",
-                @"focusedmon>>\\.\DISPLAY2,1",
-                @"focusedmonv2>>\\.\DISPLAY2,1",
+                @"movewindow>>1,1,1,\\.\DISPLAY2",
+                @"focus>>\\.\DISPLAY2,1,1,1,",
             ],
             Lines(outcome));
     }
@@ -193,10 +188,7 @@ public class MonitorDispatchTests
         Assert.AreEqual(new MonitorId(1), right.State.ActiveMonitor);
         Assert.AreSequenceEqual(
             [
-                @"focusedmon>>\\.\DISPLAY2,1",
-                @"focusedmonv2>>\\.\DISPLAY2,1",
-                "activewindow>>,",
-                "activewindowv2>>2",
+                @"focus>>\\.\DISPLAY2,1,1,2,",
             ],
             Lines(right));
 
@@ -243,12 +235,9 @@ public class MonitorDispatchTests
         Assert.Contains(client => client.Window == new WindowId(2), outcome.State.Hidden);
         Assert.AreSequenceEqual(
             [
-                @"createworkspace>>2,\\.\DISPLAY1",
-                @"createworkspacev2>>2,2,\\.\DISPLAY1",
-                @"moveworkspace>>2,\\.\DISPLAY2",
-                @"moveworkspacev2>>2,2,\\.\DISPLAY2",
-                @"focusedmon>>\\.\DISPLAY2,2",
-                @"focusedmonv2>>\\.\DISPLAY2,2",
+                @"createworkspace>>2,2,\\.\DISPLAY1",
+                @"moveworkspace>>2,2,\\.\DISPLAY2",
+                @"focus>>\\.\DISPLAY2,2,2,1,",
             ],
             Lines(outcome));
 

@@ -1,10 +1,14 @@
 using System.Globalization;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Winland.Application;
 
 public static partial class CommandProtocol
 {
-    public static IReadOnlyList<string> FormatStream(IReadOnlyList<StreamEvent> events, State state)
+    public static IReadOnlyList<string> FormatStream(IReadOnlyList<StreamEvent> events, State state, CommandFlags flags = CommandFlags.None)
     {
         ArgumentNullException.ThrowIfNull(events);
         ArgumentNullException.ThrowIfNull(state);
@@ -12,137 +16,181 @@ public static partial class CommandProtocol
             return [];
 
         var indexed = Index(state);
+        var json = flags.HasFlag(CommandFlags.Json);
         var lines = new List<string>(events.Count);
         foreach (var streamEvent in events)
-            Append(lines, streamEvent, state, indexed);
+        {
+            if (streamEvent is MonitorLayoutChanged)
+                continue;
+
+            var line = new EventLine(json);
+            Write(line, streamEvent, state, indexed);
+            lines.Add(line.Finish());
+        }
 
         return lines;
     }
 
-    private static void Append(List<string> lines, StreamEvent streamEvent, State state, Indexed indexed)
+    private static void Write(EventLine line, StreamEvent streamEvent, State state, Indexed indexed)
     {
         switch (streamEvent)
         {
             case ClientOpened opened:
-                lines.Add($"openwindow>>{EventAddress(opened.Window)},{opened.Workspace.Name},{EventMonitor(state, opened.Workspace)},{Clean(opened.Class)},{Clean(opened.Title)}");
+                line.Name("openwindow").Address(opened.Window).Workspace(opened.Workspace, indexed)
+                    .Text("monitor", MonitorName(state, opened.Workspace)).Text("class", opened.Class).Text("title", opened.Title);
                 break;
             case ClientClosed closed:
-                lines.Add($"closewindow>>{EventAddress(closed.Window)}");
+                line.Name("closewindow").Address(closed.Window);
                 break;
             case FocusChanged focused:
-                AppendFocus(lines, focused, state);
+                line.Name("focus").Text("monitor", focused.Monitor).Workspace(focused.Workspace, indexed)
+                    .Window(focused.Window is WindowId window ? state.ClientOf(window) ?? new Client(default, window) : null);
                 break;
             case ClientRetitled retitled:
-                lines.Add("windowtitle>>" + EventAddress(retitled.Window));
-                lines.Add($"windowtitlev2>>{EventAddress(retitled.Window)},{Clean(retitled.Title)}");
-                if (retitled.Active)
-                    AppendFocus(lines, new FocusChanged(retitled.Window), state);
-                break;
-            case ClientReclassed reclassed:
-                if (reclassed.Active)
-                    AppendFocus(lines, new FocusChanged(reclassed.Window), state);
-                break;
-            case MonitorLayoutChanged:
+                line.Name("windowtitle").Address(retitled.Window).Text("title", retitled.Title);
                 break;
             case ClientUrgent urgent:
-                lines.Add("urgent>>" + EventAddress(urgent.Window));
+                line.Name("urgent").Address(urgent.Window);
                 break;
             case ClientMoved moved:
-                lines.Add($"movewindow>>{EventAddress(moved.Window)},{moved.Workspace.Name},{EventMonitor(state, moved.Workspace)}");
-                lines.Add($"movewindowv2>>{EventAddress(moved.Window)},{WorkspaceIdText(moved.Workspace, indexed)},{moved.Workspace.Name},{EventMonitor(state, moved.Workspace)}");
+                line.Name("movewindow").Address(moved.Window).Workspace(moved.Workspace, indexed)
+                    .Text("monitor", MonitorName(state, moved.Workspace));
                 break;
             case FloatingChanged floating:
-                lines.Add($"changefloatingmode>>{EventAddress(floating.Window)},{(floating.Floating ? "1" : "0")}");
+                line.Name("changefloatingmode").Address(floating.Window).Flag("floating", floating.Floating);
                 break;
             case ClientMinimized minimized:
-                lines.Add($"minimized>>{EventAddress(minimized.Window)},{(minimized.Minimized ? "1" : "0")}");
+                line.Name("minimized").Address(minimized.Window).Flag("minimized", minimized.Minimized);
                 break;
             case ClientPinned pinned:
-                lines.Add($"pin>>{EventAddress(pinned.Window)},{(pinned.Pinned ? "1" : "0")}");
+                line.Name("pin").Address(pinned.Window).Flag("pinned", pinned.Pinned);
                 break;
             case GroupToggled toggled:
-                lines.Add($"togglegroup>>{(toggled.Created ? "1" : "0")},{EventAddress(toggled.Window)}");
+                line.Name("togglegroup").Flag("created", toggled.Created).Address(toggled.Window);
                 break;
             case ClientIntoGroup into:
-                lines.Add("moveintogroup>>" + EventAddress(into.Window));
+                line.Name("moveintogroup").Address(into.Window);
                 break;
             case ClientOutOfGroup outOf:
-                lines.Add("moveoutofgroup>>" + EventAddress(outOf.Window));
+                line.Name("moveoutofgroup").Address(outOf.Window);
                 break;
             case WorkspaceActivated activated:
-                lines.Add($"workspace>>{activated.Workspace.Name},{EventMonitor(state, activated.Workspace)}");
-                lines.Add($"workspacev2>>{WorkspaceIdText(activated.Workspace, indexed)},{activated.Workspace.Name},{EventMonitor(state, activated.Workspace)}");
+                line.Name("workspace").Workspace(activated.Workspace, indexed).Text("monitor", MonitorName(state, activated.Workspace));
                 break;
             case WorkspaceCreated created:
-                lines.Add($"createworkspace>>{created.Workspace.Name},{EventMonitor(state, created.Workspace)}");
-                lines.Add($"createworkspacev2>>{WorkspaceIdText(created.Workspace, indexed)},{created.Workspace.Name},{EventMonitor(state, created.Workspace)}");
+                line.Name("createworkspace").Workspace(created.Workspace, indexed).Text("monitor", MonitorName(state, created.Workspace));
                 break;
             case WorkspaceDestroyed destroyed:
-                lines.Add($"destroyworkspace>>{Clean(destroyed.Name)},{Clean(destroyed.Monitor)}");
-                lines.Add($"destroyworkspacev2>>{destroyed.Id.ToString(CultureInfo.InvariantCulture)},{Clean(destroyed.Name)},{Clean(destroyed.Monitor)}");
+                line.Name("destroyworkspace").Workspace(destroyed.Id, destroyed.Name).Text("monitor", destroyed.Monitor);
                 break;
             case WorkspaceMoved movedWorkspace:
-                lines.Add($"moveworkspace>>{movedWorkspace.Workspace.Name},{Clean(movedWorkspace.Monitor)}");
-                lines.Add($"moveworkspacev2>>{WorkspaceIdText(movedWorkspace.Workspace, indexed)},{movedWorkspace.Workspace.Name},{Clean(movedWorkspace.Monitor)}");
-                break;
-            case MonitorFocused focusedMonitor:
-                lines.Add($"focusedmon>>{Clean(focusedMonitor.Name)},{focusedMonitor.Workspace.Name}");
-                lines.Add($"focusedmonv2>>{Clean(focusedMonitor.Name)},{WorkspaceIdText(focusedMonitor.Workspace, indexed)}");
+                line.Name("moveworkspace").Workspace(movedWorkspace.Workspace, indexed).Text("monitor", movedWorkspace.Monitor);
                 break;
             case FullscreenChanged fullscreen:
-                lines.Add("fullscreen>>" + (fullscreen.Entered ? "1" : "0"));
+                line.Name("fullscreen").Flag("fullscreen", fullscreen.Entered);
                 break;
             case ActiveSpecial special:
+                line.Name("activespecial");
                 if (special.Workspace is WorkspaceId specialWorkspace)
-                {
-                    lines.Add($"activespecial>>{Clean(specialWorkspace.Name)},{Clean(special.Monitor)}");
-                    lines.Add($"activespecialv2>>{WorkspaceIdText(specialWorkspace, indexed)},{Clean(specialWorkspace.Name)},{Clean(special.Monitor)}");
-                }
+                    line.Workspace(specialWorkspace, indexed);
                 else
-                {
-                    lines.Add($"activespecial>>,{Clean(special.Monitor)}");
-                    lines.Add($"activespecialv2>>,,{Clean(special.Monitor)}");
-                }
+                    line.NoWorkspace();
+
+                line.Text("monitor", special.Monitor);
                 break;
             case ConfigWarned warned:
-                lines.Add($"warning>>{warned.Line.ToString(CultureInfo.InvariantCulture)},{Clean(warned.Source)},{Clean(warned.Message)}");
+                line.Name("warning").Number("line", warned.Line).Text("file", warned.Source).Text("message", warned.Message);
                 break;
             case ConfigReloaded:
-                lines.Add("configreloaded>>");
+                line.Name("configreloaded");
                 break;
             case MonitorAdded added:
-                lines.Add($"monitoradded>>{Clean(added.Name)}");
-                break;
-            case MonitorAddedV2 added:
-                lines.Add($"monitoraddedv2>>{added.Id.ToString(CultureInfo.InvariantCulture)},{Clean(added.Name)},{Clean(added.Description)}");
+                line.Name("monitoradded").Number("id", added.Id).Text("name", added.Name).Text("description", added.Description);
                 break;
             case MonitorRemoved removed:
-                lines.Add($"monitorremoved>>{Clean(removed.Name)}");
-                break;
-            case MonitorRemovedV2 removed:
-                lines.Add($"monitorremovedv2>>{removed.Id.ToString(CultureInfo.InvariantCulture)},{Clean(removed.Name)},{Clean(removed.Description)}");
+                line.Name("monitorremoved").Number("id", removed.Id).Text("name", removed.Name).Text("description", removed.Description);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(streamEvent), streamEvent, "No format for this event.");
         }
     }
 
-    private static void AppendFocus(List<string> lines, FocusChanged focused, State state)
-    {
-        if (focused.Window is not WindowId window)
-        {
-            lines.Add("activewindow>>,");
-            lines.Add("activewindowv2>>");
-            return;
-        }
-
-        var client = state.ClientOf(window);
-        lines.Add($"activewindow>>{Clean(client?.Class)},{Clean(client?.Title)}");
-        lines.Add("activewindowv2>>" + EventAddress(window));
-    }
-
     internal static string EventAddress(WindowId window) =>
         window.Value.ToString("x", CultureInfo.InvariantCulture);
 
-    private static string EventMonitor(State state, WorkspaceId id) => Clean(MonitorName(state, id));
+    private sealed class EventLine(bool json)
+    {
+        private static readonly JsonSerializerOptions Relaxed = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+
+        private readonly StringBuilder _text = new();
+        private readonly JsonObject? _json = json ? [] : null;
+        private bool _first = true;
+
+        public EventLine Name(string name)
+        {
+            if (_json is null)
+                _text.Append(name).Append(">>");
+            else
+                _json["event"] = name;
+
+            return this;
+        }
+
+        public EventLine Text(string key, string? value) =>
+            _json is null ? Field(Clean(value)) : Set(key, value);
+
+        public EventLine Number(string key, long value) =>
+            _json is null ? Field(value.ToString(CultureInfo.InvariantCulture)) : Set(key, value);
+
+        public EventLine Flag(string key, bool value) =>
+            _json is null ? Field(value ? "1" : "0") : Set(key, value);
+
+        public EventLine Address(WindowId window) =>
+            _json is null ? Field(EventAddress(window)) : Set("address", window.Address);
+
+        public EventLine Workspace(WorkspaceId workspace, Indexed indexed) =>
+            Workspace(WorkspaceNumber(workspace, indexed), workspace.Name);
+
+        public EventLine Workspace(long id, string name) =>
+            _json is null
+                ? Field(id.ToString(CultureInfo.InvariantCulture)).Field(Clean(name))
+                : Set("workspace", new JsonObject { ["id"] = id, ["name"] = name });
+
+        public EventLine NoWorkspace() =>
+            _json is null ? Field("").Field("") : Set("workspace", null);
+
+        public EventLine Window(Client? client)
+        {
+            if (_json is not null)
+            {
+                return Set("window", client is null ? null : new JsonObject
+                {
+                    ["address"] = client.Window.Address,
+                    ["title"] = client.Title,
+                    ["class"] = client.Class,
+                    ["exe"] = client.Exe,
+                });
+            }
+
+            return client is null ? Field("").Field("") : Field(EventAddress(client.Window)).Field(Clean(client.Title));
+        }
+
+        public string Finish() => _json?.ToJsonString(Relaxed) ?? _text.ToString();
+
+        private EventLine Set(string key, JsonNode? value)
+        {
+            _json![key] = value;
+            return this;
+        }
+
+        private EventLine Field(string text)
+        {
+            if (!_first)
+                _text.Append(',');
+
+            _first = false;
+            _text.Append(text);
+            return this;
+        }
+    }
 }

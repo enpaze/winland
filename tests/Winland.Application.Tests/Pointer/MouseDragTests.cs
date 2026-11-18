@@ -337,7 +337,7 @@ public class MouseDragTests
         Assert.AreEqual(RightWorkspace, crossing.Workspace);
         Assert.AreEqual(new MonitorId(0), crossed.State.ActiveMonitor);
         Assert.Contains(item => item is ClientMoved changed && changed.Window == new WindowId(2), crossed.Events);
-        Assert.AreSequenceEqual([@"movewindow>>2,1,\\.\DISPLAY2", @"movewindowv2>>2,1,1,\\.\DISPLAY2"], MoveLines(crossed));
+        Assert.AreSequenceEqual([@"movewindow>>2,1,1,\\.\DISPLAY2"], MoveLines(crossed));
 
         var dropped = core.Handle(new PointerButtonReleased("mouse:left") { Position = new Point(2400, 500) });
 
@@ -390,7 +390,7 @@ public class MouseDragTests
         Assert.IsTrue(Client(crossed, 1).Floating);
         Assert.AreEqual(new Rectangle(1640, 340, 640, 400), BoundsOf(crossed, 1));
         Assert.AreEqual(new MonitorId(0), crossed.State.ActiveMonitor);
-        Assert.AreSequenceEqual([@"movewindow>>1,1,\\.\DISPLAY2", @"movewindowv2>>1,1,1,\\.\DISPLAY2"], MoveLines(crossed));
+        Assert.AreSequenceEqual([@"movewindow>>1,1,1,\\.\DISPLAY2"], MoveLines(crossed));
 
         var followed = core.Handle(new PointerMoved(new Point(1800, 400)));
         Assert.AreEqual(RightWorkspace, Client(followed, 1).Workspace);
@@ -411,7 +411,7 @@ public class MouseDragTests
         var followed = core.Handle(new PointerMoved(new Point(2800, 400)));
 
         Assert.AreEqual(RightWorkspace, Client(crossed, 1).Workspace);
-        Assert.AreSequenceEqual([@"movewindow>>1,1,\\.\DISPLAY2", @"movewindowv2>>1,1,1,\\.\DISPLAY2"], MoveLines(crossed));
+        Assert.AreSequenceEqual([@"movewindow>>1,1,1,\\.\DISPLAY2"], MoveLines(crossed));
         Assert.AreEqual(new Rectangle(2740, 340, 640, 400), BoundsOf(followed, 1));
         Assert.AreEqual(RightWorkspace, Client(followed, 1).Workspace);
         Assert.IsEmpty(MoveLines(followed));
@@ -431,7 +431,7 @@ public class MouseDragTests
 
         Assert.AreEqual(WorkspaceId.Initial, Client(back, 1).Workspace);
         Assert.AreEqual(new Rectangle(40, 340, 640, 400), BoundsOf(back, 1));
-        Assert.AreSequenceEqual([@"movewindow>>1,1,\\.\DISPLAY1", @"movewindowv2>>1,1,1,\\.\DISPLAY1"], MoveLines(back));
+        Assert.AreSequenceEqual([@"movewindow>>1,1,1,\\.\DISPLAY1"], MoveLines(back));
 
         var dropped = core.Handle(new PointerButtonReleased("mouse:left") { Position = new Point(100, 400) });
         Assert.AreEqual(WorkspaceId.Initial, Client(dropped, 1).Workspace);
@@ -453,7 +453,7 @@ public class MouseDragTests
         var crossed = core.Handle(new PointerMoved(new Point(3360, 540)));
         Assert.IsTrue(Client(crossed, 1).Floating);
         Assert.AreEqual(RightWorkspace, Client(crossed, 1).Workspace);
-        Assert.AreSequenceEqual([@"movewindow>>1,1,\\.\DISPLAY2", @"movewindowv2>>1,1,1,\\.\DISPLAY2"], MoveLines(crossed));
+        Assert.AreSequenceEqual([@"movewindow>>1,1,1,\\.\DISPLAY2"], MoveLines(crossed));
         Assert.Contains(line => line == "changefloatingmode>>1,1", Lines(crossed));
 
         var followed = core.Handle(new PointerMoved(new Point(3400, 540)));
@@ -484,7 +484,7 @@ public class MouseDragTests
         Assert.AreEqual(new Rectangle(1280, 300, 1340, 400), BoundsOf(crossed, 1));
         Assert.AreEqual(RightWorkspace, Client(crossed, 1).Workspace);
         Assert.AreEqual(new MonitorId(0), crossed.State.ActiveMonitor);
-        Assert.AreSequenceEqual([@"movewindow>>1,1,\\.\DISPLAY2", @"movewindowv2>>1,1,1,\\.\DISPLAY2"], MoveLines(crossed));
+        Assert.AreSequenceEqual([@"movewindow>>1,1,1,\\.\DISPLAY2"], MoveLines(crossed));
 
         var grown = core.Handle(new PointerMoved(new Point(2700, 690)));
         Assert.AreEqual(new Rectangle(1280, 300, 1440, 400), BoundsOf(grown, 1));
@@ -532,7 +532,7 @@ public class MouseDragTests
         Assert.IsTrue(Client(crossed, 1).Floating);
         Assert.AreEqual(new Rectangle(2640, 340, 640, 400), BoundsOf(crossed, 1));
         Assert.AreEqual(new WorkspaceId("special:scratch"), Screen(crossed, 1).SpecialWorkspace);
-        Assert.AreSequenceEqual([@"movewindow>>1,special:scratch,\\.\DISPLAY2", @"movewindowv2>>1,-98,special:scratch,\\.\DISPLAY2"], MoveLines(crossed));
+        Assert.AreSequenceEqual([@"movewindow>>1,-98,special:scratch,\\.\DISPLAY2"], MoveLines(crossed));
         Assert.AreEqual(new MonitorId(0), crossed.State.ActiveMonitor);
     }
 
@@ -556,7 +556,7 @@ public class MouseDragTests
         Assert.AreEqual(new WorkspaceId("special:scratch"), Client(joined, 1).Workspace);
         Assert.IsTrue(Client(joined, 1).Floating);
         Assert.AreEqual(new Rectangle(700, 380, 640, 400), BoundsOf(joined, 1));
-        Assert.AreSequenceEqual([@"movewindow>>1,special:scratch,\\.\DISPLAY1", @"movewindowv2>>1,-98,special:scratch,\\.\DISPLAY1"], MoveLines(joined));
+        Assert.AreSequenceEqual([@"movewindow>>1,-98,special:scratch,\\.\DISPLAY1"], MoveLines(joined));
     }
 
     [TestMethod]
@@ -648,5 +648,5 @@ public class MouseDragTests
         CommandProtocol.FormatStream(outcome.Events, outcome.State);
 
     private static IReadOnlyList<string> MoveLines(Outcome outcome) =>
-        [.. Lines(outcome).Where(line => line.StartsWith("movewindow>>", StringComparison.Ordinal) || line.StartsWith("movewindowv2>>", StringComparison.Ordinal))];
+        [.. Lines(outcome).Where(line => line.StartsWith("movewindow>>", StringComparison.Ordinal))];
 }

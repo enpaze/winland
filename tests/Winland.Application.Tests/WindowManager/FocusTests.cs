@@ -76,7 +76,7 @@ public class FocusTests
         var clicked = core.Handle(new WindowFocused(new WindowId(1), FocusCause.User));
 
         Assert.IsNull(clicked.Focus);
-        Assert.AreSequenceEqual(["activewindow>>,", "activewindowv2>>1"], Lines(clicked));
+        Assert.AreSequenceEqual(["focus>>,1,1,1,"], Lines(clicked));
     }
 
     [TestMethod]
