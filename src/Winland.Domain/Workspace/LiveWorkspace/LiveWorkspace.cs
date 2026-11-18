@@ -36,7 +36,6 @@ internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, L
 
     internal void RememberFocus(WindowId? window) => Focus = window;
 
-    public bool Persistent { get; set; }
 
     public string? HomeIdentity { get; private set; }
 

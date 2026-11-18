@@ -269,9 +269,6 @@ public sealed partial class WindowManager
         return scale is > 0 and < 1000 && double.IsFinite(scale) ? scale : 1;
     }
 
-    private bool Floats(WindowId? window) =>
-        window is WindowId id && Find(id) is { Floating: true };
-
     private long When(long? time) => time ?? Clock();
 
     private static double Distance(Point from, Point to)

@@ -53,7 +53,6 @@ public sealed partial class WindowManager
 
         home ??= enabled.Count > 0 ? enabled[0] : null;
         Relocate(wasEnabled, enabled, home);
-        EnsurePersistent();
         AssignActives(enabled);
         DropEmpty();
         RefitAll();
@@ -125,18 +124,6 @@ public sealed partial class WindowManager
         {
             if (_workspaces.Shown.Shown(screen.Id) is WorkspaceId active && _workspaces.On(screen.Id, active) is not null && claimed.Add(active))
                 continue;
-
-            if (TryDefault(screen, out var preferred) && claimed.Add(preferred))
-            {
-                var chosen = WorkspaceFor(preferred, screen.Id);
-                if (chosen.Monitor == screen.Id)
-                {
-                    _workspaces.Shown.Show(screen.Id, chosen.Id);
-                    continue;
-                }
-
-                claimed.Remove(preferred);
-            }
 
             LiveWorkspace? populated = null;
             LiveWorkspace? empty = null;

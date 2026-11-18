@@ -168,15 +168,6 @@ internal sealed partial class ScrollingLayout
         return Pixels(x, y, width, height);
     }
 
-    private int TiledCount()
-    {
-        var count = 0;
-        foreach (var column in _columns)
-            count += column.Cells.Count;
-
-        return count;
-    }
-
     private (int Left, int Top, int Right, int Bottom) GapsFor(int column, int cell, int cells)
     {
         var gaps = _layoutOptions.GapsIn;

@@ -35,8 +35,6 @@ public sealed partial class WindowManager
 
     public bool HideTaskbar => _config.Session.HideTaskbar;
 
-    public ICursorPosition? Cursor { get; set; }
-
     public SessionPhase? SessionLock { get; set; }
 
     public Action<ConfigDocument>? AfterReload { get; set; }
@@ -52,7 +50,6 @@ public sealed partial class WindowManager
         _loaded = config;
         _workspaces.Shown.Show(MonitorId.Primary, WorkspaceId.Initial);
         WorkspaceFor(WorkspaceId.Initial);
-        EnsurePersistent();
         Remember(WorkspaceId.Initial, MonitorId.Primary);
     }
 

@@ -2,8 +2,8 @@ namespace Winland.Domain.Tests;
 
 public class WindowSelectorTests
 {
-    private static readonly WorkspaceId Home = WorkspaceId.FromNumber(1);
-    private static readonly WorkspaceId Away = WorkspaceId.FromNumber(2);
+    private static readonly WorkspaceId Home = WorkspaceId.FromNumber(1, MonitorId.Primary);
+    private static readonly WorkspaceId Away = WorkspaceId.FromNumber(2, MonitorId.Primary);
 
     [Fact]
     public void EmptyAndActiveNamesResolveTheActiveClient()

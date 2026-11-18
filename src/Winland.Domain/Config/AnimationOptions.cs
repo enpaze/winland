@@ -12,7 +12,7 @@ public sealed record AnimationOptions
 
     internal static OptionSet<AnimationOptions> Options { get; } = new(
     [
-        Option<AnimationOptions>.Of("animations:enabled", OptionValue.Bool, o => o.Enabled, (o, v) => o with { Enabled = v }),
+        Option<AnimationOptions>.Of("animations:enabled", OptionValue.Bool, (o, v) => o with { Enabled = v }),
     ]);
 
     public static AnimationOptions From(ConfigDocument document) => Options.From(Documented, document);

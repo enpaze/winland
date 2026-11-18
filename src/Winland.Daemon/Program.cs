@@ -110,7 +110,7 @@ static int Run(string? path, RollingLogWriter log)
     var current = ConfigFile.Read(configPath);
     ConfigFile.WriteWarnings(current.Warnings, configPath, Console.Error);
 
-    var core = new WindowManager { Cursor = new SystemCursor(), FirstStart = firstStart };
+    var core = new WindowManager { FirstStart = firstStart };
     core.ReadConfig = () => ConfigFile.TryRead(configPath);
     core.LogFile = () => log.FilePath;
     ConfigWatcher? watcher = null;

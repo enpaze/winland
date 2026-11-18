@@ -249,7 +249,6 @@ public sealed partial class WindowManager
             workspaces.Add(new Workspace(desk.Id, desk.Monitor)
             {
                 LastWindow = desk.Focus,
-                Persistent = desk.Persistent,
                 TiledLayout = LayoutFactory.NameOf(desk.Layout),
             });
         }

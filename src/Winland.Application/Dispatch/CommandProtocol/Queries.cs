@@ -328,12 +328,10 @@ public static partial class CommandProtocol
             lastWindows[workspace.Id] = workspace.LastWindow;
 
         var names = new Dictionary<WorkspaceId, string>();
-        var persistent = new Dictionary<WorkspaceId, bool>();
         var tiledLayouts = new Dictionary<WorkspaceId, string>();
         foreach (var workspace in state.Workspaces)
         {
             names[workspace.Id] = workspace.Id.Name;
-            persistent[workspace.Id] = workspace.Persistent;
             tiledLayouts[workspace.Id] = workspace.TiledLayout;
         }
 
@@ -362,7 +360,7 @@ public static partial class CommandProtocol
                 fullscreen.Contains(id),
                 lastAddress,
                 lastTitle,
-                persistent.GetValueOrDefault(id),
+                false,
                 tiledLayouts.GetValueOrDefault(id, "dwindle")));
         }
 

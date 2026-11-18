@@ -397,7 +397,7 @@ public class GroupTests
     [InlineData("scrolling")]
     public void SubstituteKeepsTheSlot(string name)
     {
-        var layout = LayoutFactory.Fallback(name).Layout;
+        var layout = LayoutFactory.Fallback(name);
         layout.Add(First, Area, null, false, default, WorkspaceId.Initial, "one", "one");
         layout.Add(Second, Area, null, false, default, WorkspaceId.Initial, "two", "two");
         Assert.True(layout.TryBounds(Second, out var slot));

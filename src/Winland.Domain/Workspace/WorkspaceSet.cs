@@ -45,7 +45,7 @@ internal sealed class WorkspaceSet : IReadOnlyCollection<LiveWorkspace>
 
     public void DropIfEmpty(WorkspaceId id, bool shown)
     {
-        if (shown || Find(id) is not LiveWorkspace desk || desk.Persistent || desk.Layout.Clients.Count > 0)
+        if (shown || Find(id) is not LiveWorkspace desk || desk.Layout.Clients.Count > 0)
             return;
 
         Remove(desk);

@@ -28,10 +28,10 @@ public sealed record LayoutOptions
 
     internal static OptionSet<LayoutOptions> Options { get; } = new(
     [
-        Of("general:layout", OptionValue.OneOf([.. LayoutFactory.Names]), o => o.Layout, (o, v) => o with { Layout = v }),
-        Of("general:gaps_in", OptionValue.Gaps, o => o.GapsIn, (o, v) => o with { GapsIn = v }),
-        Of("general:gaps_out", OptionValue.Gaps, o => o.GapsOut, (o, v) => o with { GapsOut = v }),
-        Of("general:border_size", OptionValue.Int(0, 20), o => o.BorderSize, (o, v) => o with { BorderSize = v }),
+        Of("general:layout", OptionValue.OneOf([.. LayoutFactory.Names]), (o, v) => o with { Layout = v }),
+        Of("general:gaps_in", OptionValue.Gaps, (o, v) => o with { GapsIn = v }),
+        Of("general:gaps_out", OptionValue.Gaps, (o, v) => o with { GapsOut = v }),
+        Of("general:border_size", OptionValue.Int(0, 20), (o, v) => o with { BorderSize = v }),
     ]);
 
     public static LayoutOptions From(ConfigDocument document) => Options.From(Documented, document);
@@ -60,6 +60,6 @@ public sealed record LayoutOptions
     private static int Scale(int value, double scale) =>
         (int)Math.Round(value * scale, MidpointRounding.AwayFromZero);
 
-    private static Option<LayoutOptions> Of<T>(string name, OptionValue<T> value, Func<LayoutOptions, T> get, Func<LayoutOptions, T, LayoutOptions> set) =>
-        Option<LayoutOptions>.Of(name, value, get, set);
+    private static Option<LayoutOptions> Of<T>(string name, OptionValue<T> value, Func<LayoutOptions, T, LayoutOptions> set) =>
+        Option<LayoutOptions>.Of(name, value, set);
 }

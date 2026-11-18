@@ -79,7 +79,6 @@ public sealed partial class WindowManager
         Outcome outcome;
         if (_monitors.Count == 0)
         {
-            EnsurePersistent();
             IReadOnlyList<Placement> placements = [];
             foreach (var desk in _workspaces)
             {
@@ -128,7 +127,7 @@ public sealed partial class WindowManager
 
     private void MatchLayout(LiveWorkspace desk)
     {
-        var created = LayoutFactory.Create(_config.Document, RuleFor(desk)?.Layout);
+        var created = LayoutFactory.Create(_config.Document);
         if (created.GetType() == desk.Layout.GetType() && LayoutFactory.NameOf(created) == LayoutFactory.NameOf(desk.Layout))
         {
             desk.Layout.Configure(_config.Scrolling);

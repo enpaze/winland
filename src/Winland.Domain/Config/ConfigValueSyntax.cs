@@ -26,25 +26,6 @@ public static class ConfigValueSyntax
         return false;
     }
 
-    public static bool TryParseVec2(string text, out Vec2 value)
-    {
-        value = default;
-        var space = text.IndexOf(' ');
-        if (space <= 0 || space != text.LastIndexOf(' '))
-            return false;
-
-        var left = text[..space];
-        var right = text[(space + 1)..];
-        if (left.Length == 0
-            || right.Length == 0
-            || !double.TryParse(left, NumberStyles.Float, CultureInfo.InvariantCulture, out var x)
-            || !double.TryParse(right, NumberStyles.Float, CultureInfo.InvariantCulture, out var y))
-            return false;
-
-        value = new Vec2(x, y);
-        return true;
-    }
-
     public static bool TryParseGradient(string text, out GradientValue gradient)
     {
         gradient = default;
@@ -74,23 +55,6 @@ public static class ConfigValueSyntax
             return false;
 
         gradient = new GradientValue(first.Value, angle ?? 0, angle is not null, colors);
-        return true;
-    }
-
-    public static bool TryParseColors(string text, out BorderColor[] colors)
-    {
-        colors = [];
-        if (!TryParseGradient(text, out _))
-            return false;
-
-        var found = new List<BorderColor>();
-        foreach (var part in text.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries))
-        {
-            if (TryColor(part, out var parsed))
-                found.Add(parsed);
-        }
-
-        colors = [.. found];
         return true;
     }
 
@@ -143,7 +107,5 @@ public static class ConfigValueSyntax
         return double.TryParse(token.AsSpan(0, token.Length - 3), NumberStyles.Float, CultureInfo.InvariantCulture, out degrees);
     }
 }
-
-public readonly record struct Vec2(double X, double Y);
 
 public readonly record struct GradientValue(BorderColor Color, double AngleDegrees, bool HasAngle, int Colors);

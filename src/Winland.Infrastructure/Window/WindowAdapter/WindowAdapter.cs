@@ -163,12 +163,6 @@ public sealed partial class WindowAdapter : IDisposable
         }
     }
 
-    public void Run()
-    {
-        Start();
-        Pump(null);
-    }
-
     internal static void Pump(Func<MSG, bool>? intercept)
     {
         while (PInvoke.GetMessage(out var message, default, 0, 0) > 0)

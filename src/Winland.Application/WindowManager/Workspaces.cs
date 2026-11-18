@@ -318,8 +318,6 @@ public sealed partial class WindowManager
 
     private void DropIfEmpty(WorkspaceId id) => _workspaces.DropIfEmpty(id, _workspaces.Shown.IsShown(id));
 
-    private void Rebind(LiveWorkspace desk, WorkspaceId to) => Readdressed(_workspaces.Rebind(desk, to));
-
     private void Readdressed(WorkspaceRename? rename)
     {
         if (rename is not WorkspaceRename (var from, var to))

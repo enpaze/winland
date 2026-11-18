@@ -36,17 +36,4 @@ internal static class SlotHandover
         if (map.Remove(from, out var value))
             map[to] = value;
     }
-
-    public static void Move(HashSet<ClientId> set, ClientId from, ClientId to)
-    {
-        if (set.Remove(from))
-            set.Add(to);
-    }
-
-    public static void Move(List<ClientId> list, ClientId from, ClientId to)
-    {
-        var index = list.IndexOf(from);
-        if (index >= 0)
-            list[index] = to;
-    }
 }

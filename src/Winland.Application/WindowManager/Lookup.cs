@@ -65,14 +65,6 @@ public sealed partial class WindowManager
         return desk is null ? null : desk.ClientOf(window);
     }
 
-    private Rectangle FocusedMonitorBounds()
-    {
-        if (_monitors.Count == 0 || MonitorById(FocusedId()) is not { Arranged.Enabled: true } monitor)
-            return default;
-
-        return monitor.Bounds;
-    }
-
     private Rectangle WorkArea(LiveWorkspace desk, Rectangle fallback)
     {
         var screen = MonitorById(desk.Monitor);

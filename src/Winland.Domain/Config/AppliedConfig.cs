@@ -10,7 +10,6 @@ public sealed record AppliedConfig
 
     public bool TitleRules { get; init; }
 
-    public IReadOnlyList<WorkspaceRule> WorkspaceRules => Document?.WorkspaceRules ?? WorkspaceRule.None;
 
     public IReadOnlyList<TrackpadGesture> Gestures => Document?.Gestures ?? [];
 

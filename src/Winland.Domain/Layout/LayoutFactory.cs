@@ -4,8 +4,8 @@ internal static class LayoutFactory
 {
     internal static IReadOnlyList<string> Names { get; } = ["dwindle", "scrolling", "floating"];
 
-    public static Layout Create(ConfigDocument? config, string? ruleLayout) =>
-        Fallback(ruleLayout ?? (config is null ? null : LayoutOptions.From(config).Layout)).Layout;
+    public static Layout Create(ConfigDocument? config) =>
+        Fallback(config is null ? null : LayoutOptions.From(config).Layout);
 
     public static Layout? Named(string name) => name.Trim() switch
     {
@@ -15,16 +15,8 @@ internal static class LayoutFactory
         _ => null,
     };
 
-    public static LayoutFallback Fallback(string? name)
-    {
-        var trimmed = name?.Trim();
-        if (trimmed is null)
-            return new LayoutFallback(new DwindleLayout(), null);
-
-        return Named(trimmed) is Layout named
-            ? new LayoutFallback(named, null)
-            : new LayoutFallback(new DwindleLayout(), $"Layout '{trimmed}' is not available; using dwindle.");
-    }
+    public static Layout Fallback(string? name) =>
+        (name is null ? null : Named(name)) ?? new DwindleLayout();
 
     public static string NameOf(Layout layout) => layout switch
     {
@@ -33,5 +25,3 @@ internal static class LayoutFactory
         _ => "dwindle",
     };
 }
-
-internal readonly record struct LayoutFallback(Layout Layout, string? Warning);

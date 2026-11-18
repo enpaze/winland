@@ -30,26 +30,6 @@ public class ConfigValueSyntaxTests
         Assert.False(ConfigValueSyntax.TryParseBool(text, out _));
     }
 
-    [Theory]
-    [InlineData("10 20", 10, 20)]
-    [InlineData("1.5 -2", 1.5, -2)]
-    public void Vec2IsTwoNumbersSeparatedByOneSpace(string text, double x, double y)
-    {
-        Assert.True(ConfigValueSyntax.TryParseVec2(text, out var value));
-        Assert.Equal(x, value.X);
-        Assert.Equal(y, value.Y);
-    }
-
-    [Theory]
-    [InlineData("10")]
-    [InlineData("1 2 3")]
-    [InlineData("1  2")]
-    [InlineData("1\t2")]
-    public void MalformedVec2IsRejected(string text)
-    {
-        Assert.False(ConfigValueSyntax.TryParseVec2(text, out _));
-    }
-
     [Fact]
     public void GradientKeepsTheFirstColorAndAnOptionalAngle()
     {

@@ -24,8 +24,6 @@ public readonly record struct WorkspaceId(string Name, int Monitor = 0)
         return false;
     }
 
-    public static WorkspaceId FromNumber(long number) => FromNumber(number, MonitorId.Primary);
-
     public static WorkspaceId FromNumber(long number, MonitorId monitor)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(number);
