@@ -9,9 +9,6 @@ internal static class StandInHost
     private const string HostClass = "WinlandStandInHost";
     private const string StandInClass = "WinlandStandIn";
     private const uint CreateMessage = 0x8000 + 0x48;
-    private const uint QuitMessage = 0x0012;
-    private const uint MouseActivateMessage = 0x0021;
-    private const int NoActivate = 3;
 
     private static readonly WNDPROC Proc = OnWindow;
     private static readonly Lock Gate = new();
@@ -59,7 +56,7 @@ internal static class StandInHost
             return;
 
         if (thread != 0)
-            _ = PInvoke.PostThreadMessage(thread, QuitMessage, default, default);
+            _ = PInvoke.PostThreadMessage(thread, PInvoke.WM_QUIT, default, default);
 
         _ = worker.Join(TimeSpan.FromSeconds(2));
     }
@@ -109,8 +106,8 @@ internal static class StandInHost
         if (message == CreateMessage)
             return new LRESULT((nint)CreateStandIn());
 
-        if (message == MouseActivateMessage)
-            return new LRESULT(NoActivate);
+        if (message == PInvoke.WM_MOUSEACTIVATE)
+            return new LRESULT((nint)PInvoke.MA_NOACTIVATE);
 
         return PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
     }

@@ -1,6 +1,7 @@
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
+using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
@@ -274,7 +275,7 @@ public sealed partial class WindowAdapter : IDisposable
     }
 
     internal static bool IsOverlay(int extended) =>
-        ((extended & (LayeredStyle | TopmostStyle)) != 0 && (extended & ClickThroughStyle) != 0)
+        ((extended & ((int)WINDOW_EX_STYLE.WS_EX_LAYERED | (int)WINDOW_EX_STYLE.WS_EX_TOPMOST)) != 0 && (extended & ClickThroughStyle) != 0)
         || (extended & NoActivateStyle) != 0;
 
     internal static bool IsCloaked(HWND hwnd)

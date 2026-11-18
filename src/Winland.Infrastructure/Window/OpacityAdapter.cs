@@ -1,4 +1,5 @@
 using System.Globalization;
+using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
@@ -15,8 +16,6 @@ internal interface IWindowStyles
 
 internal sealed class OpacityAdapter
 {
-    internal const uint LayeredStyle = 0x00080000;
-
     private readonly IWindowStyles _styles;
     private readonly Func<WindowId, bool> _hung;
     private readonly Dictionary<WindowId, Original> _owned = [];
@@ -128,7 +127,7 @@ internal sealed class OpacityAdapter
             return false;
         }
 
-        if ((chrome.ExStyle & LayeredStyle) != 0)
+        if ((chrome.ExStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED) != 0)
         {
             _leftAlone.Add(window);
             Report(window, "was already layered and was left alone.");
@@ -141,7 +140,7 @@ internal sealed class OpacityAdapter
         if (_hung(window))
             return false;
 
-        var updated = chrome.ExStyle | LayeredStyle;
+        var updated = chrome.ExStyle | (uint)WINDOW_EX_STYLE.WS_EX_LAYERED;
         _owned[window] = new Original(chrome.ExStyle, chrome.Alpha);
         if (!_styles.TryWriteExStyle(window, updated))
         {
@@ -241,10 +240,10 @@ internal sealed class OpacityAdapter
             _failed.Remove(window);
             _leftAlone.Remove(window);
 
-            if (!_styles.TryRead(window, out var chrome) || (chrome.ExStyle & LayeredStyle) == 0)
+            if (!_styles.TryRead(window, out var chrome) || (chrome.ExStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED) == 0)
                 return;
 
-            _owned[window] = new Original(chrome.ExStyle & ~LayeredStyle, 255);
+            _owned[window] = new Original(chrome.ExStyle & ~(uint)WINDOW_EX_STYLE.WS_EX_LAYERED, 255);
             Reset(window);
         }
     }
@@ -252,8 +251,8 @@ internal sealed class OpacityAdapter
     private void Restore(WindowId window, Original original)
     {
         if (_styles.TryRead(window, out var now))
-            _styles.TryWriteExStyle(window, (now.ExStyle & ~LayeredStyle) | (original.ExStyle & LayeredStyle));
-        if ((original.ExStyle & LayeredStyle) != 0)
+            _styles.TryWriteExStyle(window, (now.ExStyle & ~(uint)WINDOW_EX_STYLE.WS_EX_LAYERED) | (original.ExStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED));
+        if ((original.ExStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED) != 0)
             _styles.TrySetAlpha(window, original.Alpha);
     }
 

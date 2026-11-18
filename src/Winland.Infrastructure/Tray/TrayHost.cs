@@ -12,7 +12,6 @@ internal static class TrayHost
     private const string ClassName = "WinlandTray";
     private const uint IconId = 1;
     private const uint SyncMessage = 0x8000 + 0x72;
-    private const uint QuitMessage = 0x0012;
     private const uint LeftButtonUp = 0x0202;
     private const uint RightButtonUp = 0x0205;
     private const uint ContextMenu = 0x007B;
@@ -119,7 +118,7 @@ internal static class TrayHost
         }
 
         if (thread != 0)
-            _ = PInvoke.PostThreadMessage(thread, QuitMessage, default, default);
+            _ = PInvoke.PostThreadMessage(thread, PInvoke.WM_QUIT, default, default);
 
         _ = worker.Join(TimeSpan.FromSeconds(2));
     }

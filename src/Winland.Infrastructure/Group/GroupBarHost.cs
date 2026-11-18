@@ -9,15 +9,10 @@ internal static class GroupBarHost
     private const string ClassName = DecorationStack.GroupBarClass;
     private const uint SyncMessage = 0x8000 + 0x47;
     private const uint StackMessage = 0x8000 + 0x48;
-    private const uint QuitMessage = 0x0012;
-    private const uint TimerMessage = 0x0113;
-    private const uint MouseActivateMessage = 0x0021;
     private const uint LeftDownMessage = 0x0201;
     private const uint MiddleDownMessage = 0x0207;
     private const uint MiddleUpMessage = 0x0208;
     private const uint WheelMessage = 0x020A;
-    private const int NoActivate = 3;
-    private const int TopmostStyle = 0x00000008;
     private const uint TitlePeriodMilliseconds = 1000;
 
     private static readonly WNDPROC Proc = OnWindow;
@@ -125,7 +120,7 @@ internal static class GroupBarHost
             return;
 
         if (thread != 0)
-            _ = PInvoke.PostThreadMessage(thread, QuitMessage, default, default);
+            _ = PInvoke.PostThreadMessage(thread, PInvoke.WM_QUIT, default, default);
 
         _ = worker.Join(TimeSpan.FromSeconds(2));
     }
@@ -187,7 +182,7 @@ internal static class GroupBarHost
                     continue;
                 }
 
-                if (message.hwnd.IsNull && message.message == TimerMessage)
+                if (message.hwnd.IsNull && message.message == PInvoke.WM_TIMER)
                 {
                     Refresh();
                     continue;
@@ -284,8 +279,8 @@ internal static class GroupBarHost
 
     private static LRESULT OnWindow(HWND hwnd, uint message, WPARAM wParam, LPARAM lParam)
     {
-        if (message == MouseActivateMessage)
-            return new LRESULT(NoActivate);
+        if (message == PInvoke.WM_MOUSEACTIVATE)
+            return new LRESULT((nint)PInvoke.MA_NOACTIVATE);
 
         if (!ByHandle.TryGetValue(hwnd, out var bar))
             return PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
@@ -390,7 +385,7 @@ internal static class GroupBarHost
             var shown = new HWND((nint)Spec.Shown.Value);
             var chain = new List<HWND>();
             var above = DecorationStack.Above(shown, chain);
-            var topmost = !above.IsNull && (PInvoke.GetWindowLong(above, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE) & TopmostStyle) != 0;
+            var topmost = !above.IsNull && (PInvoke.GetWindowLong(above, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE) & (int)WINDOW_EX_STYLE.WS_EX_TOPMOST) != 0;
             var flags = SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_SHOWWINDOW;
 
             if (chain.Contains(Handle))

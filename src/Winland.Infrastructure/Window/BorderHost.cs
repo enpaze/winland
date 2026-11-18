@@ -9,10 +9,6 @@ internal static class BorderHost
 {
     private const string ClassName = DecorationStack.BorderClass;
     private const uint SyncMessage = 0x8000 + 0x4B;
-    private const uint QuitMessage = 0x0012;
-    private const uint MouseActivateMessage = 0x0021;
-    private const int NoActivate = 3;
-    private const int TopmostStyle = 0x00000008;
     private static readonly HWND Top = new(0);
     private static readonly HWND Topmost = new(-1);
     private static readonly HWND NotTopmost = new(-2);
@@ -114,7 +110,7 @@ internal static class BorderHost
             return;
 
         if (thread != 0)
-            _ = PInvoke.PostThreadMessage(thread, QuitMessage, default, default);
+            _ = PInvoke.PostThreadMessage(thread, PInvoke.WM_QUIT, default, default);
 
         _ = worker.Join(TimeSpan.FromSeconds(2));
     }
@@ -268,7 +264,7 @@ internal static class BorderHost
     }
 
     private static LRESULT OnWindow(HWND hwnd, uint message, WPARAM wParam, LPARAM lParam) =>
-        message == MouseActivateMessage ? new LRESULT(NoActivate) : PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
+        message == PInvoke.WM_MOUSEACTIVATE ? new LRESULT((nint)PInvoke.MA_NOACTIVATE) : PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
 
     private static unsafe HWND Create() =>
         PInvoke.CreateWindowEx(
@@ -541,7 +537,7 @@ internal static class BorderHost
             }
         }
 
-        private static bool IsTopmost(HWND hwnd) => (PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE) & TopmostStyle) != 0;
+        private static bool IsTopmost(HWND hwnd) => (PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE) & (int)WINDOW_EX_STYLE.WS_EX_TOPMOST) != 0;
 
         private static bool Visible(HWND target) =>
             PInvoke.IsWindowVisible(target) && !PInvoke.IsIconic(target) && !WindowAdapter.IsCloaked(target);

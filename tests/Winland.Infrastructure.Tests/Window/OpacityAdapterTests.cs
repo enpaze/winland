@@ -1,3 +1,5 @@
+using Windows.Win32.UI.WindowsAndMessaging;
+
 namespace Winland.Infrastructure.Tests;
 
 [Collection("Console")]
@@ -16,13 +18,13 @@ public class OpacityAdapterTests
         Assert.False(adapter.Owns(window));
 
         adapter.Apply(window, 128);
-        Assert.Equal(OpacityAdapter.LayeredStyle | 0x80, styles.ExStyle[window]);
+        Assert.Equal((uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80, styles.ExStyle[window]);
         Assert.Equal(128, styles.Alpha[window]);
         Assert.Equal(1, styles.Writes);
         Assert.True(adapter.Owns(window));
 
         adapter.Apply(window, 64);
-        Assert.Equal(OpacityAdapter.LayeredStyle | 0x80, styles.ExStyle[window]);
+        Assert.Equal((uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80, styles.ExStyle[window]);
         Assert.Equal(64, styles.Alpha[window]);
         Assert.Equal(1, styles.Writes);
 
@@ -66,7 +68,7 @@ public class OpacityAdapterTests
     {
         var styles = new FakeStyles();
         var window = new WindowId(42);
-        styles.ExStyle[window] = OpacityAdapter.LayeredStyle | 0x80;
+        styles.ExStyle[window] = (uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80;
         styles.Alpha[window] = 200;
         styles.ColorKey.Add(window);
         var adapter = new OpacityAdapter(styles);
@@ -137,7 +139,7 @@ public class OpacityAdapterTests
     {
         var styles = new FakeStyles();
         var window = new WindowId(5);
-        styles.ExStyle[window] = OpacityAdapter.LayeredStyle | 0x80;
+        styles.ExStyle[window] = (uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80;
         styles.Alpha[window] = 0;
         var hung = true;
         var adapter = new OpacityAdapter(styles, _ => hung);
@@ -260,7 +262,7 @@ public class OpacityAdapterTests
         var failed = new WindowId(4);
         var layered = new WindowId(5);
         styles.ExStyle[failed] = 0x80;
-        styles.ExStyle[layered] = OpacityAdapter.LayeredStyle;
+        styles.ExStyle[layered] = (uint)WINDOW_EX_STYLE.WS_EX_LAYERED;
         var adapter = new OpacityAdapter(styles);
         adapter.Apply(failed, 128);
         adapter.Apply(layered, 128);
@@ -399,7 +401,7 @@ public class OpacityAdapterTests
         var adapter = new OpacityAdapter(styles);
 
         Assert.True(adapter.Veil(window));
-        Assert.Equal(OpacityAdapter.LayeredStyle | 0x80, styles.ExStyle[window]);
+        Assert.Equal((uint)WINDOW_EX_STYLE.WS_EX_LAYERED | 0x80, styles.ExStyle[window]);
         Assert.Equal(255, adapter.Wanted(window));
 
         adapter.Unveil(window);
@@ -415,7 +417,7 @@ public class OpacityAdapterTests
     {
         var styles = new FakeStyles();
         var window = new WindowId(11);
-        styles.ExStyle[window] = OpacityAdapter.LayeredStyle;
+        styles.ExStyle[window] = (uint)WINDOW_EX_STYLE.WS_EX_LAYERED;
         styles.Alpha[window] = 255;
         var adapter = new OpacityAdapter(styles);
 

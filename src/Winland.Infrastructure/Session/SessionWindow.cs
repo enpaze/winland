@@ -10,7 +10,6 @@ internal sealed class SessionWindow : IDisposable
 {
     internal const string ClassName = "WinlandSessionHost";
 
-    private const uint TimerMessage = 0x0113;
     private const nuint ShellTimer = 1;
 
     private const nuint DisplayTimer = 2;
@@ -130,7 +129,7 @@ internal sealed class SessionWindow : IDisposable
                 return default;
             }
 
-            if (message == TimerMessage && (nuint)wParam == ShellTimer)
+            if (message == PInvoke.WM_TIMER && (nuint)wParam == ShellTimer)
             {
                 if (Taskbar.Present())
                 {
@@ -141,7 +140,7 @@ internal sealed class SessionWindow : IDisposable
                 return default;
             }
 
-            if (message == TimerMessage && (nuint)wParam == DisplayTimer)
+            if (message == PInvoke.WM_TIMER && (nuint)wParam == DisplayTimer)
             {
                 _ = PInvoke.KillTimer(_hwnd, DisplayTimer);
                 _onSignal(SessionSignal.DisplayChanged);

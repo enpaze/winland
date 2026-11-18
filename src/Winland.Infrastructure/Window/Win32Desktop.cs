@@ -32,7 +32,7 @@ internal sealed class Win32Desktop : IDesktop
         var exStyle = (uint)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
         var colorKey = false;
         byte alpha = 255;
-        if ((exStyle & OpacityAdapter.LayeredStyle) != 0)
+        if ((exStyle & (uint)WINDOW_EX_STYLE.WS_EX_LAYERED) != 0)
             _ = TryReadLayered(hwnd, out colorKey, out alpha);
 
         chrome = new WindowChrome(exStyle, colorKey, alpha);
@@ -50,7 +50,7 @@ internal sealed class Win32Desktop : IDesktop
         if (previous == 0 && Marshal.GetLastPInvokeError() != 0)
             return false;
 
-        if ((exStyle & ~(uint)previous) == OpacityAdapter.LayeredStyle)
+        if ((exStyle & ~(uint)previous) == (uint)WINDOW_EX_STYLE.WS_EX_LAYERED)
             return true;
 
         _ = PInvoke.SetWindowPos(

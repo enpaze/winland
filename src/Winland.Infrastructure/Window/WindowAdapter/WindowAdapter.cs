@@ -12,9 +12,7 @@ public sealed partial class WindowAdapter : IDisposable
     private const int CaptionStyle = 0x00C00000;
     private const int SizingStyle = 0x00040000;
     private const int ToolStyle = 0x00000080;
-    private const int TopmostStyle = 0x00000008;
     private const int DialogStyle = 0x00000001;
-    private const int LayeredStyle = 0x00080000;
     private const int ClickThroughStyle = 0x00000020;
     private const int NoActivateStyle = 0x08000000;
 
@@ -484,7 +482,7 @@ public sealed partial class WindowAdapter : IDisposable
                 ExclusiveFullscreen: ExclusiveFullscreenWindow.Is((uint)style, outer, monitorRect),
                 Overlay: IsOverlay(extended),
                 Resizable: (style & SizingStyle) != 0,
-                Topmost: (extended & TopmostStyle) != 0,
+                Topmost: (extended & (int)WINDOW_EX_STYLE.WS_EX_TOPMOST) != 0,
                 Frameless: (style & CaptionStyle) != CaptionStyle && (style & SizingStyle) == 0),
         };
         return true;
@@ -493,7 +491,7 @@ public sealed partial class WindowAdapter : IDisposable
     private bool Dialogish(string className, int extended, HWND owner) =>
         className == "#32770"
         || (extended & DialogStyle) != 0
-        || (extended & TopmostStyle) != 0
+        || (extended & (int)WINDOW_EX_STYLE.WS_EX_TOPMOST) != 0
         || (!owner.IsNull && (PInvoke.IsWindowVisible(owner) || _concealed.ContainsKey(new WindowId((nint)owner))));
 
     private static string RuleClass(HWND hwnd)

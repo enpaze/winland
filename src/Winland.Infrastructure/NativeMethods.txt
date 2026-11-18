@@ -229,3 +229,7 @@ DeferWindowPos
 EndDeferWindowPos
 WM_CLOSE
 SetWindowText
+WM_QUIT
+WM_TIMER
+WM_MOUSEACTIVATE
+MA_NOACTIVATE
