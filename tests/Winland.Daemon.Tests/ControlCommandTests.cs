@@ -5,14 +5,24 @@ public class ControlCommandTests
     [TestMethod]
     [DataRow("error: unknown dispatcher 'bogus'")]
     [DataRow("error: no such workspace")]
-    [DataRow("")]
-    public void ASingleFailureWritesToStandardError(string reply)
+    [DataRow(null)]
+    public void ASingleFailureWritesToStandardError(string? reply)
     {
         var result = WriteReply("dispatch bogus", reply);
 
         Assert.AreEqual(1, result.Exit);
         Assert.AreEqual("", result.Output);
-        Assert.AreEqual((reply.Length == 0 ? "error: no reply" : reply) + Environment.NewLine, result.Error);
+        Assert.AreEqual((reply ?? "error: no reply") + Environment.NewLine, result.Error);
+    }
+
+    [TestMethod]
+    public void AnEmptyReplyWritesNothingAndSucceeds()
+    {
+        var result = WriteReply("activewindow", "");
+
+        Assert.AreEqual(0, result.Exit);
+        Assert.AreEqual("", result.Output);
+        Assert.AreEqual("", result.Error);
     }
 
     [TestMethod]
@@ -30,7 +40,7 @@ public class ControlCommandTests
         Assert.AreEqual(expectedExit == 1 ? reply + Environment.NewLine : "", result.Error);
     }
 
-    private static (int Exit, string Output, string Error) WriteReply(string line, string reply)
+    private static (int Exit, string Output, string Error) WriteReply(string line, string? reply)
     {
         var previousOut = Console.Out;
         var previousError = Console.Error;

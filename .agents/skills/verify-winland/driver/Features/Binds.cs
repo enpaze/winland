@@ -13,6 +13,7 @@ public class Binds
         $hyper = CTRL ALT SHIFT
         bind = $hyper, F9, workspace, 4
         bind = $hyper, F10, workspace, 1
+        bind = $hyper, MOUSE:X2, workspace, 1
         input:follow_mouse = true
 
         """;
@@ -22,9 +23,11 @@ public class Binds
     {
         var binds = run.Ask("binds");
         Assert.Contains("bind = SHIFT CTRL ALT, F9, workspace, 4", binds, StringComparison.Ordinal);
+        Assert.Contains("bind = SHIFT CTRL ALT, mouse:x2, workspace, 1", binds, StringComparison.Ordinal);
         var json = run.Json("binds").EnumerateArray().ToList();
         Assert.Contains(bind => bind.GetProperty("key").GetString() == "F9" && bind.GetProperty("modmask").GetInt32() == 13 && bind.GetProperty("dispatcher").GetString() == "workspace", json);
-        run.Say("saw: binds lists the config's binds, with CTRL ALT SHIFT as modmask 13");
+        Assert.Contains(bind => bind.GetProperty("key").GetString() == "mouse:x2" && bind.GetProperty("mouse").GetBoolean(), json);
+        run.Say("saw: binds lists the config's binds, with CTRL ALT SHIFT as modmask 13 and the mouse button by name");
 
         var (left, right) = run.OpenPair();
 

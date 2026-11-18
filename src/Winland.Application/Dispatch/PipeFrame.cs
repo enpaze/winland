@@ -54,11 +54,11 @@ public static class PipeFrame
         return Encoding.UTF8.GetString(body.GetBuffer().AsSpan(0, (int)body.Length));
     }
 
-    public static string ReadReply(Stream stream, CancellationToken cancel = default)
+    public static string? ReadReply(Stream stream, CancellationToken cancel = default)
     {
         ArgumentNullException.ThrowIfNull(stream);
         if (ReadLineAsync(stream, ReplyLimit, cancel).GetAwaiter().GetResult() is not string first)
-            return "";
+            return null;
 
         if (first.Length <= 1
             || first[0] != '#'

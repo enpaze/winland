@@ -151,7 +151,7 @@ These talk to the running Winland.
 | `winland binds` | List the hotkeys, one config line each |
 | `winland configerrors` | List the config's warnings, each with its file and line |
 | `winland files` | Show the config Winland read and the log it writes |
-| `winland events` | Print every event as it happens, one per line |
+| `winland [-j] events` | Print every event as it happens, one per line |
 
 | Flag | Does |
 | --- | --- |

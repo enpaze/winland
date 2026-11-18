@@ -171,7 +171,7 @@ internal sealed class VerifyRun
         return Frame(first).Left <= Frame(second).Left ? (first, second) : (second, first);
     }
 
-    public string Active() => Json("activewindow").TryGetProperty("address", out var address) ? address.GetString() ?? "" : "";
+    public string Active() => Json("activewindow") is { ValueKind: JsonValueKind.Object } active && active.TryGetProperty("address", out var address) ? address.GetString() ?? "" : "";
 
     public void Focus(HWND hwnd)
     {
@@ -218,10 +218,10 @@ internal sealed class VerifyRun
 
     public IReadOnlyList<string> Events => _events?.Lines ?? throw new InvalidOperationException("Call FollowEvents first.");
 
-    public void FollowEvents()
+    public void FollowEvents(string command = "events")
     {
-        _events ??= EventLog.Follow(Paths, Daemon.Pipe, DotnetRoot);
-        Say("following winland events");
+        _events ??= EventLog.Follow(Paths, Daemon.Pipe, DotnetRoot, command);
+        Say("following winland " + command);
     }
 
     public void UntilEvent(string prefix, string? contains = null) =>

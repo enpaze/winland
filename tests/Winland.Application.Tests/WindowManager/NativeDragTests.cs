@@ -83,10 +83,10 @@ public class NativeDragTests
     }
 
     private static void Press(TestDesktop desk) =>
-        desk.Handle(new PointerButtonPressed("mouse:272") { Position = desk.Pointer });
+        desk.Handle(new PointerButtonPressed("mouse:left") { Position = desk.Pointer });
 
     private static void Release(TestDesktop desk) =>
-        desk.Handle(new PointerButtonReleased("mouse:272") { Position = desk.Pointer });
+        desk.Handle(new PointerButtonReleased("mouse:left") { Position = desk.Pointer });
 
     private static void Near(int expected, int actual, int delta) =>
         Assert.IsInRange(expected - delta, expected + delta, actual);

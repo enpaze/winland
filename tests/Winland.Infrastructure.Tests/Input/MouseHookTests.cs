@@ -7,12 +7,12 @@ public class MouseHookTests
     private const uint XUp = 0x020C;
 
     [TestMethod]
-    [DataRow(0x0201u, "mouse:272", false)]
-    [DataRow(0x0202u, "mouse:272", true)]
-    [DataRow(0x0204u, "mouse:273", false)]
-    [DataRow(0x0205u, "mouse:273", true)]
-    [DataRow(0x0207u, "mouse:274", false)]
-    [DataRow(0x0208u, "mouse:274", true)]
+    [DataRow(0x0201u, "mouse:left", false)]
+    [DataRow(0x0202u, "mouse:left", true)]
+    [DataRow(0x0204u, "mouse:right", false)]
+    [DataRow(0x0205u, "mouse:right", true)]
+    [DataRow(0x0207u, "mouse:middle", false)]
+    [DataRow(0x0208u, "mouse:middle", true)]
     public void MainButtonsAreNamedByMessage(uint message, string expected, bool expectedUp)
     {
         Assert.IsTrue(MouseHook.TryButton(message, 0, out var button, out var up));
@@ -21,12 +21,12 @@ public class MouseHookTests
     }
 
     [TestMethod]
-    [DataRow(XDown, 0x0001_0000u, "mouse:275", false)]
-    [DataRow(XUp, 0x0001_0000u, "mouse:275", true)]
-    [DataRow(XDown, 0x0002_0000u, "mouse:276", false)]
-    [DataRow(XUp, 0x0002_0000u, "mouse:276", true)]
-    [DataRow(XDown, 0x0001_0002u, "mouse:275", false)]
-    [DataRow(XDown, 0x0002_0001u, "mouse:276", false)]
+    [DataRow(XDown, 0x0001_0000u, "mouse:x1", false)]
+    [DataRow(XUp, 0x0001_0000u, "mouse:x1", true)]
+    [DataRow(XDown, 0x0002_0000u, "mouse:x2", false)]
+    [DataRow(XUp, 0x0002_0000u, "mouse:x2", true)]
+    [DataRow(XDown, 0x0001_0002u, "mouse:x1", false)]
+    [DataRow(XDown, 0x0002_0001u, "mouse:x2", false)]
     public void SideButtonsAreReadFromTheHighWord(uint message, uint mouseData, string expected, bool expectedUp)
     {
         Assert.IsTrue(MouseHook.TryButton(message, mouseData, out var button, out var up));

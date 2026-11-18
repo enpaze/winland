@@ -76,7 +76,7 @@ public class FollowMouseTests
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
         Assert.AreEqual("\"address\":\"0x1\"", Address(core));
-        core.Handle(new PointerButtonPressed("mouse:272"));
+        core.Handle(new PointerButtonPressed("mouse:left"));
         core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));
         Assert.AreEqual("\"address\":\"0x2\"", Address(core));
     }

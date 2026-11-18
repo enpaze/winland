@@ -115,13 +115,13 @@ public class StuckModifierTests
     [TestMethod]
     public void MouseChordWithSuperMasksSuperAndPassesItsRelease()
     {
-        var (core, session) = Load("bind = SUPER, mouse:272, movewindow");
+        var (core, session) = Load("bind = SUPER, mouse:left, movewindow");
         core.Decide(new KeyPressed("Super_L"), session);
 
-        var down = core.Decide(new PointerButtonPressed("mouse:272") { Position = new Point(0, 0) }, session);
+        var down = core.Decide(new PointerButtonPressed("mouse:left") { Position = new Point(0, 0) }, session);
         core.Decide(new PointerMoved(new Point(200, 200)), session);
         var superUp = core.Decide(new KeyReleased("Super_L"), session);
-        var buttonUp = core.Decide(new PointerButtonReleased("mouse:272") { Position = new Point(200, 200) }, session);
+        var buttonUp = core.Decide(new PointerButtonReleased("mouse:left") { Position = new Point(200, 200) }, session);
 
         Assert.IsTrue(down.Consumed);
         Assert.IsTrue(down.Mask);
@@ -182,17 +182,17 @@ public class StuckModifierTests
     [TestMethod]
     public void SuperMouseChordAfterASuperKeyChordIsNotMaskedTwice()
     {
-        var (core, session) = Load("bind = SUPER, F23, killactive\nbind = SUPER, mouse:272, movewindow\n");
+        var (core, session) = Load("bind = SUPER, F23, killactive\nbind = SUPER, mouse:left, movewindow\n");
         core.Decide(new KeyPressed("Super_L"), session);
 
         var key = core.Decide(new KeyPressed("F23"), session);
         core.Decide(new KeyReleased("F23"), session);
-        var button = core.Decide(new PointerButtonPressed("mouse:272"), session);
+        var button = core.Decide(new PointerButtonPressed("mouse:left"), session);
 
         Assert.IsTrue(key.Mask);
         Assert.IsTrue(button.Consumed);
         Assert.IsFalse(button.Mask);
-        Assert.IsTrue(core.Decide(new PointerButtonReleased("mouse:272"), session).Consumed);
+        Assert.IsTrue(core.Decide(new PointerButtonReleased("mouse:left"), session).Consumed);
         Assert.IsFalse(core.Decide(new KeyReleased("Super_L"), session).Consumed);
     }
 

@@ -136,7 +136,9 @@ public class ExtraCommandTests
 
         Assert.IsTrue(ControlInvocation.TryCreate(["events"], out line, out events));
         Assert.IsTrue(events);
-        Assert.IsFalse(ControlInvocation.TryCreate(["-j", "events"], out _, out _));
+        Assert.IsTrue(ControlInvocation.TryCreate(["-j", "events"], out line, out events));
+        Assert.IsTrue(events);
+        Assert.AreEqual("j/events", line);
         Assert.IsFalse(ControlInvocation.TryCreate(["nope"], out _, out _));
         Assert.IsFalse(ControlInvocation.TryCreate(["-r", "clients"], out _, out _));
         Assert.IsFalse(ControlInvocation.TryCreate(["-a", "clients"], out _, out _));

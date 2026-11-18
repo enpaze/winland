@@ -261,36 +261,40 @@ public class KeyNameTests
     {
         var german = German();
 
-        Assert.AreEqual("mouse:272", KeyNames.Resolve("mouse:272", german));
+        Assert.AreEqual("mouse:left", KeyNames.Resolve("mouse:left", german));
         Assert.AreEqual("catchall", KeyNames.Resolve("catchall", german));
 
-        var document = ConfigParser.Parse("bind = SUPER, mouse:272, movewindow\n", layout: german);
+        var document = ConfigParser.Parse("bind = SUPER, mouse:left, movewindow\n", layout: german);
         var bind = Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds));
-        Assert.AreEqual("mouse:272", bind.Key);
+        Assert.AreEqual("mouse:left", bind.Key);
     }
 
     [TestMethod]
-    [DataRow("mouse:left", "mouse:272")]
-    [DataRow("mouse:right", "mouse:273")]
-    [DataRow("mouse:middle", "mouse:274")]
-    [DataRow("mouse:x1", "mouse:275")]
-    [DataRow("Mouse:X2", "mouse:276")]
-    public void AMouseButtonNameBindsTheSameButtonAsItsNumber(string written, string number)
+    [DataRow("mouse:left", "mouse:left")]
+    [DataRow("MOUSE:Right", "mouse:right")]
+    [DataRow("mouse:middle", "mouse:middle")]
+    [DataRow("mouse:X1", "mouse:x1")]
+    [DataRow("Mouse:X2", "mouse:x2")]
+    public void AMouseButtonNameIsKeptInLowerCase(string written, string button)
     {
         var document = ConfigParser.Parse($"bind = SUPER, {written}, movewindow\n", layout: German());
 
         Assert.IsEmpty(document.Warnings);
         var bind = Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds));
-        Assert.AreEqual(number, bind.Key);
+        Assert.AreEqual(button, bind.Key);
     }
 
     [TestMethod]
-    public void AnUnknownMouseButtonNameIsAnUnknownKey()
+    [DataRow("mouse:thumb")]
+    [DataRow("mouse:272")]
+    [DataRow("mouse:276")]
+    public void AnUnknownMouseButtonNameIsAnUnknownKey(string written)
     {
-        var document = ConfigParser.Parse("bind = SUPER, mouse:thumb, movewindow\n");
+        var document = ConfigParser.Parse($"bind = SUPER, {written}, movewindow\nunbind = SUPER, {written}\n");
 
         Assert.IsEmpty(document.Binds);
-        Assert.Contains(warning => warning.Message.Contains("mouse:thumb", StringComparison.Ordinal), document.Warnings);
+        Assert.HasCount(2, document.Warnings);
+        Assert.IsTrue(document.Warnings.All(warning => warning.Message == $"Unknown key '{written}'."));
     }
 
     [TestMethod]

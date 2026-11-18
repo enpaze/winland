@@ -255,17 +255,17 @@ public class WindowBehaviorTests
         desk.Ok("focuswindow", "class:kitty");
 
         ResetWindow(desk);
-        desk.Set("bind", ", mouse:273, resizewindow");
-        Press(desk, "mouse:273");
+        desk.Set("bind", ", mouse:right, resizewindow");
+        Press(desk, "mouse:right");
         desk.MovePointer(700, 200);
-        Release(desk, "mouse:273");
+        Release(desk, "mouse:right");
         Assert.AreEqual("700,200", desk.PlaceOf("kitty").Size);
 
         ResetWindow(desk);
-        desk.Set("bind", ", mouse:273, resizewindow, 1");
-        Press(desk, "mouse:273");
+        desk.Set("bind", ", mouse:right, resizewindow, 1");
+        Press(desk, "mouse:right");
         desk.MovePointer(1280, 100);
-        Release(desk, "mouse:273");
+        Release(desk, "mouse:right");
         Assert.AreEqual("1280,800", desk.PlaceOf("kitty").Size);
     }
 
@@ -390,7 +390,7 @@ public class WindowBehaviorTests
     private static void ResetWindow(TestDesktop desk)
     {
         Assert.AreEqual("ok", desk.Send("reload"));
-        desk.Set("unbind", ", mouse:273");
+        desk.Set("unbind", ", mouse:right");
         desk.Place("kitty", 0, 0, 640, 400);
         desk.MovePointer(640, 400);
         Assert.AreEqual(("2,2", "640,400"), desk.PlaceOf("kitty"));

@@ -27,7 +27,7 @@ public class AppWindowTests
         Assert.DoesNotContain(placement => placement.Client == dragged.Id, opened.Placements);
         Assert.DoesNotContain(motion => motion.Window == dragged.Window, opened.Motions);
 
-        var dropped = core.Handle(new PointerButtonReleased("mouse:272") { Position = new Point(1500, 500) });
+        var dropped = core.Handle(new PointerButtonReleased("mouse:left") { Position = new Point(1500, 500) });
         Assert.IsFalse(Assert.ContainsSingle(client => client.Window == dragged.Window, dropped.State.Clients).Floating);
     }
 

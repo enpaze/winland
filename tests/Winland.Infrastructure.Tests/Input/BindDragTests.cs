@@ -7,10 +7,10 @@ public class BindDragTests
     public void TheDragEndsOnlyWhenItsOwnButtonComesUp()
     {
         var drag = new BindDrag();
-        drag.Begin("mouse:272", "movewindow", "");
+        drag.Begin("mouse:left", "movewindow", "");
 
-        Assert.IsNull(drag.Release("mouse:273"));
-        Assert.AreEqual(new BindDrag.Active("mouse:272", "movewindow", ""), drag.Release("mouse:272"));
+        Assert.IsNull(drag.Release("mouse:right"));
+        Assert.AreEqual(new BindDrag.Active("mouse:left", "movewindow", ""), drag.Release("mouse:left"));
         Assert.IsNull(drag.Current);
     }
 
@@ -18,23 +18,23 @@ public class BindDragTests
     public void ASecondDragWhileOneIsHeldIsIgnored()
     {
         var drag = new BindDrag();
-        drag.Begin("mouse:272", "movewindow", "");
+        drag.Begin("mouse:left", "movewindow", "");
 
-        Assert.IsFalse(drag.Begin("mouse:273", "resizewindow", ""));
-        Assert.IsNull(drag.Release("mouse:273"));
-        Assert.AreEqual(new BindDrag.Active("mouse:272", "movewindow", ""), drag.Release("mouse:272"));
+        Assert.IsFalse(drag.Begin("mouse:right", "resizewindow", ""));
+        Assert.IsNull(drag.Release("mouse:right"));
+        Assert.AreEqual(new BindDrag.Active("mouse:left", "movewindow", ""), drag.Release("mouse:left"));
     }
 
     [TestMethod]
     public void AnAbandonedDragIsHandedBackOnceSoItsEndCanBePosted()
     {
         var drag = new BindDrag();
-        drag.Begin("mouse:273", "resizewindow", "1");
+        drag.Begin("mouse:right", "resizewindow", "1");
 
-        Assert.AreEqual(new BindDrag.Active("mouse:273", "resizewindow", "1"), drag.Abandon());
+        Assert.AreEqual(new BindDrag.Active("mouse:right", "resizewindow", "1"), drag.Abandon());
         Assert.IsNull(drag.Current);
         Assert.IsNull(drag.Abandon());
-        Assert.IsNull(drag.Release("mouse:273"));
+        Assert.IsNull(drag.Release("mouse:right"));
     }
 
     [TestMethod]

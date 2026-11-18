@@ -44,7 +44,7 @@ public static class CommandClient
         return VerifyServer(pipe);
     }
 
-    public static string Transact(string command, string? pipeName = null, int timeoutMs = 2000, bool lendForeground = false, int replyTimeoutMs = 10_000)
+    public static string? Transact(string command, string? pipeName = null, int timeoutMs = 2000, bool lendForeground = false, int replyTimeoutMs = 10_000)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
         using var pipe = new NamedPipeClientStream(".", pipeName ?? DefaultName, PipeDirection.InOut, PipeOptions.Asynchronous);
@@ -138,7 +138,7 @@ public static class CommandClient
         return (int)id;
     }
 
-    private static string ReadReply(Stream stream, CancellationToken cancel)
+    private static string? ReadReply(Stream stream, CancellationToken cancel)
     {
         try
         {

@@ -18,6 +18,14 @@ public class PipeFrameTests
     }
 
     [TestMethod]
+    public void AClosedPipeIsNoReply()
+    {
+        using var stream = new MemoryStream();
+
+        Assert.IsNull(PipeFrame.ReadReply(stream));
+    }
+
+    [TestMethod]
     public void AReplyWithANewlineIsSentWithItsLength()
     {
         var framed = Encoding.UTF8.GetString(PipeFrame.Frame("a\nb"));

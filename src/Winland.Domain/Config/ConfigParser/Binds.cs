@@ -61,6 +61,12 @@ public static partial class ConfigParser
                 return;
             }
 
+            if (dispatcher.Equals("resizewindow", StringComparison.OrdinalIgnoreCase) && !key.StartsWith("mouse:", StringComparison.Ordinal))
+            {
+                Warn(lineNumber, "resizewindow is a drag; bind it to a mouse button.");
+                return;
+            }
+
             _binds.Add(new Bind(modifiers, key, dispatcher, arguments, description));
         }
 
@@ -82,6 +88,12 @@ public static partial class ConfigParser
             if (!ModifierNames.TryParse(parts[0], out var modifiers, out var modifierError))
             {
                 Warn(lineNumber, modifierError);
+                return;
+            }
+
+            if (!KeyNames.Matchable(parts[1], layout))
+            {
+                Warn(lineNumber, $"Unknown key '{parts[1]}'.");
                 return;
             }
 

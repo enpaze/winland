@@ -211,17 +211,17 @@ public class BindTests
     [TestMethod]
     public void MouseBindFiresOnTheButtonAndNotOnAKey()
     {
-        var core = Load("bind = SUPER, mouse:272, movewindow\nbind = SUPER, Q, killactive\n");
+        var core = Load("bind = SUPER, mouse:left, movewindow\nbind = SUPER, Q, killactive\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
-        var button = core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(500, 400) });
+        var button = core.Handle(new PointerButtonPressed("mouse:left") { Position = new Point(500, 400) });
         AssertRan(button, null);
         Assert.Contains(client => client.Window == new WindowId(1), button.State.Clients);
 
-        AssertPassed(Press(core, "mouse:272"));
+        AssertPassed(Press(core, "mouse:left"));
         AssertRan(Press(core, "Q"), 1);
-        AssertCaught(core.Handle(new PointerButtonReleased("mouse:272")));
+        AssertCaught(core.Handle(new PointerButtonReleased("mouse:left")));
         AssertPassed(Release(core, "Super_L"));
     }
 

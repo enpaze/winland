@@ -6,7 +6,7 @@ namespace Winland.Application;
 public static class ControlInvocation
 {
     public static string Usage { get; } =
-        string.Concat(CommandProtocol.VerbForms.Select(form => "       winland " + (form == "events" ? "" : "[-j] ") + form + "\n"))
+        string.Concat(CommandProtocol.VerbForms.Select(form => "       winland [-j] " + form + "\n"))
         + "       winland [-j] version\n";
 
     public static bool TryAnswerLocally(string[] args, out string reply)
@@ -77,9 +77,6 @@ public static class ControlInvocation
             return false;
 
         events = parsed.Request is EventsRequest;
-        if (events && prefix.Length > 0)
-            return false;
-
         line = prefix + request;
         return true;
     }
