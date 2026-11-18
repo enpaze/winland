@@ -218,7 +218,7 @@ The `get monitors` reply lists the enabled Monitors, and `get monitors all` adds
 
 A command for the running Winland, such as `winland workspace 2` or `winland get windows`, goes down the pipe and never asks for UAC or starts Winland. An argument `winland` does not know prints the usage and asks for no approval either.
 
-`winland` reads an argument that starts with `-` as a flag unless it is a number. A number may have a fraction, so `winland resizeactive -10 0` passes its numbers to the dispatcher. The words after `winland exec` are a command line and are passed as they are, flags and all, including `--`. When there are several, one with a space in it, such as a path the shell took the quotes off, is quoted again. A command line given as one quoted argument, such as `winland exec "notepad C:\a b.txt"`, is passed whole, so a program path with a space that is given alone keeps its own quotes inside it: `winland exec '"C:\Program Files\App\app.exe"'`.
+`winland` reads an argument that starts with `-` as a flag unless it is a number. A number may have a fraction, so `winland resizeactive -10 0` passes its numbers to the dispatcher. The words after `winland exec` are a command line and are passed as they are, flags and all, including `--`. A word that is exactly `-j` is still the JSON flag, so a program that needs `-j` gets its command line quoted as one argument, such as `winland exec "tool -j"`. When there are several, one with a space in it, such as a path the shell took the quotes off, is quoted again. A command line given as one quoted argument, such as `winland exec "notepad C:\a b.txt"`, is passed whole, so a program path with a space that is given alone keeps its own quotes inside it: `winland exec '"C:\Program Files\App\app.exe"'`.
 
 `winland help` and `winland --help` print the usage and exit 0. The usage lists every Dispatcher this binary knows, which may differ from the running Daemon's. A command `winland` does not know prints the usage to standard error and exits 2. On the pipe, an unknown name replies `error: unknown command '<name>'`, with a close-name hint when exactly one known name is within two edits.
 
@@ -339,7 +339,7 @@ A client has 5 seconds after it connects to send its request line. One that send
 
 The pipe refuses clients on other machines. When another process already holds the pipe name, the Daemon fails to start and says so, instead of sharing the name with it.
 
-A request is one line: `[j/]<action> [args]`, `[j/]get <thing>`, `[j/]inspect [selector]` or `[j/]events`. An action is a Dispatcher name, `reload` and `exit` among them. `get` takes `windows`, `window`, `workspaces`, `workspace`, `monitors`, `monitors all`, `binds`, `errors` or `files`. `j/` asks for JSON. The CLI takes the same words as its arguments, with `-j` before or after them for `j/`, except after `exec`, where every word belongs to the command line.
+A request is one line: `[j/]<action> [args]`, `[j/]get <thing>`, `[j/]inspect [selector]` or `[j/]events`. An action is a Dispatcher name, `reload` and `exit` among them. `get` takes `windows`, `window`, `workspaces`, `workspace`, `monitors`, `monitors all`, `binds`, `errors` or `files`. `j/` asks for JSON. The CLI takes the same words as its arguments, with `-j` before or after them for `j/`.
 
 Command failures start with `error:`. The CLI writes a failed reply to standard error and exits with code 1.
 

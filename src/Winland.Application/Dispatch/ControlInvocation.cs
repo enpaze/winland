@@ -28,7 +28,7 @@ public static class ControlInvocation
         ArgumentNullException.ThrowIfNull(args);
         line = "";
         events = false;
-        var flags = "";
+        var json = false;
         var rest = new List<string>();
 
         if (args.Any(arg => arg.Contains('\n', StringComparison.Ordinal) || arg.Contains('\r', StringComparison.Ordinal)))
@@ -38,26 +38,26 @@ public static class ControlInvocation
         {
             var arg = args[i];
 
+            if (arg == "-j")
+            {
+                json = true;
+                continue;
+            }
+
             if (IsCommandLine(rest) || !arg.StartsWith('-') || IsNumber(arg))
             {
                 rest.Add(arg);
                 continue;
             }
 
-            if (arg == "--")
-            {
-                rest.AddRange(args.Skip(i + 1));
-                break;
-            }
-
-            if (arg is not "-j")
+            if (arg != "--")
                 return false;
 
-            if (!flags.Contains(arg[1], StringComparison.Ordinal))
-                flags += arg[1];
+            rest.AddRange(args.Skip(i + 1));
+            break;
         }
 
-        var prefix = flags.Length == 0 ? "" : flags + "/";
+        var prefix = json ? "j/" : "";
         if (rest.Count == 0)
             return false;
 

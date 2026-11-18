@@ -67,7 +67,7 @@ public class Ipc
         var drag = run.Cli("resizewindow");
         Assert.AreEqual(1, drag.ExitCode);
         Assert.AreEqual("error: resizewindow is a drag; bind it to a mouse button", drag.Error.Trim());
-        foreach (var help in new[] { run.Cli("help"), run.Cli("--help") })
+        foreach (var help in new[] { run.Cli("help"), run.Cli("--help"), run.Cli("help", "-j") })
         {
             Assert.AreEqual(0, help.ExitCode);
             Assert.AreEqual("", help.Error);

@@ -43,7 +43,7 @@ Preconditions:
 - **Malformed selector.** The driver runs `winland inspect pid:abc`. It exits 1, and standard error starts with `error: invalid selector`.
 - **Unknown command.** The driver runs `winland nosuchcommand`, `winland dispatch workspace 2` and `winland clients`. Each exits 2, prints nothing to standard output, and writes the usage, starting `usage: winland`, to standard error.
 - **Drag outside a drag.** The driver runs `winland resizewindow`. It exits 1, and standard error is `error: resizewindow is a drag; bind it to a mouse button`.
-- **Help.** The driver runs `winland help` and `winland --help`. Each exits 0, writes nothing to standard error, and prints an `actions:` line that names `workspace` and `reload`.
+- **Help.** The driver runs `winland help`, `winland --help` and `winland help -j`. Each exits 0, writes nothing to standard error, and prints an `actions:` line that names `workspace` and `reload`.
 - **Version without a Daemon.** The driver stops Winland. `winland get windows` now exits 1, `winland version` exits 0 with one line, `winland <version> (<commit>)`, and `winland -j version` exits 0 with JSON whose `version` is the same and whose keys are `version`, `commit` and `dirty`.
 
 ## Gotchas

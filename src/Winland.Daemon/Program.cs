@@ -5,7 +5,7 @@ RetireStaleInstallFiles();
 
 args = Elevation.SendOutputBack(args);
 
-if (args is ["help" or "--help"])
+if (args.Where(arg => arg != "-j").ToArray() is ["help" or "--help"])
 {
     Program.WriteUsage(Console.Out);
     return 0;
@@ -347,7 +347,7 @@ internal partial class Program
         writer.WriteLine("       winland tweaks --restore");
         writer.WriteLine("       winland help");
         writer.Write(ControlInvocation.Usage);
-        writer.WriteLine("-j prints JSON, before or after the command. After exec it belongs to the command line.");
+        writer.WriteLine("-j prints JSON, before or after the command. To pass -j to a program, quote its exec command line as one argument.");
         writer.WriteLine("check reads a config as a start would, and changes nothing: 0 when clean, 1 for any warning or a file it cannot read, 2 for bad usage.");
         writer.WriteLine("version prints this winland's version and needs no running Winland.");
         writer.WriteLine("WINLAND_NO_ELEVATE=1 or --no-elevate starts without elevation. install --user uses it.");
