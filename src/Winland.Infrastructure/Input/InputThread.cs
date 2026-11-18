@@ -88,14 +88,7 @@ internal sealed class InputThread : IDisposable
         _started.Set();
         try
         {
-            while (PInvoke.GetMessage(out var message, default, 0, 0) > 0)
-            {
-                if (message.hwnd.IsNull && Service(message.message))
-                    continue;
-
-                PInvoke.TranslateMessage(in message);
-                PInvoke.DispatchMessage(in message);
-            }
+            MessageLoop.Run(message => message.hwnd.IsNull && Service(message.message));
         }
         finally
         {

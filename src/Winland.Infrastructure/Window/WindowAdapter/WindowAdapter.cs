@@ -163,18 +163,6 @@ public sealed partial class WindowAdapter : IDisposable
         }
     }
 
-    internal static void Pump(Func<MSG, bool>? intercept)
-    {
-        while (PInvoke.GetMessage(out var message, default, 0, 0) > 0)
-        {
-            if (intercept is not null && intercept(message))
-                continue;
-
-            PInvoke.TranslateMessage(in message);
-            PInvoke.DispatchMessage(in message);
-        }
-    }
-
     public void Dispose()
     {
         if (_disposed)

@@ -213,7 +213,7 @@ public sealed class WindowHost : IDisposable
 
             OnSignal(shell);
 
-            WindowAdapter.Pump(message =>
+            MessageLoop.Run(message =>
             {
                 if (message.message == LoopInvoker.Message)
                 {

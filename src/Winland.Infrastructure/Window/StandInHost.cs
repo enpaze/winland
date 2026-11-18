@@ -101,11 +101,7 @@ internal static class StandInHost
             ready.Set();
         }
 
-        while (PInvoke.GetMessage(out var message, default, 0, 0) > 0)
-        {
-            PInvoke.TranslateMessage(in message);
-            PInvoke.DispatchMessage(in message);
-        }
+        MessageLoop.Run();
     }
 
     private static LRESULT OnWindow(HWND hwnd, uint message, WPARAM wParam, LPARAM lParam)
