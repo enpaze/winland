@@ -24,7 +24,7 @@ public static partial class CommandProtocol
         switch (streamEvent)
         {
             case ClientOpened opened:
-                lines.Add($"openwindow>>{EventAddress(opened.Window)},{WorkspaceNameText(opened.Workspace, indexed)},{EventMonitor(state, opened.Workspace)},{Clean(opened.Class)},{Clean(opened.Title)}");
+                lines.Add($"openwindow>>{EventAddress(opened.Window)},{opened.Workspace.Name},{EventMonitor(state, opened.Workspace)},{Clean(opened.Class)},{Clean(opened.Title)}");
                 break;
             case ClientClosed closed:
                 lines.Add($"closewindow>>{EventAddress(closed.Window)}");
@@ -48,8 +48,8 @@ public static partial class CommandProtocol
                 lines.Add("urgent>>" + EventAddress(urgent.Window));
                 break;
             case ClientMoved moved:
-                lines.Add($"movewindow>>{EventAddress(moved.Window)},{WorkspaceNameText(moved.Workspace, indexed)},{EventMonitor(state, moved.Workspace)}");
-                lines.Add($"movewindowv2>>{EventAddress(moved.Window)},{WorkspaceIdText(moved.Workspace, indexed)},{WorkspaceNameText(moved.Workspace, indexed)},{EventMonitor(state, moved.Workspace)}");
+                lines.Add($"movewindow>>{EventAddress(moved.Window)},{moved.Workspace.Name},{EventMonitor(state, moved.Workspace)}");
+                lines.Add($"movewindowv2>>{EventAddress(moved.Window)},{WorkspaceIdText(moved.Workspace, indexed)},{moved.Workspace.Name},{EventMonitor(state, moved.Workspace)}");
                 break;
             case FloatingChanged floating:
                 lines.Add($"changefloatingmode>>{EventAddress(floating.Window)},{(floating.Floating ? "1" : "0")}");
@@ -70,23 +70,23 @@ public static partial class CommandProtocol
                 lines.Add("moveoutofgroup>>" + EventAddress(outOf.Window));
                 break;
             case WorkspaceActivated activated:
-                lines.Add($"workspace>>{WorkspaceNameText(activated.Workspace, indexed)},{EventMonitor(state, activated.Workspace)}");
-                lines.Add($"workspacev2>>{WorkspaceIdText(activated.Workspace, indexed)},{WorkspaceNameText(activated.Workspace, indexed)},{EventMonitor(state, activated.Workspace)}");
+                lines.Add($"workspace>>{activated.Workspace.Name},{EventMonitor(state, activated.Workspace)}");
+                lines.Add($"workspacev2>>{WorkspaceIdText(activated.Workspace, indexed)},{activated.Workspace.Name},{EventMonitor(state, activated.Workspace)}");
                 break;
             case WorkspaceCreated created:
-                lines.Add($"createworkspace>>{WorkspaceNameText(created.Workspace, indexed)},{EventMonitor(state, created.Workspace)}");
-                lines.Add($"createworkspacev2>>{WorkspaceIdText(created.Workspace, indexed)},{WorkspaceNameText(created.Workspace, indexed)},{EventMonitor(state, created.Workspace)}");
+                lines.Add($"createworkspace>>{created.Workspace.Name},{EventMonitor(state, created.Workspace)}");
+                lines.Add($"createworkspacev2>>{WorkspaceIdText(created.Workspace, indexed)},{created.Workspace.Name},{EventMonitor(state, created.Workspace)}");
                 break;
             case WorkspaceDestroyed destroyed:
                 lines.Add($"destroyworkspace>>{Clean(destroyed.Name)},{Clean(destroyed.Monitor)}");
                 lines.Add($"destroyworkspacev2>>{destroyed.Id.ToString(CultureInfo.InvariantCulture)},{Clean(destroyed.Name)},{Clean(destroyed.Monitor)}");
                 break;
             case WorkspaceMoved movedWorkspace:
-                lines.Add($"moveworkspace>>{WorkspaceNameText(movedWorkspace.Workspace, indexed)},{Clean(movedWorkspace.Monitor)}");
-                lines.Add($"moveworkspacev2>>{WorkspaceIdText(movedWorkspace.Workspace, indexed)},{WorkspaceNameText(movedWorkspace.Workspace, indexed)},{Clean(movedWorkspace.Monitor)}");
+                lines.Add($"moveworkspace>>{movedWorkspace.Workspace.Name},{Clean(movedWorkspace.Monitor)}");
+                lines.Add($"moveworkspacev2>>{WorkspaceIdText(movedWorkspace.Workspace, indexed)},{movedWorkspace.Workspace.Name},{Clean(movedWorkspace.Monitor)}");
                 break;
             case MonitorFocused focusedMonitor:
-                lines.Add($"focusedmon>>{Clean(focusedMonitor.Name)},{WorkspaceNameText(focusedMonitor.Workspace, indexed)}");
+                lines.Add($"focusedmon>>{Clean(focusedMonitor.Name)},{focusedMonitor.Workspace.Name}");
                 lines.Add($"focusedmonv2>>{Clean(focusedMonitor.Name)},{WorkspaceIdText(focusedMonitor.Workspace, indexed)}");
                 break;
             case FullscreenChanged fullscreen:
@@ -95,8 +95,8 @@ public static partial class CommandProtocol
             case ActiveSpecial special:
                 if (special.Workspace is WorkspaceId specialWorkspace)
                 {
-                    lines.Add($"activespecial>>{Clean(WorkspaceNameText(specialWorkspace, indexed))},{Clean(special.Monitor)}");
-                    lines.Add($"activespecialv2>>{WorkspaceIdText(specialWorkspace, indexed)},{Clean(WorkspaceNameText(specialWorkspace, indexed))},{Clean(special.Monitor)}");
+                    lines.Add($"activespecial>>{Clean(specialWorkspace.Name)},{Clean(special.Monitor)}");
+                    lines.Add($"activespecialv2>>{WorkspaceIdText(specialWorkspace, indexed)},{Clean(specialWorkspace.Name)},{Clean(special.Monitor)}");
                 }
                 else
                 {

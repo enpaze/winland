@@ -208,10 +208,10 @@ public static partial class CommandProtocol
         return [FormattableString.Invariant($"{monitor.Width}x{monitor.Height}@{monitor.RefreshRate:0.00}Hz")];
     }
 
-    internal static long WorkspaceNumber(State state, WorkspaceId id)
+    internal static long WorkspaceNumber(State state, WorkspaceId id) => WorkspaceNumber(id, Index(state));
+
+    private static long WorkspaceNumber(WorkspaceId id, Indexed indexed)
     {
-        ArgumentNullException.ThrowIfNull(state);
-        var indexed = Index(state);
         if (indexed.ByWorkspace.TryGetValue(id, out var described))
             return described.Order;
 
@@ -221,19 +221,8 @@ public static partial class CommandProtocol
         return 0;
     }
 
-    private static string WorkspaceIdText(WorkspaceId id, Indexed indexed)
-    {
-        if (indexed.ByWorkspace.TryGetValue(id, out var described))
-            return described.Order.ToString(CultureInfo.InvariantCulture);
-
-        if (id.TryGetNumber(out var number))
-            return number.ToString(CultureInfo.InvariantCulture);
-
-        return "0";
-    }
-
-    private static string WorkspaceNameText(WorkspaceId id, Indexed indexed) =>
-        indexed.ByWorkspace.TryGetValue(id, out var described) ? described.Name : id.Name;
+    private static string WorkspaceIdText(WorkspaceId id, Indexed indexed) =>
+        WorkspaceNumber(id, indexed).ToString(CultureInfo.InvariantCulture);
 
     private static string Clean(string? text)
     {
@@ -316,27 +305,20 @@ public static partial class CommandProtocol
                 fullscreen.Add(client.Workspace);
         }
 
-        var lastWindows = new Dictionary<WorkspaceId, WindowId?>();
+        var workspaces = new Dictionary<WorkspaceId, Workspace>();
         foreach (var workspace in state.Workspaces)
-            lastWindows[workspace.Id] = workspace.LastWindow;
-
-        var names = new Dictionary<WorkspaceId, string>();
-        var tiledLayouts = new Dictionary<WorkspaceId, string>();
-        foreach (var workspace in state.Workspaces)
-        {
-            names[workspace.Id] = workspace.Id.Name;
-            tiledLayouts[workspace.Id] = workspace.TiledLayout;
-        }
+            workspaces[workspace.Id] = workspace;
 
         var byWorkspace = new Dictionary<WorkspaceId, WorkspaceJson>(ids.Count);
         var counts = new List<WorkspaceEntryJson>(ids.Count);
         foreach (var id in ids)
         {
-            var json = Describe(id, namedIds, specialIds, names, MonitorName(state, id));
+            var json = Describe(id, namedIds, specialIds, MonitorName(state, id));
             byWorkspace[id] = json;
+            var known = workspaces.GetValueOrDefault(id);
             var lastAddress = "0x0";
             var lastTitle = "";
-            if (lastWindows.TryGetValue(id, out var last) && last is WindowId window)
+            if (known?.LastWindow is WindowId window)
             {
                 lastAddress = window.Address;
                 lastTitle = state.ClientOf(window)?.Title ?? "";
@@ -354,7 +336,7 @@ public static partial class CommandProtocol
                 lastAddress,
                 lastTitle,
                 false,
-                tiledLayouts.GetValueOrDefault(id, "dwindle")));
+                known is null ? "dwindle" : known.TiledLayout));
         }
 
         var keys = new (long Order, int Monitor)[counts.Count];
@@ -406,10 +388,9 @@ public static partial class CommandProtocol
         WorkspaceId id,
         Dictionary<string, int> namedIds,
         Dictionary<string, int> specialIds,
-        Dictionary<WorkspaceId, string> names,
         string monitor)
     {
-        var name = names.TryGetValue(id, out var display) ? display : id.Name;
+        var name = id.Name;
         if (id.IsSpecial)
             return new WorkspaceJson(id.Name, null, "special", name, monitor) { Order = specialIds[id.Name] };
 
