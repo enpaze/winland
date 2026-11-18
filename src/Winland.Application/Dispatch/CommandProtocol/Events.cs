@@ -136,19 +136,8 @@ public static partial class CommandProtocol
             return;
         }
 
-        var klass = "";
-        var title = "";
-        foreach (var client in state.Clients)
-        {
-            if (client.Window != window)
-                continue;
-
-            klass = client.Class;
-            title = client.Title;
-            break;
-        }
-
-        lines.Add($"activewindow>>{Clean(klass)},{Clean(title)}");
+        var client = state.ClientOf(window);
+        lines.Add($"activewindow>>{Clean(client?.Class)},{Clean(client?.Title)}");
         lines.Add("activewindowv2>>" + EventAddress(window));
     }
 
@@ -156,15 +145,4 @@ public static partial class CommandProtocol
         window.Value.ToString("x", CultureInfo.InvariantCulture);
 
     private static string EventMonitor(State state, WorkspaceId id) => Clean(MonitorName(state, id));
-
-    private static string TitleOf(State state, WindowId window)
-    {
-        foreach (var client in state.Clients)
-        {
-            if (client.Window == window)
-                return client.Title;
-        }
-
-        return "";
-    }
 }

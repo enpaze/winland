@@ -75,17 +75,10 @@ public static partial class CommandProtocol
 
     internal static string FormatActiveWindow(State state, WindowId? active)
     {
-        if (active is not WindowId window)
+        if (active is not WindowId window || state.ClientOf(window) is not Client client)
             return "{}";
 
-        var indexed = Index(state);
-        foreach (var client in state.Clients)
-        {
-            if (client.Window == window)
-                return JsonSerializer.Serialize(ClientOf(client, state, indexed));
-        }
-
-        return "{}";
+        return JsonSerializer.Serialize(ClientOf(client, state, Index(state)));
     }
 
     private static string[] GroupedOf(State state, WindowId window)
@@ -119,7 +112,7 @@ public static partial class CommandProtocol
             [client.Bounds.Width, client.Bounds.Height],
             indexed.ByWorkspace[client.Workspace],
             client.Floating,
-            MonitorOf(state, client.Workspace),
+            MonitorOf(state, client.Workspace).Value,
             client.Class,
             client.Title,
             client.InitialClass,
@@ -346,7 +339,7 @@ public static partial class CommandProtocol
             if (lastWindows.TryGetValue(id, out var last) && last is WindowId window)
             {
                 lastAddress = window.Address;
-                lastTitle = TitleOf(state, window);
+                lastTitle = state.ClientOf(window)?.Title ?? "";
             }
 
             counts.Add(new WorkspaceEntryJson(
@@ -355,7 +348,7 @@ public static partial class CommandProtocol
                 json.Type,
                 json.Name,
                 MonitorName(state, id),
-                MonitorOf(state, id),
+                MonitorOf(state, id).Value,
                 windows.GetValueOrDefault(id),
                 fullscreen.Contains(id),
                 lastAddress,
@@ -395,42 +388,19 @@ public static partial class CommandProtocol
         return "default";
     }
 
-    private static int MonitorOf(State state, WorkspaceId id)
+    private static MonitorId MonitorOf(State state, WorkspaceId id)
     {
         foreach (var workspace in state.Workspaces)
         {
             if (workspace.Id == id)
-                return workspace.Monitor.Value;
+                return workspace.Monitor;
         }
 
-        return state.ActiveMonitor.Value;
+        return state.ActiveMonitor;
     }
 
-    private static string MonitorName(State state, WorkspaceId id)
-    {
-        MonitorId monitor = state.ActiveMonitor;
-        var found = false;
-        foreach (var workspace in state.Workspaces)
-        {
-            if (workspace.Id != id)
-                continue;
-
-            monitor = workspace.Monitor;
-            found = true;
-            break;
-        }
-
-        if (!found)
-            monitor = state.ActiveMonitor;
-
-        foreach (var screen in state.Screens)
-        {
-            if (screen.Id == monitor)
-                return screen.Monitor.Name;
-        }
-
-        return "";
-    }
+    private static string MonitorName(State state, WorkspaceId id) =>
+        state.ScreenOf(MonitorOf(state, id))?.Monitor.Name ?? "";
 
     private static WorkspaceJson Describe(
         WorkspaceId id,

@@ -69,18 +69,13 @@ public sealed partial class WindowManager
         if (_config.Cursor.NoWarps || outcome.Traits?.HasFlag(DispatcherTraits.WarpsToEmptyMonitor) != true || FocusedClient(outcome.State) is not null)
             return null;
 
-        foreach (var screen in outcome.State.Screens)
-        {
-            if (screen.Id != outcome.State.ActiveMonitor || !screen.Monitor.Enabled)
-                continue;
+        if (outcome.State.ScreenOf(outcome.State.ActiveMonitor) is not { Monitor.Enabled: true } screen)
+            return null;
 
-            var monitor = screen.Monitor;
-            var point = new Point(monitor.X + (monitor.Width / 2), monitor.Y + (monitor.Height / 2));
-            _pointer = point;
-            return new WarpTo(point);
-        }
-
-        return null;
+        var monitor = screen.Monitor;
+        var point = new Point(monitor.X + (monitor.Width / 2), monitor.Y + (monitor.Height / 2));
+        _pointer = point;
+        return new WarpTo(point);
     }
 
     private static Client? FocusedClient(State state)

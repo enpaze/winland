@@ -26,21 +26,12 @@ public static partial class CommandProtocol
 
     internal static string FormatActiveWindowText(State state, WindowId? active)
     {
-        if (active is not WindowId window)
+        if (active is not WindowId window || state.ClientOf(window) is not Client client)
             return "";
 
-        var indexed = Index(state);
-        foreach (var client in state.Clients)
-        {
-            if (client.Window != window)
-                continue;
-
-            var text = new StringBuilder();
-            AppendClient(text, ClientOf(client, state, indexed));
-            return text.ToString();
-        }
-
-        return "";
+        var text = new StringBuilder();
+        AppendClient(text, ClientOf(client, state, Index(state)));
+        return text.ToString();
     }
 
     internal static string FormatWorkspacesText(State state)
