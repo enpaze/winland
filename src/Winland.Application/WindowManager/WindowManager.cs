@@ -246,7 +246,7 @@ public sealed partial class WindowManager
             WindowEnabledChanged changed => ChangeEnabled(changed),
             WindowLimitsChanged limits => ChangeLimits(limits),
             WindowMinimized minimized => Minimize(minimized.Window),
-            WindowRestored restored => Restore(restored),
+            WindowRestored restored => Unminimize(restored),
             WindowResized resized => Reapply(resized),
             WindowTitleChanged retitled => Retitle(retitled),
             WindowClassChanged reclassed => Reclass(reclassed),

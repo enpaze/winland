@@ -18,7 +18,7 @@ public sealed partial class WindowManager
     {
         var window = focused.Window;
         if (_awaitingMapFocus.Remove(window) && focused.Cause != FocusCause.Requested)
-            return Restore(Kept());
+            return Offering(View([]), Kept());
 
         if (focused.Cause == FocusCause.Requested)
         {
@@ -34,7 +34,7 @@ public sealed partial class WindowManager
         }
 
         if (HasNoFocus(window))
-            return Restore(Kept());
+            return Offering(View([]), Kept());
 
         var activated = focused.Cause == FocusCause.Activated;
         var afterInput = ActivatedAfterClick(focused);
@@ -44,7 +44,7 @@ public sealed partial class WindowManager
                 return View([]);
 
             MarkUrgent(window);
-            return Restore(Kept());
+            return Offering(View([]), Kept());
         }
 
         if (WorkspaceContaining(window) is { } home && (!_workspaces.Shown.IsShown(home.Id) || home.IsWaiting(window)))
@@ -65,7 +65,7 @@ public sealed partial class WindowManager
             var covered = owner.Covered();
             var target = FocusUnderFullscreen(owner, window, out var refit);
             if (target != window)
-                return Restore(target);
+                return Offering(View([]), target);
 
             if (refit is not null)
             {
@@ -229,9 +229,6 @@ public sealed partial class WindowManager
 
     private WindowId? Kept() =>
         _focus.Focused is WindowId current && IsShownClient(current) ? current : null;
-
-    private Outcome Restore(WindowId? window) =>
-        window is WindowId target ? View([]) with { Focus = target } : View([]);
 
     private bool IsShownClient(WindowId window)
     {

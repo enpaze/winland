@@ -298,7 +298,7 @@ public sealed partial class WindowManager
             : View([]);
     }
 
-    private Outcome Restore(WindowRestored restored)
+    private Outcome Unminimize(WindowRestored restored)
     {
         var desk = WorkspaceContaining(restored.Window);
         if (desk is null)
