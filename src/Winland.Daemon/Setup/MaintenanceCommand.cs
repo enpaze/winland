@@ -17,11 +17,11 @@ static class MaintenanceCommand
             if (result == 0)
             {
                 if (command is InstallCommand.Machine)
-                    Maintenance().RemoveUserInstall();
+                    NewAppInstall().RemoveUserInstall();
                 else if (command is InstallCommand.Remove remove)
                 {
                     TaskbarControl.RecoverHidden();
-                    Maintenance().Uninstall(remove.Purge, machine: false);
+                    NewAppInstall().Uninstall(remove.Purge, machine: false);
                 }
             }
 
@@ -38,7 +38,7 @@ static class MaintenanceCommand
         if (command.ElevatedRefusal is string refusal && UserAccess.IsElevated)
             throw new InvalidOperationException(refusal);
 
-        var app = Maintenance();
+        var app = NewAppInstall();
         switch (command)
         {
             case InstallCommand.UserCleanup:
@@ -102,7 +102,7 @@ static class MaintenanceCommand
         var result = new ReleaseUpdate(
             new GitHubReleaseFeed(http),
             new ZipReleasePackage(),
-            Maintenance(),
+            NewAppInstall(),
             () => AdministratorFolder.CreateTemp("winland-update-"),
             RemoveStage).Run(
                 BuildStamp.Version,
@@ -153,7 +153,7 @@ static class MaintenanceCommand
             Directory.Delete(directory, recursive: true);
     }
 
-    private static bool MachineInstalled() => Maintenance().MachinePresent();
+    private static bool MachineInstalled() => NewAppInstall().MachinePresent();
 
     private static InstallLayout Layout() => new(
         InstallLocations.Machine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)),
@@ -162,7 +162,7 @@ static class MaintenanceCommand
         Environment.GetFolderPath(Environment.SpecialFolder.Programs),
         InstallLocations.Config(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
 
-    private static AppInstall Maintenance() => new(
+    private static AppInstall NewAppInstall() => new(
         Layout(),
         new SchtasksCatalog(),
         new WindowsInstallFiles(),
