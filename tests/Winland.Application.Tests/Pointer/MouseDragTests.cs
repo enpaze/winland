@@ -10,7 +10,7 @@ public class MouseDragTests
     [TestMethod]
     public void FloatingMoveFollowsThePointer()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
         core.Handle(new Dispatch("togglefloating"));
         Press(core, "Super_L");
@@ -26,7 +26,7 @@ public class MouseDragTests
     [TestMethod]
     public void TiledDragDropsTheClientIntoTheTreeUnderThePointer()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -44,7 +44,7 @@ public class MouseDragTests
     [TestMethod]
     public void SecondDragButtonLeavesTheFirstDragToDropItsClient()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\nbindm = SUPER, mouse:273, resizewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\nbind = SUPER, mouse:273, resizewindow\n");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -79,7 +79,7 @@ public class MouseDragTests
     [TestMethod]
     public void FloatingResizeGrowsFromTheGrabbedCorner()
     {
-        var core = Flat("bindm = SUPER, mouse:273, resizewindow\n");
+        var core = Flat("bind = SUPER, mouse:273, resizewindow\n");
         Appear(core, 1);
         core.Handle(new Dispatch("togglefloating"));
         Press(core, "Super_L");
@@ -93,7 +93,7 @@ public class MouseDragTests
     [TestMethod]
     public void TiledResizeChangesTheSplitRatio()
     {
-        var core = Flat("bindm = SUPER, mouse:273, resizewindow\n");
+        var core = Flat("bind = SUPER, mouse:273, resizewindow\n");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -108,7 +108,7 @@ public class MouseDragTests
     [TestMethod]
     public void TheDragTakesTheClientUnderThePointerAndFocusesIt()
     {
-        var core = Flat("bindm = SUPER, mouse:273, resizewindow\n");
+        var core = Flat("bind = SUPER, mouse:273, resizewindow\n");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -124,7 +124,7 @@ public class MouseDragTests
     [TestMethod]
     public void APressOffEveryClientDoesNotDrag()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
         core.Handle(new Dispatch("togglefloating"));
         Press(core, "Super_L");
@@ -138,7 +138,7 @@ public class MouseDragTests
     [TestMethod]
     public void ALiftedTileIsCenteredOnThePointer()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -154,7 +154,7 @@ public class MouseDragTests
     [TestMethod]
     public void ADropFollowsThePointer()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -170,7 +170,7 @@ public class MouseDragTests
     [TestMethod]
     public void ADropSplitsAlongTheLongerSideOfTheTile()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -200,7 +200,7 @@ public class MouseDragTests
     [TestMethod]
     public void MasterSmartResizingTakesSpaceFromTheTileAboveAGrabbedTopEdge()
     {
-        var core = Flat("general:layout = master\nbindm = SUPER, mouse:273, resizewindow\n");
+        var core = Flat("general:layout = master\nbind = SUPER, mouse:273, resizewindow\n");
         Outcome placed = null!;
         for (var window = 1; window <= 4; window++)
             placed = Appear(core, window);
@@ -223,7 +223,7 @@ public class MouseDragTests
     [TestMethod]
     public void ResizeWindowOneKeepsTheAspectRatio()
     {
-        var core = Flat("bindm = SUPER, mouse:273, resizewindow 1\n");
+        var core = Flat("bind = SUPER, mouse:273, resizewindow, 1\n");
         Appear(core, 1);
         core.Handle(new Dispatch("togglefloating"));
         Press(core, "Super_L");
@@ -239,7 +239,7 @@ public class MouseDragTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(
-            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 2\nbindm = SUPER, mouse:273, resizewindow\n")));
+            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 2\nbind = SUPER, mouse:273, resizewindow\n")));
         Appear(core, 1);
         core.Handle(new Dispatch("togglefloating"));
         var frame = Client(core.Handle(new Dispatch("resizewindow")), 1).Bounds;
@@ -255,7 +255,7 @@ public class MouseDragTests
     [TestMethod]
     public void AMouseBindCarriesTheResizeMode()
     {
-        var document = ConfigParser.Parse("bindm = SUPER, mouse:273, resizewindow 2\n");
+        var document = ConfigParser.Parse("bind = SUPER, mouse:273, resizewindow, 2\n");
 
         Assert.IsEmpty(document.Warnings);
         var bind = Assert.ContainsSingle(document.Binds.OfType<Bind>());
@@ -277,33 +277,37 @@ public class MouseDragTests
     }
 
     [TestMethod]
-    public void TheMouseDispatcherDragsLikeAMouseBind()
+    [DataRow("bindm = SUPER, mouse:272, movewindow", "Bind flag 'm' is not supported.")]
+    [DataRow("bindmd = SUPER, mouse:272, Drag, movewindow", "Bind flag 'm' is not supported.")]
+    [DataRow("bind = SUPER, Z, mouse, movewindow", "Unknown dispatcher 'mouse'.")]
+    public void TheOldDragFormsWarnAndAreSkipped(string line, string warning)
     {
-        var core = Flat("bind = SUPER, mouse:272, mouse, movewindow\n");
-        Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
-        Press(core, "Super_L");
-        core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(700, 400) });
+        var document = ConfigParser.Parse(line + "\n", dispatchers: WindowManager.DispatcherNames);
 
-        var moved = core.Handle(new PointerMoved(new Point(750, 430)));
-
-        Assert.AreEqual(new Rectangle(690, 370, 640, 400), BoundsOf(moved, 1));
+        Assert.StartsWith(warning, Assert.ContainsSingle(document.Warnings).Message, StringComparison.Ordinal);
+        Assert.IsEmpty(document.Binds);
     }
 
     [TestMethod]
-    [DataRow("bind = SUPER, mouse:272, mouse, killactive", "The mouse dispatcher takes movewindow or resizewindow.")]
-    public void TheMouseDispatcherRejectsWhatCannotDrag(string line, string warning)
+    public void AMouseKeyWithAMoveToAWorkspaceIsAClickNotADrag()
     {
-        var document = ConfigParser.Parse(line + "\n");
+        var core = Flat("bind = SUPER, mouse:272, movetoworkspacesilent, 2\n");
+        Appear(core, 1);
+        core.Handle(new Dispatch("togglefloating"));
+        Press(core, "Super_L");
 
-        Assert.AreSequenceEqual([new ConfigWarning(1, warning)], document.Warnings);
-        Assert.IsEmpty(document.Binds);
+        var pressed = core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(700, 400) });
+        var moved = core.Handle(new PointerMoved(new Point(750, 430)));
+
+        Assert.IsTrue(pressed.Consumed);
+        Assert.AreEqual(new WorkspaceId("2"), Client(pressed, 1).Workspace);
+        Assert.IsFalse(moved.Live);
     }
 
     [TestMethod]
     public void ADragPressWithNoWindowUnderThePointerGoesThrough()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
         core.Handle(new Dispatch("togglefloating"));
         Press(core, "Super_L");
@@ -469,7 +473,7 @@ public class MouseDragTests
     [TestMethod]
     public void AFloatingResizeJoinsTheWorkspaceUnderItsMiddleAndKeepsResizing()
     {
-        var core = TwoMonitors("bindm = SUPER, mouse:273, resizewindow\n");
+        var core = TwoMonitors("bind = SUPER, mouse:273, resizewindow\n");
         Appear(core, 1);
         var floated = core.Handle(new Dispatch("togglefloating"));
         Place(core, 1, Client(floated, 1).Bounds with { X = 1280, Y = 300 });
@@ -496,7 +500,7 @@ public class MouseDragTests
     [TestMethod]
     public void ATiledResizeDoesNotJoinAnotherMonitor()
     {
-        var core = TwoMonitors("bindm = SUPER, mouse:273, resizewindow\n");
+        var core = TwoMonitors("bind = SUPER, mouse:273, resizewindow\n");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -535,7 +539,7 @@ public class MouseDragTests
     [TestMethod]
     public void ADragJoinsTheSpecialWorkspaceItsOwnMonitorOpens()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\n");
         core.Handle(new MonitorsChanged(
         [
             new Monitor(@"\\.\DISPLAY1", "Left", 0, 0, 1920, 1080, 1, true, Wide),
@@ -572,7 +576,7 @@ public class MouseDragTests
 
     private static WindowManager TwoMonitors(string extra = "")
     {
-        var core = Flat(extra + "bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat(extra + "bind = SUPER, mouse:272, movewindow\n");
         core.Handle(new MonitorsChanged(
         [
             new Monitor(@"\\.\DISPLAY1", "Left", 0, 0, 1920, 1080, 1, true, Wide),
@@ -584,7 +588,7 @@ public class MouseDragTests
     [TestMethod]
     public void InMonocleAFloatingClientFollowsThePointer()
     {
-        var core = Flat("general:layout = monocle\nbindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("general:layout = monocle\nbind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
         core.Handle(new Dispatch("togglefloating"));
         Press(core, "Super_L");
@@ -598,7 +602,7 @@ public class MouseDragTests
     [TestMethod]
     public void AMoveShowsTheGrabbingPointerUntilItIsDropped()
     {
-        var core = Flat("bindm = SUPER, mouse:272, movewindow\n");
+        var core = Flat("bind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -618,48 +622,16 @@ public class MouseDragTests
     [DataRow(100, 1000, "bottom_left_corner")]
     public void AResizeShowsTheCornerItGrabbed(int x, int y, string cursor)
     {
-        var core = Flat("bindm = SUPER, mouse:273, resizewindow\n");
+        var core = Flat("bind = SUPER, mouse:273, resizewindow\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
         Assert.AreEqual(cursor, core.Handle(new PointerButtonPressed("mouse:273") { Position = new Point(x, y) }).ResizeCursor);
     }
 
-    [TestMethod]
-    public void TheMouseDispatcherOnAKeyLetsTheKeyThroughWithNoWindowUnderThePointer()
-    {
-        var core = Flat("bind = SUPER, Z, mouse, movewindow\n");
-        Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
-        core.Handle(new PointerMoved(new Point(10, 10)));
-        Press(core, "Super_L");
-
-        Assert.IsFalse(core.Handle(new KeyPressed("z")).Consumed);
-    }
-
-    [TestMethod]
-    public void TheMouseDispatcherOnAKeyDragsWhileTheKeyIsHeld()
-    {
-        var core = Flat("bind = SUPER, Z, mouse, movewindow\n");
-        Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
-        core.Handle(new PointerMoved(new Point(700, 400)));
-        Press(core, "Super_L");
-
-        var pressed = core.Handle(new KeyPressed("z"));
-        var moved = core.Handle(new PointerMoved(new Point(750, 430)));
-        var released = core.Handle(new KeyReleased("z"));
-        var after = core.Handle(new PointerMoved(new Point(900, 600)));
-
-        Assert.IsTrue(pressed.Consumed);
-        Assert.AreEqual(new Rectangle(690, 370, 640, 400), BoundsOf(moved, 1));
-        Assert.IsNull(released.ResizeCursor);
-        Assert.DoesNotContain(placement => placement.Client == new ClientId(1), after.Placements);
-    }
-
     private static WindowManager FourTiles(string options)
     {
-        var core = Flat(options + "bindm = SUPER, mouse:273, resizewindow\n");
+        var core = Flat(options + "bind = SUPER, mouse:273, resizewindow\n");
         Outcome placed = null!;
         for (var window = 1; window <= 4; window++)
             placed = Appear(core, window);

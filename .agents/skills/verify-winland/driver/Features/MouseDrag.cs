@@ -10,8 +10,8 @@ public class MouseDrag
     public TestContext TestContext { get; set; } = null!;
         private const string Config =
         """
-        bindm = CTRL ALT SHIFT, mouse:272, movewindow
-        bindm = CTRL ALT SHIFT, mouse:273, resizewindow
+        bind = CTRL ALT SHIFT, mouse:272, movewindow
+        bind = CTRL ALT SHIFT, mouse:273, resizewindow
         windowrule = float, class:WinlandVerifyWindow, title:WinlandDrag
 
         """;
@@ -21,6 +21,11 @@ public class MouseDrag
     [VerifyFact]
     public void MovesAndResizesAFloatingWindowWithTheMouse() => VerifyRun.Drive(TestContext, Config, run =>
     {
+        var binds = run.Ask("binds");
+        Assert.Contains("bind = SHIFT CTRL ALT, mouse:272, movewindow", binds, StringComparison.Ordinal);
+        Assert.Contains("bind = SHIFT CTRL ALT, mouse:273, resizewindow", binds, StringComparison.Ordinal);
+        run.Say("saw: binds echoes both drags with the plain bind keyword");
+
         var window = run.OpenTitled("WinlandDrag", 400, 300);
         run.Until("the window floats", () => run.Client(window)?.GetProperty("floating").GetBoolean() == true);
         run.Focus(window);

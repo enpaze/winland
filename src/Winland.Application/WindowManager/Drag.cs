@@ -32,7 +32,7 @@ public sealed partial class WindowManager
     {
         var desk = LayoutWorkspace(window);
         Give(window, desk);
-        var gesture = new Gesture(window, button, IsResize(drag.Dispatcher), pointer)
+        var gesture = new Gesture(window, button, IsResize(drag.Dispatcher))
         {
             Pointer = pointer,
             Cursor = DragCursor(desk, window, IsResize(drag.Dispatcher), pointer),
@@ -372,14 +372,12 @@ public sealed partial class WindowManager
     private static bool IsResize(string dispatcher) =>
         Is(dispatcher, "resizewindow");
 
-    private sealed class Gesture(WindowId window, string button, bool resize, Point origin)
+    private sealed class Gesture(WindowId window, string button, bool resize)
         : PointerInteraction(window)
     {
         public string Button { get; } = button;
 
         public bool Resize { get; } = resize;
-
-        public Point Origin { get; } = origin;
 
         public bool KeepRatio { get; init; }
 

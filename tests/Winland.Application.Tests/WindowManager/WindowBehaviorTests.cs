@@ -255,14 +255,14 @@ public class WindowBehaviorTests
         desk.Ok("focuswindow", "class:kitty");
 
         ResetWindow(desk);
-        desk.Set("bindm", ", mouse:273, resizewindow");
+        desk.Set("bind", ", mouse:273, resizewindow");
         Press(desk, "mouse:273");
         desk.MovePointer(700, 200);
         Release(desk, "mouse:273");
         Assert.AreEqual("700,200", desk.PlaceOf("kitty").Size);
 
         ResetWindow(desk);
-        desk.Set("bindm", ", mouse:273, resizewindow 1");
+        desk.Set("bind", ", mouse:273, resizewindow, 1");
         Press(desk, "mouse:273");
         desk.MovePointer(1280, 100);
         Release(desk, "mouse:273");

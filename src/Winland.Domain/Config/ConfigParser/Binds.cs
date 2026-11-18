@@ -1,5 +1,3 @@
-using static Winland.Domain.OrdinalText;
-
 namespace Winland.Domain;
 
 public static partial class ConfigParser
@@ -8,24 +6,17 @@ public static partial class ConfigParser
     {
         private void HandleBind(string lhs, string rhs, int lineNumber)
         {
-            if (!TryParseFlags(lhs["bind".Length..], out var flags, out var hasDescription, out var flagError))
+            if (!TryParseFlags(lhs["bind".Length..], out var hasDescription, out var flagError))
             {
                 Warn(lineNumber, flagError);
                 return;
             }
 
-            var mouse = flags.HasFlag(BindFlag.Mouse);
             var minimum = 3 + (hasDescription ? 1 : 0);
-            var parts = mouse ? SplitArgs(rhs, null) : SplitArgs(rhs, minimum + 1);
+            var parts = SplitArgs(rhs, minimum + 1);
             if (parts.Count < minimum)
             {
                 Warn(lineNumber, "Bind has too few arguments.");
-                return;
-            }
-
-            if (mouse && parts.Count > minimum)
-            {
-                Warn(lineNumber, "Bind has too many arguments.");
                 return;
             }
 
@@ -63,41 +54,14 @@ public static partial class ConfigParser
             }
 
             var dispatcher = parts[index];
-            var arguments = !mouse && parts.Count > index + 1 ? parts[index + 1] : "";
-            if (mouse)
-            {
-                (dispatcher, arguments) = SplitAction(dispatcher);
-                if (dispatcher.Length > 0 && !Is(dispatcher, "movewindow") && !Is(dispatcher, "resizewindow"))
-                {
-                    Warn(lineNumber, "A bindm takes movewindow or resizewindow.");
-                    return;
-                }
-            }
-            else if (Is(dispatcher, "mouse"))
-            {
-                (dispatcher, arguments) = SplitAction(arguments.Trim());
-                if (!Is(dispatcher, "movewindow") && !Is(dispatcher, "resizewindow"))
-                {
-                    Warn(lineNumber, "The mouse dispatcher takes movewindow or resizewindow.");
-                    return;
-                }
-
-                flags |= BindFlag.Mouse;
-            }
-
+            var arguments = parts.Count > index + 1 ? parts[index + 1] : "";
             if (dispatcher.Length > 0 && dispatchers is not null && !dispatchers.Contains(dispatcher, StringComparer.OrdinalIgnoreCase))
             {
                 Warn(lineNumber, $"Unknown dispatcher '{dispatcher}'.{DidYouMean.For(dispatcher, dispatchers)}");
                 return;
             }
 
-            _binds.Add(new Bind(modifiers, key, dispatcher, arguments, flags, description));
-        }
-
-        private static (string Dispatcher, string Arguments) SplitAction(string action)
-        {
-            var space = action.IndexOfAny([' ', '\t']);
-            return space > 0 ? (action[..space], action[(space + 1)..].Trim()) : (action, "");
+            _binds.Add(new Bind(modifiers, key, dispatcher, arguments, description));
         }
 
         private void HandleUnbind(string rhs, int lineNumber)
@@ -124,24 +88,18 @@ public static partial class ConfigParser
             _binds.Add(new Unbind(modifiers, KeyNames.Resolve(parts[1], layout)));
         }
 
-        private static bool TryParseFlags(string flags, out BindFlag parsed, out bool hasDescription, out string error)
+        private static bool TryParseFlags(string flags, out bool hasDescription, out string error)
         {
-            parsed = BindFlag.None;
             hasDescription = false;
             foreach (var flag in flags)
             {
-                switch (flag)
+                if (flag != 'd')
                 {
-                    case 'm':
-                        parsed |= BindFlag.Mouse;
-                        break;
-                    case 'd':
-                        hasDescription = true;
-                        break;
-                    default:
-                        error = $"Bind flag '{flag}' is not supported.";
-                        return false;
+                    error = $"Bind flag '{flag}' is not supported.";
+                    return false;
                 }
+
+                hasDescription = true;
             }
 
             error = "";

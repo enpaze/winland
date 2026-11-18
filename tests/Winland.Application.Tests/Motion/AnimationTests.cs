@@ -241,7 +241,7 @@ public class AnimationTests
     [TestMethod]
     public void ADraggedWindowMovesAtOnce()
     {
-        var core = Load("bindm = SUPER, mouse:272, movewindow");
+        var core = Load("bind = SUPER, mouse:272, movewindow");
         Appear(core, 1);
         var floated = core.Handle(new Dispatch("togglefloating"));
         var bounds = Assert.ContainsSingle(floated.Placements).Bounds;
@@ -258,7 +258,7 @@ public class AnimationTests
     [TestMethod]
     public void TheTileThatMakesRoomForALiftedTileAnimatesWhileTheLiftedOneFollowsThePointer()
     {
-        var core = Load("bindm = SUPER, mouse:272, movewindow");
+        var core = Load("bind = SUPER, mouse:272, movewindow");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);
@@ -277,7 +277,7 @@ public class AnimationTests
     [TestMethod]
     public void AMouseResizeOfATileMovesItsNeighborAtOnce()
     {
-        var core = Load("bindm = SUPER, mouse:273, resizewindow");
+        var core = Load("bind = SUPER, mouse:273, resizewindow");
         Appear(core, 1);
         Appear(core, 2);
         HoldSuper(core);

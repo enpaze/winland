@@ -264,7 +264,7 @@ public class KeyNameTests
         Assert.AreEqual("mouse:272", KeyNames.Resolve("mouse:272", german));
         Assert.AreEqual("catchall", KeyNames.Resolve("catchall", german));
 
-        var document = ConfigParser.Parse("bindm = SUPER, mouse:272, movewindow\n", layout: german);
+        var document = ConfigParser.Parse("bind = SUPER, mouse:272, movewindow\n", layout: german);
         var bind = Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds));
         Assert.AreEqual("mouse:272", bind.Key);
     }
@@ -277,7 +277,7 @@ public class KeyNameTests
     [DataRow("Mouse:X2", "mouse:276")]
     public void AMouseButtonNameBindsTheSameButtonAsItsNumber(string written, string number)
     {
-        var document = ConfigParser.Parse($"bindm = SUPER, {written}, movewindow\n", layout: German());
+        var document = ConfigParser.Parse($"bind = SUPER, {written}, movewindow\n", layout: German());
 
         Assert.IsEmpty(document.Warnings);
         var bind = Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds));
@@ -287,7 +287,7 @@ public class KeyNameTests
     [TestMethod]
     public void AnUnknownMouseButtonNameIsAnUnknownKey()
     {
-        var document = ConfigParser.Parse("bindm = SUPER, mouse:thumb, movewindow\n");
+        var document = ConfigParser.Parse("bind = SUPER, mouse:thumb, movewindow\n");
 
         Assert.IsEmpty(document.Binds);
         Assert.Contains(warning => warning.Message.Contains("mouse:thumb", StringComparison.Ordinal), document.Warnings);

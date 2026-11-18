@@ -115,7 +115,7 @@ public class StuckModifierTests
     [TestMethod]
     public void MouseChordWithSuperMasksSuperAndPassesItsRelease()
     {
-        var (core, session) = Load("bindm = SUPER, mouse:272, movewindow");
+        var (core, session) = Load("bind = SUPER, mouse:272, movewindow");
         core.Decide(new KeyPressed("Super_L"), session);
 
         var down = core.Decide(new PointerButtonPressed("mouse:272") { Position = new Point(0, 0) }, session);
@@ -182,7 +182,7 @@ public class StuckModifierTests
     [TestMethod]
     public void SuperMouseChordAfterASuperKeyChordIsNotMaskedTwice()
     {
-        var (core, session) = Load("bind = SUPER, F23, killactive\nbindm = SUPER, mouse:272, movewindow\n");
+        var (core, session) = Load("bind = SUPER, F23, killactive\nbind = SUPER, mouse:272, movewindow\n");
         core.Decide(new KeyPressed("Super_L"), session);
 
         var key = core.Decide(new KeyPressed("F23"), session);

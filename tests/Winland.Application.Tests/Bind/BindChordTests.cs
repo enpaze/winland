@@ -6,7 +6,7 @@ public class BindChordTests
     [TestMethod]
     public void ModifierKeyBindLeavesSuperHeldForAMouseBind()
     {
-        var core = Load("bind = , Super_L, exec, menu\nbindm = SUPER, mouse:272, movewindow\n");
+        var core = Load("bind = , Super_L, exec, menu\nbind = SUPER, mouse:272, movewindow\n");
         Appear(core, 1);
 
         var super = Press(core, "Super_L");
@@ -71,7 +71,7 @@ public class BindChordTests
     [TestMethod]
     public void EmptyMouseBindConsumesAndTheOtherMouseBindStillRuns()
     {
-        var core = Load("bindm = , mouse:272,\nbindm = , mouse:272, movewindow\n");
+        var core = Load("bind = , mouse:272,\nbind = , mouse:272, movewindow\n");
         Appear(core, 1);
 
         var pressed = core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(500, 400) });

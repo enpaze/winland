@@ -93,7 +93,7 @@ public static partial class CommandProtocol
             keycode = code;
         }
 
-        var mouse = bind.Flags.HasFlag(BindFlag.Mouse) || bind.Key.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase);
+        var mouse = bind.Key.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase);
         return new BindJson(
             mouse,
             bind.Description is not null,

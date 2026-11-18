@@ -130,21 +130,6 @@ public class EmptyStepTests
     }
 
     [TestMethod]
-    public void AMoveWithoutAStepStillMovesThePointerAKeyDragStartsFrom()
-    {
-        var core = Configured("bind = SUPER, Z, mouse, movewindow");
-        core.Handle(new WindowAppeared(OneWindow, Area));
-        core.Handle(new Dispatch("togglefloating"));
-        core.Handle(new PointerMoved(new Point(700, 400)));
-
-        var moved = core.Handle(new PointerMoved(new Point(10, 10)));
-        core.Handle(new KeyPressed("Super_L"));
-
-        Assert.IsTrue(moved.IsEmpty);
-        Assert.IsFalse(core.Handle(new KeyPressed("z")).Consumed);
-    }
-
-    [TestMethod]
     public void AMoveThatChangesTheFocusIsNotEmpty()
     {
         var (core, laid) = Tiled();

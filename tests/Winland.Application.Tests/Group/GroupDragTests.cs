@@ -77,7 +77,7 @@ public class GroupDragTests
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(
             "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"
-            + "bindm = SUPER, mouse:272, movewindow\n")));
+            + "bind = SUPER, mouse:272, movewindow\n")));
         var right = new Rectangle(1920, 0, 1920, 1080);
         core.Handle(new MonitorsChanged(
         [
@@ -214,7 +214,7 @@ public class GroupDragTests
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(
             "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"
-            + "bindm = SUPER, mouse:272, movewindow\n" + extra)));
+            + "bind = SUPER, mouse:272, movewindow\n" + extra)));
         core.Handle(new WindowAppeared(new WindowId(1), Wide));
         core.Handle(new WindowAppeared(new WindowId(2), Wide));
         core.Handle(new Dispatch("focuswindow", "address:0x1"));

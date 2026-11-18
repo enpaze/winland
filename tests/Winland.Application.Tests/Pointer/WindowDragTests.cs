@@ -5,7 +5,7 @@ public class WindowDragTests
 {
     private const string DragOnLeftButton = """
         unbind = SUPER, mouse:272
-        bindm = , mouse:272, movewindow
+        bind = , mouse:272, movewindow
         """;
 
     [TestMethod]
