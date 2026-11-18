@@ -54,7 +54,7 @@ public sealed partial class WindowManager
         if (int.TryParse(text, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var number))
             index = number <= 0 ? group.Count - 1 : Math.Min(number - 1, group.Count - 1);
         else
-            index = text is "b" or "prev" ? (group.Current + group.Count - 1) % group.Count : (group.Current + 1) % group.Count;
+            index = Cycled(group, forward: text is not ("b" or "prev"));
 
         return ShowMember(desk, group, index);
     }
@@ -67,9 +67,11 @@ public sealed partial class WindowManager
             return View([]);
         }
 
-        var index = scrolled.Forward ? (group.Current + 1) % group.Count : (group.Current + group.Count - 1) % group.Count;
-        return ShowMember(desk, group, index);
+        return ShowMember(desk, group, Cycled(group, scrolled.Forward));
     }
+
+    private static int Cycled(WindowGroup group, bool forward) =>
+        forward ? (group.Current + 1) % group.Count : (group.Current + group.Count - 1) % group.Count;
 
     private Outcome ShowMember(LiveWorkspace desk, WindowGroup group, int index)
     {
