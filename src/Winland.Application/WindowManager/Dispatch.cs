@@ -39,13 +39,16 @@ public sealed partial class WindowManager
         arguments ??= "";
 
         if (!Table.TryGetValue(name, out var dispatcher))
-            return View([]) with { Error = DidYouMean.After("error: unknown dispatcher '" + name + "'", name, Table.Keys) };
+            return Rejected(DidYouMean.After("error: unknown dispatcher '" + name + "'", name, Table.Keys));
 
         if (!dispatcher.AllowsComma && arguments.Contains(',', StringComparison.Ordinal))
             return Rejected("error: " + name + " does not take a comma");
 
         return dispatcher.Run(this, name, arguments) with { Traits = dispatcher.Traits };
     }
+
+    private Outcome Rejected(string error) =>
+        View([]) with { Error = error };
 
     private Outcome WorkspaceDispatch(string arguments)
     {

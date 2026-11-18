@@ -9,7 +9,7 @@ public sealed partial class WindowManager
             return View([]);
 
         if (ActiveWindow() is not WindowId window || WorkspaceContaining(window) is not LiveWorkspace desk || desk.ClientOf(window) is not Client client)
-            return MissingWindow();
+            return Rejected("error: window not found");
 
         if (!FullscreenCommands.Changed(client.Fullscreen, parsed.Mode, parsed.Action, out var next))
             return View([]);
@@ -21,7 +21,7 @@ public sealed partial class WindowManager
     {
         var desk = WorkspaceContaining(window);
         if (desk is null || desk.ClientOf(window) is not Client client)
-            return MissingWindow();
+            return Rejected("error: window not found");
 
         var covered = desk.Covered();
         if (SetFullscreen(desk, window, mode, layoutAware) is not { } set)
@@ -92,9 +92,6 @@ public sealed partial class WindowManager
 
         return null;
     }
-
-    private Outcome MissingWindow() =>
-        View([]) with { Error = "error: window not found" };
 
     private Rectangle CoveringBounds(LiveWorkspace desk)
     {

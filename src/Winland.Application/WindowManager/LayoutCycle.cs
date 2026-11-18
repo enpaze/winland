@@ -8,7 +8,7 @@ public sealed partial class WindowManager
     {
         var name = arguments.Trim();
         if (LayoutFactory.Named(name) is not Layout created)
-            return View([]) with { Error = DidYouMean.After($"error: unknown layout '{name}'", name, LayoutFactory.Names) };
+            return Rejected(DidYouMean.After($"error: unknown layout '{name}'", name, LayoutFactory.Names));
 
         var desk = CurrentWorkspace();
         return LayoutFactory.NameOf(created) == LayoutFactory.NameOf(desk.Layout)

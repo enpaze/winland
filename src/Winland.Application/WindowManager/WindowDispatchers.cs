@@ -99,7 +99,4 @@ public sealed partial class WindowManager
 
         return clients;
     }
-
-    private Outcome Rejected(string error) =>
-        View([]) with { Error = error };
 }
