@@ -37,7 +37,8 @@ public class Workspaces
             run.Json("activeworkspace").GetProperty("id").GetInt32() == 3 && VerifyRun.Visible(first) && VerifyRun.Visible(second));
 
         run.UntilEvent("openwindow", "WinlandVerifyWindow,WinlandVerify 1");
-        run.UntilEvent("workspacev2");
-        run.UntilEvent("movewindowv2", VerifyRun.Address(second)[2..] + ",3,3,");
+        run.UntilEvent("workspace", "3,3,");
+        run.UntilEvent("movewindow", VerifyRun.EventAddress(second) + ",3,3,");
+        run.UntilEvent("focus", ",3,3," + VerifyRun.EventAddress(first) + ",WinlandVerify 1");
     });
 }

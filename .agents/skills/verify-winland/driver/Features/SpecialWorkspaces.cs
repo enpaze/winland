@@ -20,11 +20,11 @@ public class SpecialWorkspaces
 
         run.Dispatch("togglespecialworkspace");
         run.Until("togglespecialworkspace shows the special workspace over workspace 1", () => VerifyRun.Visible(right) && VerifyRun.Visible(left));
-        run.UntilEvent("activespecial", "special:special,");
+        run.UntilEvent("activespecial", "-99,special:special,");
         Assert.AreEqual(1, run.ActiveWorkspace());
 
         run.Dispatch("togglespecialworkspace");
         run.Until("togglespecialworkspace again hides it", () => !VerifyRun.Visible(right) && VerifyRun.Visible(left));
-        run.UntilEvent("activespecial", ">>,");
+        run.UntilEvent("activespecial", ">>,,");
     });
 }

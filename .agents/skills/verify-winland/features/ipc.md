@@ -10,7 +10,7 @@ The `winland` CLI talks to the running Daemon over the IPC pipe. A user runs a D
 - `request:activeworkspace` reports the focused Workspace and how many windows it holds.
 - `request:activewindow` reports the focused window. With none, the text reply is empty and the JSON reply is `null`, and the CLI exits 0.
 - `request:inspect` reads a Window under the pointer or a selected Client without changing it, and reports why it is managed or floating.
-- `request:events` prints every event as it happens, one per line. `-j` is accepted and prints the same `name>>data` lines.
+- `request:events` prints every event as it happens, one `name>>data` line each. With `-j` each line is one JSON object, `{"event":"<name>", ...}`.
 - `dispatcher-names` lists the invoked binary's Dispatcher names when `winland dispatch` has no name, without a Daemon.
 - `version` prints the invoked binary's version, such as `winland 0.0.0 (a1b2c3d)`, without a Daemon.
 - `command-errors` writes a failed reply to standard error, starting with `error:`, and exits 1.
@@ -34,8 +34,8 @@ Preconditions:
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature ipc`. It prints `== feature ipc: passed`.
 - **Empty replies.** With no window open, `winland clients` replies `no open windows`, `winland activewindow` prints nothing and exits 0, and `winland -j activewindow` replies `null`.
-- **Open a window.** The driver starts `winland -j events` and opens `WinlandVerify 1`. It becomes a Client, and the Event stream holds an `openwindow` line with the window's address, without `0x`, followed by Workspace `1`.
-- **Queries.** The driver focuses the window with `winland dispatch focuswindow address:<hwnd>`. `winland clients` names `WinlandVerify 1`, `winland -j activewindow` reports title `WinlandVerify 1`, `winland -j activeworkspace` reports `windows` `1`, and `winland -j workspaces` lists id `1`.
+- **Open a window.** The driver starts `winland -j events` and opens `WinlandVerify 1`. It becomes a Client, and the Event stream holds an `openwindow` JSON object with the window's `address`, with `0x`, and `workspace` id `1`.
+- **Queries.** The driver focuses the window with `winland dispatch focuswindow address:<hwnd>`. The Event stream holds a `focus` JSON object whose `window` has the window's `address`, `title` `WinlandVerify 1` and `class` `WinlandVerifyWindow`. `winland clients` names `WinlandVerify 1`, `winland -j activewindow` reports title `WinlandVerify 1`, `winland -j activeworkspace` reports `windows` `1`, and `winland -j workspaces` lists id `1`.
 - **Inspect a Client.** The driver runs `winland -j inspect address:<hwnd>`. It reports `status` `found`, `target` `selector`, `managed` `true` and `class` `WinlandVerifyWindow`.
 - **Inspect by pattern.** The driver runs `winland -j inspect winlandverify*`, a class pattern in lower case, and `winland -j inspect exe:<EXE>`, the driver process's file name in upper case. Each reports the window's address.
 - **Inspect a missing Client.** The driver runs `winland -j inspect title:NoSuchWindow`. It exits 0 and reports `status` `not_found` and `reason` `no_client`.

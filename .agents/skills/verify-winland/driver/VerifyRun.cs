@@ -230,6 +230,17 @@ internal sealed class VerifyRun
             () => Events.Any(line => line.StartsWith(prefix + ">>", StringComparison.Ordinal) && (contains is null || line.Contains(contains, StringComparison.Ordinal))),
             detail: () => "events: " + string.Join(" | ", Events));
 
+    public void UntilJsonEvent(string name, Func<JsonElement, bool> matches) =>
+        Until(
+            $"JSON event {name}",
+            () => Events.Any(line =>
+            {
+                using var parsed = JsonDocument.Parse(line);
+                var root = parsed.RootElement;
+                return root.GetProperty("event").GetString() == name && matches(root);
+            }),
+            detail: () => "events: " + string.Join(" | ", Events));
+
     public void StopEvents()
     {
         _events?.Dispose();

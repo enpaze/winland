@@ -1,3 +1,4 @@
+using System.Text.Json;
 
 namespace Winland.Verify.Tests.Features;
 
@@ -18,8 +19,15 @@ public class Ipc
 
         run.FollowEvents("-j events");
         var window = run.OpenManaged("1");
-        run.UntilEvent("openwindow", VerifyRun.EventAddress(window) + ",1,");
+        run.UntilJsonEvent("openwindow", line =>
+            line.GetProperty("address").GetString() == VerifyRun.Address(window)
+            && line.GetProperty("workspace").GetProperty("id").GetInt32() == 1);
         run.Focus(window);
+        run.UntilJsonEvent("focus", line =>
+            line.GetProperty("window") is { ValueKind: JsonValueKind.Object } focused
+            && focused.GetProperty("address").GetString() == VerifyRun.Address(window)
+            && focused.GetProperty("title").GetString() == "WinlandVerify 1"
+            && focused.GetProperty("class").GetString() == "WinlandVerifyWindow");
         Assert.Contains("WinlandVerify 1", run.Ask("clients"), StringComparison.Ordinal);
         Assert.AreEqual("WinlandVerify 1", run.Json("activewindow").GetProperty("title").GetString());
         Assert.AreEqual(1, run.Json("activeworkspace").GetProperty("windows").GetInt32());
