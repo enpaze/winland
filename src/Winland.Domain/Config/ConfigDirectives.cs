@@ -16,7 +16,6 @@ internal static class ConfigDirectives
         if (comment.Length > marker.Length && !char.IsWhiteSpace(comment[marker.Length]))
             return false;
 
-        var parts = comment[marker.Length..].Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length > 0 && parts[0] is "if" or "else" or "endif";
+        return Tokens.First(comment[marker.Length..]) is "if" or "else" or "endif";
     }
 }

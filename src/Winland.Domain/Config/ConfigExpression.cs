@@ -65,7 +65,7 @@ internal static class ConfigExpression
     private static bool TryEvaluate(string body, IReadOnlyDictionary<string, string> variables, out string formatted)
     {
         formatted = "";
-        var parts = body.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        var parts = Tokens.Of(body);
         if (parts.Length < 3 || parts[1] is not ("+" or "-" or "*" or "/"))
             return false;
 

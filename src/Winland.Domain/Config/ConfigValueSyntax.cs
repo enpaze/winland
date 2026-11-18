@@ -32,7 +32,7 @@ public static class ConfigValueSyntax
         if (string.IsNullOrWhiteSpace(text))
             return false;
 
-        var parts = text.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        var parts = Tokens.Of(text);
         BorderColor? first = null;
         var colors = 0;
         double? angle = null;

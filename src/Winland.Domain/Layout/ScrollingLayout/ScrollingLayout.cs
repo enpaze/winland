@@ -301,9 +301,6 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
     private static int Round(double value) =>
         (int)Math.Floor(value + 0.5);
 
-    private static string[] Tokens(string arguments) =>
-        arguments.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-
     private static string At(string[] tokens, int index) =>
         index < tokens.Length ? tokens[index] : "";
 

@@ -69,7 +69,7 @@ internal static class OptionValue
     private static bool TryGaps(string text, out EdgeInsets gaps)
     {
         gaps = EdgeInsets.Zero;
-        var parts = text.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        var parts = Tokens.Of(text);
         if (parts.Length is 0 or > 4)
             return false;
 

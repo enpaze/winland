@@ -7,7 +7,7 @@ internal sealed partial class DwindleLayout
 {
     public WindowId? MoveFocus(WindowId active, string arguments)
     {
-        if (!Sides.TryParse(First(arguments), out var direction))
+        if (!Sides.TryParse(Tokens.First(arguments), out var direction))
             return null;
         if (!TryGeometry(active, out var origin, out var floating))
             return null;
@@ -35,7 +35,7 @@ internal sealed partial class DwindleLayout
 
     public IReadOnlyList<Placement> MoveWindow(WindowId window, string arguments)
     {
-        if (!Sides.TryParse(First(arguments), out var direction))
+        if (!Sides.TryParse(Tokens.First(arguments), out var direction))
             return [];
 
         var id = new ClientId(window.Value);
@@ -160,7 +160,7 @@ internal sealed partial class DwindleLayout
     public IReadOnlyList<Placement> LayoutMessage(WindowId? active, string arguments)
     {
         LayoutMessageError = null;
-        var tokens = Tokens(arguments);
+        var tokens = Tokens.Of(arguments);
         if (tokens.Length == 0)
         {
             LayoutMessageError = "error: bad layoutmsg";
@@ -269,13 +269,4 @@ internal sealed partial class DwindleLayout
             _ => false,
         };
     }
-
-    private static string First(string arguments)
-    {
-        var tokens = Tokens(arguments);
-        return tokens.Length == 0 ? "" : tokens[0];
-    }
-
-    private static string[] Tokens(string arguments) =>
-        arguments.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
 }
