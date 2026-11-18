@@ -73,12 +73,12 @@ internal static partial class WindowRuleParser
         return true;
     }
 
-    private static MapPlacement Place(MapPlacement current, WindowRule rule) => rule.Effect switch
+    private static MapPlacement Place(MapPlacement current, RuleEffect effect) => effect.Kind switch
     {
-        WindowRuleEffect.Move => current with { Move = rule.Placement?.Point, Center = false },
-        WindowRuleEffect.Size => current with { Size = rule.Placement?.Point },
-        WindowRuleEffect.Center => current with { Center = rule.Enabled, Move = null },
-        WindowRuleEffect.Monitor => current with { Monitor = rule.Placement?.Monitor },
+        WindowRuleEffect.Move => current with { Move = effect.Placement?.Point, Center = false },
+        WindowRuleEffect.Size => current with { Size = effect.Placement?.Point },
+        WindowRuleEffect.Center => current with { Center = effect.Enabled, Move = null },
+        WindowRuleEffect.Monitor => current with { Monitor = effect.Placement?.Monitor },
         _ => current,
     };
 }

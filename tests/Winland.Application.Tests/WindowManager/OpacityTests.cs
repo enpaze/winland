@@ -42,8 +42,8 @@ public class OpacityTests
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(2, document.WindowRules.Count);
-        Assert.AreEqual(new OpacityRule(0.8f, 0.8f, 0.8f), document.WindowRules[0].Opacity);
-        Assert.AreEqual(new OpacityRule(0.8f, 0.6f, 1f), document.WindowRules[1].Opacity);
+        Assert.AreEqual(new OpacityRule(0.8f, 0.8f, 0.8f), Assert.ContainsSingle(document.WindowRules[0].Effects).Opacity);
+        Assert.AreEqual(new OpacityRule(0.8f, 0.6f, 1f), Assert.ContainsSingle(document.WindowRules[1].Effects).Opacity);
     }
 
     [TestMethod]

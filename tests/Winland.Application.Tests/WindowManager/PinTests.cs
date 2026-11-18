@@ -115,8 +115,9 @@ public class PinTests
     {
         var document = ConfigParser.Parse("windowrule = pin 0, class:kitty\nwindowrule = pin maybe, class:kitty\n");
 
-        Assert.AreEqual(WindowRuleEffect.Pin, Assert.ContainsSingle(document.WindowRules).Effect);
-        Assert.IsFalse(document.WindowRules[0].Enabled);
+        var effect = Assert.ContainsSingle(Assert.ContainsSingle(document.WindowRules).Effects);
+        Assert.AreEqual(WindowRuleEffect.Pin, effect.Kind);
+        Assert.IsFalse(effect.Enabled);
         Assert.AreEqual(new ConfigWarning(2, "Malformed window rule."), Assert.ContainsSingle(document.Warnings));
     }
 
