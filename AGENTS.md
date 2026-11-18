@@ -22,7 +22,6 @@ A keyboard-driven tiling window manager for Windows 11. It manages windows on to
 ├── tests/                       # One *.Tests project per src project, plus smoke tests
 ├── scripts/                     # check, test, run, smoke, and install
 ├── docs/
-│   ├── adr/                     # Decision records
 │   ├── architecture.md          # The layers, the path an input takes, where to change things
 │   ├── behavior.md              # How Winland behaves, every Option and Dispatcher
 │   ├── development.md           # Setup, environment, and every command
@@ -35,11 +34,11 @@ A keyboard-driven tiling window manager for Windows 11. It manages windows on to
 - Run `pwsh -NoProfile -File scripts/check.ps1`, then `pwsh -NoProfile -File scripts/test.ps1`. Everything must pass. While iterating, `dotnet test` on the test project that covers the change is enough.
 - Say what you couldn't verify.
 - Added or changed a command, prerequisite, environment variable, or top-level folder? Update [docs/development.md](docs/development.md) or Project Structure.
-- Changed how Winland behaves? Update `docs/behavior.md`. A standing decision is an ADR in `docs/adr/`, kept in step with `docs/adr/README.md`.
+- Changed how Winland behaves? Update `docs/behavior.md`.
 
 ## Conventions
 
-- Option and Dispatcher names are Winland's, documented in `docs/behavior.md` (ADR 0002). An unknown keyword warns and is skipped.
+- Option and Dispatcher names are Winland's, documented in `docs/behavior.md`. An unknown keyword warns and is skipped.
 - Don't add a file catalog or a narration of control flow to the docs.
 - Write no code comments. `scripts/check.ps1` fails on any comment except a directive a tool reads.
 
@@ -63,7 +62,7 @@ Use the five default triage labels. Read `docs/agents/triage-labels.md` before t
 
 ### Domain docs
 
-Single-context: root `GLOSSARY.md` and `docs/adr/`. Read `docs/agents/domain.md` before exploring the codebase.
+Single-context: root `GLOSSARY.md`. Read `docs/agents/domain.md` before exploring the codebase.
 
 ## Notes
 

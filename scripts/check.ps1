@@ -44,7 +44,6 @@ function Test-MarkdownLinks([string]$Root, [string[]]$Tracked) {
         }
     }
 
-    $optional = @('GLOSSARY.md', 'docs/adr', 'docs/adr/README.md')
     $pathExtensions = '\.(md|ps1|json|yml|yaml|props|slnx|csproj)$'
 
     $linkCount = 0
@@ -101,7 +100,6 @@ function Test-MarkdownLinks([string]$Root, [string[]]$Tracked) {
                 if ($candidate -match '^(dante-sparras|enpaze)/[^/]+$') { continue }
                 $path = $candidate.TrimEnd('/')
                 if ($path.StartsWith('./')) { $path = $path.Substring(2) }
-                if ($path -in $optional) { continue }
                 $pathCount++
                 if (-not $files.Contains($path) -and -not $dirs.Contains($path)) {
                     Write-Host "Broken link: ${md}: $candidate"
