@@ -44,9 +44,10 @@ internal static class Chord
             return true;
         }
 
-        error = chord.Contains('$', StringComparison.Ordinal) ? $"Undefined variable in chord '{chord}'."
-            : keyName.Length == 0 ? $"Chord '{chord}' is missing a key."
-            : held < parts.Length - 1 ? $"Unknown modifier '{parts[held].Trim()}' in chord '{chord}'. The modifiers are Win, Shift, Ctrl and Alt."
+        var failed = held < parts.Length - 1 ? parts[held].Trim() : keyName;
+        error = keyName.Length == 0 ? $"Chord '{chord}' is missing a key."
+            : failed.Contains('$', StringComparison.Ordinal) ? $"Undefined variable in chord '{chord}'."
+            : held < parts.Length - 1 ? $"Unknown modifier '{failed}' in chord '{chord}'. The modifiers are Win, Shift, Ctrl and Alt."
             : $"Unknown key '{keyName}'.";
         return false;
     }

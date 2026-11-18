@@ -81,6 +81,17 @@ public class BindFlagTests
     }
 
     [TestMethod]
+    public void AnUnknownModifierBeforeTheDollarKeyIsNamed()
+    {
+        var parsed = ConfigParser.Parse("bind = Bogus+$, close\n");
+
+        Assert.AreEqual(
+            "Unknown modifier 'Bogus' in chord 'Bogus+$'. The modifiers are Win, Shift, Ctrl and Alt.",
+            Assert.ContainsSingle(parsed.Warnings).Message);
+        Assert.IsEmpty(parsed.Binds);
+    }
+
+    [TestMethod]
     [DataRow("$mod+Shift+Q")]
     [DataRow("$1+Q")]
     [DataRow("$+$mod+Q")]
