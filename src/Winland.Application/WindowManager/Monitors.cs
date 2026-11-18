@@ -283,23 +283,6 @@ public sealed partial class WindowManager
         return screen is { Arranged.Enabled: true } ? screen : null;
     }
 
-    private LiveMonitor? FocusedMonitor()
-    {
-        foreach (var screen in _monitors)
-        {
-            if (screen.Focused && screen.Arranged.Enabled)
-                return screen;
-        }
-
-        foreach (var screen in _monitors)
-        {
-            if (screen.Arranged.Enabled)
-                return screen;
-        }
-
-        return null;
-    }
-
     private HashSet<WindowId> ShowingNow()
     {
         var shown = new HashSet<WindowId>();

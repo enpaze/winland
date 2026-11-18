@@ -15,24 +15,24 @@ public sealed partial class WindowManager
         }
     }
 
-    private MonitorId FocusedId()
+    private MonitorId FocusedId() =>
+        FocusedMonitor()?.Id ?? (_monitors.Count == 0 ? MonitorId.Primary : _monitors[0].Id);
+
+    private LiveMonitor? FocusedMonitor()
     {
         foreach (var screen in _monitors)
         {
             if (screen.Focused && screen.Arranged.Enabled)
-                return screen.Id;
+                return screen;
         }
-
-        if (_monitors.Count == 0)
-            return MonitorId.Primary;
 
         foreach (var screen in _monitors)
         {
             if (screen.Arranged.Enabled)
-                return screen.Id;
+                return screen;
         }
 
-        return _monitors[0].Id;
+        return null;
     }
 
     private LiveWorkspace FocusedWorkspace() => WorkspaceFor(ActiveId(), FocusedId());
