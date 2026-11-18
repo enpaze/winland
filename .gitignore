@@ -6,7 +6,8 @@ TestResults/
 .firecrawl/
 .scratch/
 
-.claude/
+.claude/*
+!.claude/skills/
 
 .DS_Store
 Thumbs.db
