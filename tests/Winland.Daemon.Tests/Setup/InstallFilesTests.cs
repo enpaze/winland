@@ -124,6 +124,13 @@ public sealed class InstallFilesTests : IDisposable
         File.Copy(Path.Combine(Environment.SystemDirectory, "cmd.exe"), holder);
 
         var mapped = Path.Combine(directory, "mapped.exe.winland-old");
+        var nested = Path.Combine(directory, "native", "helper.dll.winland-old");
+        var stamped = Path.Combine(directory, "plugin.dll.winland-old-" + Guid.NewGuid().ToString("N"));
+        var decoy = Path.Combine(directory, "notes.winland-old.txt");
+        Directory.CreateDirectory(Path.GetDirectoryName(nested)!);
+        File.WriteAllText(nested, "old");
+        File.WriteAllText(stamped, "old");
+        File.WriteAllText(decoy, "keep");
         Process? running = null;
         FileStream? stream = null;
         try
@@ -139,6 +146,8 @@ public sealed class InstallFilesTests : IDisposable
             Assert.False(running.WaitForExit(300));
             File.Move(holder, mapped);
             stream = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None);
+            Assert.IsType<IOException>(Record.Exception(() => File.Delete(held)));
+            Assert.IsType<UnauthorizedAccessException>(Record.Exception(() => File.Delete(mapped)));
 
             using var exited = Process.Start(new ProcessStartInfo
             {
@@ -154,7 +163,10 @@ public sealed class InstallFilesTests : IDisposable
 
             Assert.Equal("", output);
             Assert.Equal("current", File.ReadAllText(kept));
+            Assert.Equal("keep", File.ReadAllText(decoy));
             Assert.False(File.Exists(free));
+            Assert.False(File.Exists(nested));
+            Assert.False(File.Exists(stamped));
             Assert.True(File.Exists(held));
             Assert.True(File.Exists(mapped));
         }
@@ -174,10 +186,109 @@ public sealed class InstallFilesTests : IDisposable
         Assert.False(File.Exists(held));
         Assert.False(File.Exists(mapped));
         Assert.Equal("current", File.ReadAllText(kept));
+        Assert.Equal("keep", File.ReadAllText(decoy));
         WindowsInstallFiles.DeleteRetired(directory);
         Assert.False(File.Exists(held));
         Assert.False(File.Exists(mapped));
         Assert.Equal("current", File.ReadAllText(kept));
+        Assert.Equal("keep", File.ReadAllText(decoy));
+    }
+
+    [Fact]
+    public void TheNextLaunchRemovesAnUnlockedRetiredFileAndLeavesALockedOne()
+    {
+        var host = Path.GetDirectoryName(typeof(WindowsInstallFiles).Assembly.Location)!;
+        var install = Path.Combine(root, "launched");
+        CopyHost(host, install);
+        var retired = Path.Combine(install, "native", "helper.dll.winland-old");
+        var held = Path.Combine(install, "held.dll.winland-old");
+        var decoy = Path.Combine(install, "notes.winland-old.txt");
+        Directory.CreateDirectory(Path.GetDirectoryName(retired)!);
+        File.WriteAllText(retired, "old");
+        File.WriteAllText(held, "old");
+        File.WriteAllText(decoy, "keep");
+        using var stream = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None);
+
+        var first = RunInstalled(install, Path.Combine(install, "absent.conf"));
+
+        Assert.Contains("Could not read config", first, StringComparison.Ordinal);
+        Assert.DoesNotContain("UnauthorizedAccessException", first, StringComparison.Ordinal);
+        Assert.DoesNotContain("Exception calling \"Delete\"", first, StringComparison.Ordinal);
+        Assert.False(File.Exists(retired));
+        Assert.True(File.Exists(held));
+        Assert.Equal("keep", File.ReadAllText(decoy));
+
+        stream.Dispose();
+        var second = RunInstalled(install, Path.Combine(install, "absent.conf"));
+
+        Assert.Contains("Could not read config", second, StringComparison.Ordinal);
+        Assert.DoesNotContain("UnauthorizedAccessException", second, StringComparison.Ordinal);
+        Assert.False(File.Exists(held));
+        Assert.Equal("keep", File.ReadAllText(decoy));
+    }
+
+    private static string RunInstalled(string install, string config)
+    {
+        var start = new ProcessStartInfo(Path.Combine(install, "winland.exe"))
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = install,
+        };
+        start.ArgumentList.Add("check");
+        start.ArgumentList.Add(config);
+        start.Environment["WINLAND_NO_ELEVATE"] = "1";
+        using var process = Process.Start(start);
+        Assert.NotNull(process);
+        var stdout = process.StandardOutput.ReadToEnd();
+        var stderr = process.StandardError.ReadToEnd();
+        Assert.True(process.WaitForExit(30_000));
+        return stdout + stderr;
+    }
+
+    private static void CopyHost(string source, string destination)
+    {
+        Directory.CreateDirectory(destination);
+        foreach (var name in new[]
+        {
+            "winland.exe",
+            "winland.dll",
+            "winland.deps.json",
+            "winland.runtimeconfig.json",
+            "Winland.Application.dll",
+            "Winland.Domain.dll",
+            "Winland.Infrastructure.dll",
+            "Winland.Install.dll",
+            "Microsoft.Win32.SystemEvents.dll",
+            "Microsoft.Windows.SDK.NET.dll",
+            "WinRT.Runtime.dll",
+        })
+        {
+            var from = Path.Combine(source, name);
+            Assert.True(File.Exists(from), from);
+            using var input = new FileStream(from, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var output = File.Create(Path.Combine(destination, name));
+            input.CopyTo(output);
+        }
+
+        CopyTree(Path.Combine(source, "runtimes"), Path.Combine(destination, "runtimes"));
+    }
+
+    private static void CopyTree(string source, string destination)
+    {
+        Assert.True(Directory.Exists(source), source);
+        Directory.CreateDirectory(destination);
+        foreach (var directory in Directory.EnumerateDirectories(source))
+            CopyTree(directory, Path.Combine(destination, Path.GetFileName(directory)));
+
+        foreach (var file in Directory.EnumerateFiles(source))
+        {
+            using var input = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var output = File.Create(Path.Combine(destination, Path.GetFileName(file)));
+            input.CopyTo(output);
+        }
     }
 
     private static string RunRetirementScript(string script)

@@ -36,6 +36,13 @@ public partial class Update(ITestOutputHelper output)
                 install.Say("saw: this build is the dev release's commit, so update said it is up to date");
             }
 
+            AssertNoRetirementError(updated);
+            install.Say("saw: update printed no retirement error");
+            var swept = install.Run(UserInstall.Executable, "check", Path.Combine(Path.GetTempPath(), "winland-verify-absent.conf"));
+            AssertNoRetirementError(swept);
+            Assert.False(RetiredFileRemains(UserInstall.Folder), "a .winland-old file remained after the next run");
+            install.Say("saw: the next run left no file whose name contains .winland-old");
+
             install.Uninstall();
             install.Until("uninstall removes the updated copy", () => !Directory.Exists(UserInstall.Folder));
         }
@@ -51,4 +58,16 @@ public partial class Update(ITestOutputHelper output)
 
     [GeneratedRegex(@"Winland is updated to (\S+)\.")]
     private static partial Regex UpdatedTo();
+
+    private static void AssertNoRetirementError(CliResult result)
+    {
+        var text = result.Output + result.Error;
+        Assert.DoesNotContain("UnauthorizedAccessException", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Exception calling \"Delete\"", text, StringComparison.Ordinal);
+    }
+
+    private static bool RetiredFileRemains(string folder) =>
+        Directory.Exists(folder)
+        && Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories)
+            .Any(path => Path.GetFileName(path).Contains(".winland-old", StringComparison.Ordinal));
 }
