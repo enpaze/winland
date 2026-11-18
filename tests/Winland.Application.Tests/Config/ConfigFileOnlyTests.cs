@@ -10,9 +10,8 @@ public class ConfigFileOnlyTests
     [DataRow("getoption general:gaps_out")]
     [DataRow("setprop address:0x1 border_size 9")]
     [DataRow("getprop address:0x1 border_size")]
-    [DataRow("dispatch setprop address:0x1 border_size 9")]
     [DataRow("[[BATCH]]keyword general:gaps_out 0 ; keyword general:border_size 9")]
-    [DataRow("[[BATCH]]j/clients")]
+    [DataRow("[[BATCH]]j/get windows")]
     [DataRow("[[BATCH]]/reload")]
     public void NoRequestReadsOrChangesASetting(string line)
     {
@@ -20,7 +19,7 @@ public class ConfigFileOnlyTests
         desk.Spawn("a");
         var core = desk.WindowManager;
         var applied = (core.HideTaskbar, core.RuleRevision);
-        var windows = desk.Send("j/clients");
+        var windows = desk.Send("j/get windows");
         var placed = desk.PlaceOf("a");
 
         Assert.StartsWith("error:", desk.Send(line), StringComparison.Ordinal);
@@ -30,7 +29,7 @@ public class ConfigFileOnlyTests
         desk.Close("b");
         Assert.AreEqual(applied, (core.HideTaskbar, core.RuleRevision));
         Assert.AreEqual(placed, desk.PlaceOf("a"));
-        Assert.AreEqual(windows, desk.Send("j/clients"));
+        Assert.AreEqual(windows, desk.Send("j/get windows"));
     }
 
     [TestMethod]

@@ -16,7 +16,7 @@ Window commands act on the Focused window: swap it with a neighbour, move it in 
 - Press `Win+Shift+Arrows` to swap the window with its neighbour, and `Win+Shift+Ctrl+Arrows` to move it to another Monitor.
 - Press `Win+T` to float or tile the window, and `Win+O` to pop it out, which floats and pins it.
 - Press `Win+Q` or `Win+W` to close the window.
-- Run `winland dispatch swapwindow r`, `winland dispatch movewindow l`, `winland dispatch togglefloating`, `winland dispatch pin` or `winland dispatch killactive`.
+- Run `winland swapwindow r`, `winland movewindow l`, `winland togglefloating`, `winland pin` or `winland killactive`.
 
 ## Driving it with drive.ps1
 
@@ -27,14 +27,14 @@ Preconditions:
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature window-commands`. It prints `== feature window-commands: passed`.
 - **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`. Both become Clients and tile side by side across the work area.
-- **Swap.** The driver focuses the left window with `winland dispatch focuswindow address:<hwnd>` and runs `winland dispatch swapwindow r`. The focused window is now on the right.
-- **Move.** The driver runs `winland dispatch movewindow l`. The focused window is back on the left.
-- **Float.** The driver runs `winland dispatch togglefloating`. The window's Client reports `floating: true`, and the other window fills the work area.
-- **Pin.** The driver runs `winland dispatch pin`. The floating window's Client reports `pinned: true`.
-- **Switch with a pin.** The driver runs `winland dispatch workspace 2`. The tile hides, the pinned window stays shown, and its Client reports Workspace `2`.
-- **Unpin.** The driver runs `winland dispatch pin` again. The Client reports `pinned: false`.
-- **Switch back.** The driver runs `winland dispatch workspace 1`. The tile shows again, and the unpinned window hides, left on Workspace 2.
-- **Close.** The driver focuses the tile and runs `winland dispatch killactive`. The window closes and is no longer in `winland -j clients`.
+- **Swap.** The driver focuses the left window with `winland focuswindow address:<hwnd>` and runs `winland swapwindow r`. The focused window is now on the right.
+- **Move.** The driver runs `winland movewindow l`. The focused window is back on the left.
+- **Float.** The driver runs `winland togglefloating`. The window's Client reports `floating: true`, and the other window fills the work area.
+- **Pin.** The driver runs `winland pin`. The floating window's Client reports `pinned: true`.
+- **Switch with a pin.** The driver runs `winland workspace 2`. The tile hides, the pinned window stays shown, and its Client reports Workspace `2`.
+- **Unpin.** The driver runs `winland pin` again. The Client reports `pinned: false`.
+- **Switch back.** The driver runs `winland workspace 1`. The tile shows again, and the unpinned window hides, left on Workspace 2.
+- **Close.** The driver focuses the tile and runs `winland killactive`. The window closes and is no longer in `winland -j get windows`.
 
 ## Gotchas
 
@@ -46,4 +46,4 @@ Preconditions:
 - `movewindow` in a direction and `swapwindow` refuse a Client that is fullscreen or maximized.
 - `killactive` asks the application to close, so a real application can ask to save first and stay open.
 - The driver does not move a window to another Monitor with `movewindow`.
-- The keys in the first list come from the starter config. The driver's config has no binds, so it drives these Dispatchers through `winland dispatch`. [Binds](./binds.md) proves the key path.
+- The keys in the first list come from the starter config. The driver's config has no binds, so it drives these Dispatchers through the `winland` CLI. [Binds](./binds.md) proves the key path.

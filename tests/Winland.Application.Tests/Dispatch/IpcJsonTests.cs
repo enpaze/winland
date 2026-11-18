@@ -20,8 +20,8 @@ public class IpcJsonTests
             {"address":"0x2a","hidden":false,"visible":true,"at":[0,0],"size":[800,600],"workspace":{"id":1,"type":"normal","name":"1","monitor":""},"floating":false,"monitor":"","class":"kitty","title":"term","initialClass":"kitty","initialTitle":"term","pid":4242,"pinned":false,"fullscreen":0,"fullscreenHandler":"default","allowedOverFullscreen":true,"grouped":[]}
             """;
 
-        Assert.AreEqual("[" + Client + "]", core.Execute("j/clients").Text);
-        Assert.AreEqual(Client, core.Execute("j/activewindow").Text);
+        Assert.AreEqual("[" + Client + "]", core.Execute("j/get windows").Text);
+        Assert.AreEqual(Client, core.Execute("j/get window").Text);
         Assert.AreEqual(4242, core.Recovery().Clients[0].ProcessId);
     }
 
@@ -36,9 +36,9 @@ public class IpcJsonTests
             Bounds = new Rectangle(10, 20, 300, 200),
             ProcessId = 99,
         });
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
-        var clients = Json(core.Execute("j/clients").Text).EnumerateArray().ToArray();
+        var clients = Json(core.Execute("j/get windows").Text).EnumerateArray().ToArray();
 
         Assert.AreEqual("0x1", clients[0].GetProperty("address").GetString());
         Assert.IsTrue(clients[0].GetProperty("hidden").GetBoolean());
@@ -76,8 +76,8 @@ public class IpcJsonTests
             {"id":1,"type":"normal","name":"1","monitor":"","monitorId":0,"windows":1,"hasFullscreen":false,"lastWindow":"0x2a","lastWindowTitle":"term","tiledLayout":"dwindle"}
             """;
 
-        Assert.AreEqual("[" + Workspace + "]", core.Execute("j/workspaces").Text);
-        Assert.AreEqual(Workspace, core.Execute("j/activeworkspace").Text);
+        Assert.AreEqual("[" + Workspace + "]", core.Execute("j/get workspaces").Text);
+        Assert.AreEqual(Workspace, core.Execute("j/get workspace").Text);
     }
 
     [TestMethod]
@@ -88,16 +88,16 @@ public class IpcJsonTests
         var core = new WindowManager(ConfigParser.Parse("general:layout = " + layout));
         core.Handle(new WindowAppeared(new WindowId(42), new Rectangle(0, 0, 800, 600)));
 
-        var workspace = Assert.ContainsSingle(Json(core.Execute("j/workspaces").Text).EnumerateArray());
+        var workspace = Assert.ContainsSingle(Json(core.Execute("j/get workspaces").Text).EnumerateArray());
 
         Assert.AreEqual(layout, workspace.GetProperty("tiledLayout").GetString());
-        Assert.AreEqual(layout, Json(core.Execute("j/activeworkspace").Text).GetProperty("tiledLayout").GetString());
+        Assert.AreEqual(layout, Json(core.Execute("j/get workspace").Text).GetProperty("tiledLayout").GetString());
     }
 
     [TestMethod]
     public void ActiveWorkspaceRejectsTrailingArguments()
     {
-        Assert.AreEqual("error: unknown request", new WindowManager().Execute("j/activeworkspace extra").Text);
+        Assert.AreEqual("error: unknown request", new WindowManager().Execute("j/get workspace extra").Text);
     }
 
     [TestMethod]
@@ -125,8 +125,8 @@ public class IpcJsonTests
             {"id":0,"name":"Dell","description":"DEL U2720Q ABC123","make":"DEL","model":"U2720Q","serial":"ABC123","width":1920,"height":1080,"refreshRate":60,"x":0,"y":0,"activeWorkspace":{"id":1,"type":"normal","name":"1","monitor":"Dell"},"specialWorkspace":{"type":"","name":"","monitor":""},"reserved":[0,0,0,40],"scale":1,"focused":true,"disabled":false,"currentFormat":"","hardwareDetails":{"hdr":false,"chroma":false,"bt2020":false}}
             """;
 
-        Assert.AreEqual("[" + Monitor + "]", core.Execute("j/monitors").Text);
-        Assert.AreEqual("[" + Monitor + "]", core.Execute("j/monitors all").Text);
+        Assert.AreEqual("[" + Monitor + "]", core.Execute("j/get monitors").Text);
+        Assert.AreEqual("[" + Monitor + "]", core.Execute("j/get monitors all").Text);
     }
 
     [TestMethod]
@@ -139,8 +139,8 @@ public class IpcJsonTests
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
 
-        var monitors = Json(core.Execute("j/monitors").Text).EnumerateArray().ToArray();
-        var clients = Json(core.Execute("j/clients").Text).EnumerateArray().ToArray();
+        var monitors = Json(core.Execute("j/get monitors").Text).EnumerateArray().ToArray();
+        var clients = Json(core.Execute("j/get windows").Text).EnumerateArray().ToArray();
 
         Assert.AreEqual(monitors[0].GetProperty("name").GetString(), clients[0].GetProperty("monitor").GetString());
         Assert.AreEqual(monitors[1].GetProperty("name").GetString(), clients[1].GetProperty("monitor").GetString());
@@ -158,8 +158,8 @@ public class IpcJsonTests
         var right = new Monitor(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1, false, new Rectangle(1920, 0, 1280, 1024));
         core.Handle(new MonitorsChanged([left, right]));
 
-        var shown = Json(core.Execute("j/monitors").Text).EnumerateArray().ToArray();
-        var all = Json(core.Execute("j/monitors all").Text).EnumerateArray().ToArray();
+        var shown = Json(core.Execute("j/get monitors").Text).EnumerateArray().ToArray();
+        var all = Json(core.Execute("j/get monitors all").Text).EnumerateArray().ToArray();
 
         var enabled = Assert.ContainsSingle(shown);
         Assert.AreEqual(@"\\.\DISPLAY1", enabled.GetProperty("name").GetString());
@@ -184,6 +184,6 @@ public class IpcJsonTests
             {"id":0,"name":"","description":"","make":"","model":"","serial":"","width":0,"height":0,"refreshRate":0,"x":0,"y":0,"activeWorkspace":{"id":1,"type":"normal","name":"1","monitor":""},"specialWorkspace":{"type":"","name":"","monitor":""},"reserved":[0,0,0,0],"scale":1,"focused":true,"disabled":false,"currentFormat":"","hardwareDetails":{"hdr":false,"chroma":false,"bt2020":false}}
             """;
 
-        Assert.AreEqual("[" + Monitor + "]", new WindowManager().Execute("j/monitors").Text);
+        Assert.AreEqual("[" + Monitor + "]", new WindowManager().Execute("j/get monitors").Text);
     }
 }

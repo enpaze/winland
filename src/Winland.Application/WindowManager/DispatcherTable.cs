@@ -13,12 +13,15 @@ public sealed partial class WindowManager
 
     public static IReadOnlyCollection<string> DispatcherNames => Table.Keys;
 
+    internal static bool IsDispatcher(string name) => Table.ContainsKey(name);
+
     private static FrozenDictionary<string, Dispatcher> BuildTable()
     {
         var table = new Dictionary<string, Dispatcher>(StringComparer.OrdinalIgnoreCase)
         {
             ["exec"] = new(static (m, _, a) => m.Exec(a), AllowsComma: true),
             ["exit"] = new(static (m, _, _) => m.ExitDaemon()),
+            ["reload"] = new(static (m, _, a) => a.Length == 0 ? m.Reload() : m.Rejected("error: reload takes no arguments")),
 
             ["workspace"] = new(static (m, _, a) => m.WorkspaceDispatch(a), AllowsComma: true),
             ["togglespecialworkspace"] = new(static (m, _, a) => m.ToggleSpecial(a), AllowsComma: true),

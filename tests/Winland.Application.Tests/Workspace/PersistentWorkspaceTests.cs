@@ -42,7 +42,7 @@ public class PersistentWorkspaceTests
 
     private static string[] MonitorNames(TestDesktop desk)
     {
-        using var document = JsonDocument.Parse(desk.Send("j/monitors"));
+        using var document = JsonDocument.Parse(desk.Send("j/get monitors"));
         return [.. document.RootElement.EnumerateArray().Select(monitor => monitor.GetProperty("name").GetString() ?? "")];
     }
 }

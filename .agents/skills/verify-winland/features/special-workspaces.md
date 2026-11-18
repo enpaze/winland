@@ -13,8 +13,8 @@ A special workspace holds windows out of sight until the user shows it over the 
 
 - Press `Win+S` or `` Win+` `` to show or hide the scratchpad.
 - Press `Win+Alt+S` or `` Win+Shift+` `` to move the window to the scratchpad.
-- Run `winland dispatch togglespecialworkspace`, `winland dispatch togglespecialworkspace scratchpad` or `winland dispatch movetoworkspacesilent special`.
-- Run `winland dispatch workspace special:<name>` to show a special workspace without hiding it on a second run.
+- Run `winland togglespecialworkspace`, `winland togglespecialworkspace scratchpad` or `winland movetoworkspacesilent special`.
+- Run `winland workspace special:<name>` to show a special workspace without hiding it on a second run.
 
 ## Driving it with drive.ps1
 
@@ -25,16 +25,16 @@ Preconditions:
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature special-workspaces`. It prints `== feature special-workspaces: passed`.
 - **Tile two windows.** The driver follows `winland events`, then opens `WinlandVerify 1` and `WinlandVerify 2`, which tile side by side.
-- **Send a window away.** The driver focuses the right window with `winland dispatch focuswindow address:<hwnd>` and runs `winland dispatch movetoworkspacesilent special`. The right window hides, and its Client reports Workspace name `special:special`.
-- **Show it.** The driver runs `winland dispatch togglespecialworkspace`. Both windows are visible, the Event stream holds an `activespecial` line with `-99,special:special,`, and `winland -j activeworkspace` still reports id `1`.
-- **Hide it.** The driver runs `winland dispatch togglespecialworkspace` again. The right window hides, the left window stays shown, and the Event stream holds an `activespecial` line with an empty id and name.
+- **Send a window away.** The driver focuses the right window with `winland focuswindow address:<hwnd>` and runs `winland movetoworkspacesilent special`. The right window hides, and its Client reports Workspace name `special:special`.
+- **Show it.** The driver runs `winland togglespecialworkspace`. Both windows are visible, the Event stream holds an `activespecial` line with `-99,special:special,`, and `winland -j get workspace` still reports id `1`.
+- **Hide it.** The driver runs `winland togglespecialworkspace` again. The right window hides, the left window stays shown, and the Event stream holds an `activespecial` line with an empty id and name.
 
 ## Gotchas
 
-- `togglespecialworkspace` with no argument addresses `special:special`. The starter's `Win+S` addresses `special:scratchpad`, another special workspace. Keep the names the same when you mix keys and `winland dispatch`.
-- The normal Workspace stays the active one. `activeworkspace` reports Workspace 1 while the special workspace shows; check the window or the `activespecial` event instead.
+- `togglespecialworkspace` with no argument addresses `special:special`. The starter's `Win+S` addresses `special:scratchpad`, another special workspace. Keep the names the same when you mix keys and the `winland` CLI.
+- The normal Workspace stays the active one. `get workspace` reports Workspace 1 while the special workspace shows; check the window or the `activespecial` event instead.
 - Focusing a Client on the normal Workspace closes the special workspace, and so does changing the Monitor's normal Workspace. Do not focus the left window while checking the open special workspace.
 - The special workspace closes when its last Client leaves.
 - In events and text replies the unnamed special workspace is id -99. The driver matches a Client's special workspace by its JSON `name`, `special:special`.
 - `workspace special:<name>` shows the special workspace and does not hide it again on a second run, unlike `togglespecialworkspace`.
-- The keys in the first list come from the starter config. The driver's config has no binds, so it drives this Dispatcher through `winland dispatch`. [Binds](./binds.md) proves the key path.
+- The keys in the first list come from the starter config. The driver's config has no binds, so it drives this Dispatcher through the `winland` CLI. [Binds](./binds.md) proves the key path.

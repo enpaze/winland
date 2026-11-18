@@ -21,10 +21,10 @@ public class Binds
     [VerifyFact]
     public void RunsKeyBindsAndFollowsTheMouse() => VerifyRun.Drive(TestContext, Config, run =>
     {
-        var binds = run.Ask("binds");
+        var binds = run.Ask("get", "binds");
         Assert.Contains("bind = SHIFT CTRL ALT, F9, workspace, 4", binds, StringComparison.Ordinal);
         Assert.Contains("bind = SHIFT CTRL ALT, mouse:x2, workspace, 1", binds, StringComparison.Ordinal);
-        var json = run.Json("binds").EnumerateArray().ToList();
+        var json = run.Json("get", "binds").EnumerateArray().ToList();
         Assert.Contains(bind => bind.GetProperty("key").GetString() == "F9" && bind.GetProperty("modMask").GetInt32() == 13 && bind.GetProperty("dispatcher").GetString() == "workspace", json);
         Assert.Contains(bind => bind.GetProperty("key").GetString() == "mouse:x2" && bind.GetProperty("mouse").GetBoolean(), json);
         run.Say("saw: binds lists the config's binds, with CTRL ALT SHIFT as modMask 13 and the mouse button by name");

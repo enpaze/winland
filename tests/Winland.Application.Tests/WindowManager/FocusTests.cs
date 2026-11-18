@@ -165,13 +165,13 @@ public class FocusTests
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = no_focus, class:quiet\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Class = "quiet" } });
-        core.Execute("dispatch workspace 1");
+        core.Execute("workspace 1");
 
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
-        Assert.AreEqual("null", core.Execute("j/activewindow").Text);
+        Assert.AreEqual("null", core.Execute("j/get window").Text);
     }
 
     [TestMethod]

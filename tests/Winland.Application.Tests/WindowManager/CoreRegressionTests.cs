@@ -96,7 +96,7 @@ public class CoreRegressionTests
 
         Assert.IsNull(closed.Focus);
         Assert.AreEqual(new MonitorId(0), closed.State.ActiveMonitor);
-        Assert.AreEqual("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        Assert.AreEqual("0x1", Json(core.Execute("j/get window").Text).GetProperty("address").GetString());
     }
 
     [TestMethod]

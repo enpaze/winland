@@ -19,7 +19,7 @@ public class DispatcherRegressionTests
         var result = core.Handle(new Dispatch(name, argument));
 
         Assert.IsNull(result.Focus);
-        Assert.AreEqual("0x3", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        Assert.AreEqual("0x3", Json(core.Execute("j/get window").Text).GetProperty("address").GetString());
     }
 
     [TestMethod]
@@ -43,7 +43,7 @@ public class DispatcherRegressionTests
         var result = core.Handle(new Dispatch("focuswindow", "address:0x2"));
 
         Assert.IsNull(result.Focus);
-        Assert.AreEqual("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        Assert.AreEqual("0x1", Json(core.Execute("j/get window").Text).GetProperty("address").GetString());
     }
 
     [TestMethod]

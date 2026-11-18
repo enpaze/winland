@@ -24,7 +24,7 @@ To install by hand, download `Winland-win-x64.zip` from [Releases](https://githu
 
 ## Hotkeys
 
-The starter uses `$mainMod = SUPER` and describes each bind. Run `winland binds` to list the hotkeys as config lines with those descriptions. Edit the config through the tray menu; save to reload. Changing the modifier can create shortcut conflicts.
+The starter uses `$mainMod = SUPER` and describes each bind. Run `winland get binds` to list the hotkeys as config lines with those descriptions. Edit the config through the tray menu; save to reload. Changing the modifier can create shortcut conflicts.
 
 ### Windows
 
@@ -93,7 +93,7 @@ The backtick key uses its US keyboard position on other layouts too.
 
 ## Stop and undo
 
-- To quit, right-click the Winland icon in the notification area, which Windows may keep behind the `^` arrow, and choose Quit. Or run `winland dispatch exit`. Either puts every window back.
+- To quit, right-click the Winland icon in the notification area, which Windows may keep behind the `^` arrow, and choose Quit. Or run `winland exit`. Either puts every window back.
 - To remove Winland, run `winland uninstall`. It also turns Snap and the touchpad swipes back on, if the install turned them off.
 
 ## Important files
@@ -117,7 +117,7 @@ The default install runs as administrator and writes no log file. After a crash,
 | `winland` | Start Winland |
 | `winland --config <file>` | Start Winland with that `.conf` file in place of your config |
 | `winland check [file]` | Validate a config and its sources without starting or changing Winland |
-| `winland [-j] dispatch` | List this binary's Dispatcher names without a Daemon |
+| `winland help` | List the commands and this binary's Dispatcher names without a Daemon |
 | `winland [-j] version` | Show this binary's version without a Daemon |
 | `winland install` | Install for this PC, running as administrator. Asks for one approval |
 | `winland install --user` | Install for you only, without administrator rights |
@@ -132,30 +132,30 @@ The default install runs as administrator and writes no log file. After a crash,
 | `winland tweaks --off --touchpad` | Also turn off the three- and four-finger touchpad swipes |
 | `winland tweaks --restore` | Restore recorded Windows settings from a normal terminal without uninstalling |
 
-`check` exits 0 when clean, 1 for diagnostics or a read failure, and 2 for invalid usage; diagnostics go to standard error. It never creates or rewrites a config. Local name lists are sorted lines, or JSON arrays with `-j`, and describe this binary rather than another version of the Daemon. `tweaks --restore` preserves the record on failure so it can be retried. Restored Snap or touchpad controls may interact with tiling while Winland stays running.
+`check` exits 0 when clean, 1 for diagnostics or a read failure, and 2 for invalid usage; diagnostics go to standard error. It never creates or rewrites a config. `help` describes this binary rather than another version of the Daemon. `tweaks --restore` preserves the record on failure so it can be retried. Restored Snap or touchpad controls may interact with tiling while Winland stays running.
 
 These talk to the running Winland.
 
 | Command | Does |
 | --- | --- |
-| `winland dispatch <name> [args]` | Run a Dispatcher, such as `winland dispatch workspace 2` |
-| `winland dispatch layout <dwindle\|scrolling\|floating>` | Select the Shown workspace's Layout |
-| `winland dispatch moveintogroup <l\|r\|u\|d>` | Join the Group of the Client in that direction |
+| `winland <action> [args]` | Run a Dispatcher, such as `winland workspace 2` |
 | `winland reload` | Read the config again |
-| `winland clients` | List the windows Winland manages |
-| `winland activewindow` | Show the focused window |
+| `winland layout <dwindle\|scrolling\|floating>` | Select the Shown workspace's Layout |
+| `winland moveintogroup <l\|r\|u\|d>` | Join the Group of the Client in that direction |
+| `winland get windows` | List the windows Winland manages |
+| `winland get window` | Show the focused window |
 | `winland [-j] inspect [selector]` | Explain the Window under the pointer or a selected Client and offer a draft rule |
-| `winland workspaces` | List the workspaces |
-| `winland activeworkspace` | Show the focused workspace |
-| `winland monitors [all]` | List the monitors. `all` includes disabled ones |
-| `winland binds` | List the hotkeys, one config line each |
-| `winland configerrors` | List the config's warnings, each with its file and line |
-| `winland files` | Show the config Winland read and the log it writes |
+| `winland get workspaces` | List the workspaces |
+| `winland get workspace` | Show the focused workspace |
+| `winland get monitors [all]` | List the monitors. `all` includes disabled ones |
+| `winland get binds` | List the hotkeys, one config line each |
+| `winland get errors` | List the config's warnings, each with its file and line |
+| `winland get files` | Show the config Winland read and the log it writes |
 | `winland [-j] events` | Print every event as it happens, one per line |
 
 | Flag | Does |
 | --- | --- |
-| `-j` | Answer in JSON |
+| `-j` | Answer in JSON. It goes before or after the command |
 
 ## Credits
 

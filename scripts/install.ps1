@@ -81,7 +81,7 @@ function Get-SummaryLines([string]$Version, [string]$Folder, [string]$Config, [b
         $lines.Add('    Start      Winland in the Start menu, or run winland')
     }
     $lines.Add('    Quit       right-click the Winland icon in the notification area (behind ^ if hidden), then Quit')
-    $lines.Add('    Keys       winland binds lists your hotkeys and their descriptions')
+    $lines.Add('    Keys       winland get binds lists your hotkeys and their descriptions')
     $lines.Add('    Edit       right-click the Winland icon, then Edit config')
     $lines.Add('    Tweaks     winland tweaks --restore restores recorded Snap and swipes from a normal terminal')
     $lines.Add('    Remove     winland uninstall removes Winland and restores recorded Windows settings')

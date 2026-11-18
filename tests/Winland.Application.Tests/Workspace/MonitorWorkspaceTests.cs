@@ -25,7 +25,7 @@ public class MonitorWorkspaceTests
         Assert.DoesNotContain(client => client.Window == new WindowId(1), second.State.Hidden);
         Assert.DoesNotContain(client => client.Window == new WindowId(2), second.State.Hidden);
 
-        var monitors = Json(core.Execute("j/monitors").Text).EnumerateArray().ToArray();
+        var monitors = Json(core.Execute("j/get monitors").Text).EnumerateArray().ToArray();
         Assert.AreEqual(2, monitors.Length);
         Assert.AreEqual(0, monitors[0].GetProperty("id").GetInt32());
         Assert.AreEqual(@"\\.\DISPLAY1", monitors[0].GetProperty("name").GetString());
@@ -52,7 +52,7 @@ public class MonitorWorkspaceTests
         Assert.AreEqual("1", monitors[1].GetProperty("activeWorkspace").GetProperty("name").GetString());
         Assert.AreEqual(@"\\.\DISPLAY2", monitors[1].GetProperty("activeWorkspace").GetProperty("monitor").GetString());
 
-        var workspaces = Json(core.Execute("j/workspaces").Text).EnumerateArray().ToArray();
+        var workspaces = Json(core.Execute("j/get workspaces").Text).EnumerateArray().ToArray();
         var onLeft = Assert.ContainsSingle(item => item.GetProperty("monitor").GetString() == @"\\.\DISPLAY1", workspaces);
         var onRight = Assert.ContainsSingle(item => item.GetProperty("monitor").GetString() == @"\\.\DISPLAY2", workspaces);
         Assert.AreEqual(0, onLeft.GetProperty("monitorId").GetInt32());
@@ -62,7 +62,7 @@ public class MonitorWorkspaceTests
         Assert.AreEqual(1, onRight.GetProperty("windows").GetInt32());
         Assert.AreEqual("1", onRight.GetProperty("name").GetString());
 
-        var clients = Json(core.Execute("j/clients").Text).EnumerateArray().ToArray();
+        var clients = Json(core.Execute("j/get windows").Text).EnumerateArray().ToArray();
         Assert.IsFalse(clients[0].GetProperty("hidden").GetBoolean());
         Assert.IsFalse(clients[1].GetProperty("hidden").GetBoolean());
         Assert.AreEqual(1, clients[0].GetProperty("workspace").GetProperty("id").GetInt32());
@@ -94,7 +94,7 @@ public class MonitorWorkspaceTests
         Assert.Contains(new WindowId(2), outcome.Hide);
         Assert.Contains(client => client.Window == new WindowId(2), outcome.State.Hidden);
 
-        var workspaces = Json(core.Execute("j/workspaces").Text)
+        var workspaces = Json(core.Execute("j/get workspaces").Text)
             .EnumerateArray()
             .ToDictionary(item => item.GetProperty("name").GetString()!);
         Assert.AreEqual(@"\\.\DISPLAY1", workspaces["1"].GetProperty("monitor").GetString());
@@ -103,7 +103,7 @@ public class MonitorWorkspaceTests
         Assert.AreEqual(1, workspaces["1"].GetProperty("windows").GetInt32());
         Assert.AreEqual(1, workspaces["2"].GetProperty("windows").GetInt32());
 
-        var monitor = Assert.ContainsSingle(Json(core.Execute("j/monitors").Text).EnumerateArray());
+        var monitor = Assert.ContainsSingle(Json(core.Execute("j/get monitors").Text).EnumerateArray());
         Assert.AreEqual(@"\\.\DISPLAY1", monitor.GetProperty("name").GetString());
         Assert.IsTrue(monitor.GetProperty("focused").GetBoolean());
         Assert.AreEqual("1", monitor.GetProperty("activeWorkspace").GetProperty("name").GetString());
@@ -185,7 +185,7 @@ public class MonitorWorkspaceTests
 
         Assert.Contains(client => client.Window == new WindowId(2), gone.State.Hidden);
         Assert.AreEqual(new WindowId(1), gone.Focus);
-        Assert.AreEqual("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        Assert.AreEqual("0x1", Json(core.Execute("j/get window").Text).GetProperty("address").GetString());
         Assert.DoesNotContain(
             line => line.StartsWith("workspace>>", StringComparison.Ordinal),
             Lines(gone));
@@ -214,7 +214,7 @@ public class MonitorWorkspaceTests
         Assert.AreEqual(WorkspaceId.FromNumber(5, returned.Id), Client(back, 5).Workspace);
         Assert.Contains(client => client.Window == new WindowId(5), back.State.Hidden);
         Assert.AreEqual(new WindowId(1), back.Focus);
-        Assert.AreEqual("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        Assert.AreEqual("0x1", Json(core.Execute("j/get window").Text).GetProperty("address").GetString());
     }
 
     [TestMethod]

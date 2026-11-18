@@ -34,7 +34,7 @@ public class Focus
         run.Dispatch("focuswindow address:" + VerifyRun.Address(left));
         run.Until("address focuses the left window", () => run.Active() == VerifyRun.Address(left));
 
-        run.Cli("dispatch", "focuswindow", "title:NoSuchWindow");
+        run.Cli("focuswindow", "title:NoSuchWindow");
         run.Holds("focuswindow on an unmatched selector leaves focus where it is", () => run.Active() == VerifyRun.Address(left), 500);
     });
 }

@@ -351,14 +351,14 @@ public class WorkspaceTests
     public void SwitchingToAWorkspaceOnAnotherMonitorMovesTheCursorToItsFocusedClient()
     {
         var core = TwoMonitors("");
-        core.Execute("dispatch focusmonitor RIGHT");
-        core.Execute("dispatch workspace 2");
+        core.Execute("focusmonitor RIGHT");
+        core.Execute("workspace 2");
         core.Handle(new WindowAppeared(new WindowId(1), Right));
         core.Handle(new WindowAppeared(new WindowId(2), Right));
         core.Handle(new WindowFocused(new WindowId(1), FocusCause.User));
-        core.Execute("dispatch focusmonitor LEFT");
+        core.Execute("focusmonitor LEFT");
 
-        var switched = core.Execute("dispatch workspace previous").Effect;
+        var switched = core.Execute("workspace previous").Effect;
 
         Assert.AreEqual(new WarpTo(new Point(2400, 540)), switched.Warp);
     }
@@ -378,7 +378,7 @@ public class WorkspaceTests
     {
         var core = TwoMonitors("");
 
-        var switched = core.Execute("dispatch workspace 3").Effect;
+        var switched = core.Execute("workspace 3").Effect;
 
         Assert.IsNull(switched.Warp);
     }
@@ -387,10 +387,10 @@ public class WorkspaceTests
 
     private static Outcome ShowTheRightsWorkspace(WindowManager core)
     {
-        core.Execute("dispatch focusmonitor RIGHT");
-        core.Execute("dispatch workspace 2");
-        core.Execute("dispatch focusmonitor LEFT");
-        return core.Execute("dispatch workspace previous").Effect;
+        core.Execute("focusmonitor RIGHT");
+        core.Execute("workspace 2");
+        core.Execute("focusmonitor LEFT");
+        return core.Execute("workspace previous").Effect;
     }
 
     private static WindowManager TwoMonitors(string config)
@@ -401,7 +401,7 @@ public class WorkspaceTests
             new Monitor("LEFT", "Left", 0, 0, 1920, 1080, 1, true, Area),
             new Monitor("RIGHT", "Right", 1920, 0, 1920, 1080, 1, true, Right),
         ]));
-        core.Execute("dispatch focusmonitor LEFT");
+        core.Execute("focusmonitor LEFT");
         return core;
     }
 

@@ -241,7 +241,7 @@ public class MonitorDispatchTests
             ],
             Lines(outcome));
 
-        var monitors = System.Text.Json.JsonElement.Parse(core.Execute("j/monitors").Text).EnumerateArray().ToArray();
+        var monitors = System.Text.Json.JsonElement.Parse(core.Execute("j/get monitors").Text).EnumerateArray().ToArray();
         Assert.AreEqual("2", monitors[0].GetProperty("activeWorkspace").GetProperty("name").GetString());
         Assert.AreEqual(@"\\.\DISPLAY1", monitors[0].GetProperty("activeWorkspace").GetProperty("monitor").GetString());
         Assert.IsFalse(monitors[0].GetProperty("focused").GetBoolean());

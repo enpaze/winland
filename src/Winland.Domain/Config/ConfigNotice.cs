@@ -6,7 +6,7 @@ public sealed record ConfigNotice(string Title, string Text, string? File, int G
 {
     public static ConfigNotice Welcome(string? configPath, int generation) => new(
         "Winland",
-        "Winland is tiling your windows. Run winland binds to list the hotkeys. Right-click the Winland icon to edit the config or quit.",
+        "Winland is tiling your windows. Run winland get binds to list the hotkeys. Right-click the Winland icon to edit the config or quit.",
         string.IsNullOrEmpty(configPath) ? null : configPath,
         generation,
         Informational: true);

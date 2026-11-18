@@ -10,7 +10,7 @@ public class InitialWorkspaceTests
     {
         var core = Loaded("");
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
         var opened = Open(core, window: 1, pid: 500);
 
@@ -23,7 +23,7 @@ public class InitialWorkspaceTests
     {
         var core = Loaded("");
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         Open(core, window: 1, pid: 500);
 
         var second = Open(core, window: 2, pid: 500);
@@ -38,7 +38,7 @@ public class InitialWorkspaceTests
         var core = Loaded("");
         core.Clock = () => now;
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         now = 10_001;
 
         var opened = Open(core, window: 1, pid: 500);
@@ -51,7 +51,7 @@ public class InitialWorkspaceTests
     {
         var core = Loaded("");
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
         var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { ProcessId = 600, AncestorProcessIds = [500] });
 
@@ -63,7 +63,7 @@ public class InitialWorkspaceTests
     {
         var core = Loaded("windowrule = workspace 4 silent, class:ruled\n");
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
         var opened = core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
@@ -97,7 +97,7 @@ public class InitialWorkspaceTests
 
     private static void Start(WindowManager core, int pid)
     {
-        var launch = Assert.ContainsSingle(core.Execute("dispatch exec app").Effect.Launches);
+        var launch = Assert.ContainsSingle(core.Execute("exec app").Effect.Launches);
         core.NoteLaunched(pid, launch);
     }
 

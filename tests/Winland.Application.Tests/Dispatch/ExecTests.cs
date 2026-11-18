@@ -8,7 +8,7 @@ public class ExecTests
     {
         var desk = new TestDesktop();
 
-        var reply = desk.WindowManager.Execute("dispatch exec sleep 1");
+        var reply = desk.WindowManager.Execute("exec sleep 1");
 
         Assert.AreEqual("ok", reply.Text);
         Assert.AreEqual("sleep 1", Assert.ContainsSingle(reply.Effect.Launches).CommandLine);

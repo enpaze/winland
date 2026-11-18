@@ -46,7 +46,7 @@ function Stop-Winland([string]$cli) {
 
     Write-Output "Stopping winland ($(($running | ForEach-Object { $_.Id }) -join ', '))."
     if ($cli -and (Test-Path -LiteralPath $cli)) {
-        & $cli dispatch exit *> $null
+        & $cli exit *> $null
     }
 
     $deadline = [DateTime]::UtcNow.AddSeconds(20)
@@ -119,7 +119,7 @@ $deadline = [DateTime]::UtcNow.AddSeconds($(if ($Elevated) { 90 } else { 30 }))
 $ready = $false
 while ([DateTime]::UtcNow -lt $deadline) {
     if ($process.HasExited -and -not $Elevated) { break }
-    & $exe clients *> $null
+    & $exe get windows *> $null
     if ($LASTEXITCODE -eq 0) { $ready = $true; break }
     Start-Sleep -Milliseconds 250
 }

@@ -126,12 +126,12 @@ public class DecorationTests
         var core = Configured();
         core.Handle(Appeared(1, Area));
 
-        var away = core.Execute("dispatch workspace 2").Effect;
+        var away = core.Execute("workspace 2").Effect;
 
         Assert.AreEqual(Inactive, For(away, 1).Border);
         Assert.IsEmpty(away.ResetDecorations);
 
-        var back = core.Execute("dispatch workspace 1").Effect;
+        var back = core.Execute("workspace 1").Effect;
 
         Assert.AreEqual(Active, For(back, 1).Border);
         Assert.IsEmpty(back.ResetDecorations);
@@ -195,10 +195,10 @@ public class DecorationTests
     {
         var core = Configured();
         core.Handle(Appeared(1, Area));
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         core.Handle(Appeared(2, Area));
 
-        var back = core.Execute("dispatch workspace 1").Effect;
+        var back = core.Execute("workspace 1").Effect;
 
         Assert.AreEqual(Active, For(back, 1).Border);
         Assert.AreEqual(Inactive, For(back, 2).Border);

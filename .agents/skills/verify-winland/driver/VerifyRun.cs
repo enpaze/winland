@@ -118,9 +118,7 @@ internal sealed class VerifyRun
 
     public void Dispatch(string arguments)
     {
-        var words = new List<string> { "dispatch" };
-        words.AddRange(arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-        Assert.AreEqual("ok", Ask([.. words]));
+        Assert.AreEqual("ok", Ask(arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries)));
     }
 
     public JsonElement Json(params string[] arguments)
@@ -134,7 +132,7 @@ internal sealed class VerifyRun
     public JsonElement? Client(HWND hwnd)
     {
         var address = Address(hwnd);
-        foreach (var client in Json("clients").EnumerateArray())
+        foreach (var client in Json("get", "windows").EnumerateArray())
         {
             if (string.Equals(client.GetProperty("address").GetString(), address, StringComparison.OrdinalIgnoreCase))
                 return client;
@@ -144,7 +142,7 @@ internal sealed class VerifyRun
     }
 
     public JsonElement ClientOf(HWND hwnd) =>
-        Client(hwnd) ?? throw new InvalidOperationException($"{Address(hwnd)} is not a Client. {Json("clients")}");
+        Client(hwnd) ?? throw new InvalidOperationException($"{Address(hwnd)} is not a Client. {Json("get", "windows")}");
 
     public HWND Open(string name, int width = 200, int height = 150, HWND owner = default) =>
         OpenTitled(Title + " " + name, width, height, owner);
@@ -171,7 +169,7 @@ internal sealed class VerifyRun
         return Frame(first).Left <= Frame(second).Left ? (first, second) : (second, first);
     }
 
-    public string Active() => Json("activewindow") is { ValueKind: JsonValueKind.Object } active && active.TryGetProperty("address", out var address) ? address.GetString() ?? "" : "";
+    public string Active() => Json("get", "window") is { ValueKind: JsonValueKind.Object } active && active.TryGetProperty("address", out var address) ? address.GetString() ?? "" : "";
 
     public void Focus(HWND hwnd)
     {
@@ -179,7 +177,7 @@ internal sealed class VerifyRun
         Until($"{Address(hwnd)} is the active window", () => Active() == Address(hwnd));
     }
 
-    public int ActiveWorkspace() => Json("activeworkspace").GetProperty("id").GetInt32();
+    public int ActiveWorkspace() => Json("get", "workspace").GetProperty("id").GetInt32();
 
     public void Until(string what, Func<bool> condition, int timeoutMs = 10_000, Func<string>? detail = null)
     {
@@ -348,7 +346,7 @@ internal sealed class VerifyRun
     {
         try
         {
-            var result = Daemon.Cli("-j", "clients");
+            var result = Daemon.Cli("-j", "get", "windows");
             return Shorten(result.Output.Trim(), 1500);
         }
         catch (Exception exception) when (exception is InvalidOperationException or IOException)

@@ -6,32 +6,21 @@ namespace Winland.Application;
 public static class ControlInvocation
 {
     public static string Usage { get; } =
-        string.Concat(CommandProtocol.VerbForms.Select(form => "       winland [-j] " + form + "\n"))
-        + "       winland [-j] version\n";
+        "       winland [-j] <action> [args]\n"
+        + string.Concat(CommandProtocol.VerbForms.Select(form => "       winland [-j] " + form + "\n"))
+        + "       winland [-j] version\n"
+        + "actions: " + string.Join(", ", WindowManager.DispatcherNames.Order(StringComparer.Ordinal)) + "\n";
 
     public static bool TryAnswerLocally(string[] args, out string reply)
     {
         ArgumentNullException.ThrowIfNull(args);
         reply = "";
         var words = args.Where(arg => arg != "-j").ToArray();
-        if (words.Length != 1)
+        if (words.Length != 1 || !words[0].Equals("version", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        var json = words.Length < args.Length;
-        if (words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase))
-        {
-            var sorted = WindowManager.DispatcherNames.Order(StringComparer.Ordinal).ToArray();
-            reply = json ? JsonSerializer.Serialize(sorted) : string.Join('\n', sorted);
-            return true;
-        }
-
-        if (words[0].Equals("version", StringComparison.OrdinalIgnoreCase))
-        {
-            reply = json ? VersionJson() : VersionText();
-            return true;
-        }
-
-        return false;
+        reply = words.Length < args.Length ? VersionJson() : VersionText();
+        return true;
     }
 
     public static bool TryCreate(string[] args, out string line, out bool events)
@@ -39,7 +28,7 @@ public static class ControlInvocation
         ArgumentNullException.ThrowIfNull(args);
         line = "";
         events = false;
-        var flags = "";
+        var json = false;
         var rest = new List<string>();
 
         if (args.Any(arg => arg.Contains('\n', StringComparison.Ordinal) || arg.Contains('\r', StringComparison.Ordinal)))
@@ -49,26 +38,26 @@ public static class ControlInvocation
         {
             var arg = args[i];
 
+            if (arg == "-j")
+            {
+                json = true;
+                continue;
+            }
+
             if (IsCommandLine(rest) || !arg.StartsWith('-') || IsNumber(arg))
             {
                 rest.Add(arg);
                 continue;
             }
 
-            if (arg == "--")
-            {
-                rest.AddRange(args.Skip(i + 1));
-                break;
-            }
-
-            if (arg is not "-j")
+            if (arg != "--")
                 return false;
 
-            if (!flags.Contains(arg[1], StringComparison.Ordinal))
-                flags += arg[1];
+            rest.AddRange(args.Skip(i + 1));
+            break;
         }
 
-        var prefix = flags.Length == 0 ? "" : flags + "/";
+        var prefix = json ? "j/" : "";
         if (rest.Count == 0)
             return false;
 
@@ -82,17 +71,15 @@ public static class ControlInvocation
     }
 
     private static bool IsCommandLine(List<string> words) =>
-        words.Count >= 2
-        && words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase)
-        && words[1].Equals("exec", StringComparison.OrdinalIgnoreCase);
+        words.Count >= 1 && words[0].Equals("exec", StringComparison.OrdinalIgnoreCase);
 
     private static IEnumerable<string> Quoted(List<string> words)
     {
-        var command = IsCommandLine(words) && words.Count > 3;
+        var command = IsCommandLine(words) && words.Count > 2;
         for (var i = 0; i < words.Count; i++)
         {
             var word = words[i];
-            yield return command && i >= 2 && word.Contains(' ', StringComparison.Ordinal)
+            yield return command && i >= 1 && word.Contains(' ', StringComparison.Ordinal)
                 && !word.Contains('"', StringComparison.Ordinal) && !word.StartsWith('[')
                 ? "\"" + word + "\""
                 : word;

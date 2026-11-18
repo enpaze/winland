@@ -11,7 +11,7 @@ public class Layouts
     public void TilesSplitsResizesAndSwitchesLayouts() => VerifyRun.Drive(TestContext, "general:layout = dwindle\n", run =>
     {
         var (left, right) = run.OpenPair();
-        Assert.AreEqual("dwindle", run.Json("activeworkspace").GetProperty("tiledLayout").GetString());
+        Assert.AreEqual("dwindle", run.Json("get", "workspace").GetProperty("tiledLayout").GetString());
 
         run.Dispatch("togglesplit");
         run.Until("togglesplit stacks the two tiles", () => VerifyRun.Stacked(VerifyRun.Frame(left), VerifyRun.Frame(right), VerifyRun.WorkArea(left)));
@@ -25,7 +25,7 @@ public class Layouts
             VerifyRun.Frame(left).Width >= before + 80 && VerifyRun.SideBySide(VerifyRun.Frame(left), VerifyRun.Frame(right), VerifyRun.WorkArea(left)));
 
         run.Dispatch("layout scrolling");
-        run.Until("layout scrolling selects the scrolling Layout", () => run.Json("activeworkspace").GetProperty("tiledLayout").GetString() == "scrolling");
+        run.Until("layout scrolling selects the scrolling Layout", () => run.Json("get", "workspace").GetProperty("tiledLayout").GetString() == "scrolling");
         run.Focus(left);
         var column = VerifyRun.Frame(left).Width;
         run.Dispatch("layoutmsg colresize +conf");
@@ -33,13 +33,13 @@ public class Layouts
 
         run.Dispatch("cyclelayout");
         run.Until("cyclelayout goes from scrolling to floating and floats the tiles", () =>
-            run.Json("activeworkspace").GetProperty("tiledLayout").GetString() == "floating"
+            run.Json("get", "workspace").GetProperty("tiledLayout").GetString() == "floating"
             && run.ClientOf(left).GetProperty("floating").GetBoolean()
             && run.ClientOf(right).GetProperty("floating").GetBoolean());
 
         run.Dispatch("cyclelayout");
         run.Until("cyclelayout goes back to dwindle and tiles the windows side by side", () =>
-            run.Json("activeworkspace").GetProperty("tiledLayout").GetString() == "dwindle"
+            run.Json("get", "workspace").GetProperty("tiledLayout").GetString() == "dwindle"
             && !run.ClientOf(left).GetProperty("floating").GetBoolean()
             && VerifyRun.SideBySide(VerifyRun.Frame(left), VerifyRun.Frame(right), VerifyRun.WorkArea(left)));
     });

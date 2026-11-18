@@ -13,8 +13,8 @@ Winland leaves the taskbar, the Start menu, Search and the shell's other flyouts
 
 - Set `general:hide_taskbar = true` in the config. The starter config has `general:hide_taskbar = false` as a comment. The change applies at once on reload, from a save or `winland reload`.
 - Open Start, Search or another flyout from the taskbar. It opens over the tiles and is not a Client.
-- Run `winland clients` to see that no taskbar or flyout is listed.
-- Quit from the tray menu or run `winland dispatch exit` to get the taskbars back. After a crash, `taskbar.marker` in `%USERPROFILE%\.winland` lets the next start put them back.
+- Run `winland get windows` to see that no taskbar or flyout is listed.
+- Quit from the tray menu or run `winland exit` to get the taskbars back. After a crash, `taskbar.marker` in `%USERPROFILE%\.winland` lets the next start put them back.
 
 ## Driving it with drive.ps1
 
@@ -26,7 +26,7 @@ Preconditions:
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature shell-windows`. It prints `== feature shell-windows: passed`.
 - **Hide the taskbars.** Winland starts with the driver's config, and the taskbars hide.
 - **Tile over the strip.** The driver opens `WinlandVerify 1`. It becomes a Client and fills the whole Monitor, within 12 pixels, including the strip the taskbar reserved.
-- **Taskbar is not a Client.** The driver runs `winland -j clients`. No entry has class `Shell_TrayWnd` or `Shell_SecondaryTrayWnd`, and the driver prints `saw: the taskbar is not a Client`.
+- **Taskbar is not a Client.** The driver runs `winland -j get windows`. No entry has class `Shell_TrayWnd` or `Shell_SecondaryTrayWnd`, and the driver prints `saw: the taskbar is not a Client`.
 - **Exit.** The driver stops Winland. Every taskbar is visible again.
 
 ## Gotchas

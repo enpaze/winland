@@ -13,7 +13,7 @@ Winland shows an icon in the notification area with the number of the Workspace 
 - Click or right-click the Winland icon in the notification area. Windows may keep it behind the `^` arrow. Its tooltip reads `Winland, Workspace N`.
 - In the menu, press `R` for Reload, `E` for Edit config, `L` for Open log, or `Q` for Quit.
 - Click a config notification balloon to open the config file, as Edit config does.
-- Run `winland reload` or `winland dispatch exit` for the same Reload and Quit without the menu.
+- Run `winland reload` or `winland exit` for the same Reload and Quit without the menu.
 
 ## Driving it with drive.ps1
 
@@ -24,7 +24,7 @@ Preconditions:
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature notification-area`. It prints `== feature notification-area: passed`.
 - **Follow events.** The driver runs `winland events` and keeps reading it.
-- **Hide a window.** The driver opens `WinlandVerify 1`, which becomes a Client, and runs `winland dispatch workspace 2`. The window hides.
+- **Hide a window.** The driver opens `WinlandVerify 1`, which becomes a Client, and runs `winland workspace 2`. The window hides.
 - **Find the icon.** Winland has its notification-area icon window, of class `WinlandTray`.
 - **Open the menu.** The driver sends the icon a right-click. The menu opens, and the driver prints its items, which include `&Reload`, `&Edit config` and `&Quit`.
 - **Reload.** The driver presses `R` in the menu. The Event stream holds a `configreloaded` line.

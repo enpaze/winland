@@ -28,7 +28,7 @@ public class CommandFailureTests
             Exception? failure = null;
             try
             {
-                CommandClient.Transact("dispatch workspace 2", name);
+                CommandClient.Transact("workspace 2", name);
             }
             catch (Exception caught)
             {
@@ -58,7 +58,7 @@ public class CommandFailureTests
         Assert.AreEqual(Environment.ProcessId, CommandClient.ProcessId(name));
         Assert.IsFalse(SpinWait.SpinUntil(() => Volatile.Read(ref followed) != 0, TimeSpan.FromMilliseconds(500)));
         Assert.AreEqual(0, Volatile.Read(ref applied));
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 2", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 2", name));
         Assert.AreEqual(1, Volatile.Read(ref applied));
     }
 
@@ -70,9 +70,9 @@ public class CommandFailureTests
         var name = "winland-test-" + Guid.NewGuid().ToString("N");
         using var server = new NamedPipeServerStream(name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
         var connected = server.WaitForConnectionAsync();
-        var request = Task.Run(() => CommandClient.Transact("clients", name, replyTimeoutMs: 200));
+        var request = Task.Run(() => CommandClient.Transact("get windows", name, replyTimeoutMs: 200));
         await connected.WaitAsync(TimeSpan.FromSeconds(5));
-        Assert.AreEqual("clients", await PipeFrame.ReadLineAsync(server, PipeFrame.RequestLimit));
+        Assert.AreEqual("get windows", await PipeFrame.ReadLineAsync(server, PipeFrame.RequestLimit));
         await server.WriteAsync(System.Text.Encoding.UTF8.GetBytes(partialReply));
 
         var finished = SpinWait.SpinUntil(() => request.IsCompleted, TimeSpan.FromSeconds(5));

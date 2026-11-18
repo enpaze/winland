@@ -38,7 +38,7 @@ Nothing in Domain or Application calls Win32. A test drives `WindowManager` with
 | Which windows may stay over a fullscreen or maximized Client | `Domain/Fullscreen/FullscreenCover.cs`. Pinning is in `Application/WindowManager/Pin.cs`. |
 | Binds and keys | `Domain/Bind`. The hooks that feed them are in `Infrastructure/Input`. |
 | The pointer, scrolling and the touchpad | `Domain/Pointer`. |
-| A pipe request, such as a query or `reload` | The verb in `Application/Dispatch/CommandProtocol/CommandProtocol.cs`, its reply in `Application/WindowManager/Queries.cs`, and the reply text in the other files of `CommandProtocol`. |
+| A pipe request, such as `get windows` | The verb in `Application/Dispatch/CommandProtocol/CommandProtocol.cs`, its reply in `Application/WindowManager/Queries.cs`, and the reply text in the other files of `CommandProtocol`. |
 | An event in the Event stream | `Application/WindowManager/EventStream.cs` decides it, and `Application/Dispatch/CommandProtocol/Events.cs` writes its text and JSON. |
 | How windows move on screen | `Application/WindowManager/Animations.cs` plans motions, and `Infrastructure/Motion` plays them. |
 

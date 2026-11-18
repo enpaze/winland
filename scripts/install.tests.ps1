@@ -158,7 +158,7 @@ Test-Case 'the summary says Winland is running only when it was started' {
 Test-Case 'the summary says how to quit, where the keys are and how to undo' {
     $lines = @(Get-SummaryLines '0.2.1' 'C:\Program Files\Winland' 'C:\Users\me\.winland\winland.conf' $true)
     Assert-Equal $lines[3] '    Quit       right-click the Winland icon in the notification area (behind ^ if hidden), then Quit'
-    Assert-Equal $lines[4] '    Keys       winland binds lists your hotkeys and their descriptions'
+    Assert-Equal $lines[4] '    Keys       winland get binds lists your hotkeys and their descriptions'
     Assert-Equal $lines[5] '    Edit       right-click the Winland icon, then Edit config'
     Assert-Equal $lines[6] '    Tweaks     winland tweaks --restore restores recorded Snap and swipes from a normal terminal'
     Assert-Equal $lines[7] '    Remove     winland uninstall removes Winland and restores recorded Windows settings'

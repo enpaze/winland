@@ -90,7 +90,7 @@ public partial class FeatureMapTests
 
     [TestMethod]
     public void EveryPipeRequestBelongsToExactlyOneFeature() =>
-        AssertClaimedOnce("request", CommandProtocol.VerbForms.Select(form => form.Split(' ')[0]));
+        AssertClaimedOnce("request", CommandProtocol.VerbNames);
 
     [TestMethod]
     public void EveryInstallCommandBelongsToExactlyOneFeature() =>
