@@ -125,10 +125,8 @@ public class SpecialWorkspaceTests
         var named = core.Handle(new Dispatch("workspace", "special:scratch"));
         Assert.AreSequenceEqual(
             [
-                "activewindow>>quiet,",
-                "activewindowv2>>2",
-                @"activespecial>>special:scratch,\\.\DISPLAY1",
-                @"activespecialv2>>-98,special:scratch,\\.\DISPLAY1",
+                @"activespecial>>-98,special:scratch,\\.\DISPLAY1",
+                @"focus>>\\.\DISPLAY1,1,1,2,",
             ],
             Lines(named));
         Assert.AreEqual(WorkspaceId.Initial, named.State.ActiveWorkspace);
@@ -138,12 +136,9 @@ public class SpecialWorkspaceTests
         Assert.Contains(window => window == new WindowId(2), same.Hide);
         Assert.AreSequenceEqual(
             [
-                @"createworkspace>>special:special,\\.\DISPLAY1",
-                @"createworkspacev2>>-99,special:special,\\.\DISPLAY1",
-                "activewindow>>,",
-                "activewindowv2>>",
-                @"activespecial>>special:special,\\.\DISPLAY1",
-                @"activespecialv2>>-99,special:special,\\.\DISPLAY1",
+                @"createworkspace>>-99,special:special,\\.\DISPLAY1",
+                @"activespecial>>-99,special:special,\\.\DISPLAY1",
+                @"focus>>\\.\DISPLAY1,1,1,,",
             ],
             Lines(same));
 
@@ -154,10 +149,8 @@ public class SpecialWorkspaceTests
         var closed = core.Handle(new Dispatch("togglespecialworkspace", ""));
         Assert.AreSequenceEqual(
             [
-                "activewindow>>,",
-                "activewindowv2>>1",
-                @"activespecial>>,\\.\DISPLAY1",
-                @"activespecialv2>>,,\\.\DISPLAY1",
+                @"activespecial>>,,\\.\DISPLAY1",
+                @"focus>>\\.\DISPLAY1,1,1,1,",
             ],
             Lines(closed));
         Assert.IsNull(closed.State.SpecialWorkspace);

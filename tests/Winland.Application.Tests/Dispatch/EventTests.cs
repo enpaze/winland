@@ -16,7 +16,7 @@ public class EventTests
         });
 
         Assert.AreSequenceEqual(
-            ["openwindow>>1,1,,kitty,terminal", "activewindow>>kitty,terminal", "activewindowv2>>1"],
+            ["openwindow>>1,1,1,,kitty,terminal", "focus>>,1,1,1,terminal"],
             Lines(outcome));
     }
 
@@ -30,7 +30,7 @@ public class EventTests
             Traits = WindowTraits.Normal with { Class = "app", Title = "a,b" },
         });
 
-        Assert.AreEqual("openwindow>>1,1,,app,a,b", Lines(outcome)[0]);
+        Assert.AreEqual("openwindow>>1,1,1,,app,a,b", Lines(outcome)[0]);
     }
 
     [TestMethod]
@@ -43,7 +43,7 @@ public class EventTests
             Traits = WindowTraits.Normal with { Title = "a\nb" },
         });
 
-        Assert.AreEqual("openwindow>>1,1,,,a b", Lines(outcome)[0]);
+        Assert.AreEqual("openwindow>>1,1,1,,,a b", Lines(outcome)[0]);
     }
 
     [TestMethod]
@@ -70,7 +70,7 @@ public class EventTests
         });
 
         Assert.AreSequenceEqual(
-            ["createworkspace>>2,", "createworkspacev2>>2,2,", "openwindow>>1,2,,kitty,term"],
+            ["createworkspace>>2,2,", "openwindow>>1,2,2,,kitty,term"],
             Lines(outcome));
     }
 
@@ -86,15 +86,11 @@ public class EventTests
 
         Assert.AreSequenceEqual(
             [
-                "createworkspace>>2,",
-                "createworkspacev2>>2,2,",
-                "destroyworkspace>>1,",
-                "destroyworkspacev2>>1,1,",
-                "openwindow>>1,2,,kitty,term",
-                "workspace>>2,",
-                "workspacev2>>2,2,",
-                "activewindow>>kitty,term",
-                "activewindowv2>>1",
+                "createworkspace>>2,2,",
+                "destroyworkspace>>1,1,",
+                "openwindow>>1,2,2,,kitty,term",
+                "workspace>>2,2,",
+                "focus>>,2,2,1,term",
             ],
             Lines(outcome));
     }
@@ -108,7 +104,7 @@ public class EventTests
 
         var outcome = core.Handle(new WindowClosed(new WindowId(2)));
 
-        Assert.AreSequenceEqual(["closewindow>>2", "activewindow>>,", "activewindowv2>>1"], Lines(outcome));
+        Assert.AreSequenceEqual(["closewindow>>2", "focus>>,1,1,1,"], Lines(outcome));
     }
 
     [TestMethod]
@@ -132,7 +128,7 @@ public class EventTests
 
         var closed = core.Handle(new WindowClosed(new WindowId(7)));
 
-        Assert.AreSequenceEqual(["destroyworkspace>>1,", "destroyworkspacev2>>1,1,", "closewindow>>7"], Lines(closed));
+        Assert.AreSequenceEqual(["destroyworkspace>>1,1,", "closewindow>>7"], Lines(closed));
     }
 
     [TestMethod]
@@ -143,7 +139,7 @@ public class EventTests
 
         var outcome = core.Handle(new WindowClosed(new WindowId(1)));
 
-        Assert.AreSequenceEqual(["closewindow>>1", "activewindow>>,", "activewindowv2>>"], Lines(outcome));
+        Assert.AreSequenceEqual(["closewindow>>1", "focus>>,1,1,,"], Lines(outcome));
     }
 
     [TestMethod]
@@ -156,7 +152,7 @@ public class EventTests
         var closed = core.Handle(new WindowClosed(new WindowId(1)));
 
         Assert.IsEmpty(killed.Effect.Events);
-        Assert.AreSequenceEqual(["closewindow>>1", "activewindow>>,", "activewindowv2>>"], Lines(closed));
+        Assert.AreSequenceEqual(["closewindow>>1", "focus>>,1,1,,"], Lines(closed));
     }
 
     [TestMethod]
@@ -169,7 +165,7 @@ public class EventTests
         var outcome = core.Handle(new Dispatch("movefocus", "l"));
 
         Assert.AreEqual(new WindowId(1), outcome.Focus);
-        Assert.AreSequenceEqual(["activewindow>>,", "activewindowv2>>1"], Lines(outcome));
+        Assert.AreSequenceEqual(["focus>>,1,1,1,"], Lines(outcome));
     }
 
     [TestMethod]
@@ -181,7 +177,7 @@ public class EventTests
 
         var outcome = core.Handle(new WindowFocused(new WindowId(1)));
 
-        Assert.AreSequenceEqual(["activewindow>>,", "activewindowv2>>1"], Lines(outcome));
+        Assert.AreSequenceEqual(["focus>>,1,1,1,"], Lines(outcome));
     }
 
     [TestMethod]
@@ -205,12 +201,9 @@ public class EventTests
 
         Assert.AreSequenceEqual(
             [
-                "createworkspace>>2,",
-                "createworkspacev2>>2,2,",
-                "workspace>>2,",
-                "workspacev2>>2,2,",
-                "activewindow>>,",
-                "activewindowv2>>",
+                "createworkspace>>2,2,",
+                "workspace>>2,2,",
+                "focus>>,2,2,,",
             ],
             Lines(outcome));
     }
@@ -226,12 +219,9 @@ public class EventTests
 
         Assert.AreSequenceEqual(
             [
-                "destroyworkspace>>2,",
-                "destroyworkspacev2>>2,2,",
-                "workspace>>1,",
-                "workspacev2>>1,1,",
-                "activewindow>>,",
-                "activewindowv2>>1",
+                "destroyworkspace>>2,2,",
+                "workspace>>1,1,",
+                "focus>>,1,1,1,",
             ],
             Lines(outcome));
     }
@@ -257,12 +247,9 @@ public class EventTests
 
         Assert.AreSequenceEqual(
             [
-                "createworkspace>>3,",
-                "createworkspacev2>>3,3,",
-                "movewindow>>2,3,",
-                "movewindowv2>>2,3,3,",
-                "activewindow>>,",
-                "activewindowv2>>1",
+                "createworkspace>>3,3,",
+                "movewindow>>2,3,3,",
+                "focus>>,1,1,1,",
             ],
             Lines(outcome));
     }
@@ -278,12 +265,10 @@ public class EventTests
 
         Assert.AreSequenceEqual(
             [
-                "createworkspace>>4,",
-                "createworkspacev2>>4,4,",
-                "movewindow>>2,4,",
-                "movewindowv2>>2,4,4,",
-                "workspace>>4,",
-                "workspacev2>>4,4,",
+                "createworkspace>>4,4,",
+                "movewindow>>2,4,4,",
+                "workspace>>4,4,",
+                "focus>>,4,4,2,",
             ],
             Lines(outcome));
     }
@@ -327,7 +312,7 @@ public class EventTests
         });
 
         Assert.AreSequenceEqual(
-            ["openwindow>>2a,1,,kitty,term", "activewindow>>kitty,term", "activewindowv2>>2a"],
+            ["openwindow>>2a,1,1,,kitty,term", "focus>>,1,1,2a,term"],
             Lines(outcome));
         using var active = System.Text.Json.JsonDocument.Parse(core.Execute("j/activewindow").Text);
         Assert.AreEqual("0x2a", active.RootElement.GetProperty("address").GetString());
@@ -372,12 +357,10 @@ public class EventTests
 
         Assert.AreSequenceEqual(
             [
-                @"createworkspace>>1,\\.\DISPLAY2",
-                @"createworkspacev2>>1,1,\\.\DISPLAY2",
-                @"monitoradded>>\\.\DISPLAY1",
-                @"monitoraddedv2>>0,\\.\DISPLAY1,Dell",
-                @"monitoradded>>\\.\DISPLAY2",
-                @"monitoraddedv2>>1,\\.\DISPLAY2,Samsung",
+                @"createworkspace>>1,1,\\.\DISPLAY2",
+                @"monitoradded>>0,\\.\DISPLAY1,Dell",
+                @"monitoradded>>1,\\.\DISPLAY2,Samsung",
+                @"focus>>\\.\DISPLAY1,1,1,,",
             ],
             Lines(outcome));
     }
@@ -395,10 +378,8 @@ public class EventTests
 
         Assert.AreSequenceEqual(
             [
-                @"moveworkspace>>2,\\.\DISPLAY1",
-                @"moveworkspacev2>>2,2,\\.\DISPLAY1",
-                @"monitorremoved>>\\.\DISPLAY2",
-                @"monitorremovedv2>>1,\\.\DISPLAY2,Samsung",
+                @"moveworkspace>>2,2,\\.\DISPLAY1",
+                @"monitorremoved>>1,\\.\DISPLAY2,Samsung",
             ],
             Lines(outcome));
     }
@@ -415,10 +396,8 @@ public class EventTests
 
         Assert.AreSequenceEqual(
             [
-                @"destroyworkspace>>1,\\.\DISPLAY2",
-                @"destroyworkspacev2>>1,1,\\.\DISPLAY2",
-                @"monitorremoved>>\\.\DISPLAY2",
-                @"monitorremovedv2>>1,\\.\DISPLAY2,Samsung",
+                @"destroyworkspace>>1,1,\\.\DISPLAY2",
+                @"monitorremoved>>1,\\.\DISPLAY2,Samsung",
             ],
             Lines(outcome));
         Assert.DoesNotContain(workspace => workspace.Id == new WorkspaceId("1", 1), outcome.State.Workspaces);
@@ -444,10 +423,7 @@ public class EventTests
 
         Assert.AreSequenceEqual(
             [
-                @"focusedmon>>\\.\DISPLAY2,1",
-                @"focusedmonv2>>\\.\DISPLAY2,1",
-                "activewindow>>right,two",
-                "activewindowv2>>2",
+                @"focus>>\\.\DISPLAY2,1,1,2,two",
             ],
             Lines(outcome));
     }
@@ -462,6 +438,75 @@ public class EventTests
         var outcome = core.Handle(new MonitorsChanged([display]));
 
         Assert.IsEmpty(outcome.Events);
+    }
+
+    [TestMethod]
+    public void JsonFocusNamesTheMonitorWorkspaceAndWindow()
+    {
+        var core = new WindowManager();
+        core.Handle(new MonitorsChanged([new Monitor(@"\\.\DISPLAY1", "Dell", 0, 0, 1920, 1080, 1, true, Area)]));
+
+        var outcome = core.Handle(new WindowAppeared(new WindowId(0x2A), Area)
+        {
+            Traits = WindowTraits.Normal with { Class = "kitty", Title = "a \"quoted\" été", Exe = "kitty.exe" },
+        });
+
+        Assert.AreEqual(
+            """{"event":"focus","monitor":"\\\\.\\DISPLAY1","workspace":{"id":1,"name":"1"},"window":{"address":"0x2a","title":"a \"quoted\" été","class":"kitty","exe":"kitty.exe"}}""",
+            JsonLines(outcome)[^1]);
+    }
+
+    [TestMethod]
+    public void JsonFocusHasANullWindowWhenNothingHasFocus()
+    {
+        var core = new WindowManager();
+        core.Handle(new WindowAppeared(new WindowId(1), Area));
+
+        var outcome = core.Handle(new WindowClosed(new WindowId(1)));
+
+        Assert.AreSequenceEqual(
+            [
+                """{"event":"closewindow","address":"0x1"}""",
+                """{"event":"focus","monitor":"","workspace":{"id":1,"name":"1"},"window":null}""",
+            ],
+            JsonLines(outcome));
+    }
+
+    [TestMethod]
+    public void JsonEventsCarryTypedFields()
+    {
+        var core = new WindowManager();
+        core.Handle(new WindowAppeared(new WindowId(1), Area));
+
+        var minimized = core.Handle(new WindowMinimized(new WindowId(1)));
+        var warned = core.Handle(new ConfigLoaded(ConfigParser.Parse("nope = 1\n")));
+        var added = core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "Dell", 0, 0, 1920, 1080, 1, true, Area)]));
+
+        Assert.AreEqual("""{"event":"minimized","address":"0x1","minimized":true}""", JsonLines(minimized)[0]);
+        Assert.AreSequenceEqual(
+            [
+                """{"event":"warning","line":1,"file":null,"message":"Unsupported keyword 'nope'."}""",
+                """{"event":"configreloaded"}""",
+            ],
+            JsonLines(warned));
+        Assert.Contains("""{"event":"monitoradded","id":0,"name":"DISPLAY1","description":"Dell"}""", JsonLines(added));
+    }
+
+    [TestMethod]
+    public void JsonActiveSpecialHasANullWorkspaceWhenItCloses()
+    {
+        var core = new WindowManager();
+        core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "Dell", 0, 0, 1920, 1080, 1, true, Area)]));
+        core.Execute("dispatch togglespecialworkspace");
+
+        var closed = core.Execute("dispatch togglespecialworkspace");
+
+        Assert.AreSequenceEqual(
+            [
+                """{"event":"destroyworkspace","workspace":{"id":-99,"name":"special:special"},"monitor":"DISPLAY1"}""",
+                """{"event":"activespecial","workspace":null,"monitor":"DISPLAY1"}""",
+            ],
+            JsonLines(closed.Effect));
     }
 
     [TestMethod]
@@ -484,4 +529,7 @@ public class EventTests
 
     private static IReadOnlyList<string> Lines(CommandReply reply) =>
         Lines(reply.Effect);
+
+    private static IReadOnlyList<string> JsonLines(Outcome outcome) =>
+        CommandProtocol.FormatStream(outcome.Events, outcome.State, CommandFlags.Json);
 }

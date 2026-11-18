@@ -156,12 +156,10 @@ public class PinTests
 
         Assert.AreSequenceEqual(
             [
-                "createworkspace>>2,",
-                "createworkspacev2>>2,2,",
-                "movewindow>>1,2,",
-                "movewindowv2>>1,2,2,",
-                "workspace>>2,",
-                "workspacev2>>2,2,",
+                "createworkspace>>2,2,",
+                "movewindow>>1,2,2,",
+                "workspace>>2,2,",
+                "focus>>,2,2,1,",
             ],
             Lines(switched));
         Assert.Contains(window => window == new WindowId(2), switched.Effect.Hide);
