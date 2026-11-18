@@ -131,7 +131,7 @@ static int Run(string? path, RollingLogWriter log)
     if (prior is not null)
         SessionEffects.RestoreCursors();
     SessionEffects.InstallSystem();
-    using var host = new WindowHost(core, store.Save, CommandClient.ConfiguredName(), controlTaskbar: true);
+    using var host = new SessionLoop(core, store.Save, CommandClient.ConfiguredName(), controlTaskbar: true);
     var stopGate = new Lock();
     var stopped = false;
     void StopOnce()
@@ -203,7 +203,7 @@ static void Persist(RecoveryStore store, RecoverySnapshot snapshot)
     store.Save(WindowIdentity.Annotate(snapshot));
 }
 
-static void Stop(WindowHost host, RecoveryStore store, WindowManager core)
+static void Stop(SessionLoop host, RecoveryStore store, WindowManager core)
 {
     try
     {
@@ -222,7 +222,7 @@ static void Stop(WindowHost host, RecoveryStore store, WindowManager core)
     }
 }
 
-static void Salvage(WindowHost host)
+static void Salvage(SessionLoop host)
 {
     try
     {

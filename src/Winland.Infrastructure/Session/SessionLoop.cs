@@ -3,7 +3,7 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure;
 
-public sealed class WindowHost : IDisposable
+public sealed class SessionLoop : IDisposable
 {
 
     private readonly WindowManager _core;
@@ -41,12 +41,12 @@ public sealed class WindowHost : IDisposable
     private bool _disposed;
     private readonly ITaskbarSession _taskbar;
 
-    public WindowHost(WindowManager core, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null, bool controlTaskbar = false)
+    public SessionLoop(WindowManager core, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null, bool controlTaskbar = false)
         : this(core, controlTaskbar ? LiveTaskbarSession.Instance : NullTaskbarSession.Instance, onRecovery, pipeName)
     {
     }
 
-    internal WindowHost(WindowManager core, ITaskbarSession taskbar, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null)
+    internal SessionLoop(WindowManager core, ITaskbarSession taskbar, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null)
     {
         ArgumentNullException.ThrowIfNull(core);
         _core = core;

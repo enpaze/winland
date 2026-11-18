@@ -7,7 +7,7 @@ public class InfrastructureDependencyTests
     [Fact]
     public void TheInfrastructureReferencesOnlyTheInnerLayers()
     {
-        var winland = typeof(WindowHost).Assembly.GetReferencedAssemblies()
+        var winland = typeof(SessionLoop).Assembly.GetReferencedAssemblies()
             .Select(name => name.Name!)
             .Where(name => name.StartsWith("Winland", StringComparison.Ordinal) || name.StartsWith("winland", StringComparison.Ordinal));
 
