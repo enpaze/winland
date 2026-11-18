@@ -1,6 +1,6 @@
 # Architecture
 
-Where things are, and the path an input takes. The rules behind the layout are in [ADR 0005](adr/0005-clean-architecture-in-four-layers.md). The words are in [GLOSSARY.md](../GLOSSARY.md).
+Where things are, and the path an input takes. The words are in [GLOSSARY.md](../GLOSSARY.md).
 
 ## Layers
 
@@ -46,6 +46,6 @@ Nothing in Domain or Application calls Win32. A test drives `WindowManager` with
 
 ## Tests
 
-Each layer has its own test project under `tests/`, with folders that match the source. The helpers the Application tests share, such as `Display` for a Monitor and `BoundsOf` for where a window went, are in `tests/Winland.Application.Tests/Support` and need no import. `TestDesktop` there wraps a `WindowManager` that answers as the Windows adapter does, for tests that drive it with pipe lines and read the replies. `docs/behavior.md` is the spec ([ADR 0008](adr/0008-winland-keeps-what-windows-users-need.md)).
+Each layer has its own test project under `tests/`, with folders that match the source. The helpers the Application tests share, such as `Display` for a Monitor and `BoundsOf` for where a window went, are in `tests/Winland.Application.Tests/Support` and need no import. `TestDesktop` there wraps a `WindowManager` that answers as the Windows adapter does, for tests that drive it with pipe lines and read the replies. `docs/behavior.md` is the spec.
 
 The Windows adapter is tested without a desktop. In `tests/Winland.Infrastructure.Tests/Window`, `FakeDesktop` stands in for `IDesktop` and logs every write in order, and `TestWindows` runs a `WindowManager` and a `WindowAdapter` over it with a clock the test moves. The window events and fresh inspection descriptions the adapter reads still call Win32 directly, and the `Desktop` tests cover them. Inspection tests use supplied descriptions to check read-only replies; native pointer and identity reads require Desktop coverage.
