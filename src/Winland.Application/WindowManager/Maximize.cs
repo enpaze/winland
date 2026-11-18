@@ -55,11 +55,13 @@ public sealed partial class WindowManager
     {
         if (WorkspaceContaining(drifted.Window) is not LiveWorkspace desk
             || desk.ClientOf(drifted.Window) is not { Minimized: false } client
-            || (drifted.TiledOnly && client.Floating)
             || _interaction?.Window == drifted.Window
             || !_workspaces.Shown.IsShown(desk.Id)
             || !desk.Layout.TryBounds(drifted.Window, out var slot))
             return View([]);
+
+        if (drifted.TiledOnly && client.Floating)
+            return client.Fullscreen == FullscreenMode.None ? FollowNativeFloating(drifted.Window, drifted.Bounds) : View([]);
 
         var bounds = PlacedBounds(client, desk, slot);
         if (bounds == drifted.Bounds)

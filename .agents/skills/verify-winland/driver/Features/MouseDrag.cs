@@ -58,6 +58,7 @@ public class MouseDrag
     public void AMoveKeepsTheSizeAResizeGave() => VerifyRun.Drive(TestContext, Config, run =>
     {
         var window = run.OpenTitled("WinlandDrag", 400, 300);
+        var opened = System.Diagnostics.Stopwatch.StartNew();
         run.Until("the window floats", () => run.Client(window)?.GetProperty("floating").GetBoolean() == true);
         run.Focus(window);
 
@@ -79,6 +80,7 @@ public class MouseDrag
         run.Until("the border drag grew the window", () => VerifyRun.Frame(window).Width >= framed.Width + 60, detail: () => VerifyRun.Frame(window).ToString());
         KeepsSizeWhileMoved(run, window, "after a border drag");
 
+        Thread.Sleep(Math.Max(0, 2500 - (int)opened.ElapsedMilliseconds));
         var own = Desktop.Rect(window);
         PInvoke.SetWindowPos(window, HWND.Null, own.Left, own.Top, own.Width + 80, own.Height + 50, SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
         run.Say("the window resized itself by 80,50");
