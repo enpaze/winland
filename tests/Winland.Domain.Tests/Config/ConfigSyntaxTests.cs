@@ -82,7 +82,7 @@ public class ConfigSyntaxTests
     }
 
     [TestMethod]
-    public void AConditionMarkerWarnsThatItIsNotEvaluatedAndEveryLineApplies()
+    public void AConditionMarkerIsACommentAndEveryLineApplies()
     {
         var document = ConfigParser.Parse("""
             # hyprlang if MISSING
@@ -90,14 +90,32 @@ public class ConfigSyntaxTests
             #hyprlang else # the other branch
             gaps_out = 5
             # hyprlang endif
-            # hyprlang iffy
-            # Hyprlang if MISSING
-            # hyprlang noerror true
             """);
 
-        const string message = "Winland does not evaluate hyprlang conditions. The lines inside apply.";
-        Assert.AreSequenceEqual([new ConfigWarning(1, message), new ConfigWarning(3, message), new ConfigWarning(5, message)], document.Warnings);
+        Assert.IsEmpty(document.Warnings);
         Assert.AreSequenceEqual([new Setting("gaps_in", "3"), new Setting("gaps_out", "5")], document.Settings);
+    }
+
+    [TestMethod]
+    [DataRow("general {", "Malformed line.")]
+    [DataRow("}", "Malformed line.")]
+    [DataRow("gaps_in = {{2 + 3}}", "Invalid value '{{2 + 3}}' for gaps_in.")]
+    [DataRow("device[mouse]:sensitivity = 1", "Unsupported keyword 'device[mouse]:sensitivity'.")]
+    public void AHyprlandOnlyLineWarnsAndTheNextLineStillApplies(string line, string warning)
+    {
+        var document = ConfigParser.Parse($"{line}\ngaps_out = 4\n");
+
+        Assert.AreEqual(new ConfigWarning(1, warning), Assert.ContainsSingle(document.Warnings));
+        Assert.AreEqual(new Setting("gaps_out", "4"), Assert.ContainsSingle(document.Settings));
+    }
+
+    [TestMethod]
+    public void TheLinesInsideABraceBlockAreOrdinaryLines()
+    {
+        var document = ConfigParser.Parse("general {\n    gaps_in = 5\n}\n");
+
+        Assert.AreSequenceEqual([new ConfigWarning(1, "Malformed line."), new ConfigWarning(3, "Malformed line.")], document.Warnings);
+        Assert.AreEqual(new Setting("gaps_in", "5"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
@@ -120,59 +138,6 @@ public class ConfigSyntaxTests
             [new ConfigWarning(2, "Unsupported keyword 'ghostkeyword'."), new ConfigWarning(5, "Unsupported keyword 'ghostkeyword'.")],
             document.Warnings);
         Assert.AreEqual(new Setting("gaps_in", "3"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void ExpressionReplacesASumProductAndQuotient()
-    {
-        var document = ConfigParser.Parse("""
-            $VAR1 = 2
-            $VAR2 = {{VAR1 + 3}}
-            gaps_in = {{VAR2 * 2}}
-            column_width = {{1 / 4}}
-            """);
-
-        Assert.IsEmpty(document.Warnings);
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new Setting("gaps_in", "10"),
-                new Setting("column_width", "0.25"),
-            },
-            document.Settings);
-    }
-
-    [TestMethod]
-    public void ExpressionWithoutSpacesIsRejected()
-    {
-        var document = ConfigParser.Parse("""
-            gaps_in = {{2+3}}
-            gaps_out = 4
-            """);
-
-        Assert.AreEqual(new ConfigWarning(1, "Invalid expression."), Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("gaps_out", "4"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void EscapedExpressionStaysLiteralAndADoubledBackslashEvaluates()
-    {
-        var document = ConfigParser.Parse("""
-            $VAR1 = 2
-            exec-once = \{{10 + 10}}
-            exec-once = \\{{VAR1 + 10}}
-            exec-once = \\{ hello \\}
-            """);
-
-        Assert.IsEmpty(document.Warnings);
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new Setting("exec-once", "{{10 + 10}}"),
-                new Setting("exec-once", @"\12"),
-                new Setting("exec-once", @"\{ hello \}"),
-            },
-            document.Settings);
     }
 
     [TestMethod]
@@ -201,18 +166,6 @@ public class ConfigSyntaxTests
             },
             document.Settings);
         Assert.AreSequenceEqual([@"C:\winland-home\colors.conf", "colors.conf"], document.Sources);
-    }
-
-    [TestMethod]
-    public void AStrayBraceInASourcedFileDoesNotCloseTheCategoryAroundIt()
-    {
-        var source = new MemorySource(new Dictionary<string, string> { ["a.conf"] = "}\n" });
-
-        var document = ConfigParser.Parse("general {\nsource = a.conf\ngaps_in = 7\n}\n", source);
-
-        Assert.IsEmpty(document.Settings);
-        Assert.Contains(new ConfigWarning(3, "Unsupported keyword 'general:gaps_in'."), document.Warnings);
-        Assert.Contains(warning => warning.Source == "a.conf", document.Warnings);
     }
 
     [TestMethod]
@@ -312,45 +265,6 @@ public class ConfigSyntaxTests
         Assert.AreEqual(new Setting("gaps_in", "4"), Assert.ContainsSingle(document.Settings));
         Assert.AreEqual(@"C:\cfg\parts\colors.conf", Assert.ContainsSingle(document.Warnings).Source);
         Assert.AreSequenceEqual([@"C:\cfg\parts\extra.conf", @"C:\cfg\parts\colors.conf"], document.Sources);
-    }
-
-    [TestMethod]
-    public void KeyedBlockDoesNotLeakItsLines()
-    {
-        var document = ConfigParser.Parse("""
-            device[mouse] {
-                sensitivity = 1
-                gaps_in = 9
-            }
-            gaps_in = 2
-            """);
-
-        Assert.AreSequenceEqual(
-            [
-                new ConfigWarning(2, "Unsupported keyword 'device[mouse]:sensitivity'."),
-                new ConfigWarning(3, "Unsupported keyword 'device[mouse]:gaps_in'."),
-            ],
-            document.Warnings);
-        Assert.AreEqual(new Setting("gaps_in", "2"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void InlineKeyedDeviceLineIsKeptAndDoesNotJoinTheEnclosingCategory()
-    {
-        var document = ConfigParser.Parse("""
-            general {
-                device[mouse]:sensitivity = 1
-                gaps_in = 2
-            }
-            """);
-
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new ConfigWarning(2, "Unsupported keyword 'device[mouse]:sensitivity'."),
-                new ConfigWarning(3, "Unsupported keyword 'general:gaps_in'."),
-            },
-            document.Warnings);
     }
 
     [TestMethod]

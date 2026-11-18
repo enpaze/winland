@@ -51,11 +51,8 @@ public static partial class ConfigParser
                 return;
             }
 
-            var depth = _categories.Count;
             var previous = _source;
-            var floor = _floor;
             _source = key;
-            _floor = depth;
             try
             {
                 ParseLines(text);
@@ -63,11 +60,8 @@ public static partial class ConfigParser
             finally
             {
                 _source = previous;
-                _floor = floor;
                 _openSources.Remove(key);
             }
-
-            WarnUnclosed(_categories.Count - depth);
         }
 
         private string SourceKey(string path)
@@ -84,18 +78,6 @@ public static partial class ConfigParser
             catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
             {
                 return joined;
-            }
-        }
-
-        private void WarnUnclosed(int extra)
-        {
-            while (extra > 0)
-            {
-                var category = _categories[^1];
-                var label = category.Key is null ? category.Name : $"{category.Name}[{category.Key}]";
-                _warnings.Add(new ConfigWarning(category.Line, $"Unclosed category '{label}'.", category.Source));
-                _categories.RemoveAt(_categories.Count - 1);
-                extra--;
             }
         }
 
