@@ -59,12 +59,16 @@ internal sealed class SmokeDaemon : IDisposable
         }
     }
 
-    public static SmokeDaemon Start(SmokePaths paths, string dotnetRoot)
+    public string Folder => _directory;
+
+    public string ConfigPath => _config;
+
+    public static SmokeDaemon Start(SmokePaths paths, string dotnetRoot, string configText)
     {
         var directory = Path.Combine(Path.GetTempPath(), "winland-smoke-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         var config = Path.Combine(directory, "winland.conf");
-        File.WriteAllText(config, ConfigText());
+        File.WriteAllText(config, configText);
         var pipe = "winland-smoke-" + Guid.NewGuid().ToString("N");
         var state = Path.Combine(directory, "state.json");
         return Launch(paths, directory, config, pipe, state, dotnetRoot);
@@ -144,6 +148,18 @@ internal sealed class SmokeDaemon : IDisposable
 
         _process.WaitForExit(5_000);
     }
+
+    public SmokeDaemon Restart()
+    {
+        if (!Exited)
+            throw new InvalidOperationException("Stop winland before starting it again.");
+
+        var again = Launch(_paths, _directory, _config, Pipe, State, _dotnetRoot);
+        again.WaitUntilReady();
+        return again;
+    }
+
+    public CliResult Cli(params string[] arguments) => SmokeCli.Run(_paths, _dotnetRoot, Pipe, _directory, arguments);
 
     public void Recover()
     {
@@ -261,48 +277,10 @@ internal sealed class SmokeDaemon : IDisposable
 
     private bool TryRun(string arguments, TimeSpan timeout, out string reply, out string error)
     {
-        reply = "";
-        error = "";
-        var info = new ProcessStartInfo(_paths.Daemon)
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            WorkingDirectory = _directory,
-        };
-        foreach (var part in arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-            info.ArgumentList.Add(part);
-
-        info.Environment["WINLAND_PIPE"] = Pipe;
-        info.Environment["DOTNET_ROOT"] = _dotnetRoot;
-
-        using var process = new Process { StartInfo = info };
-        if (!process.Start())
-        {
-            error = "winland did not start.";
-            return false;
-        }
-
-        var stdout = process.StandardOutput.ReadToEndAsync();
-        var stderr = process.StandardError.ReadToEndAsync();
-        if (!process.WaitForExit(timeout))
-        {
-            try
-            {
-                process.Kill(entireProcessTree: true);
-            }
-            catch (Exception exception) when (exception is InvalidOperationException or Win32Exception)
-            {
-            }
-
-            error = $"winland {arguments} timed out.";
-            return false;
-        }
-
-        reply = stdout.GetAwaiter().GetResult();
-        error = stderr.GetAwaiter().GetResult();
-        return process.ExitCode == 0;
+        var result = SmokeCli.Run(_paths, _dotnetRoot, Pipe, _directory, arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries), timeout);
+        reply = result.Output;
+        error = result.Error;
+        return result.ExitCode == 0;
     }
 
     private void Append(StringBuilder builder, string? line)
@@ -341,17 +319,6 @@ internal sealed class SmokeDaemon : IDisposable
         var text = builder.ToString();
         return text.Length <= 2000 ? text : text[^2000..];
     }
-
-    private static string ConfigText() =>
-        """
-        general:gaps_in = 0
-        general:gaps_out = 0
-        general:border_size = 0
-        animations:enabled = false
-        windowrule = ignore, class:*
-        windowrule = tile, class:WinlandSmokeWindow, title:WinlandSmoke *
-        windowrule = workspace 1, class:WinlandSmokeWindow, title:WinlandSmoke *
-        """;
 
     private static bool HasRuntime(string? root) =>
         !string.IsNullOrWhiteSpace(root)
@@ -562,10 +529,4 @@ internal sealed class EventLog : IDisposable
 
         _process.Dispose();
     }
-}
-
-internal static class Addresses
-{
-    public static string Of(Windows.Win32.Foundation.HWND hwnd) =>
-        "0x" + ((IntPtr)hwnd).ToInt64().ToString("x", CultureInfo.InvariantCulture);
 }

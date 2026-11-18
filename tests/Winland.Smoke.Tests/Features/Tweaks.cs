@@ -1,0 +1,52 @@
+using Microsoft.Win32;
+using Windows.Win32;
+using Windows.Win32.UI.WindowsAndMessaging;
+using Xunit.Abstractions;
+
+namespace Winland.Smoke.Tests.Features;
+
+[Trait("Feature", "tweaks")]
+public class Tweaks(ITestOutputHelper output)
+{
+    private const string TouchpadKey = @"Software\Microsoft\Windows\CurrentVersion\PrecisionTouchPad";
+
+    [SystemSmokeFact]
+    public void TurnsSnapAndSwipesOffAndPutsThemBack()
+    {
+        var install = UserInstall.Begin(output);
+        var before = Read();
+        install.Say($"before: {before}");
+        try
+        {
+            var off = install.Run(install.Paths.Daemon, "tweaks", "--off", "--touchpad");
+            Assert.Equal(0, off.ExitCode);
+            var during = Read();
+            install.Say($"after tweaks --off --touchpad: {during}");
+            Assert.Equal(new Settings(false, 0, 0), during);
+            Assert.True(File.Exists(UserInstall.SettingsRecord), "tweaks --off recorded nothing to restore.");
+
+            var restore = install.Run(install.Paths.Daemon, "tweaks", "--restore");
+            Assert.Equal(0, restore.ExitCode);
+            var after = Read();
+            install.Say($"after tweaks --restore: {after}");
+            Assert.Equal(before, after);
+            Assert.False(File.Exists(UserInstall.SettingsRecord), "tweaks --restore kept its record.");
+            install.Say("saw: Snap and both swipes went off, then came back exactly as they were");
+        }
+        finally
+        {
+            if (File.Exists(UserInstall.SettingsRecord))
+                _ = install.Run(install.Paths.Daemon, "tweaks", "--restore");
+        }
+    }
+
+    private static unsafe Settings Read()
+    {
+        int arranging = 0;
+        _ = PInvoke.SystemParametersInfo(SYSTEM_PARAMETERS_INFO_ACTION.SPI_GETWINARRANGING, 0, &arranging, 0);
+        using var key = Registry.CurrentUser.OpenSubKey(TouchpadKey);
+        return new Settings(arranging != 0, key?.GetValue("ThreeFingerSlideEnabled") as int?, key?.GetValue("FourFingerSlideEnabled") as int?);
+    }
+
+    private readonly record struct Settings(bool Snap, int? ThreeFingerSlide, int? FourFingerSlide);
+}
