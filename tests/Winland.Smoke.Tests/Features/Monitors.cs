@@ -23,7 +23,8 @@ public class Monitors(ITestOutputHelper output)
         run.Dispatch("focusmonitor current");
         Assert.Equal(name, run.Json("activeworkspace").GetProperty("monitor").GetString());
         var unknown = run.Cli("dispatch", "focusmonitor", "NoSuchMonitor");
-        Assert.True(unknown.Output.StartsWith("error:", StringComparison.Ordinal) || unknown.Error.StartsWith("error:", StringComparison.Ordinal) || unknown.Output.Trim() == "ok");
+        Assert.Equal(1, unknown.ExitCode);
+        Assert.Equal("error: monitor not found", unknown.Error.Trim());
 
         if (count < 2)
         {
