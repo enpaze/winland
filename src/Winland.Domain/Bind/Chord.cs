@@ -30,12 +30,6 @@ internal static class Chord
         error = "";
         var chord = text.Trim();
         var parts = chord.Split('+');
-        if (parts.Any(part => part.Contains('$', StringComparison.Ordinal) && part.Trim() != "$"))
-        {
-            error = $"Undefined variable in chord '{chord}'.";
-            return false;
-        }
-
         var held = 0;
         while (held < parts.Length - 1 && ModifierNamed(parts[held].Trim()) is var modifier and not Modifier.None)
         {
@@ -44,22 +38,17 @@ internal static class Chord
         }
 
         var keyName = string.Join('+', parts[held..]).Trim();
-        if (keyName.Length == 0)
+        if (keyName.Length > 0 && KeyNames.Matchable(keyName, layout))
         {
-            error = $"Chord '{chord}' is missing a key.";
-            return false;
+            key = KeyNames.Resolve(keyName, layout);
+            return true;
         }
 
-        if (!KeyNames.Matchable(keyName, layout))
-        {
-            error = held < parts.Length - 1
-                ? $"Unknown modifier '{parts[held].Trim()}' in chord '{chord}'. The modifiers are Win, Shift, Ctrl and Alt."
-                : $"Unknown key '{keyName}'.";
-            return false;
-        }
-
-        key = KeyNames.Resolve(keyName, layout);
-        return true;
+        error = chord.Contains('$', StringComparison.Ordinal) ? $"Undefined variable in chord '{chord}'."
+            : keyName.Length == 0 ? $"Chord '{chord}' is missing a key."
+            : held < parts.Length - 1 ? $"Unknown modifier '{parts[held].Trim()}' in chord '{chord}'. The modifiers are Win, Shift, Ctrl and Alt."
+            : $"Unknown key '{keyName}'.";
+        return false;
     }
 
     private static Modifier ModifierNamed(string name) =>

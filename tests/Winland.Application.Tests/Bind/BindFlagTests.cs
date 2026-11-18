@@ -70,6 +70,17 @@ public class BindFlagTests
     }
 
     [TestMethod]
+    public void AKeyTheLayoutNamesWithADollarSignIsAKey()
+    {
+        var layout = KeyLayout.From(new Dictionary<int, string> { [0xBA] = "$$" }, hasAltGr: false, deadKeys: []);
+
+        var parsed = ConfigParser.Parse("bind = Win+$$, close\n", layout: layout);
+
+        Assert.IsEmpty(parsed.Warnings);
+        Assert.AreEqual(Modifier.Win, Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(parsed.Binds)).Modifiers);
+    }
+
+    [TestMethod]
     [DataRow("$mod+Shift+Q")]
     [DataRow("$1+Q")]
     [DataRow("$+$mod+Q")]
