@@ -240,28 +240,29 @@ sealed class WindowsInstallFiles : IFileTree
         if (Interlocked.Exchange(ref retirementScheduled, 1) != 0)
             return;
 
-        var script = "Wait-Process -Id " + Environment.ProcessId + "\r\n"
-            + "function Remove-Retired([string]$Path) {\r\n"
-            + "  if (-not (Test-Path -LiteralPath $Path)) { return }\r\n"
-            + "  $attributes = [IO.File]::GetAttributes($Path)\r\n"
-            + "  $link = ($attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0\r\n"
-            + "  $container = ($attributes -band [IO.FileAttributes]::Directory) -ne 0\r\n"
-            + "  if ($link) { return }\r\n"
-            + "  if ($container) {\r\n"
-            + "    foreach ($child in [IO.Directory]::EnumerateFileSystemEntries($Path)) { Remove-Retired $child }\r\n"
-            + "    return\r\n"
-            + "  }\r\n"
-            + "  if ([IO.Path]::GetFileName($Path).Contains('.winland-old')) {\r\n"
-            + "    [IO.File]::SetAttributes($Path, [IO.FileAttributes]::Normal)\r\n"
-            + "    [IO.File]::Delete($Path)\r\n"
-            + "  }\r\n"
-            + "}\r\n"
-            + "Remove-Retired " + Quote(directory) + "\r\n"
-            + "Remove-Item -LiteralPath $PSCommandPath -Force\r\n"
-            + "Remove-Item -LiteralPath $PSScriptRoot -Force\r\n";
-
-        StartCleanupScript(script);
+        StartCleanupScript(RetirementScript(Environment.ProcessId, directory));
     }
+
+    internal static string RetirementScript(int processId, string directory) =>
+        "Wait-Process -Id " + processId + "\r\n"
+        + "function Remove-Retired([string]$Path) {\r\n"
+        + "  if (-not (Test-Path -LiteralPath $Path)) { return }\r\n"
+        + "  $attributes = [IO.File]::GetAttributes($Path)\r\n"
+        + "  $link = ($attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0\r\n"
+        + "  $container = ($attributes -band [IO.FileAttributes]::Directory) -ne 0\r\n"
+        + "  if ($link) { return }\r\n"
+        + "  if ($container) {\r\n"
+        + "    foreach ($child in [IO.Directory]::EnumerateFileSystemEntries($Path)) { Remove-Retired $child }\r\n"
+        + "    return\r\n"
+        + "  }\r\n"
+        + "  if ([IO.Path]::GetFileName($Path).Contains('.winland-old')) {\r\n"
+        + "    [IO.File]::SetAttributes($Path, [IO.FileAttributes]::Normal)\r\n"
+        + "    [IO.File]::Delete($Path)\r\n"
+        + "  }\r\n"
+        + "}\r\n"
+        + "Remove-Retired " + Quote(directory) + "\r\n"
+        + "Remove-Item -LiteralPath $PSCommandPath -Force\r\n"
+        + "Remove-Item -LiteralPath $PSScriptRoot -Force\r\n";
 
     private static bool ImageIsInside(string directory)
     {

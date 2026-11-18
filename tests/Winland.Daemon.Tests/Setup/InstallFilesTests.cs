@@ -109,6 +109,90 @@ public sealed class InstallFilesTests : IDisposable
         Assert.False(File.Exists(destination + ".winland-old"));
     }
 
+    [Fact]
+    public void RetirementStaysQuietWhileFilesAreLockedAndRemovesThemOnceUnlocked()
+    {
+        var directory = Path.Combine(root, "install");
+        Directory.CreateDirectory(directory);
+        var kept = Path.Combine(directory, "winland.exe");
+        var free = Path.Combine(directory, "free.dll.winland-old");
+        var held = Path.Combine(directory, "held.dll.winland-old");
+        File.WriteAllText(kept, "current");
+        File.WriteAllText(free, "old");
+        File.WriteAllText(held, "old");
+        var holder = Path.Combine(directory, "holder.exe");
+        File.Copy(Path.Combine(Environment.SystemDirectory, "cmd.exe"), holder);
+
+        Process? running = null;
+        FileStream? stream = null;
+        try
+        {
+            running = Process.Start(new ProcessStartInfo
+            {
+                FileName = holder,
+                ArgumentList = { "/k" },
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+            Assert.NotNull(running);
+            var mapped = Path.Combine(directory, "mapped.exe.winland-old");
+            File.Move(holder, mapped);
+            stream = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None);
+
+            using var exited = Process.Start(new ProcessStartInfo
+            {
+                FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe"),
+                ArgumentList = { "/c", "exit" },
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+            Assert.NotNull(exited);
+            exited.WaitForExit();
+
+            var output = RunRetirementScript(WindowsInstallFiles.RetirementScript(exited.Id, directory));
+
+            Assert.Equal("", output);
+            Assert.Equal("current", File.ReadAllText(kept));
+            Assert.False(File.Exists(free));
+            Assert.True(File.Exists(held));
+            Assert.True(File.Exists(mapped));
+        }
+        finally
+        {
+            stream?.Dispose();
+            if (running is { HasExited: false })
+            {
+                running.Kill(entireProcessTree: true);
+                running.WaitForExit();
+            }
+
+            running?.Dispose();
+        }
+    }
+
+    private static string RunRetirementScript(string script)
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "winland-remove-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, "remove.ps1");
+        File.WriteAllText(path, script);
+        var powershell = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");
+        using var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = powershell,
+            ArgumentList = { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path },
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        });
+        Assert.NotNull(process);
+        var stdout = process.StandardOutput.ReadToEnd();
+        var stderr = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+        return stdout + stderr;
+    }
+
     private static void Junction(string link, string target)
     {
         var start = new ProcessStartInfo("cmd.exe")
