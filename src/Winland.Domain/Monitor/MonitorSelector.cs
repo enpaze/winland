@@ -74,7 +74,7 @@ internal static class MonitorSelector
         var best = long.MaxValue;
         foreach (var monitor in monitors)
         {
-            if (Contains(monitor, point))
+            if (new Rectangle(monitor.X, monitor.Y, monitor.Width, monitor.Height).Contains(point))
                 return monitor;
 
             var distance = DistanceSquared(monitor, point);
@@ -145,12 +145,6 @@ internal static class MonitorSelector
     };
 
     private static bool Sticks(int edge, int other) => Math.Abs(edge - other) < 2;
-
-    private static bool Contains(MonitorTarget monitor, Point point) =>
-        point.X >= monitor.X
-        && point.Y >= monitor.Y
-        && point.X < monitor.X + monitor.Width
-        && point.Y < monitor.Y + monitor.Height;
 
     private static long DistanceSquared(MonitorTarget monitor, Point point)
     {

@@ -134,12 +134,12 @@ internal sealed partial class DwindleLayout
     private static Node? FindLeaf(Node node, Point point)
     {
         if (node.Id is not null)
-            return Covers(node.Box, point) ? node : null;
+            return node.Box.Contains(point) ? node : null;
 
-        if (node.First is not null && Covers(node.First.Box, point))
+        if (node.First is not null && node.First.Box.Contains(point))
             return FindLeaf(node.First, point);
 
-        if (node.Second is not null && Covers(node.Second.Box, point))
+        if (node.Second is not null && node.Second.Box.Contains(point))
             return FindLeaf(node.Second, point);
 
         return null;
@@ -154,7 +154,7 @@ internal sealed partial class DwindleLayout
             if (!_nodes.TryGetValue(client.Id, out var node) || !InTree(node))
                 continue;
 
-            var distance = DistanceSquared(node.Box, point);
+            var distance = node.Box.DistanceSquared(point);
             if (distance < bestDistance)
             {
                 best = node;

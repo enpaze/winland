@@ -104,9 +104,7 @@ internal sealed partial class ScrollingLayout : IMouseDragHost
                     return column;
             }
 
-            var dx = pointer.X < box.X ? box.X - pointer.X : pointer.X >= box.X + box.Width ? pointer.X - (box.X + box.Width) : 0;
-            var dy = pointer.Y < box.Y ? box.Y - pointer.Y : pointer.Y >= box.Y + box.Height ? pointer.Y - (box.Y + box.Height) : 0;
-            var distance = (dx * (double)dx) + (dy * (double)dy);
+            var distance = box.DistanceSquared(pointer);
             if (distance < best)
             {
                 best = distance;

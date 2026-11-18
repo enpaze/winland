@@ -280,19 +280,6 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return new Rectangle(box.X + left, box.Y + top, width, height);
     }
 
-    private static bool Covers(Rectangle box, Point point) =>
-        point.X >= box.X
-        && point.Y >= box.Y
-        && point.X < box.X + box.Width
-        && point.Y < box.Y + box.Height;
-
-    private static double DistanceSquared(Rectangle box, Point point)
-    {
-        var dx = point.X < box.X ? box.X - point.X : point.X >= box.X + box.Width ? point.X - (box.X + box.Width) : 0;
-        var dy = point.Y < box.Y ? box.Y - point.Y : point.Y >= box.Y + box.Height ? point.Y - (box.Y + box.Height) : 0;
-        return (dx * (double)dx) + (dy * (double)dy);
-    }
-
     private static Node Leaf(Node node)
     {
         while (node.Id is null)

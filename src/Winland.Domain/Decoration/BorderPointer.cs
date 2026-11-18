@@ -3,12 +3,7 @@ namespace Winland.Domain;
 internal static class BorderPointer
 {
     public static bool Contains(Rectangle box, Point point) =>
-        box.Width > 0
-        && box.Height > 0
-        && point.X >= box.X
-        && point.Y >= box.Y
-        && point.X < box.X + box.Width
-        && point.Y < box.Y + box.Height;
+        box.Width > 0 && box.Height > 0 && box.Contains(point);
 
     public static Point Clamp(Rectangle box, Point point) => new(
         Math.Clamp(point.X, box.X, Math.Max(box.X, box.X + box.Width - 1)),
