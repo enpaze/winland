@@ -25,7 +25,7 @@ internal sealed partial class ScrollingLayout
             return [];
 
         if (_floating.Contains(id))
-            return _floating.MoveToEdge(id, side, _area, _layoutOptions.BorderFor(id));
+            return _floating.MoveToEdge(id, side, _area, _options.BorderFor(id));
 
         if (CellFor(window) is not Cell cell || cell.Column is null)
             return [];
@@ -48,7 +48,7 @@ internal sealed partial class ScrollingLayout
             return [];
 
         if (_floating.Contains(id))
-            return _floating.Resize(id, x, y, exact, _layoutOptions.FloatingOnScreen(_area), FloatingLimits(id));
+            return _floating.Resize(id, x, y, exact, _options.FloatingOnScreen(_area), FloatingLimits(id));
 
         if (CellFor(window) is not Cell cell || cell.Column is null)
             return [];
@@ -115,7 +115,7 @@ internal sealed partial class ScrollingLayout
 
         var tile = cell.Logical.Width > 0 ? cell.Logical : cell.Box;
         RemoveCell(cell);
-        var floated = FloatingLimits(id).Clamp(_floating.Around(id, tile, _layoutOptions.FloatingOnScreen(_area)));
+        var floated = FloatingLimits(id).Clamp(_floating.Around(id, tile, _options.FloatingOnScreen(_area)));
         _floating.Set(id, floated);
         SetFloating(id, true);
         Recalculate();

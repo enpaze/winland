@@ -17,7 +17,7 @@ public sealed record AppliedConfig
 
     public LayoutOptions Layout { get; init; } = LayoutOptions.Unconfigured;
 
-    public ScrollingOptions Scrolling { get; init; } = ScrollingOptions.Defaults;
+    public ScrollingOptions Scrolling { get; init; } = ScrollingOptions.Documented;
 
 
     public DecorationOptions Decoration { get; init; } = DecorationOptions.Documented;

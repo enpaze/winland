@@ -12,12 +12,12 @@ public sealed record ScrollingOptions
 
     public static IReadOnlyList<double> StepWidths { get; } = [0.333, 0.5, 0.667, 1.0];
 
-    public static ScrollingOptions Defaults { get; } = new();
+    public static ScrollingOptions Documented { get; } = new();
 
     internal static OptionSet<ScrollingOptions> Options { get; } = new(
     [
         Option<ScrollingOptions>.Of("scrolling:column_width", OptionValue.Number(0.1, 1), (o, v) => o with { ColumnWidth = v }),
     ]);
 
-    public static ScrollingOptions From(ConfigDocument document) => Options.From(Defaults, document);
+    public static ScrollingOptions From(ConfigDocument document) => Options.From(Documented, document);
 }

@@ -11,8 +11,8 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
     private readonly Dictionary<ClientId, Suspension> _suspended = [];
     private readonly Dictionary<WindowId, double> _widths = [];
     private readonly List<Column> _columns = [];
-    private LayoutOptions _layoutOptions = LayoutOptions.Unconfigured;
-    private ScrollingOptions _scrolling = ScrollingOptions.Defaults;
+    private LayoutOptions _options = LayoutOptions.Unconfigured;
+    private ScrollingOptions _scrolling = ScrollingOptions.Documented;
     private Rectangle _area;
     private Rectangle _monitor;
     private WindowId? _focus;
@@ -45,7 +45,7 @@ internal sealed partial class ScrollingLayout : TiledLayout, Layout
     public IReadOnlyList<Placement> Apply(LayoutOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        _layoutOptions = options;
+        _options = options;
         Recalculate();
         return Placements();
     }

@@ -19,7 +19,7 @@ internal sealed partial class ScrollingLayout : IMouseDragHost
     public IReadOnlyList<Placement> PlaceFloating(WindowId window, Rectangle bounds)
     {
         var id = new ClientId(window.Value);
-        return _floating.Place(id, bounds, _layoutOptions.FloatingOnScreen(_area), FloatingLimits(id)) ? WithFloating(id) : [];
+        return _floating.Place(id, bounds, _options.FloatingOnScreen(_area), FloatingLimits(id)) ? WithFloating(id) : [];
     }
 
     bool IMouseDragHost.LiftTile(ClientId id, out Rectangle box)

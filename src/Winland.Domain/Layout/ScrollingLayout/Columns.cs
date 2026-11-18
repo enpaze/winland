@@ -160,7 +160,7 @@ internal sealed partial class ScrollingLayout
 
     private Rectangle CellBox(ClientId id, double x, double y, double width, double height)
     {
-        var border = _layoutOptions.BorderFor(id);
+        var border = _options.BorderFor(id);
         x += border;
         y += border;
         width = Math.Max(0, width - (border * 2.0));
@@ -170,7 +170,7 @@ internal sealed partial class ScrollingLayout
 
     private (int Left, int Top, int Right, int Bottom) GapsFor(int column, int cell, int cells)
     {
-        var gaps = _layoutOptions.GapsIn;
+        var gaps = _options.GapsIn;
         return (
             column > 0 ? gaps.Left : 0,
             cell > 0 ? gaps.Top : 0,

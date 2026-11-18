@@ -116,7 +116,7 @@ internal sealed partial class ScrollingLayout
         if (mode == FullscreenMode.Maximized)
         {
             var gaps = GapsFor(index, 0, 1);
-            var border = _layoutOptions.BorderFor(cell.Id);
+            var border = _options.BorderFor(cell.Id);
             x += gaps.Left + border;
             y += gaps.Top + border;
             width = Math.Max(1, width - gaps.Left - gaps.Right - (border * 2.0));
