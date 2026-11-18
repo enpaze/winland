@@ -1,5 +1,3 @@
-using static Winland.Domain.OrdinalText;
-
 namespace Winland.Application;
 
 public sealed partial class WindowManager
@@ -81,49 +79,39 @@ public sealed partial class WindowManager
             : launched;
     }
 
-    private Outcome LayoutDispatch(string name, string arguments)
+    private Outcome KillActive()
+    {
+        var active = ActiveWindow();
+        var desk = CurrentWorkspace();
+        return Present(desk, desk.Covered(), [], close: active);
+    }
+
+    private Outcome ResizeActive(string arguments)
+    {
+        var active = ActiveWindow();
+        var desk = CurrentWorkspace();
+        var covered = desk.Covered();
+        IReadOnlyList<Placement> placements = active is WindowId window ? desk.Layout.ResizeActive(window, arguments) : [];
+        return Present(desk, covered, placements);
+    }
+
+    private Outcome LayoutMessage(string message)
     {
         var active = ActiveWindow();
         var desk = CurrentWorkspace();
         var layout = desk.Layout;
         var covered = desk.Covered();
-        IReadOnlyList<Placement> placements = [];
-        WindowId? close = null;
-        WindowId? focus = null;
-        var message = false;
-
-        if (Is(name, "killactive"))
-        {
-            close = active;
-        }
-        else if (Is(name, "resizeactive"))
-            placements = active is WindowId window ? layout.ResizeActive(window, arguments) : [];
-        else
-        {
-            message = true;
-            placements = Is(name, "layoutmsg")
-                ? layout.LayoutMessage(active, arguments)
-                : layout.LayoutMessage(active, Join(name, arguments));
-        }
-
-        if (message && layout.LayoutMessageError is string layoutError)
+        var placements = layout.LayoutMessage(active, message);
+        if (layout.LayoutMessageError is string layoutError)
             return View(placements) with { Error = layoutError };
 
-        if (message && layout.LayoutMessageFocus is WindowId requested)
-            focus = requested;
-
+        var focus = layout.LayoutMessageFocus;
         if (focus is WindowId next && HasNoFocus(next))
             focus = null;
         else if (focus is WindowId accepted)
             Give(accepted, desk);
 
-        return Present(
-            desk,
-            covered,
-            placements,
-            close: close,
-            focus: focus,
-            focusRevealed: message && focus is null);
+        return Present(desk, covered, placements, focus: focus, focusRevealed: focus is null);
     }
 
     private static string Join(string name, string arguments) =>

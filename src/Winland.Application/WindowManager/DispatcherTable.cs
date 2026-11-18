@@ -30,23 +30,23 @@ public sealed partial class WindowManager
             ["movefocus"] = new(static (m, _, a) => m.MoveFocusDirection(a), Traits: DispatcherTraits.WarpsToFocused | DispatcherTraits.WarpsToEmptyMonitor),
             ["focuswindow"] = new(static (m, _, a) => m.FocusWindow(a), AllowsComma: true),
 
-            ["killactive"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
+            ["killactive"] = new(static (m, _, _) => m.KillActive()),
             ["movewindow"] = new(static (m, _, a) => m.MoveWindowDirection(a)),
             ["swapwindow"] = new(static (m, _, a) => m.SwapWindow(a)),
             ["togglefloating"] = new(static (m, _, a) => m.FloatWindow(a)),
             ["pin"] = new(static (m, _, a) => m.PinWindow(a)),
             ["fullscreen"] = new(static (m, _, a) => m.FullscreenDispatcher(a)),
-            ["resizeactive"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
+            ["resizeactive"] = new(static (m, _, a) => m.ResizeActive(a)),
 
-            ["layoutmsg"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
-            ["togglesplit"] = new(static (m, n, a) => m.LayoutDispatch(n, a)),
+            ["layoutmsg"] = new(static (m, _, a) => m.LayoutMessage(a)),
+            ["togglesplit"] = new(static (m, n, a) => m.LayoutMessage(Join(n, a))),
             ["layout"] = new(static (m, _, a) => m.SelectLayout(a)),
             ["cyclelayout"] = new(static (m, _, a) => m.CycleWorkspaceLayout(a)),
 
             ["togglegroup"] = new(static (m, _, _) => m.ToggleGroup()),
-            ["changegroupactive"] = new(static (m, _, a) => m.ChangeGroupActive(a.Trim())),
-            ["moveintogroup"] = new(static (m, _, a) => m.MoveIntoGroup(a.Trim())),
-            ["moveoutofgroup"] = new(static (m, _, a) => m.MoveOutOfGroup(a.Trim())),
+            ["changegroupactive"] = new(static (m, _, a) => m.ChangeGroupActive(a)),
+            ["moveintogroup"] = new(static (m, _, a) => m.MoveIntoGroup(a)),
+            ["moveoutofgroup"] = new(static (m, _, a) => m.MoveOutOfGroup(a)),
 
             ["resizewindow"] = new(static (m, _, _) => m.View([])),
         };

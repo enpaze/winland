@@ -38,8 +38,9 @@ public sealed partial class WindowManager
         return group;
     }
 
-    private Outcome ChangeGroupActive(string text)
+    private Outcome ChangeGroupActive(string arguments)
     {
+        var text = arguments.Trim();
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
             return Rejected("error: no window found");
 
@@ -88,8 +89,9 @@ public sealed partial class WindowManager
         return PresentIfShown(desk, covered, desk.Layout.Visible(), focus: focus);
     }
 
-    private Outcome MoveIntoGroup(string text)
+    private Outcome MoveIntoGroup(string arguments)
     {
+        var text = arguments.Trim();
         if (!TryGroupDirection(text, out var direction))
             return Rejected("error: unsupported direction: " + text);
 
@@ -185,9 +187,9 @@ public sealed partial class WindowManager
         return desk.Layout.TryTake(window, out taken);
     }
 
-    private Outcome MoveOutOfGroup(string text)
+    private Outcome MoveOutOfGroup(string arguments)
     {
-        if (text.Length > 0)
+        if (arguments.Trim().Length > 0)
             return Rejected("error: moveoutofgroup takes no argument");
 
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
