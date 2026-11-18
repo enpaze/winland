@@ -41,7 +41,7 @@ Preconditions:
 - **Malformed selector.** The driver runs `winland inspect pid:abc`. It exits 1, and standard error starts with `error: invalid selector`.
 - **Unknown Dispatcher.** The driver runs `winland dispatch nosuchdispatcher`. It exits 1, and standard error starts with `error:`.
 - **List Dispatchers.** The driver runs `winland dispatch` with no name. It exits 0 and prints one name per line, `workspace` among them.
-- **Version without a Daemon.** The driver stops Winland. `winland clients` now exits 1, and `winland version` exits 0 with one line, `winland <version> (<commit>)`.
+- **Version without a Daemon.** The driver stops Winland. `winland clients` now exits 1, `winland version` exits 0 with one line, `winland <version> (<commit>)`, and `winland -j version` exits 0 with JSON whose `version` is the same.
 
 ## Gotchas
 

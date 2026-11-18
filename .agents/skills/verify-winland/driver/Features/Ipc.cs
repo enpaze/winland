@@ -45,6 +45,8 @@ public class Ipc
         run.StopEvents();
         Assert.IsTrue(run.Daemon.TryStopClean(), "winland did not stop cleanly. " + run.Daemon.Logs());
         Assert.AreEqual(1, run.Cli("clients").ExitCode);
-        Assert.MatchesRegex(@"^winland \S+ \(\S+\)$", run.Ask("version"));
+        var version = run.Ask("version");
+        Assert.MatchesRegex(@"^winland \S+ \(\S+\)$", version);
+        Assert.StartsWith("winland " + run.Json("version").GetProperty("version").GetString() + " (", version, StringComparison.Ordinal);
     });
 }

@@ -37,6 +37,8 @@ windowrule = workspace 1, class:WinlandDevWindow, title:WinlandDev *
 pwsh -NoProfile -File scripts/run.ps1 -Config $devConfig
 ```
 
+The script returns once `winland clients` answers on that pipe. `winland version` is no readiness check, because it answers without a running Winland.
+
 With `WINLAND_PIPE` set, the script replaces only dev builds recorded for that pipe. It leaves older dev builds without a pipe record alone. For placement tests, exit your installed Winland from its tray first so it does not manage the test windows too.
 
 `-Config <file>` reads that `.conf` file instead of `%USERPROFILE%\.winland\winland.conf`. The build starts without administrator rights and cannot place elevated programs' windows. `-Elevated` asks for UAC approval.

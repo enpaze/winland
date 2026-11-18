@@ -108,7 +108,7 @@ Everything Winland keeps for you is in `%USERPROFILE%\.winland`.
 | `windows-settings.json` | The Windows settings the installer turned off, so uninstall can turn them back on |
 | `taskbar.marker` | Only there while `general:hide_taskbar` hides the taskbar, so a crash still brings it back |
 
-The default install runs as administrator and writes no log file. After a crash, open Event Viewer > Windows Logs > Application and find the .NET Runtime event 1026 for Winland at that time. Include that event's exception and stack trace, `winland version` and `winland configerrors` in a bug report. For an unelevated run with file logging enabled, also attach `winland.log` and `winland.log.1` if present.
+The default install runs as administrator and writes no log file. After a crash, open Event Viewer > Windows Logs > Application and find the .NET Runtime event 1026 for Winland at that time. Include that event's exception and stack trace and the output of `winland version` and `winland check` in a bug report. Both work while Winland is not running. For an unelevated run with file logging enabled, also attach `winland.log` and `winland.log.1` if present.
 
 ## CLI
 
