@@ -9,16 +9,13 @@ foreach ($scriptTest in $scriptTests) {
     pwsh -NoProfile -File $scriptTest.FullName
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
-$tests = Join-Path $root 'tests'
-$projects = @(Get-ChildItem -Path $tests -Filter *.csproj -Recurse -File | Where-Object {
-    $_.Name -like '*.Tests.csproj' -and $_.Name -notlike '*.Smoke.Tests.csproj'
-} | Sort-Object FullName)
+$solution = Join-Path $root 'Winland.slnx'
+$projects = @(([xml](Get-Content -LiteralPath $solution -Raw)).SelectNodes('//Project/@Path') | ForEach-Object Value | Where-Object { $_ -like '*.Tests.csproj' } | ForEach-Object { Get-Item -LiteralPath (Join-Path $root $_) } | Sort-Object FullName)
 if ($projects.Count -eq 0) {
-    throw 'No unit test project under tests/.'
+    throw 'No test project in Winland.slnx.'
 }
 
 if (-not $NoBuild) {
-    $solution = Join-Path $root 'Winland.slnx'
     Write-Output "dotnet build $solution"
     dotnet build $solution --configuration Release --nologo
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

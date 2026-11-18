@@ -13,18 +13,19 @@ A keyboard-driven tiling window manager for Windows 11. It manages windows on to
 
 ```text
 .
+├── .agents/skills/verify-winland/  # The verify-winland skill: the feature map, its drivers, and drive.ps1
+├── .claude/skills/verify-winland/  # A copy of that skill's SKILL.md for Claude Code
 ├── src/
 │   ├── Winland.Domain/          # The model and the config language, with no Win32
 │   ├── Winland.Application/     # WindowManager, the command protocol and the event stream
 │   ├── Winland.Infrastructure/  # Win32: hooks, window placement, monitors, tray, IPC pipe
 │   ├── Winland.Daemon/          # winland.exe: reads the config and wires the rest together
 │   └── Winland.Install/         # Install, update and release files
-├── tests/                       # One *.Tests project per src project, plus smoke tests
-├── scripts/                     # check, test, run, smoke, and install
+├── tests/                       # One *.Tests project per src project
+├── scripts/                     # check, test, run, and install
 ├── docs/
 │   ├── architecture.md          # The layers, the path an input takes, where to change things
 │   ├── behavior.md              # How Winland behaves, every Option and Dispatcher
-│   ├── features.md              # Every feature, where its code is, and the command that drives it
 │   ├── development.md           # Setup, environment, and every command
 │   └── releasing.md             # How release-please cuts a release
 └── GLOSSARY.md                  # The domain glossary
@@ -35,7 +36,7 @@ A keyboard-driven tiling window manager for Windows 11. It manages windows on to
 - Run `pwsh -NoProfile -File scripts/check.ps1`, then `pwsh -NoProfile -File scripts/test.ps1`. Everything must pass. While iterating, `dotnet test` on the test project that covers the change is enough.
 - Say what you couldn't verify.
 - Added or changed a command, prerequisite, environment variable, or top-level folder? Update [docs/development.md](docs/development.md) or Project Structure.
-- Changed how Winland behaves? Update `docs/behavior.md`, and the feature's driver in `tests/Winland.Smoke.Tests/Features`.
+- Changed how Winland behaves? Update `docs/behavior.md`, and the feature's file and driver in the `verify-winland` skill. Prove it with that skill's driver.
 
 ## Conventions
 

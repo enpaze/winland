@@ -19,6 +19,6 @@
     <Project Path="tests/Winland.Infrastructure.Tests/Winland.Infrastructure.Tests.csproj" />
     <Project Path="tests/Winland.Install.Tests/Winland.Install.Tests.csproj" />
     <Project Path="tests/Winland.Daemon.Tests/Winland.Daemon.Tests.csproj" />
-    <Project Path="tests/Winland.Smoke.Tests/Winland.Smoke.Tests.csproj" />
+    <Project Path=".agents/skills/verify-winland/driver/Winland.Verify.Tests.csproj" />
   </Folder>
 </Solution>

@@ -57,8 +57,8 @@ A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forc
 | `WINLAND_PIPE` | Override the daemon and CLI pipe name. Give isolated tests a unique name. Unset or blank uses the session's default. |
 | `WINLAND_STATE` | Override the recovery state file path. Use a separate file for each test daemon. |
 | `WINLAND_NO_ELEVATE` | `1` opts out of automatic elevation, as `--no-elevate` does. Intended for tests. |
-| `WINLAND_SMOKE` | `1` lets the feature drivers run. `scripts/smoke.ps1` sets it. Without it every driver skips itself. |
-| `WINLAND_SMOKE_SYSTEM` | `1` lets the `install`, `update` and `tweaks` drivers change this user's install, `PATH` and Windows settings, which they put back afterwards. CI sets it. |
+| `WINLAND_VERIFY` | `1` lets the feature drivers run. `drive.ps1` sets it. Without it every driver skips itself. |
+| `WINLAND_VERIFY_SYSTEM` | `1` lets the `install`, `update` and `tweaks` drivers change this user's install, `PATH` and Windows settings, which they put back afterwards. CI sets it. |
 | `DOTNET_ROOT` | The .NET runtime root for apphosts when .NET is outside its usual location. `run.ps1` resolves it automatically. |
 
 ## Commands
@@ -67,10 +67,10 @@ A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forc
 | --- | --- |
 | `pwsh -NoProfile -File scripts/check.ps1` | The lint: parses the PowerShell, rejects names that differ only by case, checks markdown links and the paths `AGENTS.md` names, rejects code comments, and builds the solution. `-SkipBuild` checks docs without a build, as docs-only PRs do in CI. |
 | `pwsh -NoProfile -File scripts/comments.ps1` | Lists every comment in the tracked C#, PowerShell, YAML, MSBuild and git config files, and fails if there is one. `-Fix` deletes them. Shebangs, `#requires` and `# zizmor: ignore[...]` stay. |
-| `pwsh -NoProfile -File scripts/test.ps1` | Runs every unit test project side by side, as CI does. |
+| `pwsh -NoProfile -File scripts/test.ps1` | Runs every test project in `Winland.slnx` side by side, as CI does. The feature drivers skip there, and `FeatureMapTests` checks the feature map. |
 | `dotnet test tests/<project>` | The focused test for one project. |
 | `dotnet format Winland.slnx` | Apply the solution's formatting rules. Add `--verify-no-changes` to check without editing. |
-| `pwsh -NoProfile -File scripts/smoke.ps1 -Feature <id>` | Drives one feature of [the feature map](features.md) on this desktop and checks what a user would see. With no `-Feature` it drives every feature in turn, and runs a failed driver once more. `-NoBuild` uses the last Release build. Stop your own Winland first. |
+| `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature <id>` | Drives one feature of [the feature map](../.agents/skills/verify-winland/features/README.md) on this desktop and checks what a user would see. With no `-Feature` it drives every feature in turn, and runs a failed driver once more. `-NoBuild` uses the last Release build, `-Doctor` checks readiness, and `-Cleanup` stops what an interrupted run left. Stop your own Winland first. [The verify-winland skill](../.agents/skills/verify-winland/SKILL.md) says how to run and read it. |
 | `pwsh -NoProfile -File scripts/install.tests.ps1` | Tests the decisions in `scripts/install.ps1`. |
 | `pwsh -NoProfile -File scripts/run.ps1` | Publishes this checkout and starts it in place of the running winland. `-Stop` stops it. |
 | `pwsh -NoProfile -File scripts/package.ps1 -Version 1.2.3 -Commit (git rev-parse HEAD).Trim()` | Build the self-contained release zip, `version.json` and `SHA256SUMS` without starting Winland. Prints the output folder. `-DisplayVersion` includes dev metadata and `-OutputDirectory` chooses a new output folder. |
@@ -96,8 +96,8 @@ Every lane is a step in one Windows job, because each job pays its own setup.
 | Lane | What it does | When it runs |
 | --- | --- | --- |
 | Lint | `scripts/check.ps1`, then `actionlint` on `.github/workflows/*.yml`. Docs-only PRs skip the build. | Always. |
-| Test | `scripts/test.ps1 -NoBuild` on the lint's build: every `*.Tests.csproj` under `tests/` except `*.Smoke.Tests.csproj`. | Always, except a pull request that changes only docs and repo metadata (`*.md`, `docs/`, `.github/ISSUE_TEMPLATE/`, `.github/rulesets/`, `.gitignore`, `.gitattributes`, `LICENSE*`). A change to `docs/features.md` or `docs/behavior.md` still runs it, because `FeatureMapTests` reads them. |
-| Drive | `scripts/smoke.ps1 -NoBuild` with `WINLAND_SMOKE_SYSTEM=1`: every driver in [the feature map](features.md), on the runner's desktop. A failure uploads `TestResults/`. | Whenever Test runs. |
+| Test | `scripts/test.ps1 -NoBuild` on the lint's build: every `*.Tests.csproj` in `Winland.slnx`. | Always, except a pull request that changes only docs and repo metadata (`*.md`, `docs/`, `.github/ISSUE_TEMPLATE/`, `.github/rulesets/`, `.gitignore`, `.gitattributes`, `LICENSE*`). A change to `docs/behavior.md`, `.agents/skills/` or `.claude/skills/` still runs it, because `FeatureMapTests` reads them. |
+| Drive | `.agents/skills/verify-winland/drive.ps1 -NoBuild` with `WINLAND_VERIFY_SYSTEM=1`: every driver in [the feature map](../.agents/skills/verify-winland/features/README.md), on the runner's desktop. A failure uploads `TestResults/`. | Whenever Test runs. |
 
 - A test project that fails runs once more on the same build. If it passes the second time, `scripts/test.ps1` names the flaky tests in a `FLAKY:` line, and CI adds a warning and a job summary line. Fix flaky tests by waiting for a condition instead of a fixed time.
 - The unit tests that open real windows are in one xunit collection (`DesktopCollection` in `tests/Winland.Infrastructure.Tests`) that runs alone. The ones a running Winland would disturb skip while any `winland` process runs, including builds on custom pipes. Run them with the daemon stopped.

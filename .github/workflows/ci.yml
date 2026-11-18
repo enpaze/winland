@@ -79,8 +79,8 @@ jobs:
           $files = @(git diff --name-only --no-renames "origin/$($env:BASE_REF)...$($env:HEAD_SHA)")
           if ($LASTEXITCODE -ne 0) { throw "git diff failed with $LASTEXITCODE" }
           $docs = '^(.*\.md|docs/.*|\.github/ISSUE_TEMPLATE/.*|\.github/rulesets/.*|\.gitignore|\.gitattributes|LICENSE.*)$'
-          $mapped = @('docs/features.md', 'docs/behavior.md')
-          $code = @($files | Where-Object { $_ -and ($_ -cnotmatch $docs -or $_ -cin $mapped) })
+          $mapped = '^(docs/behavior\.md|\.agents/skills/|\.claude/skills/)'
+          $code = @($files | Where-Object { $_ -and ($_ -cnotmatch $docs -or $_ -cmatch $mapped) })
           $test = if ($code.Count -gt 0) { 'true' } else { 'false' }
           "test=$test" >> $env:GITHUB_OUTPUT
           Write-Output "test lane: $test"
@@ -118,8 +118,8 @@ jobs:
         if: steps.classify.outputs.test == 'true'
         shell: pwsh
         env:
-          WINLAND_SMOKE_SYSTEM: "1"
-        run: ./scripts/smoke.ps1 -NoBuild
+          WINLAND_VERIFY_SYSTEM: "1"
+        run: ./.agents/skills/verify-winland/drive.ps1 -NoBuild
       - name: Upload the feature driver results
         if: failure() && steps.classify.outputs.test == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
