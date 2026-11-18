@@ -173,8 +173,7 @@ static class MaintenanceCommand
         InstallLocations.User(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)),
         Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms),
         Environment.GetFolderPath(Environment.SpecialFolder.Programs),
-        InstallLocations.Config(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
-        InstallLocations.State(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
+        InstallLocations.Config(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
 
     private static AppInstall Maintenance() => new(
         Layout(),

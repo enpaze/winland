@@ -5,8 +5,7 @@ public sealed record InstallLayout(
     string UserDirectory,
     string CommonPrograms,
     string UserPrograms,
-    string ConfigDirectory,
-    string StateDirectory);
+    string ConfigDirectory);
 
 public sealed class AppInstall
 {
@@ -130,10 +129,7 @@ public sealed class AppInstall
 
         RemoveUser();
         if (purge)
-        {
             files.DeleteTree(layout.ConfigDirectory);
-            files.DeleteTree(layout.StateDirectory);
-        }
 
         if (unrestored is not null)
             throw new InvalidOperationException("Winland is uninstalled, but the Windows settings it turned off were not put back: " + unrestored.Message, unrestored);

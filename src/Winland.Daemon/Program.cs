@@ -247,7 +247,7 @@ static void Salvage(WindowHost host)
 static RecoveryStore StateStore()
 {
     var standard = Path.Combine(
-        InstallLocations.State(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
+        InstallLocations.Config(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
         "state.json");
     var variable = Environment.GetEnvironmentVariable(StateLocation.Variable);
     if (!Elevation.IsElevated())

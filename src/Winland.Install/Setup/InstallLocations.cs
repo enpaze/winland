@@ -32,8 +32,6 @@ public static class InstallLocations
 
     public static string SettingsFile(string userProfile) => Path.Combine(Config(userProfile), SettingsFileName);
 
-    public static string State(string userProfile) => Config(userProfile);
-
     public const string ExecutableName = "winland.exe";
 
     public static string Executable(string directory) => Path.Combine(directory, ExecutableName);

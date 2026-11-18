@@ -14,8 +14,6 @@ public class AppInstallTests
 
     private static readonly string Config = InstallLocations.Config(@"C:\Users\me");
 
-    private static readonly string State = InstallLocations.State(@"C:\Users\me");
-
     private readonly MemoryFileTree files = new();
     private readonly MemoryTaskCatalog tasks = new();
     private readonly MemoryRegistry registry = new();
@@ -326,8 +324,8 @@ public class AppInstallTests
     public void UninstallRemovesTheInstallAndKeepsTheConfig()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
-        files.Seed(Path.Combine(State, "state.json"), [7]);
-        files.Seed(Path.Combine(State, "winland.log"), [8]);
+        files.Seed(Path.Combine(Config, "state.json"), [7]);
+        files.Seed(Path.Combine(Config, "winland.log"), [8]);
 
         install.Uninstall(purge: false, machine: true);
 
@@ -337,25 +335,24 @@ public class AppInstallTests
         Assert.Null(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayName"));
         Assert.Equal("", Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
         Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
-        Assert.Equal([7], files.Read(Path.Combine(State, "state.json")));
-        Assert.Equal([8], files.Read(Path.Combine(State, "winland.log")));
+        Assert.Equal([7], files.Read(Path.Combine(Config, "state.json")));
+        Assert.Equal([8], files.Read(Path.Combine(Config, "winland.log")));
     }
 
     [Fact]
     public void PurgeRemovesTheConfigTheLogsAndTheState()
     {
         install.InstallForUser(Source, "0.1.0");
-        files.Seed(Path.Combine(State, "state.json"), [7]);
-        files.Seed(Path.Combine(State, "winland.log"), [8]);
+        files.Seed(Path.Combine(Config, "state.json"), [7]);
+        files.Seed(Path.Combine(Config, "winland.log"), [8]);
 
         install.Uninstall(purge: true, machine: false);
 
         Assert.False(files.DirectoryExists(User));
         Assert.False(files.DirectoryExists(Config));
-        Assert.False(files.DirectoryExists(State));
         Assert.False(files.Exists(Path.Combine(Config, "winland.conf")));
-        Assert.False(files.Exists(Path.Combine(State, "state.json")));
-        Assert.False(files.Exists(Path.Combine(State, "winland.log")));
+        Assert.False(files.Exists(Path.Combine(Config, "state.json")));
+        Assert.False(files.Exists(Path.Combine(Config, "winland.log")));
         Assert.Null(registry.GetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue));
     }
 
@@ -432,5 +429,5 @@ public class AppInstallTests
     private int Dword(RegistryRoot root, string name) =>
         registry.Values[(root, InstallLocations.UninstallKey, name)].Dword ?? throw new InvalidOperationException(name);
 
-    private static InstallLayout Layout() => new(Machine, User, CommonPrograms, UserPrograms, Config, State);
+    private static InstallLayout Layout() => new(Machine, User, CommonPrograms, UserPrograms, Config);
 }
