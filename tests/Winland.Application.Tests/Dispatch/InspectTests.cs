@@ -199,6 +199,7 @@ public class InspectTests
     [TestMethod]
     [DataRow("class:nothing")]
     [DataRow("nothing")]
+    [DataRow("[")]
     [DataRow("class:[")]
     [DataRow("title:(a")]
     [DataRow("exe:nothing.exe")]
@@ -211,6 +212,27 @@ public class InspectTests
 
         Assert.AreEqual("window not found: no Client matches", desktop.Send("inspect " + selector));
         Assert.AreEqual("no_client", Inspect(desktop, selector).GetProperty("reason").GetString());
+        desktop.Spawn("term");
+        Assert.AreEqual("window not found: no Client matches", desktop.Send("inspect " + selector));
+        Assert.AreEqual("no_client", Inspect(desktop, selector).GetProperty("reason").GetString());
+    }
+
+    [TestMethod]
+    [DataRow("term")]
+    [DataRow("TERM")]
+    [DataRow("class:t*")]
+    [DataRow("title:My*")]
+    [DataRow("exe:term.EXE")]
+    [DataRow("ADDRESS:0x1")]
+    public void APatternOrAddressInspectsTheClientItMatches(string selector)
+    {
+        var desktop = new TestDesktop();
+        desktop.Spawn("term", "My Doc", WindowTraits.Normal with { Exe = "term.exe" });
+
+        var inspected = Inspect(desktop, selector);
+
+        Assert.AreEqual("found", inspected.GetProperty("status").GetString());
+        Assert.AreEqual("0x1", inspected.GetProperty("address").GetString());
     }
 
     [TestMethod]

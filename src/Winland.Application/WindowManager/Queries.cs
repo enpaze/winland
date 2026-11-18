@@ -71,7 +71,7 @@ public sealed partial class WindowManager
     private bool TrySelect(string selector, out Client client)
     {
         client = null!;
-        if (WindowSelector.Find(selector, ActiveWindow(), EveryClient()) is not WindowId id || Find(id) is not Client found)
+        if (WindowSelector.Find(selector, ActiveWindow(), Snapshot().Clients) is not WindowId id || Find(id) is not Client found)
             return false;
 
         client = found;

@@ -232,7 +232,7 @@ A command for the running Winland, such as `winland dispatch workspace 2` or `wi
 
 `exit` stops Winland and restores the windows it manages.
 
-A window selector picks one Client. `active`, or no selector, is the Focused window. `floating` and `tiled` pick the first floating or tiled Client on the Focused window's Workspace. `address:0x2a` and `pid:1234` pick the Client with that address or process id. `class:`, `title:` and `exe:` take a pattern and compare it as a `windowrule` field does: with the whole field, without case, and `*` matches any run of characters. Text with no prefix is a `class:` pattern, so `kitty` is `class:kitty`. When several Clients match, one on the Focused window's Workspace wins.
+A window selector picks one Client. `active` is the Focused window. `floating` and `tiled` pick the first floating or tiled Client on the Focused window's Workspace. `address:0x2a` and `pid:1234` pick the Client with that address or process id. `class:`, `title:` and `exe:` take a pattern and compare it as a `windowrule` field does: with the whole field, without case, and `*` matches any run of characters. Text with no prefix is a `class:` pattern, so `kitty` is `class:kitty`. A prefix is read without case. When several Clients match, one on the Focused window's Workspace wins.
 
 A Store app's frame belongs to ApplicationFrameHost, which hosts every Store app, so its Client's process, `pid` in `clients` and the `pid:` selector are the app hosted in the frame.
 

@@ -60,7 +60,7 @@ internal static class WindowSelector
         ];
         foreach (var (prefix, kind) in prefixed)
         {
-            if (text.StartsWith(prefix, StringComparison.Ordinal))
+            if (text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return (kind, text[prefix.Length..]);
         }
 

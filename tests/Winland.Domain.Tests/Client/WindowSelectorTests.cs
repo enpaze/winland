@@ -42,6 +42,8 @@ public class WindowSelectorTests
         Assert.AreEqual(active, WindowSelector.Find("class:kitty", active, clients));
         Assert.AreEqual(active, WindowSelector.Find("title:term", active, clients));
         Assert.AreEqual(active, WindowSelector.Find("exe:kitty.exe", active, clients));
+        Assert.AreEqual(active, WindowSelector.Find("CLASS:kitty", active, clients));
+        Assert.AreEqual(active, WindowSelector.Find("Title:term", active, clients));
         Assert.IsNull(WindowSelector.Find("title:kitty", active, clients));
         Assert.IsNull(WindowSelector.Find("exe:kitty", active, clients));
         Assert.IsNull(WindowSelector.Find("class:kitty.exe", active, clients));
@@ -74,7 +76,9 @@ public class WindowSelectorTests
         Assert.AreEqual("0x2a", address);
         Assert.AreEqual(active, WindowSelector.Find("address:" + address, active, clients));
         Assert.AreEqual(active, WindowSelector.Find("address:0X2A", active, clients));
+        Assert.AreEqual(active, WindowSelector.Find("ADDRESS:0x2a", active, clients));
         Assert.AreEqual(active, WindowSelector.Find("pid:4242", active, clients));
+        Assert.AreEqual(active, WindowSelector.Find("PID:4242", active, clients));
         Assert.IsNull(WindowSelector.Find("address:0x2b", active, clients));
         Assert.IsNull(WindowSelector.Find("0x2a", active, clients));
         Assert.IsNull(WindowSelector.Find("pid:04242", active, clients));
@@ -135,6 +139,7 @@ public class WindowSelectorTests
     [DataRow("pid:42")]
     [DataRow("address:0x2a")]
     [DataRow("address:0X2A")]
+    [DataRow("ADDRESS:0x2a")]
     public void EverySelectorFindReadsIsWellFormed(string selector) =>
         Assert.IsNull(WindowSelector.Malformed(selector));
 
@@ -144,6 +149,7 @@ public class WindowSelectorTests
     [DataRow("address:", "address: takes a window address, such as address:0x2a")]
     [DataRow("address:2a", "address: takes a window address, such as address:0x2a")]
     [DataRow("address:0xzz", "address: takes a window address, such as address:0x2a")]
+    [DataRow("ADDRESS:zz", "address: takes a window address, such as address:0x2a")]
     public void AMalformedSelectorSaysWhatIsWrong(string selector, string problem) =>
         Assert.AreEqual(problem, WindowSelector.Malformed(selector));
 
