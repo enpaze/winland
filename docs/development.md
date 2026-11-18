@@ -87,7 +87,7 @@ The Daemon and CLI use the pipe `\\.\pipe\winland-<SessionId>` for their Windows
 
 ## CI
 
-`.github/workflows/ci.yml` builds and tests changes on Windows. Push runs also fill the NuGet cache. Newer runs cancel older runs for the same change, while release runs have a separate concurrency group.
+`.github/workflows/ci.yml` builds and tests changes on Windows. Push runs also fill the NuGet cache. Newer runs cancel older runs for the same change, while release runs have a separate concurrency group. To repeat CI on an existing commit, re-run its CI run in GitHub Actions.
 
 Every lane is a step in one Windows job, because each job pays its own setup.
 
