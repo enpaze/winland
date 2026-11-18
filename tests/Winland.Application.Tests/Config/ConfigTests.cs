@@ -218,7 +218,7 @@ public class ConfigTests
     [TestMethod]
     public void LongerVariableNamesExpandBeforeShorterOnes()
     {
-        var text = "$main = SUPER\n$mod = ALT\nbind = $mod+Q, close\n";
+        var text = "$m = Win\n$mod = Alt\nbind = $mod+Q, close\n";
 
         var document = ConfigParser.Parse(text);
 

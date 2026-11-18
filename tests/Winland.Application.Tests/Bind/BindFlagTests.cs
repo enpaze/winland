@@ -59,6 +59,17 @@ public class BindFlagTests
     }
 
     [TestMethod]
+    public void ADollarSignAloneIsTheDollarKey()
+    {
+        var parsed = ConfigParser.Parse("bind = Win+$, close\n");
+
+        Assert.IsEmpty(parsed.Warnings);
+        var bind = Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(parsed.Binds));
+        Assert.AreEqual(ConfigParser.Parse("bind = Win+dollar, close\n").Binds[0], bind);
+        Assert.AreEqual(bind, ConfigParser.Parse(BindText.Line(bind)).Binds[0]);
+    }
+
+    [TestMethod]
     public void AnUndefinedVariableInTheChordWarnsAndTheBindIsSkipped()
     {
         var parsed = ConfigParser.Parse("bind = $mod+Shift+Q, close" + Environment.NewLine);
