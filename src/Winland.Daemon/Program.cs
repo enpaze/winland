@@ -1,6 +1,8 @@
 using Winland.Daemon;
 using Winland.Install;
 
+RetireStaleInstallFiles();
+
 args = Elevation.SendOutputBack(args);
 
 if (ControlInvocation.TryListNames(args, out var names))
@@ -53,6 +55,19 @@ if (!IsStart(args))
     return Usage();
 
 return Guard(() => Run(args.Length == 0 ? null : args[1], log), rethrow: true);
+
+static void RetireStaleInstallFiles()
+{
+    var image = Environment.ProcessPath;
+    if (string.IsNullOrWhiteSpace(image))
+        return;
+
+    var directory = Path.GetDirectoryName(image);
+    if (string.IsNullOrWhiteSpace(directory))
+        return;
+
+    WindowsInstallFiles.DeleteRetired(directory);
+}
 
 static bool IsStart(string[] arguments) =>
     arguments.Length == 0 || (arguments.Length == 2 && arguments[0].Equals("--config", StringComparison.OrdinalIgnoreCase));

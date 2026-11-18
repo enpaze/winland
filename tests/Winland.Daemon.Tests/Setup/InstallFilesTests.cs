@@ -123,6 +123,7 @@ public sealed class InstallFilesTests : IDisposable
         var holder = Path.Combine(directory, "holder.exe");
         File.Copy(Path.Combine(Environment.SystemDirectory, "cmd.exe"), holder);
 
+        var mapped = Path.Combine(directory, "mapped.exe.winland-old");
         Process? running = null;
         FileStream? stream = null;
         try
@@ -130,12 +131,12 @@ public sealed class InstallFilesTests : IDisposable
             running = Process.Start(new ProcessStartInfo
             {
                 FileName = holder,
-                ArgumentList = { "/k" },
+                ArgumentList = { "/c", "ping", "-n", "30", "127.0.0.1" },
                 UseShellExecute = false,
                 CreateNoWindow = true,
             });
             Assert.NotNull(running);
-            var mapped = Path.Combine(directory, "mapped.exe.winland-old");
+            Assert.False(running.WaitForExit(300));
             File.Move(holder, mapped);
             stream = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None);
 
@@ -168,6 +169,15 @@ public sealed class InstallFilesTests : IDisposable
 
             running?.Dispose();
         }
+
+        WindowsInstallFiles.DeleteRetired(directory);
+        Assert.False(File.Exists(held));
+        Assert.False(File.Exists(mapped));
+        Assert.Equal("current", File.ReadAllText(kept));
+        WindowsInstallFiles.DeleteRetired(directory);
+        Assert.False(File.Exists(held));
+        Assert.False(File.Exists(mapped));
+        Assert.Equal("current", File.ReadAllText(kept));
     }
 
     private static string RunRetirementScript(string script)
