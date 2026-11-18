@@ -63,7 +63,7 @@ sealed class DaemonSession : IDaemonSession
 
         var start = new ProcessStartInfo
         {
-            FileName = Elevation.IsElevated()
+            FileName = UserAccess.IsElevated
                 ? InstallLocations.Launcher(executable)
                 : executable,
             WorkingDirectory = Path.GetDirectoryName(executable) ?? Environment.CurrentDirectory,

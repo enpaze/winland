@@ -10,7 +10,7 @@ static class MaintenanceCommand
         var needsAdministrator = command is InstallCommand.Remove
             ? MachineInstalled()
             : command.RequiresAdministrator(machineInstallPresent: false);
-        if (needsAdministrator && !Elevation.IsElevated())
+        if (needsAdministrator && !UserAccess.IsElevated)
         {
             var relay = command is InstallCommand.Machine { Account: null } machine ? machine.Relay(CurrentUser()) : args;
             var result = Elevation.Relaunch(relay);
@@ -35,7 +35,7 @@ static class MaintenanceCommand
     {
         var executable = Environment.ProcessPath
             ?? throw new InvalidOperationException("The executable path is not available.");
-        if (command.ElevatedRefusal is string refusal && Elevation.IsElevated())
+        if (command.ElevatedRefusal is string refusal && UserAccess.IsElevated)
             throw new InvalidOperationException(refusal);
 
         var app = Maintenance();
@@ -57,9 +57,9 @@ static class MaintenanceCommand
                 Console.WriteLine(Installed("Winland is installed for this user", user.Logon, user.Start));
                 return 0;
             case InstallCommand.Remove remove:
-                if (!Elevation.IsElevated())
+                if (!UserAccess.IsElevated)
                     TaskbarControl.RecoverHidden();
-                app.Uninstall(remove.Purge, machine: Elevation.IsElevated());
+                app.Uninstall(remove.Purge, machine: UserAccess.IsElevated);
                 Console.WriteLine(remove.Purge
                     ? "Winland is uninstalled, and its config, logs and state are removed."
                     : "Winland is uninstalled.");
@@ -94,7 +94,7 @@ static class MaintenanceCommand
     {
         var saved = new FileSettingsText(UpdateChannelFile.PathFor(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)));
-        var channel = UpdateChannelFile.Choose(requested, Elevation.IsElevated() ? null : saved.Read());
+        var channel = UpdateChannelFile.Choose(requested, UserAccess.IsElevated ? null : saved.Read());
         var executable = Environment.ProcessPath
             ?? throw new InvalidOperationException("The executable path is not available.");
         var layout = Layout();
@@ -109,7 +109,7 @@ static class MaintenanceCommand
                 executable,
                 layout.MachineDirectory,
                 layout.UserDirectory,
-                Elevation.IsElevated(),
+                UserAccess.IsElevated,
                 channel,
                 BuildStamp.Commit);
 
@@ -131,7 +131,7 @@ static class MaintenanceCommand
                 Console.Error.WriteLine("Refusing the update: the SHA-256 of Winland-win-x64.zip does not match SHA256SUMS. The release may still be uploading. Try again in a minute.");
                 return 1;
             case UpdateResult.Updated updated:
-                if (Elevation.IsElevated())
+                if (UserAccess.IsElevated)
                     _ = SchtasksCatalog.UseLauncher(executable);
                 Remember();
                 Console.WriteLine("Winland is updated to " + updated.Version + ".");
@@ -142,14 +142,14 @@ static class MaintenanceCommand
 
         void Remember()
         {
-            if (!Elevation.IsElevated() && requested is UpdateChannel chosen)
+            if (!UserAccess.IsElevated && requested is UpdateChannel chosen)
                 saved.Write(UpdateChannelFile.Text(chosen));
         }
     }
 
     private static string StageDirectory()
     {
-        if (Elevation.IsElevated())
+        if (UserAccess.IsElevated)
         {
             var windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
             return AdministratorFolder.CreateNew(windowsTemp, "winland-update-");

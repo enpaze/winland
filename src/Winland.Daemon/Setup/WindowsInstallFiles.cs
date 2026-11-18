@@ -301,7 +301,7 @@ sealed class WindowsInstallFiles : IFileTree
     private static void StartCleanupScript(string script)
     {
         string folder;
-        if (Elevation.IsElevated())
+        if (UserAccess.IsElevated)
         {
             var windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
             folder = AdministratorFolder.CreateNew(windowsTemp, "winland-");

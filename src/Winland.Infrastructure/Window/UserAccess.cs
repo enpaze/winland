@@ -16,6 +16,8 @@ public static class UserAccess
         return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
     });
 
+    public static bool IsElevated => Elevated.Value;
+
     public static unsafe bool HasLimitedToken()
     {
         using var identity = WindowsIdentity.GetCurrent();
@@ -28,7 +30,7 @@ public static class UserAccess
     public static T Run<T>(Func<T> action)
     {
         ArgumentNullException.ThrowIfNull(action);
-        if (!Elevated.Value)
+        if (!IsElevated)
             return action();
 
         ProcessLauncher.PrepareImpersonation();

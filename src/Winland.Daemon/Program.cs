@@ -31,7 +31,7 @@ var userInstall = InstallLocations.IsPerUserInstall(
     Environment.ProcessPath,
     InstallLocations.User(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)));
 switch (ManualStartElevation.Decide(
-    Elevation.IsElevated(),
+    UserAccess.IsElevated,
     Environment.GetEnvironmentVariable(ManualStartElevation.OptOutVariable),
     args,
     userInstall,
@@ -250,7 +250,7 @@ static RecoveryStore StateStore()
         InstallLocations.Config(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
         "state.json");
     var variable = Environment.GetEnvironmentVariable(StateLocation.Variable);
-    if (!Elevation.IsElevated())
+    if (!UserAccess.IsElevated)
         return new RecoveryStore(StateLocation.Choose(variable, standard, elevated: false, _ => null).Path);
 
     string user;
@@ -313,7 +313,7 @@ static void CopyLog(RollingLogWriter log, DebugOptions options, string? file)
         if (file is null)
             return null;
 
-        if (Elevation.IsElevated())
+        if (UserAccess.IsElevated)
         {
             Console.Error.WriteLine("debug:disable_logs is false, but an elevated Winland writes no log file.");
             return null;

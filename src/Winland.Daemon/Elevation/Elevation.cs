@@ -14,12 +14,6 @@ static class Elevation
 
     private static NamedPipeClientStream[]? s_output;
 
-    public static bool IsElevated()
-    {
-        using var identity = WindowsIdentity.GetCurrent();
-        return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
-    }
-
     public static int Relaunch(IReadOnlyList<string> args)
     {
         var path = Environment.ProcessPath
