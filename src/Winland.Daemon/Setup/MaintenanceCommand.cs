@@ -103,7 +103,7 @@ static class MaintenanceCommand
             new GitHubReleaseFeed(http),
             new ZipReleasePackage(),
             Maintenance(),
-            StageDirectory,
+            () => AdministratorFolder.CreateTemp("winland-update-"),
             RemoveStage).Run(
                 BuildStamp.Version,
                 executable,
@@ -145,19 +145,6 @@ static class MaintenanceCommand
             if (!UserAccess.IsElevated && requested is UpdateChannel chosen)
                 saved.Write(UpdateChannelFile.Text(chosen));
         }
-    }
-
-    private static string StageDirectory()
-    {
-        if (UserAccess.IsElevated)
-        {
-            var windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
-            return AdministratorFolder.CreateNew(windowsTemp, "winland-update-");
-        }
-
-        var folder = Path.Combine(Path.GetTempPath(), "winland-update-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(folder);
-        return folder;
     }
 
     private static void RemoveStage(string directory)

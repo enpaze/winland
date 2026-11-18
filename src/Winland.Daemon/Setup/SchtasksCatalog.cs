@@ -47,8 +47,7 @@ sealed class SchtasksCatalog : ITaskCatalog
 
     private static void Register(LogonTask task, bool update)
     {
-        var windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
-        var folder = AdministratorFolder.CreateNew(windowsTemp, "winland-");
+        var folder = AdministratorFolder.CreateInWindowsTemp("winland-");
         var path = Path.Combine(folder, "task.xml");
         try
         {

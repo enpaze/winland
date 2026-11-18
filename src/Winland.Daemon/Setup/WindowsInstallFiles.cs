@@ -300,18 +300,7 @@ sealed class WindowsInstallFiles : IFileTree
 
     private static void StartCleanupScript(string script)
     {
-        string folder;
-        if (UserAccess.IsElevated)
-        {
-            var windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
-            folder = AdministratorFolder.CreateNew(windowsTemp, "winland-");
-        }
-        else
-        {
-            folder = Path.Combine(Path.GetTempPath(), "winland-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(folder);
-        }
-
+        var folder = AdministratorFolder.CreateTemp("winland-");
         var path = Path.Combine(folder, "remove.ps1");
         File.WriteAllText(path, script);
         var powershell = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");

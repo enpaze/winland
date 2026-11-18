@@ -22,6 +22,19 @@ public static class AdministratorFolder
         return folder;
     }
 
+    public static string CreateInWindowsTemp(string prefix) =>
+        CreateNew(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"), prefix);
+
+    public static string CreateTemp(string prefix)
+    {
+        if (UserAccess.IsElevated)
+            return CreateInWindowsTemp(prefix);
+
+        var folder = Path.Combine(Path.GetTempPath(), prefix + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        return folder;
+    }
+
     internal static DirectorySecurity Security(bool owner)
     {
         const InheritanceFlags inherit = InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit;
