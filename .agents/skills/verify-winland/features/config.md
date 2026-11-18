@@ -9,7 +9,7 @@ Winland reads one config file and the files it `source`s, reloads them when one 
 - `request:get files` reports the config Winland read and the log it writes, each as a full path.
 - `config-check` validates a file and its sources with `winland check [file]`, without a Daemon, and exits 0 when clean, 1 for diagnostics or a read failure, and 2 for invalid usage.
 - `reload-on-save` reloads the config when it is saved, applies the new values and reports `configreloaded` on the Event stream.
-- `unknown-keyword-warning` warns on an unknown Option, ends the warning `Did you mean '<option>'?` when one Option is within two edits, warns `Malformed line.` on a line with no `=`, and loads the rest.
+- `unknown-keyword-warning` warns on an unknown Option, ends the warning `Did you mean '<option>'?` when one Option is within two edits, warns `Malformed line.` on a line that is not blank, a comment or `name = value`, and loads the rest.
 
 ## How to get to it (user POV)
 

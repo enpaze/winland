@@ -16,7 +16,7 @@ A line that ends with a backslash is joined to the next line, so a value that en
 
 `source` reads another file in place of the line. A relative path is read from the folder of the file containing the `source` line, and a glob reads each file it matches in name order. A glob with no matches warns and its folder is still watched for new files. A file is named the same however its path is spelled: paths are compared without case, after a relative path is joined to the folder of the file containing it. Warnings from a sourced file name its full path. A `source` that names a file already being read, the config itself included, warns `Source '<path>' includes itself.` and is skipped. A glob passes over such a file without a warning, so `source = ./*.conf` in the config's own folder does not read the config a second time.
 
-An Option is one line, `name = value`, such as `gaps_in = 4`. A line with no `=` warns `Malformed line.`
+An Option is one line, `name = value`, such as `gaps_in = 4`. A line that is not blank or a comment needs a name, then `=`, or it warns `Malformed line.` A value is read as written apart from its `$name` variables, so `{{ }}` in it is not evaluated.
 
 Variable expansion stops and warns if the expanded text would exceed 65,536 characters, or if expansion does not finish in 100 passes. That line is skipped and the rest still loads. Boolean options accept `1`, or text starting with `true`, `yes` or `on`, without case, as true. `0`, `false`, `no` and `off` are false.
 
