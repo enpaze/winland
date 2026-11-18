@@ -39,7 +39,7 @@ internal sealed class QuickMove
             if (!decision.Send)
             {
                 if (pending is { } waiting && target != current)
-                    _pending[window] = waiting with { Skipped = waiting.Skipped + 1 };
+                    _pending[window] = waiting with { Skipped = waiting.Skipped + 1, Next = target };
                 return false;
             }
 
@@ -48,6 +48,30 @@ internal sealed class QuickMove
 
         send(target, decision.KeepSize);
         return true;
+    }
+
+    internal void CatchUp(WindowId window, Rectangle current, Action<Rectangle, bool> send)
+    {
+        ArgumentNullException.ThrowIfNull(send);
+        Rectangle next;
+        Decision decision;
+        lock (_gate)
+        {
+            if (Waiting(window) is not { Next: { } held })
+                return;
+
+            next = held;
+            decision = Decide(next, current, null, 0);
+            if (!decision.Send)
+            {
+                _pending.Remove(window);
+                return;
+            }
+
+            _pending[window] = new Pending(next, 0, _clock());
+        }
+
+        send(next, decision.KeepSize);
     }
 
     internal void Note(WindowId window, Rectangle placed, bool waiting)
@@ -115,7 +139,7 @@ internal sealed class QuickMove
 
     private static bool SamePlace(Rectangle a, Rectangle b) => a == b;
 
-    private readonly record struct Pending(Rectangle Requested, int Skipped, long Since);
+    private readonly record struct Pending(Rectangle Requested, int Skipped, long Since, Rectangle? Next = null);
 
     private readonly record struct Placed(int X, int Y, long Since);
 }
