@@ -149,12 +149,12 @@ internal sealed class VerifyDaemon : IDisposable
         _process.WaitForExit(5_000);
     }
 
-    public VerifyDaemon Restart()
+    public VerifyDaemon Restart(string? config = null)
     {
         if (!Exited)
             throw new InvalidOperationException("Stop winland before starting it again.");
 
-        var again = Launch(_paths, _directory, _config, Pipe, State, _dotnetRoot);
+        var again = Launch(_paths, _directory, config ?? _config, Pipe, State, _dotnetRoot);
         again.WaitUntilReady();
         return again;
     }

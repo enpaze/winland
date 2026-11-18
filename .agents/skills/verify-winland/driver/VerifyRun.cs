@@ -245,9 +245,9 @@ internal sealed class VerifyRun
         _events = null;
     }
 
-    public void Restart()
+    public void Restart(string? config = null)
     {
-        Daemon = Daemon.Restart();
+        Daemon = Daemon.Restart(config);
         _daemons.Add(Daemon);
         Say("winland started again on " + Daemon.Pipe);
     }

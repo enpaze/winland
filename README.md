@@ -20,7 +20,7 @@ To install the dev release, built from `main` after every change, run:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/enpaze/winland/main/scripts/install.ps1))) -Channel dev
 ```
 
-To install by hand, download `Winland-win-x64.zip` from [Releases](https://github.com/enpaze/winland/releases), unzip it and run `winland\winland.exe install`, then run `winland tweaks --off`. Add `--touchpad` to the tweaks command to turn off the three- and four-finger touchpad swipes too.
+To install by hand, download `Winland-win-x64.zip` from [Releases](https://github.com/enpaze/winland/releases), unzip it and run `winland\winland.exe install`, then run `winland tweaks off`. Add `--touchpad` to the tweaks command to turn off the three- and four-finger touchpad swipes too.
 
 ## Hotkeys
 
@@ -115,7 +115,7 @@ The default install runs as administrator and writes no log file. After a crash,
 | Command | Does |
 | --- | --- |
 | `winland` | Start Winland |
-| `winland --config <file>` | Start Winland with that `.conf` file in place of your config |
+| `winland --config <file>` | Start Winland with that file in place of your config |
 | `winland check [file]` | Validate a config and its sources without starting or changing Winland |
 | `winland help` | List the commands and this binary's Dispatcher names without a Daemon |
 | `winland [-j] version` | Show this binary's version without a Daemon |
@@ -128,11 +128,11 @@ The default install runs as administrator and writes no log file. After a crash,
 | `winland update --channel dev` | Follow the dev channel and remember the choice |
 | `winland uninstall` | Remove Winland, turn back on any Windows setting the installer turned off, and keep the `.winland` folder |
 | `winland uninstall --purge` | Remove Winland and the `.winland` folder |
-| `winland tweaks --off` | Turn off Windows Snap, and remember how it was |
-| `winland tweaks --off --touchpad` | Also turn off the three- and four-finger touchpad swipes |
-| `winland tweaks --restore` | Restore recorded Windows settings from a normal terminal without uninstalling |
+| `winland tweaks off` | Turn off Windows Snap, and remember how it was |
+| `winland tweaks off --touchpad` | Also turn off the three- and four-finger touchpad swipes |
+| `winland tweaks restore` | Restore recorded Windows settings from a normal terminal without uninstalling |
 
-`check` exits 0 when clean, 1 for diagnostics or a read failure, and 2 for invalid usage; diagnostics go to standard error. It never creates or rewrites a config. `help` describes this binary rather than another version of the Daemon. `tweaks --restore` preserves the record on failure so it can be retried. Restored Snap or touchpad controls may interact with tiling while Winland stays running.
+`check` exits 0 when clean, 1 for diagnostics or a read failure, and 2 for invalid usage; diagnostics go to standard error. It never creates or rewrites a config. `help` describes this binary rather than another version of the Daemon. `tweaks restore` preserves the record on failure so it can be retried. Restored Snap or touchpad controls may interact with tiling while Winland stays running.
 
 These talk to the running Winland.
 

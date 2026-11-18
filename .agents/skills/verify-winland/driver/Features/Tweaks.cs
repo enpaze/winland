@@ -22,23 +22,23 @@ public class Tweaks
         install.Say($"before, with Snap turned on so restore must turn it back on: {before}");
         try
         {
-            var off = install.Run(install.Paths.Daemon, "tweaks", "--off", "--touchpad");
+            var off = install.Run(install.Paths.Daemon, "tweaks", "off", "--touchpad");
             Assert.AreEqual(0, off.ExitCode);
             install.Until("Snap and both swipes are off", () => Read() == new Settings(false, 0, 0), 5_000);
-            install.Say($"after tweaks --off --touchpad: {Read()}");
-            Assert.IsTrue(File.Exists(UserInstall.SettingsRecord), "tweaks --off recorded nothing to restore.");
+            install.Say($"after tweaks off --touchpad: {Read()}");
+            Assert.IsTrue(File.Exists(UserInstall.SettingsRecord), "tweaks off recorded nothing to restore.");
 
-            var restore = install.Run(install.Paths.Daemon, "tweaks", "--restore");
+            var restore = install.Run(install.Paths.Daemon, "tweaks", "restore");
             Assert.AreEqual(0, restore.ExitCode);
             install.Until("Snap and both swipes are back as they were", () => Read() == before, 5_000);
-            install.Say($"after tweaks --restore: {Read()}");
-            Assert.IsFalse(File.Exists(UserInstall.SettingsRecord), "tweaks --restore kept its record.");
+            install.Say($"after tweaks restore: {Read()}");
+            Assert.IsFalse(File.Exists(UserInstall.SettingsRecord), "tweaks restore kept its record.");
             install.Say("saw: Snap and both swipes went off, then came back exactly as they were");
         }
         finally
         {
             if (File.Exists(UserInstall.SettingsRecord))
-                _ = install.Run(install.Paths.Daemon, "tweaks", "--restore");
+                _ = install.Run(install.Paths.Daemon, "tweaks", "restore");
 
             SetSnap(original.Snap);
         }

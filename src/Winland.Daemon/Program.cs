@@ -111,12 +111,6 @@ static int Run(string? path, RollingLogWriter log)
         return 1;
     }
 
-    if (path is not null && !path.EndsWith(".conf", StringComparison.OrdinalIgnoreCase))
-    {
-        Console.Error.WriteLine($"--config takes a .conf file, not '{path}'.");
-        return 1;
-    }
-
     var configPath = path ?? ConfigPaths.Default(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
     var firstStart = path is null && DefaultConfig.WriteIfMissing(configPath);
     if (firstStart)
@@ -343,8 +337,8 @@ internal partial class Program
         writer.WriteLine("       winland install [--user] [--no-logon] [--no-start]");
         writer.WriteLine("       winland update [--channel <stable|dev>]");
         writer.WriteLine("       winland uninstall [--purge]");
-        writer.WriteLine("       winland tweaks --off [--touchpad]");
-        writer.WriteLine("       winland tweaks --restore");
+        writer.WriteLine("       winland tweaks off [--touchpad]");
+        writer.WriteLine("       winland tweaks restore");
         writer.WriteLine("       winland help");
         writer.Write(ControlInvocation.Usage);
         writer.WriteLine("-j prints JSON, before or after the command. To pass -j to a program, quote its exec command line as one argument.");

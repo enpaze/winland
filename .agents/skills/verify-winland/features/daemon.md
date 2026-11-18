@@ -8,6 +8,7 @@ One Daemon runs per session. A second `winland` started in the same session says
 - `single-instance` makes a second `winland` in the same session print `Winland is already running in this session.` and exit with code 1.
 - `crash-recovery` shows, on the next start, the windows a killed Daemon left hidden, and manages them again.
 - `maintenance-usage` makes invalid maintenance arguments print their usage and exit with code 2.
+- `config-path` starts Winland on the file `--config` names, whatever its name.
 
 ## How to get to it (user POV)
 
@@ -28,7 +29,7 @@ Preconditions:
 - **Bad maintenance arguments.** The driver runs `winland update --channel nightly`. It exits 2.
 - **Hide two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`, which tile side by side, and runs `winland workspace 2`. Both windows hide. The driver waits until the state file exists, then half a second more.
 - **Kill.** The driver kills the `winland` process. Both windows stay hidden.
-- **Restart.** The driver starts `winland` again with the same pipe, state file and config. Both windows show, and both are Clients again.
+- **Restart.** The driver copies the config to `winland.txt` and starts `winland --config winland.txt` with the same pipe and state file. `winland -j get files` reports `winland.txt` as `config`. Both windows show, and both are Clients again.
 - **Exit.** The driver runs `winland workspace 2`, and both windows hide again. It runs `winland exit`. Winland stops, and both windows show again.
 
 ## Gotchas

@@ -76,10 +76,6 @@ if ($Stop) {
 $arguments = @()
 if (-not $Elevated) { $arguments += '--no-elevate' }
 if ($Config) {
-    if (-not $Config.EndsWith('.conf', [StringComparison]::OrdinalIgnoreCase)) {
-        throw "--config takes a .conf file, not '$Config'."
-    }
-
     $arguments += @('--config', (Resolve-Path -LiteralPath $Config).Path)
 }
 

@@ -40,7 +40,7 @@ The script returns once `winland get windows` answers on that pipe. `winland ver
 
 With `WINLAND_PIPE` set, the script replaces only dev builds recorded for that pipe. It leaves older dev builds without a pipe record alone. For placement tests, exit your installed Winland from its tray first so it does not manage the test windows too.
 
-`-Config <file>` reads that `.conf` file instead of `%USERPROFILE%\.winland\winland.conf`. The build starts without administrator rights and cannot place elevated programs' windows. `-Elevated` asks for UAC approval.
+`-Config <file>` reads that file instead of `%USERPROFILE%\.winland\winland.conf`. The build starts without administrator rights and cannot place elevated programs' windows. `-Elevated` asks for UAC approval.
 
 Each build has its own folder under `%LOCALAPPDATA%\winland-dev`, with `winland.out.log` and `winland.err.log`. Piping the script's output is safe. Stop the build from the same shell, keeping the same `WINLAND_PIPE`:
 
@@ -82,7 +82,7 @@ A clean stop shows the taskbar again if `hide_taskbar` hid it. If a forced stop 
 
 `winland help` lists the Dispatcher names of the invoked binary without a Daemon. An action, `get`, `inspect` and `events` require the running Daemon. `winland [-j] inspect [selector]` reads a Window without changing it; omission targets the pointer, while a selector targets a Client. Not found succeeds, and a malformed selector fails. See [Window inspection](behavior.md#window-inspection) for fields, reason codes and draft-rule limits.
 
-`winland tweaks --restore` restores the invoking user's recorded Windows controls without uninstalling or stopping the Daemon. Run it in a normal terminal. It refuses elevation, retains the record after a failure and needs no elevation when retried. It cannot be combined with `--off` or `--touchpad`.
+`winland tweaks restore` restores the invoking user's recorded Windows controls without uninstalling or stopping the Daemon. Run it in a normal terminal. It refuses elevation, retains the record after a failure and needs no elevation when retried.
 
 Warnings fail the build. `Directory.Build.props` enables `TreatWarningsAsErrors`, recommended analyzers with `AnalysisMode`, and the configured code style warnings with `EnforceCodeStyleInBuild`.
 
