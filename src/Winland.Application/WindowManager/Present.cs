@@ -453,7 +453,7 @@ public sealed partial class WindowManager
         if (thickness <= 0)
             return null;
 
-        var scale = MonitorById(desk.Monitor) is { Arranged.Enabled: true } screen ? screen.Arranged.Scale : 1;
+        var scale = MonitorScale(desk.Monitor);
         var radius = CornerRadius(shape, scale);
         return new BorderRing(BorderOf(client.Window, active), thickness, radius, alpha);
     }
@@ -470,8 +470,7 @@ public sealed partial class WindowManager
     {
         var desk = _workspaces.Find(client.Workspace);
         var rounding = _props.Own(client.Window, WindowProp.Rounding) is { } set ? (int)Math.Min(set, int.MaxValue) : _config.Decoration.Rounding;
-        var screen = desk is null ? null : MonitorById(desk.Monitor);
-        var scale = screen is { Arranged.Enabled: true } ? screen.Arranged.Scale : 1;
+        var scale = desk is null ? 1 : MonitorScale(desk.Monitor);
         return CornerShape.For(rounding, scale);
     }
 }

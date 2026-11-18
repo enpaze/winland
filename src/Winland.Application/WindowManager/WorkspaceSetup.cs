@@ -21,8 +21,7 @@ public sealed partial class WindowManager
 
         MatchLayout(desk);
         layout = desk.Layout;
-        var screen = MonitorById(desk.Monitor);
-        if (screen is { Arranged.Enabled: true })
+        if (EnabledMonitor(desk.Monitor) is { } screen)
         {
             Stamp(desk);
             layout.Apply(desk.Options);
@@ -45,8 +44,6 @@ public sealed partial class WindowManager
 
     private LayoutOptions OptionsFor(LiveWorkspace desk)
     {
-        var screen = MonitorById(desk.Monitor);
-        var scale = screen is { Arranged.Enabled: true } ? screen.Arranged.Scale : 1;
-        return (_config.Layout with { ClientBorder = _clientBorder }).ScaledBy(scale);
+        return (_config.Layout with { ClientBorder = _clientBorder }).ScaledBy(MonitorScale(desk.Monitor));
     }
 }

@@ -160,7 +160,7 @@ public sealed partial class WindowManager
         }
 
         var tileBack = settle && wasTiled;
-        var monitor = MonitorById(target.Monitor) is { Arranged.Enabled: true } destination ? destination.Bounds : default;
+        var monitor = EnabledMonitor(target.Monitor)?.Bounds ?? default;
         target.Receive(window, taken with { Floating = !tileBack, Bounds = box }, WorkArea(target, _area), monitor, pointer: tileBack ? pointer : null);
         CarryGroup(source, target, window);
         FocusState.Remember(target, window);

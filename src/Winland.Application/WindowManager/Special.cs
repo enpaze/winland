@@ -34,7 +34,7 @@ public sealed partial class WindowManager
 
     private void BringFloatingOnto(LiveWorkspace desk, MonitorId monitor)
     {
-        if (MonitorById(monitor) is not { Arranged.Enabled: true } screen)
+        if (EnabledMonitor(monitor) is not { } screen)
             return;
 
         var here = screen.Bounds;

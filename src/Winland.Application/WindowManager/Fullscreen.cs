@@ -102,12 +102,9 @@ public sealed partial class WindowManager
     private Rectangle CoveringBounds(LiveWorkspace desk)
     {
         var work = WorkArea(desk, _area);
-        var screen = MonitorById(desk.Monitor);
-        if (screen is not { Arranged: { Enabled: true } monitor })
-            return FullscreenGeometry.Cover(FullscreenMode.Fullscreen, work, default);
-
-        var bounds = new Rectangle(monitor.X, monitor.Y, monitor.Width, monitor.Height);
-        return bounds;
+        return EnabledMonitor(desk.Monitor) is { } screen
+            ? screen.Bounds
+            : FullscreenGeometry.Cover(FullscreenMode.Fullscreen, work, default);
     }
 
     private static IReadOnlyList<Placement> Cover(IReadOnlyList<Placement> placements, State snapshot)

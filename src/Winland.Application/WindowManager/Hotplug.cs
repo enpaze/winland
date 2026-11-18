@@ -177,8 +177,7 @@ public sealed partial class WindowManager
     private void Refit(LiveWorkspace desk)
     {
         Stamp(desk);
-        var screen = MonitorById(desk.Monitor);
-        if (screen is not { Arranged.Enabled: true })
+        if (EnabledMonitor(desk.Monitor) is not { } screen)
             return;
 
         desk.Layout.Apply(desk.Options);

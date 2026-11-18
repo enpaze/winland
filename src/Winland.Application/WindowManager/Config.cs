@@ -159,13 +159,12 @@ public sealed partial class WindowManager
         desk.Replace(created);
         created.Configure(_config.Scrolling);
         Stamp(desk);
-        var screen = MonitorById(desk.Monitor);
+        var monitor = EnabledMonitor(desk.Monitor)?.Bounds ?? default;
         var area = WorkArea(desk, _area);
         created.Apply(desk.Options);
         if (area.Width > 0 && area.Height > 0)
-            created.Fit(area, screen is { Arranged.Enabled: true } ? screen.Bounds : default);
+            created.Fit(area, monitor);
 
-        var monitor = screen is { Arranged.Enabled: true } ? screen.Bounds : default;
         foreach (var (window, taken) in held)
             desk.Receive(window, taken, area, monitor);
 

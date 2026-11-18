@@ -358,8 +358,7 @@ public sealed partial class WindowManager
 
     private LayoutOptions ActiveOptions()
     {
-        var screen = MonitorById(FocusedWorkspace().Monitor);
-        if (screen is { Arranged.Enabled: true })
+        if (EnabledMonitor(FocusedWorkspace().Monitor) is { } screen)
             return _config.Layout.ScaledBy(screen.Arranged.Scale);
 
         return _config.Layout;

@@ -4,7 +4,7 @@ public sealed partial class WindowManager
 {
     private Taken OntoMonitor(Taken taken, MonitorId from, MonitorId to)
     {
-        if (!taken.Floating || from == to || MonitorById(from) is not { Arranged.Enabled: true } source || MonitorById(to) is not { Arranged.Enabled: true } destination)
+        if (!taken.Floating || from == to || EnabledMonitor(from) is not { } source || EnabledMonitor(to) is not { } destination)
             return taken;
 
         var bounds = taken.Bounds;
@@ -193,7 +193,7 @@ public sealed partial class WindowManager
             return away.Length == 0 ? followed : followed with { Hide = Combine(followed.Hide, away) };
         }
 
-        if (_workspaces.Find(target) is { } located && MonitorById(located.Monitor) is { Arranged.Enabled: true } home && home.Id != FocusedId())
+        if (_workspaces.Find(target) is { } located && EnabledMonitor(located.Monitor) is { } home && home.Id != FocusedId())
             Focus(home.Id);
 
         var monitor = FocusedId();
@@ -244,8 +244,8 @@ public sealed partial class WindowManager
         if (desk is null)
             return null;
 
-        var owner = MonitorById(desk.Monitor);
-        if (owner is null || !owner.Arranged.Enabled || _workspaces.Shown.Shown(owner.Id) != target || owner.Id == FocusedId())
+        var owner = EnabledMonitor(desk.Monitor);
+        if (owner is null || _workspaces.Shown.Shown(owner.Id) != target || owner.Id == FocusedId())
             return null;
 
         return owner;

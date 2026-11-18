@@ -133,7 +133,7 @@ public sealed partial class WindowManager
     private (WindowId Window, LiveWorkspace Desk)? NeighborAcross(LiveWorkspace desk, WindowId window, string direction)
     {
         if (!Sides.TryParse(direction, out var side)
-            || MonitorHolding(desk) is not LiveMonitor origin || TargetOf(origin) is not MonitorTarget from
+            || EnabledMonitor(desk.Monitor) is not LiveMonitor origin || TargetOf(origin) is not MonitorTarget from
             || MonitorSelector.InDirection(Targets(), from, side) is not MonitorTarget neighbor
             || MonitorOf(neighbor) is not LiveMonitor screen || _workspaces.Shown.Shown(screen.Id) is not WorkspaceId shown
             || _workspaces.Find(shown) is not LiveWorkspace there || !desk.Layout.TryBounds(window, out var box)

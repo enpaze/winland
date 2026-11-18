@@ -65,14 +65,8 @@ public sealed partial class WindowManager
         return desk is null ? null : desk.ClientOf(window);
     }
 
-    private Rectangle WorkArea(LiveWorkspace desk, Rectangle fallback)
-    {
-        var screen = MonitorById(desk.Monitor);
-        if (screen is { Arranged.Enabled: true })
-            return screen.Arranged.WorkArea;
-
-        return fallback;
-    }
+    private Rectangle WorkArea(LiveWorkspace desk, Rectangle fallback) =>
+        EnabledMonitor(desk.Monitor)?.Arranged.WorkArea ?? fallback;
 
     private LiveMonitor? MonitorById(MonitorId id)
     {
@@ -84,4 +78,9 @@ public sealed partial class WindowManager
 
         return null;
     }
+
+    private LiveMonitor? EnabledMonitor(MonitorId id) =>
+        MonitorById(id) is { Arranged.Enabled: true } screen ? screen : null;
+
+    private double MonitorScale(MonitorId id) => EnabledMonitor(id)?.Arranged.Scale ?? 1;
 }

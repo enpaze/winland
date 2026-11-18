@@ -27,7 +27,7 @@ public sealed partial class WindowManager
             }
         }
 
-        if (MonitorHolding(desk) is not LiveMonitor origin || TargetOf(origin) is not MonitorTarget from)
+        if (EnabledMonitor(desk.Monitor) is not LiveMonitor origin || TargetOf(origin) is not MonitorTarget from)
             return View([]);
 
         if (MonitorSelector.InDirection(Targets(), from, direction) is not MonitorTarget neighbor
@@ -56,7 +56,7 @@ public sealed partial class WindowManager
     {
         if (TryMonitorArgument(arguments, out var monitorText, out var silent))
         {
-            if (MonitorOf(MonitorSelector.Resolve(monitorText, Targets(), TargetOf(FocusedMonitor()))) is not LiveMonitor chosen)
+            if (ResolveMonitor(monitorText) is not LiveMonitor chosen)
                 return Rejected("error: monitor not found");
 
             return MoveActiveOnto(chosen, silent);
@@ -74,7 +74,7 @@ public sealed partial class WindowManager
             return Present(desk, covered, stayed);
         }
 
-        if (MonitorHolding(desk) is LiveMonitor origin
+        if (EnabledMonitor(desk.Monitor) is LiveMonitor origin
             && desk.Layout.TryBounds(window, out var box))
         {
             var focal = Sides.Focal(Ideal(desk, window, box), direction);
@@ -86,7 +86,7 @@ public sealed partial class WindowManager
         var placements = desk.Layout.MoveWindow(window, arguments);
         if (placements.Count == 0
             && desk.Layout.FollowsMonitorWhenUnmoved
-            && MonitorHolding(desk) is LiveMonitor home
+            && EnabledMonitor(desk.Monitor) is LiveMonitor home
             && TargetOf(home) is MonitorTarget from
             && MonitorSelector.InDirection(Targets(), from, direction) is MonitorTarget neighbor
             && MonitorOf(neighbor) is LiveMonitor next)
@@ -97,7 +97,7 @@ public sealed partial class WindowManager
 
     private Outcome FocusMonitorDispatch(string arguments)
     {
-        if (MonitorOf(MonitorSelector.Resolve(arguments, Targets(), TargetOf(FocusedMonitor()))) is not LiveMonitor screen)
+        if (ResolveMonitor(arguments) is not LiveMonitor screen)
             return Rejected("error: monitor not found");
 
         return FocusOnto(screen, preferred: null);
@@ -105,7 +105,7 @@ public sealed partial class WindowManager
 
     private Outcome MoveCurrentWorkspace(string arguments)
     {
-        if (MonitorOf(MonitorSelector.Resolve(arguments, Targets(), TargetOf(FocusedMonitor()))) is not LiveMonitor destination)
+        if (ResolveMonitor(arguments) is not LiveMonitor destination)
             return Rejected("error: monitor not found");
 
         if (_workspaces.Find(ActiveId()) is not LiveWorkspace desk)
@@ -221,7 +221,7 @@ public sealed partial class WindowManager
 
     private Rectangle Ideal(LiveWorkspace desk, WindowId window, Rectangle box)
     {
-        if (desk.ClientOf(window) is not Client client || MonitorById(desk.Monitor) is not { Arranged.Enabled: true } screen)
+        if (desk.ClientOf(window) is not Client client || EnabledMonitor(desk.Monitor) is not { } screen)
             return box;
         if (desk.IsCovering(client))
             return screen.Bounds;
@@ -268,20 +268,11 @@ public sealed partial class WindowManager
     private static MonitorTarget? TargetOf(LiveMonitor? screen) =>
         screen is { Arranged.Enabled: true } enabled ? Target(enabled) : null;
 
-    private LiveMonitor? MonitorOf(MonitorTarget? target)
-    {
-        if (target is not MonitorTarget found)
-            return null;
+    private LiveMonitor? MonitorOf(MonitorTarget? target) =>
+        target is MonitorTarget found ? EnabledMonitor(found.Id) : null;
 
-        var screen = MonitorById(found.Id);
-        return screen is { Arranged.Enabled: true } ? screen : null;
-    }
-
-    private LiveMonitor? MonitorHolding(LiveWorkspace desk)
-    {
-        var screen = MonitorById(desk.Monitor);
-        return screen is { Arranged.Enabled: true } ? screen : null;
-    }
+    private LiveMonitor? ResolveMonitor(string text) =>
+        MonitorOf(MonitorSelector.Resolve(text, Targets(), TargetOf(FocusedMonitor())));
 
     private HashSet<WindowId> ShowingNow()
     {
