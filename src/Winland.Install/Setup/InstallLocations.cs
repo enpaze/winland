@@ -38,6 +38,10 @@ public static class InstallLocations
 
     public static string Shortcut(string programsDirectory) => Path.Combine(programsDirectory, ShortcutName);
 
+    public static bool SameFolder(string left, string right) =>
+        Path.TrimEndingDirectorySeparator(Path.GetFullPath(left))
+            .Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)), StringComparison.OrdinalIgnoreCase);
+
     public static bool IsPerUserInstall(string? executable, string userDirectory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userDirectory);

@@ -19,16 +19,12 @@ public static class InstalledCopy
         if (folder is null)
             return InstallKind.None;
 
-        if (Same(folder, machineDirectory))
+        if (InstallLocations.SameFolder(folder, machineDirectory))
             return InstallKind.Machine;
 
-        if (Same(folder, userDirectory))
+        if (InstallLocations.SameFolder(folder, userDirectory))
             return InstallKind.User;
 
         return InstallKind.None;
     }
-
-    private static bool Same(string left, string right) =>
-        Path.TrimEndingDirectorySeparator(Path.GetFullPath(left))
-            .Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)), StringComparison.OrdinalIgnoreCase);
 }

@@ -171,7 +171,7 @@ public sealed class AppInstall
 
     private void Apply(CopyPlan plan)
     {
-        if (SameDirectory(plan.SourceDirectory, plan.Destination))
+        if (InstallLocations.SameFolder(plan.SourceDirectory, plan.Destination))
             return;
 
         files.PrepareDirectory(plan.Destination);
@@ -288,10 +288,6 @@ public sealed class AppInstall
         if (PathList.Remove(current, folder) is string updated)
             registry.SetString(root, key, InstallLocations.PathValue, updated, expandable: true);
     }
-
-    private static bool SameDirectory(string left, string right) =>
-        Path.TrimEndingDirectorySeparator(Path.GetFullPath(left))
-            .Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)), StringComparison.OrdinalIgnoreCase);
 
     private static string Quote(string value)
     {
