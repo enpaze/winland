@@ -12,6 +12,10 @@ public sealed partial class WindowManager
 
     private List<WorkspaceId>? _activated;
 
+    private List<StreamEvent>? _extraEvents;
+
+    private void Raise(StreamEvent streamEvent) => (_extraEvents ??= []).Add(streamEvent);
+
     private void NoteWorkspaceActive(WorkspaceId workspace) => (_activated ??= []).Add(workspace);
 
     private Outcome WithEvents(Outcome outcome, Captured before, Input? input)
@@ -187,6 +191,52 @@ public sealed partial class WindowManager
         }
 
         return state.ActiveWorkspace;
+    }
+
+    private static void AddSpecialEvents(List<StreamEvent> events, State before, State after)
+    {
+        if (before.Screens.Count == 0 && after.Screens.Count == 0)
+        {
+            if (before.SpecialWorkspace != after.SpecialWorkspace)
+                events.Add(new ActiveSpecial(after.SpecialWorkspace, ""));
+
+            return;
+        }
+
+        var ids = new List<MonitorId>();
+        foreach (var screen in before.Screens)
+        {
+            if (!ids.Contains(screen.Id))
+                ids.Add(screen.Id);
+        }
+
+        foreach (var screen in after.Screens)
+        {
+            if (!ids.Contains(screen.Id))
+                ids.Add(screen.Id);
+        }
+
+        foreach (var id in ids)
+        {
+            var previous = FindMonitorSnapshot(before, id);
+            var next = FindMonitorSnapshot(after, id);
+            if (previous?.SpecialWorkspace == next?.SpecialWorkspace)
+                continue;
+
+            var name = next?.Monitor.Name ?? previous?.Monitor.Name ?? "";
+            events.Add(new ActiveSpecial(next?.SpecialWorkspace, name));
+        }
+    }
+
+    private static MonitorSnapshot? FindMonitorSnapshot(State state, MonitorId id)
+    {
+        foreach (var screen in state.Screens)
+        {
+            if (screen.Id == id)
+                return screen;
+        }
+
+        return null;
     }
 
     private static void AddMonitorEvents(List<StreamEvent> events, State before, State after)

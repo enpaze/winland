@@ -275,7 +275,7 @@ public sealed partial class WindowManager
 
         Restamp(there, []);
         Give(dragged, there);
-        (_extraEvents ??= []).Add(new ClientIntoGroup(dragged));
+        Raise(new ClientIntoGroup(dragged));
         var outcome = Present(there, covered, there.Layout.Visible(), focus: dragged) with { Consumed = consumed };
         return from != there && _workspaces.Find(from.Id) is LiveWorkspace left && _workspaces.Shown.IsShown(left.Id)
             ? outcome with { Placements = [.. left.Layout.Placed(), .. outcome.Placements] }

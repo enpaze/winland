@@ -12,8 +12,6 @@ public sealed partial class WindowManager
         _stacking.Add(window);
     }
 
-    private List<StreamEvent>? _extraEvents;
-
     private Outcome Consider(WindowFocused focused)
     {
         var window = focused.Window;

@@ -37,7 +37,7 @@ public sealed partial class WindowManager
         else
             _pins.Unpin(id);
 
-        (_extraEvents ??= []).Add(new ClientPinned(id, want));
+        Raise(new ClientPinned(id, want));
         return Settle(desk, id);
     }
 
