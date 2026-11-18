@@ -116,7 +116,7 @@ internal sealed partial class DwindleLayout
         replacement.Parent = null;
     }
 
-    private void Refit()
+    private protected override void Refit()
     {
         if (_root is null || FullscreenClients.Covering(_clients))
             return;

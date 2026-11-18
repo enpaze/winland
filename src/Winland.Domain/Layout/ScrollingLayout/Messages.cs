@@ -14,7 +14,7 @@ internal sealed partial class ScrollingLayout
 
             var last = _columns[^1];
             CenterColumn(last);
-            Recalculate();
+            Refit();
             if (last.Cells.Count > 0)
                 Focus(last.Cells[^1]);
             return Placements();
@@ -33,12 +33,12 @@ internal sealed partial class ScrollingLayout
                 return Placements();
 
             SetOffset(MaxExtent());
-            Recalculate();
+            Refit();
             return Placements();
         }
 
         FitColumn(neighbor);
-        Recalculate();
+        Refit();
         if (neighbor.Cells.Count > 0)
             Focus(forward ? neighbor.Cells[0] : neighbor.Cells[^1]);
         return Placements();
@@ -57,7 +57,7 @@ internal sealed partial class ScrollingLayout
 
             foreach (var item in _columns)
                 item.Width = Math.Clamp(width, ScrollingOptions.MinColumnWidth, ScrollingOptions.MaxColumnWidth);
-            Recalculate();
+            Refit();
             return Placements();
         }
 
@@ -77,7 +77,7 @@ internal sealed partial class ScrollingLayout
 
         column.Width = Math.Clamp(column.Width, ScrollingOptions.MinColumnWidth, ScrollingOptions.MaxColumnWidth);
         FitColumn(column);
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -179,7 +179,7 @@ internal sealed partial class ScrollingLayout
         }
 
         FitColumn(neighbor);
-        Recalculate();
+        Refit();
         _moved = true;
 
         next = Remember(neighbor, target);
@@ -298,7 +298,7 @@ internal sealed partial class ScrollingLayout
             }
         }
 
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -351,7 +351,7 @@ internal sealed partial class ScrollingLayout
 
         (_columns[index], _columns[target]) = (_columns[target], _columns[index]);
         FitColumn(column);
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -493,7 +493,7 @@ internal sealed partial class ScrollingLayout
         SetFloating(id, false);
         InsertTiled(id, window);
         _focus = window;
-        Recalculate();
+        Refit();
         return Placements();
     }
 }

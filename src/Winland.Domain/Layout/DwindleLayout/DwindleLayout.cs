@@ -4,27 +4,8 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
 {
     private readonly Dictionary<ClientId, Node> _nodes = [];
     private readonly Dictionary<ClientId, Suspension> _suspended = [];
-    private LayoutOptions _options = LayoutOptions.Unconfigured;
     private Node? _root;
     private ClientId? _splitTarget;
-    private Rectangle _area;
-    private Rectangle _monitor;
-
-    public IReadOnlyList<Placement> Apply(LayoutOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        _options = options;
-        Refit();
-        return Placements();
-    }
-
-    public void Fit(Rectangle area, Rectangle monitor)
-    {
-        _area = area;
-        if (monitor.Width > 0 && monitor.Height > 0)
-            _monitor = monitor;
-        Refit();
-    }
 
     public IReadOnlyList<Placement> SetFullscreen(WindowId window, FullscreenMode mode)
     {
@@ -145,15 +126,8 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return Placements();
     }
 
-    public IReadOnlyList<Placement> Minimize(WindowId window)
+    private protected override IReadOnlyList<Placement> MinimizeTiled(ClientId id)
     {
-        var id = new ClientId(window.Value);
-        if (_floating.Contains(id))
-        {
-            SetMinimized(id, true);
-            return [];
-        }
-
         if (!_nodes.Remove(id, out var node))
             return [];
 
@@ -167,19 +141,9 @@ internal sealed partial class DwindleLayout : TiledLayout, Layout
         return Placements();
     }
 
-    public IReadOnlyList<Placement> Restore(WindowId window)
+    private protected override IReadOnlyList<Placement> RestoreTiled(WindowId window)
     {
         var id = new ClientId(window.Value);
-        if (_floating.TryGet(id, out var bounds))
-        {
-            var index = IndexOf(id);
-            if (index < 0 || !_clients[index].Minimized)
-                return [];
-
-            SetMinimized(id, false);
-            return [new Placement(id, bounds)];
-        }
-
         if (!_suspended.Remove(id, out var suspension))
             return [];
 

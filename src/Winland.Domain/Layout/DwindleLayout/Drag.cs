@@ -2,19 +2,9 @@ namespace Winland.Domain;
 
 internal sealed partial class DwindleLayout : IMouseDragHost
 {
-    private readonly MouseDrag _drag = new();
-
-    MouseDrag Layout.MouseDrag => _drag;
-
     FloatingClients IMouseDragHost.Floating => _floating;
 
     public IReadOnlyList<Placement> Drag(WindowId window, PointerDrag drag) => _drag.Step(this, window, drag);
-
-    public IReadOnlyList<Placement> PlaceFloating(WindowId window, Rectangle bounds)
-    {
-        var id = new ClientId(window.Value);
-        return _floating.Place(id, bounds, _options.FloatingOnScreen(_area), FloatingLimits(id)) ? WithFloating(id) : [];
-    }
 
     bool IMouseDragHost.TryDragBounds(ClientId id, out Rectangle bounds, out bool floating)
     {
@@ -94,13 +84,4 @@ internal sealed partial class DwindleLayout : IMouseDragHost
     IReadOnlyList<Placement> IMouseDragHost.ShowFloating(ClientId id) => WithFloating(id);
 
     IReadOnlyList<Placement> IMouseDragHost.EndInPlace() => [];
-
-    private IReadOnlyList<Placement> WithFloating(ClientId id)
-    {
-        var placements = new List<Placement>(Placements());
-        if (_floating.TryGet(id, out var box))
-            placements.Add(new Placement(id, box));
-
-        return placements;
-    }
 }

@@ -47,7 +47,7 @@ internal sealed partial class ScrollingLayout
         if (held != mode)
             FitColumn(column);
 
-        Recalculate();
+        Refit();
         return Visible();
     }
 
@@ -69,7 +69,7 @@ internal sealed partial class ScrollingLayout
             return [];
 
         if (client.LayoutFullscreen)
-            Recalculate();
+            Refit();
 
         var placements = new List<Placement>(Visible());
         if (mode != FullscreenMode.None && !placements.Exists(placement => placement.Client == id) && TryBounds(window, out var bounds))

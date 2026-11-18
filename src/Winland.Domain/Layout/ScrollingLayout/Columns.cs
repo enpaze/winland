@@ -112,7 +112,7 @@ internal sealed partial class ScrollingLayout
         return end;
     }
 
-    private void Recalculate()
+    private protected override void Refit()
     {
         var usable = Usable();
         if (usable.Width <= 0 || usable.Height <= 0 || _columns.Count == 0)

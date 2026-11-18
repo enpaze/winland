@@ -34,7 +34,7 @@ internal sealed partial class ScrollingLayout
             return [];
 
         _focus = window;
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -96,7 +96,7 @@ internal sealed partial class ScrollingLayout
         }
 
         ResizeRow(cell, deltaY, corner);
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -118,7 +118,7 @@ internal sealed partial class ScrollingLayout
         var floated = FloatingLimits(id).Clamp(_floating.Around(id, tile, _options.FloatingOnScreen(_area)));
         _floating.Set(id, floated);
         SetFloating(id, true);
-        Recalculate();
+        Refit();
         var placements = new List<Placement>(Placements()) { new(id, floated) };
         return placements;
     }

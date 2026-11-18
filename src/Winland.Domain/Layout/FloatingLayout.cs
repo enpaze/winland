@@ -10,7 +10,7 @@ internal sealed class FloatingLayout : Layout
 
     public string? LayoutMessageError => _messageError;
 
-    MouseDrag Layout.MouseDrag => ((Layout)_inner).MouseDrag;
+    public MouseDrag MouseDrag => _inner.MouseDrag;
 
     public IReadOnlyList<Placement> Apply(LayoutOptions options) => _inner.Apply(options);
 

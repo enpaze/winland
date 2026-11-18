@@ -2,10 +2,6 @@ namespace Winland.Domain;
 
 internal sealed partial class ScrollingLayout : IMouseDragHost
 {
-    private readonly MouseDrag _drag = new();
-
-    MouseDrag Layout.MouseDrag => _drag;
-
     FloatingClients IMouseDragHost.Floating => _floating;
 
     public IReadOnlyList<Placement> Drag(WindowId window, PointerDrag drag)
@@ -14,12 +10,6 @@ internal sealed partial class ScrollingLayout : IMouseDragHost
             _dragging = false;
 
         return _drag.Step(this, window, drag);
-    }
-
-    public IReadOnlyList<Placement> PlaceFloating(WindowId window, Rectangle bounds)
-    {
-        var id = new ClientId(window.Value);
-        return _floating.Place(id, bounds, _options.FloatingOnScreen(_area), FloatingLimits(id)) ? WithFloating(id) : [];
     }
 
     bool IMouseDragHost.LiftTile(ClientId id, out Rectangle box)
@@ -32,7 +22,7 @@ internal sealed partial class ScrollingLayout : IMouseDragHost
         RemoveCell(cell);
         SetFloating(id, true);
         _floating.Set(id, box);
-        Recalculate();
+        Refit();
         return true;
     }
 
@@ -52,7 +42,7 @@ internal sealed partial class ScrollingLayout : IMouseDragHost
 
     IReadOnlyList<Placement> IMouseDragHost.EndInPlace()
     {
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -84,7 +74,7 @@ internal sealed partial class ScrollingLayout : IMouseDragHost
         }
 
         _focus = window;
-        Recalculate();
+        Refit();
         return Placements();
     }
 
@@ -150,13 +140,5 @@ internal sealed partial class ScrollingLayout : IMouseDragHost
         }
 
         return false;
-    }
-
-    private IReadOnlyList<Placement> WithFloating(ClientId id)
-    {
-        var placements = new List<Placement>(Placements());
-        if (_floating.TryGet(id, out var box))
-            placements.Add(new Placement(id, box));
-        return placements;
     }
 }
