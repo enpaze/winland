@@ -29,10 +29,6 @@ internal interface ITaskbarSession
 
 public static class TaskbarControl
 {
-    internal static ITaskbarSession Current { get; set; } = NullTaskbarSession.Instance;
-
-    public static void InstallSystem() => Current = LiveTaskbarSession.Instance;
-
     public static void RecoverHidden()
     {
         if (Taskbar.MarkerPresent())

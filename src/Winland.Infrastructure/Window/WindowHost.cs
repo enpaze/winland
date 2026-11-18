@@ -40,9 +40,14 @@ public sealed class WindowHost : IDisposable
     private volatile bool _taskbarReleased;
     private bool _markerSeen;
     private bool _disposed;
-    private ITaskbarSession _taskbar = NullTaskbarSession.Instance;
+    private readonly ITaskbarSession _taskbar;
 
-    public WindowHost(WindowManager core, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null)
+    public WindowHost(WindowManager core, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null, bool controlTaskbar = false)
+        : this(core, controlTaskbar ? LiveTaskbarSession.Instance : NullTaskbarSession.Instance, onRecovery, pipeName)
+    {
+    }
+
+    internal WindowHost(WindowManager core, ITaskbarSession taskbar, Action<RecoverySnapshot>? onRecovery = null, string? pipeName = null)
     {
         ArgumentNullException.ThrowIfNull(core);
         _core = core;
@@ -60,17 +65,7 @@ public sealed class WindowHost : IDisposable
             if (_looping)
                 FollowTaskbar();
         });
-        _taskbar = TaskbarControl.Current;
-    }
-
-    internal ITaskbarSession TaskbarSession
-    {
-        get => _taskbar;
-        set
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            _taskbar = value;
-        }
+        _taskbar = taskbar;
     }
 
     public Action? SessionEnding { get; set; }

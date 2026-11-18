@@ -66,9 +66,7 @@ public class TaskbarHostTests
         {
             ReadConfig = () => new ConfigRead(ConfigParser.Parse(File.ReadAllText(files.Path))),
         };
-        var host = new WindowHost(core);
-        host.TaskbarSession = bars;
-        return host;
+        return new WindowHost(core, bars);
     }
 
     private sealed class ConfigDir : IDisposable

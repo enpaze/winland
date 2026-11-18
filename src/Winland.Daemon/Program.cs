@@ -131,8 +131,7 @@ static int Run(string? path, RollingLogWriter log)
     if (prior is not null)
         SessionEffects.RestoreCursors();
     SessionEffects.InstallSystem();
-    TaskbarControl.InstallSystem();
-    using var host = new WindowHost(core, store.Save, CommandClient.ConfiguredName());
+    using var host = new WindowHost(core, store.Save, CommandClient.ConfiguredName(), controlTaskbar: true);
     var stopGate = new Lock();
     var stopped = false;
     void StopOnce()
