@@ -19,7 +19,7 @@ public sealed partial class WindowManager
     private Outcome CycleWorkspaceLayout(string arguments)
     {
         var desk = TopWorkspace();
-        var next = NextLayout(LayoutFactory.NameOf(desk.Layout), GoesBack(arguments));
+        var next = NextLayout(LayoutFactory.NameOf(desk.Layout), Is(FirstToken(arguments), "back"));
         return ChangeLayout(desk, LayoutFactory.Named(next)!);
     }
 
@@ -29,16 +29,6 @@ public sealed partial class WindowManager
         AdoptLayout(desk, created);
         Refit(desk);
         return PresentIfShown(desk, covered, desk.Layout.Visible());
-    }
-
-    private static bool GoesBack(string arguments)
-    {
-        var word = arguments.Trim();
-        var space = word.IndexOf(' ', StringComparison.Ordinal);
-        if (space >= 0)
-            word = word[..space];
-
-        return Is(word, "back");
     }
 
     private static string NextLayout(string current, bool back)
