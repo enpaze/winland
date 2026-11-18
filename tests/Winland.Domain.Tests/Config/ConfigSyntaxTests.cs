@@ -90,6 +90,8 @@ public class ConfigSyntaxTests
             #hyprlang else # the other branch
             gaps_out = 5
             # hyprlang endif
+            # hyprlang iffy
+            # Hyprlang if MISSING
             """);
 
         Assert.IsEmpty(document.Warnings);
@@ -107,6 +109,18 @@ public class ConfigSyntaxTests
 
         Assert.AreEqual(new ConfigWarning(1, warning), Assert.ContainsSingle(document.Warnings));
         Assert.AreEqual(new Setting("gaps_out", "4"), Assert.ContainsSingle(document.Settings));
+    }
+
+    [TestMethod]
+    public void BracesInATextValueAreKeptAsWritten()
+    {
+        var document = ConfigParser.Parse("""
+            $n = 2
+            exec-once = echo {{$n + 1}} \{x\}
+            """);
+
+        Assert.IsEmpty(document.Warnings);
+        Assert.AreEqual(new Setting("exec-once", @"echo {{2 + 1}} \{x\}"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]

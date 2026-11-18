@@ -66,12 +66,12 @@ public sealed class FileConfigSourceTests : IDisposable
     public void AFileAnotherProgramHasOpenIsStillRead()
     {
         var path = Path.Combine(_root, "winland.conf");
-        File.WriteAllText(path, "general { gaps_in = 5 }");
+        File.WriteAllText(path, "gaps_in = 5");
         using var editor = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
 
         var text = new FileConfigSource(_root).Read(path);
 
-        Assert.AreEqual("general { gaps_in = 5 }", text);
+        Assert.AreEqual("gaps_in = 5", text);
     }
 
     [TestMethod]
