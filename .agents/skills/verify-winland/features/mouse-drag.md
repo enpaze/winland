@@ -6,6 +6,7 @@ A mouse button bound to `movewindow` or `resizewindow` lets the user drag a wind
 
 - `dispatcher:resizewindow` resizes a floating Client from the corner nearest the pointer, or changes a tiled Client's split ratios.
 - `move-drag` moves a floating Client with the pointer while a `movewindow` mouse bind is held.
+- `border-resize` lets the neighbours of a tiled Client follow its sizing border while the system resizes it.
 
 ## How to get to it (user POV)
 
@@ -28,6 +29,7 @@ Preconditions:
 - **Open a floating window.** The driver opens `WinlandDrag` at 400 by 300. Its Client reports `floating: true`, and the driver focuses it with `winland dispatch focuswindow address:<hwnd>`.
 - **Move.** The driver glides the real pointer to the middle of the window, holds `Ctrl+Alt+Shift`, presses the left button, glides 160 pixels right and 90 down, and releases. The window's frame moves by 160,90 within 12 pixels and keeps its width.
 - **Resize.** The driver puts the pointer 20 pixels inside the bottom right corner, holds `Ctrl+Alt+Shift`, presses the right button, glides 120 pixels right and 70 down, and releases. The window grows at least 90 pixels wider and 50 taller, and its left edge stays within 6 pixels.
+- **Border drag of a tiled Client.** In a second run the driver opens `WinlandVerify 1` on a thread of its own that takes 40 ms to take each move, and `WinlandVerify 2`. They tile side by side, and the driver focuses the right one. It checks that the point 3 pixels left of the right window's frame is that window's left sizing border, presses the left button there with no modifiers, glides 320 pixels right in 16 steps, holds still for 600 ms, and releases. A second thread samples the gap between the two frames the whole time. The driver logs how often the gap was 0 during the drag and its largest value, and it fails unless the gap is back to its rest value within 250 ms of the last step and stays there until release. The windows still meet after release.
 
 ## Gotchas
 
@@ -35,4 +37,5 @@ Preconditions:
 - A drag picks up the window as soon as the pointer moves. A press with no Client under the pointer does not drag.
 - The bound button is swallowed, so the window under the pointer does not get the click.
 - The `Win` drags in the first list come from the starter config. The driver's config binds the left and right buttons with `Ctrl+Alt+Shift` instead of `Win`.
-- The driver does not reach a tiled Client lifted and dropped, a drag onto another Monitor, a drag into or out of a Group, title-bar and border moves, `resizewindow, 1`, or a drag that ends fullscreen or maximized.
+- A neighbour that is slow to lay itself out trails a moving border by its own layout time, so the border drag driver asserts only on the gap after the border stops. It logs the gap during the drag. It drags on the primary Monitor only.
+- The driver does not reach a tiled Client lifted and dropped, a drag onto another Monitor, a drag into or out of a Group, title-bar moves, `resizewindow, 1`, or a drag that ends fullscreen or maximized.
