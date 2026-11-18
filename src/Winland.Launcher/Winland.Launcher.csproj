@@ -3,6 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net11.0-windows</TargetFramework>
     <AssemblyName>winland-launcher</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <PublishAot>true</PublishAot>
     <StartupHookSupport>false</StartupHookSupport>
     <InvariantGlobalization>true</InvariantGlobalization>
