@@ -130,6 +130,22 @@ public class EmptyStepTests
     }
 
     [TestMethod]
+    public void AMoveWithoutAStepStillMovesThePointerATileReturnsTo()
+    {
+        var core = new WindowManager(ConfigParser.Parse(FlatConfig("input:follow_mouse = 0\n")));
+        core.Handle(new WindowAppeared(OneWindow, Area));
+        core.Handle(new WindowAppeared(new WindowId(2), Area));
+        core.Handle(new Dispatch("togglefloating"));
+        Move(core, new Point(1700, 1000), 1_000);
+
+        var moved = Move(core, new Point(200, 1000), 1_100);
+        var tiled = core.Handle(new Dispatch("togglefloating"));
+
+        Assert.IsTrue(moved.IsEmpty);
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), Client(tiled, 1).Bounds);
+    }
+
+    [TestMethod]
     public void AMoveThatChangesTheFocusIsNotEmpty()
     {
         var (core, laid) = Tiled();

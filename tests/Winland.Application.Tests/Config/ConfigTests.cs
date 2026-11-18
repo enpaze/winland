@@ -564,7 +564,7 @@ public class ConfigTests
     }
 
     [TestMethod]
-    public void TheMouseFlagAndADescriptionAreParsed()
+    public void AMouseKeyBindAndADescriptionAreParsed()
     {
         var text =
             "bind = SUPER, mouse:272, movewindow\n" +
