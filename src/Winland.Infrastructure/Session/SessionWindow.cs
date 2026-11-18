@@ -10,7 +10,6 @@ internal sealed class SessionWindow : IDisposable
 {
     internal const string ClassName = "WinlandSessionHost";
 
-    private const int ClassAlreadyExists = 1410;
     private const uint TimerMessage = 0x0113;
     private const nuint ShellTimer = 1;
 
@@ -48,7 +47,7 @@ internal sealed class SessionWindow : IDisposable
         Active = this;
         try
         {
-            Register();
+            WindowClass.Register(ClassName, Proc, "session");
             _hwnd = Create();
             Listen();
         }
@@ -238,28 +237,6 @@ internal sealed class SessionWindow : IDisposable
         }
 
         _power.Add(notify);
-    }
-
-    private static unsafe void Register()
-    {
-        var module = PInvoke.GetModuleHandle((string?)null);
-        var instance = (HINSTANCE)module.DangerousGetHandle();
-        module.SetHandleAsInvalid();
-        fixed (char* name = ClassName)
-        {
-            var info = new WNDCLASSEXW
-            {
-                cbSize = (uint)Marshal.SizeOf<WNDCLASSEXW>(),
-                lpfnWndProc = Proc,
-                hInstance = instance,
-                lpszClassName = name,
-            };
-            if (PInvoke.RegisterClassEx(in info) != 0)
-                return;
-
-            if (Marshal.GetLastPInvokeError() != ClassAlreadyExists)
-                throw new InvalidOperationException($"The session window class was not registered ({Marshal.GetLastPInvokeError()}).");
-        }
     }
 
     private static unsafe HWND Create()

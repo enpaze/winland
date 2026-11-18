@@ -10,7 +10,6 @@ namespace Winland.Infrastructure;
 internal static class TrayHost
 {
     private const string ClassName = "WinlandTray";
-    private const int ClassAlreadyExists = 1410;
     private const uint IconId = 1;
     private const uint SyncMessage = 0x8000 + 0x72;
     private const uint QuitMessage = 0x0012;
@@ -141,7 +140,7 @@ internal static class TrayHost
         _taskbarCreated = PInvoke.RegisterWindowMessage("TaskbarCreated");
         try
         {
-            Register();
+            WindowClass.Register(ClassName, Proc, "notification-area");
         }
         catch (InvalidOperationException exception)
         {
@@ -589,28 +588,6 @@ internal static class TrayHost
         finally
         {
             _ = PInvoke.DestroyMenu(menu);
-        }
-    }
-
-    private static unsafe void Register()
-    {
-        var module = PInvoke.GetModuleHandle((string?)null);
-        var instance = (HINSTANCE)module.DangerousGetHandle();
-        module.SetHandleAsInvalid();
-        fixed (char* name = ClassName)
-        {
-            var info = new WNDCLASSEXW
-            {
-                cbSize = (uint)Marshal.SizeOf<WNDCLASSEXW>(),
-                lpfnWndProc = Proc,
-                hInstance = instance,
-                lpszClassName = name,
-            };
-            if (PInvoke.RegisterClassEx(in info) != 0)
-                return;
-
-            if (Marshal.GetLastPInvokeError() != ClassAlreadyExists)
-                throw new InvalidOperationException($"The notification-area window class was not registered ({Marshal.GetLastPInvokeError()}).");
         }
     }
 

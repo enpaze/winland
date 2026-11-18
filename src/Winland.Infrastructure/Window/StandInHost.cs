@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
@@ -9,7 +8,6 @@ internal static class StandInHost
 {
     private const string HostClass = "WinlandStandInHost";
     private const string StandInClass = "WinlandStandIn";
-    private const int ClassAlreadyExists = 1410;
     private const uint CreateMessage = 0x8000 + 0x48;
     private const uint QuitMessage = 0x0012;
     private const uint MouseActivateMessage = 0x0021;
@@ -84,8 +82,8 @@ internal static class StandInHost
     {
         try
         {
-            Register(HostClass);
-            Register(StandInClass);
+            WindowClass.Register(HostClass, Proc, "stand-in");
+            WindowClass.Register(StandInClass, Proc, "stand-in");
             var host = CreateHost();
             if (host.IsNull)
                 return;
@@ -138,26 +136,4 @@ internal static class StandInHost
             null,
             null,
             null);
-
-    private static unsafe void Register(string name)
-    {
-        var module = PInvoke.GetModuleHandle((string?)null);
-        var instance = (HINSTANCE)module.DangerousGetHandle();
-        module.SetHandleAsInvalid();
-        fixed (char* className = name)
-        {
-            var info = new WNDCLASSEXW
-            {
-                cbSize = (uint)Marshal.SizeOf<WNDCLASSEXW>(),
-                lpfnWndProc = Proc,
-                hInstance = instance,
-                lpszClassName = className,
-            };
-            if (PInvoke.RegisterClassEx(in info) != 0)
-                return;
-
-            if (Marshal.GetLastPInvokeError() != ClassAlreadyExists)
-                throw new InvalidOperationException($"The stand-in window class was not registered ({Marshal.GetLastPInvokeError()}).");
-        }
-    }
 }

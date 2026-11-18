@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
@@ -8,7 +7,6 @@ namespace Winland.Infrastructure;
 internal static class GroupBarHost
 {
     private const string ClassName = DecorationStack.GroupBarClass;
-    private const int ClassAlreadyExists = 1410;
     private const uint SyncMessage = 0x8000 + 0x47;
     private const uint StackMessage = 0x8000 + 0x48;
     private const uint QuitMessage = 0x0012;
@@ -147,7 +145,7 @@ internal static class GroupBarHost
         _ = PInvoke.PeekMessage(out _, default, 0, 0, PEEK_MESSAGE_REMOVE_TYPE.PM_NOREMOVE);
         try
         {
-            Register();
+            WindowClass.Register(ClassName, Proc, "group bar");
         }
         catch (InvalidOperationException exception)
         {
@@ -344,28 +342,6 @@ internal static class GroupBarHost
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
             Console.Error.WriteLine(exception);
-        }
-    }
-
-    private static unsafe void Register()
-    {
-        var module = PInvoke.GetModuleHandle((string?)null);
-        var instance = (HINSTANCE)module.DangerousGetHandle();
-        module.SetHandleAsInvalid();
-        fixed (char* name = ClassName)
-        {
-            var info = new WNDCLASSEXW
-            {
-                cbSize = (uint)Marshal.SizeOf<WNDCLASSEXW>(),
-                lpfnWndProc = Proc,
-                hInstance = instance,
-                lpszClassName = name,
-            };
-            if (PInvoke.RegisterClassEx(in info) != 0)
-                return;
-
-            if (Marshal.GetLastPInvokeError() != ClassAlreadyExists)
-                throw new InvalidOperationException($"The group bar window class was not registered ({Marshal.GetLastPInvokeError()}).");
         }
     }
 
