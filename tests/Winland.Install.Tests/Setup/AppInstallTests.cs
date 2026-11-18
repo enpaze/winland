@@ -25,7 +25,7 @@ public class AppInstallTests
     {
         install = new AppInstall(Layout(), tasks, files, registry, shortcuts, session);
         files.Seed(Source, [1]);
-        files.Seed(Path.Combine(Path.GetDirectoryName(Source)!, LogonTaskDefinition.LauncherName), [3]);
+        files.Seed(InstallLocations.Launcher(Source), [3]);
         files.Seed(@"C:\Users\me\Downloads\Winland\winland\winland.dll", [2]);
         files.Seed(@"C:\Users\me\Downloads\Winland\winland\Winland.Domain.dll", [5]);
         files.Seed(Path.Combine(Config, "winland.conf"), [9]);
@@ -270,18 +270,18 @@ public class AppInstallTests
     [Fact]
     public void MachineUpdateWithoutTheLauncherLeavesTheRunningInstallAlone()
     {
-        files.DeleteFile(Path.Combine(Path.GetDirectoryName(Source)!, LogonTaskDefinition.LauncherName));
+        files.DeleteFile(InstallLocations.Launcher(Source));
         files.Seed(Path.Combine(Machine, "winland.exe"), [8]);
-        files.Seed(Path.Combine(Machine, LogonTaskDefinition.LauncherName), [9]);
+        files.Seed(Path.Combine(Machine, InstallLocations.LauncherName), [9]);
         registry.SetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion", "0.1.0", expandable: false);
 
         var error = Assert.Throws<InvalidOperationException>(() =>
             install.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0"));
 
-        Assert.Contains(LogonTaskDefinition.LauncherName, error.Message, StringComparison.Ordinal);
+        Assert.Contains(InstallLocations.LauncherName, error.Message, StringComparison.Ordinal);
         Assert.Empty(session.Operations);
         Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Machine, LogonTaskDefinition.LauncherName)));
+        Assert.Equal([9], files.Read(Path.Combine(Machine, InstallLocations.LauncherName)));
         Assert.Equal("0.1.0", Text(RegistryRoot.Machine, "DisplayVersion"));
     }
 

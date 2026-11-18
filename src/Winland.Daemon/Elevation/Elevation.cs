@@ -24,7 +24,7 @@ static class Elevation
     {
         var path = Environment.ProcessPath
             ?? throw new InvalidOperationException("The executable path is not available.");
-        var launcher = Path.Combine(Path.GetDirectoryName(path)!, LogonTaskDefinition.LauncherName);
+        var launcher = InstallLocations.Launcher(path);
         if (File.Exists(launcher))
             path = launcher;
         var name = "winland-output-" + Guid.NewGuid().ToString("N");

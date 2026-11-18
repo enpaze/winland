@@ -53,7 +53,7 @@ public sealed class AppInstall
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
         var plan = Plan(executable, layout.MachineDirectory);
-        Require(plan.Files, LogonTaskDefinition.LauncherName, plan.SourceDirectory);
+        Require(plan.Files, InstallLocations.LauncherName, plan.SourceDirectory);
         ApplyStopped(plan, perUser: false);
         var installed = plan.InstalledExecutable;
         if (logon)
@@ -98,7 +98,7 @@ public sealed class AppInstall
 
         var plan = Plan(sourceExecutable, destination);
         if (!perUser)
-            Require(plan.Files, LogonTaskDefinition.LauncherName, plan.SourceDirectory);
+            Require(plan.Files, InstallLocations.LauncherName, plan.SourceDirectory);
 
         var running = ApplyStopped(plan, perUser);
         var installed = plan.InstalledExecutable;

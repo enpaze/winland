@@ -28,7 +28,7 @@ sealed class SchtasksCatalog : ITaskCatalog
             return false;
         var xml = XDocument.Parse(result.Output);
         var command = xml.Descendants().Single(element => element.Name.LocalName == "Command");
-        var launcher = Path.Combine(Path.GetDirectoryName(executable)!, LogonTaskDefinition.LauncherName);
+        var launcher = InstallLocations.Launcher(executable);
         if (!command.Value.Equals(launcher, StringComparison.OrdinalIgnoreCase))
         {
             command.Value = launcher;

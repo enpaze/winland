@@ -64,7 +64,7 @@ sealed class DaemonSession : IDaemonSession
         var start = new ProcessStartInfo
         {
             FileName = Elevation.IsElevated()
-                ? Path.Combine(Path.GetDirectoryName(executable)!, LogonTaskDefinition.LauncherName)
+                ? InstallLocations.Launcher(executable)
                 : executable,
             WorkingDirectory = Path.GetDirectoryName(executable) ?? Environment.CurrentDirectory,
             UseShellExecute = true,

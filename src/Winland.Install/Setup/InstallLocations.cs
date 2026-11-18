@@ -36,6 +36,10 @@ public static class InstallLocations
 
     public static string Executable(string directory) => Path.Combine(directory, ExecutableName);
 
+    public const string LauncherName = "winland-launcher.exe";
+
+    public static string Launcher(string executable) => Path.Combine(Path.GetDirectoryName(executable)!, LauncherName);
+
     public static string Shortcut(string programsDirectory) => Path.Combine(programsDirectory, ShortcutName);
 
     public static bool SameFolder(string left, string right) =>
