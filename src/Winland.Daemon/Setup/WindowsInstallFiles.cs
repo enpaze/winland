@@ -245,6 +245,19 @@ sealed class WindowsInstallFiles : IFileTree
 
     internal static string RetirementScript(int processId, string directory) =>
         "Wait-Process -Id " + processId + " -ErrorAction SilentlyContinue\r\n"
+        + "function Test-RetiredName([string]$Name) {\r\n"
+        + "  $marker = '.winland-old'\r\n"
+        + "  $at = $Name.LastIndexOf($marker)\r\n"
+        + "  if ($at -lt 0) { return $false }\r\n"
+        + "  $rest = $Name.Substring($at + $marker.Length)\r\n"
+        + "  if ($rest.Length -eq 0) { return $true }\r\n"
+        + "  if ($rest.Length -ne 33 -or -not $rest.StartsWith('-')) { return $false }\r\n"
+        + "  foreach ($c in $rest.Substring(1).ToCharArray()) {\r\n"
+        + "    $hex = ($c -ge '0' -and $c -le '9') -or ($c -ge 'a' -and $c -le 'f') -or ($c -ge 'A' -and $c -le 'F')\r\n"
+        + "    if (-not $hex) { return $false }\r\n"
+        + "  }\r\n"
+        + "  return $true\r\n"
+        + "}\r\n"
         + "function Remove-Retired([string]$Path) {\r\n"
         + "  if (-not (Test-Path -LiteralPath $Path)) { return }\r\n"
         + "  $attributes = [IO.File]::GetAttributes($Path)\r\n"
@@ -255,7 +268,7 @@ sealed class WindowsInstallFiles : IFileTree
         + "    foreach ($child in [IO.Directory]::EnumerateFileSystemEntries($Path)) { Remove-Retired $child }\r\n"
         + "    return\r\n"
         + "  }\r\n"
-        + "  if ([IO.Path]::GetFileName($Path).Contains('.winland-old')) {\r\n"
+        + "  if (Test-RetiredName([IO.Path]::GetFileName($Path))) {\r\n"
         + "    try {\r\n"
         + "      [IO.File]::SetAttributes($Path, [IO.FileAttributes]::Normal)\r\n"
         + "      [IO.File]::Delete($Path)\r\n"
@@ -322,7 +335,7 @@ sealed class WindowsInstallFiles : IFileTree
                 continue;
             }
 
-            if (!Path.GetFileName(entry).Contains(".winland-old", StringComparison.Ordinal))
+            if (!IsRetiredName(Path.GetFileName(entry)))
                 continue;
 
             try
@@ -334,6 +347,30 @@ sealed class WindowsInstallFiles : IFileTree
             {
             }
         }
+    }
+
+    private static bool IsRetiredName(string fileName)
+    {
+        const string marker = ".winland-old";
+        var at = fileName.LastIndexOf(marker, StringComparison.Ordinal);
+        if (at < 0)
+            return false;
+
+        var rest = fileName.AsSpan(at + marker.Length);
+        if (rest.IsEmpty)
+            return true;
+
+        if (rest.Length != 33 || rest[0] != '-')
+            return false;
+
+        for (var i = 1; i < rest.Length; i++)
+        {
+            var c = rest[i];
+            if (c is not ((>= '0' and <= '9') or (>= 'a' and <= 'f') or (>= 'A' and <= 'F')))
+                return false;
+        }
+
+        return true;
     }
 
     private static bool ImageIsInside(string directory)
