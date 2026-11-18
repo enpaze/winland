@@ -123,7 +123,7 @@ static class MaintenanceCommand
                 Console.WriteLine("Winland is up to date.");
                 return 0;
             case UpdateResult.NeedsAdministrator:
-                var resultCode = Elevation.Relaunch(["update", "--channel", channel == UpdateChannel.Dev ? "dev" : "stable"]);
+                var resultCode = Elevation.Relaunch(["update", "--channel", UpdateChannels.Name(channel)]);
                 if (resultCode == 0)
                     Remember();
                 return resultCode;

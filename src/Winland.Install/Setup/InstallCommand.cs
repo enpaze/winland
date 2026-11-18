@@ -142,16 +142,9 @@ public closed record InstallCommand
             yield return "--no-start";
     }
 
-    private static UpdateChannel ParseChannel(string value)
-    {
-        if (value.Equals("stable", StringComparison.OrdinalIgnoreCase))
-            return UpdateChannel.Stable;
-
-        if (value.Equals("dev", StringComparison.OrdinalIgnoreCase))
-            return UpdateChannel.Dev;
-
-        throw new ArgumentException("usage: winland update [--channel <stable|dev>]");
-    }
+    private static UpdateChannel ParseChannel(string value) =>
+        UpdateChannels.Parse(value)
+            ?? throw new ArgumentException("usage: winland update [--channel <stable|dev>]");
 
     private static bool Is(string value, string verb) =>
         value.Equals(verb, StringComparison.OrdinalIgnoreCase);
