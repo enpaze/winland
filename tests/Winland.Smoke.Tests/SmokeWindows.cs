@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -9,20 +10,17 @@ namespace Winland.Smoke.Tests;
 internal sealed class SmokeWindows : IDisposable
 {
     public const string ClassName = "WinlandSmokeWindow";
-    public const string FirstTitle = "WinlandSmoke 1";
-    public const string SecondTitle = "WinlandSmoke 2";
 
-    private const uint CloseMessage = 0x8000;
-    private const uint FocusMessage = 0x8001;
+    private const uint InvokeMessage = 0x8001;
     private const int ClassAlreadyExists = 1410;
 
     private static readonly WNDPROC Proc = WindowProc;
 
-    private readonly ManualResetEventSlim _ready = new(false);
+    private readonly ConcurrentQueue<Action> _work = new();
+    private readonly List<HWND> _opened = [];
     private readonly Thread _thread;
+    private readonly ManualResetEventSlim _started = new(false);
     private uint _threadId;
-    private Exception? _error;
-    private bool _opened;
     private bool _closed;
 
     public SmokeWindows()
@@ -33,31 +31,63 @@ internal sealed class SmokeWindows : IDisposable
             Name = "WinlandSmokeWindows",
         };
         _thread.SetApartmentState(ApartmentState.STA);
+        _thread.Start();
+        if (!_started.Wait(TimeSpan.FromSeconds(5)))
+            throw new TimeoutException("The test window thread did not start.");
     }
 
-    public HWND First { get; private set; }
+    public IReadOnlyList<HWND> Opened
+    {
+        get
+        {
+            lock (_opened)
+                return [.. _opened];
+        }
+    }
 
-    public HWND Second { get; private set; }
+    public HWND Open(string title, int width = 200, int height = 150, HWND owner = default)
+    {
+        var hwnd = Invoke(() =>
+        {
+            var origin = WorkArea();
+            var created = Create(title, origin.left + 20, origin.top + 20, width, height, owner);
+            _ = PInvoke.ShowWindow(created, SHOW_WINDOW_CMD.SW_SHOW);
+            return created;
+        });
+        lock (_opened)
+            _opened.Add(hwnd);
 
-    public void Open()
+        return hwnd;
+    }
+
+    public void Invoke(Action work) => Invoke(() =>
+    {
+        work();
+        return true;
+    });
+
+    public T Invoke<T>(Func<T> work)
     {
         ObjectDisposedException.ThrowIf(_closed, this);
-        if (_opened)
-            return;
+        var done = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _work.Enqueue(() =>
+        {
+            try
+            {
+                done.SetResult(work());
+            }
+            catch (Exception exception)
+            {
+                done.SetException(exception);
+            }
+        });
+        if (!PInvoke.PostThreadMessage(_threadId, InvokeMessage, default, default))
+            throw new InvalidOperationException($"The test window thread did not take work ({Marshal.GetLastPInvokeError()}).");
 
-        _opened = true;
-        _thread.Start();
-        if (!_ready.Wait(TimeSpan.FromSeconds(5)))
-            throw new TimeoutException("The test windows did not open.");
+        if (!done.Task.Wait(TimeSpan.FromSeconds(10)))
+            throw new TimeoutException("The test window thread did not finish its work.");
 
-        if (_error is not null)
-            throw new InvalidOperationException("The test windows did not open.", _error);
-    }
-
-    public void FocusFirst()
-    {
-        if (_threadId != 0)
-            _ = PInvoke.PostThreadMessage(_threadId, FocusMessage, default, default);
+        return done.Task.GetAwaiter().GetResult();
     }
 
     public void Close()
@@ -65,56 +95,42 @@ internal sealed class SmokeWindows : IDisposable
         if (_closed)
             return;
 
-        _closed = true;
-        if (_threadId != 0)
-            _ = PInvoke.PostThreadMessage(_threadId, CloseMessage, default, default);
+        try
+        {
+            Invoke(() =>
+            {
+                foreach (var hwnd in Opened)
+                {
+                    if (PInvoke.IsWindow(hwnd))
+                        _ = PInvoke.DestroyWindow(hwnd);
+                }
 
-        if (_opened)
+                PInvoke.PostQuitMessage(0);
+            });
+        }
+        finally
+        {
+            _closed = true;
             _thread.Join(TimeSpan.FromSeconds(5));
-
-        _ready.Dispose();
+            _started.Dispose();
+        }
     }
 
     public void Dispose() => Close();
 
     private void Run()
     {
-        try
-        {
-            _threadId = PInvoke.GetCurrentThreadId();
-            var origin = WorkArea();
-            Register();
-            First = Create(FirstTitle, origin.left + 20, origin.top + 20);
-            Second = Create(SecondTitle, origin.left + 20, origin.top + 20);
-            _ = PInvoke.ShowWindow(First, SHOW_WINDOW_CMD.SW_SHOW);
-            _ = PInvoke.ShowWindow(Second, SHOW_WINDOW_CMD.SW_SHOW);
-            _ready.Set();
-            Pump();
-        }
-        catch (Exception exception)
-        {
-            _error = exception;
-            _ready.Set();
-        }
-    }
-
-    private void Pump()
-    {
+        _threadId = PInvoke.GetCurrentThreadId();
+        _ = PInvoke.PeekMessage(out _, default, 0, 0, PEEK_MESSAGE_REMOVE_TYPE.PM_NOREMOVE);
+        Register();
+        _started.Set();
         while (PInvoke.GetMessage(out var message, default, 0, 0) > 0)
         {
-            if (message.message == FocusMessage)
+            if (message.message == InvokeMessage && message.hwnd.IsNull)
             {
-                _ = PInvoke.SetForegroundWindow(First);
-                continue;
-            }
+                while (_work.TryDequeue(out var work))
+                    work();
 
-            if (message.message == CloseMessage)
-            {
-                if (!First.IsNull)
-                    _ = PInvoke.DestroyWindow(First);
-                if (!Second.IsNull)
-                    _ = PInvoke.DestroyWindow(Second);
-                PInvoke.PostQuitMessage(0);
                 continue;
             }
 
@@ -144,18 +160,18 @@ internal sealed class SmokeWindows : IDisposable
         }
     }
 
-    private static unsafe HWND Create(string title, int x, int y)
+    private static unsafe HWND Create(string title, int x, int y, int width, int height, HWND owner)
     {
         var hwnd = PInvoke.CreateWindowEx(
-            WINDOW_EX_STYLE.WS_EX_APPWINDOW,
+            owner.IsNull ? WINDOW_EX_STYLE.WS_EX_APPWINDOW : default,
             ClassName,
             title,
             WINDOW_STYLE.WS_OVERLAPPEDWINDOW | WINDOW_STYLE.WS_VISIBLE,
             x,
             y,
-            200,
-            150,
-            HWND.Null,
+            width,
+            height,
+            owner,
             null,
             null,
             null);
