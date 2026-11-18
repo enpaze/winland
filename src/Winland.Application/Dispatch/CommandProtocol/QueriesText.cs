@@ -7,30 +7,20 @@ public static partial class CommandProtocol
 {
     internal static string FormatClientsText(State state)
     {
-        var indexed = Index(state);
-        var stacked = new Dictionary<WindowId, int>(state.Stacking.Count);
-        for (var i = 0; i < state.Stacking.Count; i++)
-            stacked[state.Stacking[i]] = i;
-
         var text = new StringBuilder();
-        foreach (var client in state.Clients.OrderBy(client => stacked.TryGetValue(client.Window, out var at) ? at : -1))
-        {
-            if (client.Minimized)
-                continue;
-
-            AppendClient(text, ClientOf(client, state, indexed));
-        }
+        foreach (var client in ListedClients(state))
+            AppendClient(text, client);
 
         return text.ToString();
     }
 
     internal static string FormatActiveWindowText(State state, WindowId? active)
     {
-        if (active is not WindowId window || state.ClientOf(window) is not Client client)
+        if (ActiveClient(state, active) is not { } client)
             return "";
 
         var text = new StringBuilder();
-        AppendClient(text, ClientOf(client, state, Index(state)));
+        AppendClient(text, client);
         return text.ToString();
     }
 
@@ -45,14 +35,9 @@ public static partial class CommandProtocol
 
     internal static string FormatActiveWorkspaceText(State state)
     {
-        var indexed = Index(state);
-        var active = indexed.ByWorkspace[state.ActiveWorkspace];
         var text = new StringBuilder();
-        foreach (var entry in indexed.Workspaces)
-        {
-            if (entry.Address == active.Address && entry.Monitor == active.Monitor && entry.Id == active.Id)
-                AppendWorkspace(text, entry);
-        }
+        foreach (var entry in ActiveWorkspaceEntries(state))
+            AppendWorkspace(text, entry);
 
         return text.ToString();
     }

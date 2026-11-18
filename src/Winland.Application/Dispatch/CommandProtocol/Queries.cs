@@ -6,42 +6,14 @@ namespace Winland.Application;
 
 public static partial class CommandProtocol
 {
-    internal static string FormatClients(State state)
-    {
-        var indexed = Index(state);
-        var views = new List<ClientJson>(state.Clients.Count);
-
-        var stacked = new Dictionary<WindowId, int>(state.Stacking.Count);
-        for (var i = 0; i < state.Stacking.Count; i++)
-            stacked[state.Stacking[i]] = i;
-        var ordered = state.Clients.OrderBy(client => stacked.TryGetValue(client.Window, out var at) ? at : -1).ToList();
-        for (var i = 0; i < ordered.Count; i++)
-        {
-            var client = ordered[i];
-            if (client.Minimized)
-                continue;
-
-            views.Add(ClientOf(client, state, indexed));
-        }
-
-        return JsonSerializer.Serialize(views);
-    }
+    internal static string FormatClients(State state) =>
+        JsonSerializer.Serialize(ListedClients(state));
 
     internal static string FormatWorkspaces(State state) =>
         JsonSerializer.Serialize(Index(state).Workspaces);
 
-    internal static string FormatActiveWorkspace(State state)
-    {
-        var indexed = Index(state);
-        var active = indexed.ByWorkspace[state.ActiveWorkspace];
-        foreach (var entry in indexed.Workspaces)
-        {
-            if (entry.Address == active.Address && entry.Monitor == active.Monitor && entry.Id == active.Id)
-                return JsonSerializer.Serialize(entry);
-        }
-
-        return "{}";
-    }
+    internal static string FormatActiveWorkspace(State state) =>
+        ActiveWorkspaceEntries(state).FirstOrDefault() is { } entry ? JsonSerializer.Serialize(entry) : "{}";
 
     internal static string FormatMonitors(State state, bool includeDisabled = false)
     {
@@ -73,12 +45,34 @@ public static partial class CommandProtocol
         return JsonSerializer.Serialize(views);
     }
 
-    internal static string FormatActiveWindow(State state, WindowId? active)
-    {
-        if (active is not WindowId window || state.ClientOf(window) is not Client client)
-            return "{}";
+    internal static string FormatActiveWindow(State state, WindowId? active) =>
+        ActiveClient(state, active) is { } client ? JsonSerializer.Serialize(client) : "{}";
 
-        return JsonSerializer.Serialize(ClientOf(client, state, Index(state)));
+    private static List<ClientJson> ListedClients(State state)
+    {
+        var indexed = Index(state);
+        var stacked = new Dictionary<WindowId, int>(state.Stacking.Count);
+        for (var i = 0; i < state.Stacking.Count; i++)
+            stacked[state.Stacking[i]] = i;
+
+        var views = new List<ClientJson>(state.Clients.Count);
+        foreach (var client in state.Clients.OrderBy(client => stacked.TryGetValue(client.Window, out var at) ? at : -1))
+        {
+            if (!client.Minimized)
+                views.Add(ClientOf(client, state, indexed));
+        }
+
+        return views;
+    }
+
+    private static ClientJson? ActiveClient(State state, WindowId? active) =>
+        active is WindowId window && state.ClientOf(window) is Client client ? ClientOf(client, state, Index(state)) : null;
+
+    private static IEnumerable<WorkspaceEntryJson> ActiveWorkspaceEntries(State state)
+    {
+        var indexed = Index(state);
+        var active = indexed.ByWorkspace[state.ActiveWorkspace];
+        return indexed.Workspaces.Where(entry => entry.Address == active.Address && entry.Monitor == active.Monitor && entry.Id == active.Id);
     }
 
     private static string[] GroupedOf(State state, WindowId window)
