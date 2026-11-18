@@ -51,7 +51,7 @@ internal sealed partial class DwindleLayout : IMouseDragHost, IDragOwner
         if (_splitTarget == id)
             _splitTarget = sibling is null ? null : Leaf(sibling.Node).Id;
 
-        MarkFloating(id, floating: true);
+        SetFloating(id, floating: true);
         _floating.Set(id, box);
         Refit();
         return true;
@@ -71,7 +71,7 @@ internal sealed partial class DwindleLayout : IMouseDragHost, IDragOwner
     IReadOnlyList<Placement> IMouseDragHost.DropTile(ClientId id, Point pointer)
     {
         _floating.Remove(id);
-        MarkFloating(id, floating: false);
+        SetFloating(id, floating: false);
         var node = new Node { Id = id };
         _nodes[id] = node;
 
@@ -94,13 +94,6 @@ internal sealed partial class DwindleLayout : IMouseDragHost, IDragOwner
     IReadOnlyList<Placement> IMouseDragHost.ShowFloating(ClientId id) => WithFloating(id);
 
     IReadOnlyList<Placement> IMouseDragHost.EndInPlace() => [];
-
-    private void MarkFloating(ClientId id, bool floating)
-    {
-        var index = IndexOf(id);
-        if (index >= 0)
-            _clients[index] = _clients[index] with { Floating = floating };
-    }
 
     private IReadOnlyList<Placement> WithFloating(ClientId id)
     {
