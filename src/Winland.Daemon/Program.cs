@@ -13,7 +13,7 @@ if (args.Length > 0 && args[0].Equals("check", StringComparison.OrdinalIgnoreCas
     return Program.Check(args[1..], ConfigPaths.Default(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)), Console.Error);
 
 if (ControlInvocation.TryCreate(args, out var line, out var events))
-    return ControlCommand.Run(line, events, PipeName());
+    return ControlCommand.Run(line, events, CommandClient.ConfiguredName());
 
 var log = new RollingLogWriter(Console.Error);
 Console.SetError(log);
@@ -59,7 +59,7 @@ static bool IsStart(string[] arguments) =>
 
 static int Relaunch(IReadOnlyList<string> arguments)
 {
-    using (var probe = InstanceLock.TryTake(InstanceLock.NameFor(PipeName() ?? CommandProtocol.PipeName)))
+    using (var probe = InstanceLock.TryTake(InstanceLock.NameFor(CommandClient.ConfiguredName() ?? CommandProtocol.PipeName)))
     {
         if (probe is null)
         {
@@ -83,7 +83,7 @@ static void LaunchConfigured(WindowManager core, IEnumerable<Launch> launches)
 
 static int Run(string? path, RollingLogWriter log)
 {
-    using var instance = InstanceLock.TryTake(InstanceLock.NameFor(PipeName() ?? CommandClient.DefaultName));
+    using var instance = InstanceLock.TryTake(InstanceLock.NameFor(CommandClient.ConfiguredName() ?? CommandClient.DefaultName));
     if (instance is null)
     {
         Console.Error.WriteLine("Winland is already running in this session.");
@@ -132,7 +132,7 @@ static int Run(string? path, RollingLogWriter log)
         SessionEffects.RestoreCursors();
     SessionEffects.InstallSystem();
     TaskbarControl.InstallSystem();
-    using var host = new WindowHost(core, store.Save, PipeName());
+    using var host = new WindowHost(core, store.Save, CommandClient.ConfiguredName());
     var stopGate = new Lock();
     var stopped = false;
     void StopOnce()
@@ -278,12 +278,6 @@ static RecoveryStore StateStore()
         Console.Error.WriteLine(ignored);
 
     return new RecoveryStore(path, RefuseOpen);
-}
-
-static string? PipeName()
-{
-    var configured = Environment.GetEnvironmentVariable("WINLAND_PIPE");
-    return string.IsNullOrWhiteSpace(configured) ? null : configured;
 }
 
 static int Usage()

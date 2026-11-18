@@ -12,6 +12,8 @@ namespace Winland.Infrastructure;
 
 public static class CommandClient
 {
+    public const string PipeVariable = "WINLAND_PIPE";
+
     public static string DefaultName
     {
         get
@@ -19,6 +21,12 @@ public static class CommandClient
             using var process = Process.GetCurrentProcess();
             return CommandProtocol.PipeName + "-" + process.SessionId.ToString(CultureInfo.InvariantCulture);
         }
+    }
+
+    public static string? ConfiguredName()
+    {
+        var configured = Environment.GetEnvironmentVariable(PipeVariable);
+        return string.IsNullOrWhiteSpace(configured) ? null : configured;
     }
 
     public static int? ProcessId(string? pipeName = null, int timeoutMs = 2000)

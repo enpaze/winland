@@ -19,7 +19,7 @@ sealed class DaemonSession : IDaemonSession
 
     private static bool StopCurrent()
     {
-        var pipe = Pipe();
+        var pipe = CommandClient.ConfiguredName();
         if (CommandClient.ProcessId(pipe) is not int id)
             return false;
 
@@ -75,11 +75,5 @@ sealed class DaemonSession : IDaemonSession
 
         using var process = Process.Start(start)
             ?? throw new InvalidOperationException("Winland did not start.");
-    }
-
-    private static string? Pipe()
-    {
-        var configured = Environment.GetEnvironmentVariable("WINLAND_PIPE");
-        return string.IsNullOrWhiteSpace(configured) ? null : configured;
     }
 }

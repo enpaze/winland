@@ -176,7 +176,7 @@ internal static class Taskbar
     }
 
     private static string MarkerPath =>
-        MarkerFile(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), Environment.GetEnvironmentVariable("WINLAND_PIPE"));
+        MarkerFile(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), CommandClient.ConfiguredName());
 
     private static void WriteMarker(int state) => UserAccess.Run(() => WriteMarkerFile(state));
 
