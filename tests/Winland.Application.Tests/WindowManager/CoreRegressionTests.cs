@@ -10,7 +10,7 @@ public class CoreRegressionTests
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new Dispatch("togglegroup"));
+        core.Handle(new Dispatch("group"));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
         core.Handle(new WindowAppeared(new WindowId(3), Area) { Traits = WindowTraits.Normal with { Dialog = true } });
 
@@ -28,7 +28,7 @@ public class CoreRegressionTests
         core.Handle(new WindowTitleChanged(new WindowId(1), "renamed"));
         core.Handle(new WindowClassChanged(new WindowId(1), "renamed"));
 
-        var moved = core.Handle(new Dispatch("movetoworkspace", "2"));
+        var moved = core.Handle(new Dispatch("move", "2"));
 
         Assert.AreEqual("", Client(moved, 1).InitialTitle);
         Assert.AreEqual("", Client(moved, 1).InitialClass);
@@ -42,7 +42,7 @@ public class CoreRegressionTests
         prior.Handle(new MonitorsChanged(screens));
         prior.Handle(new Dispatch("workspace", "3"));
         prior.Handle(new WindowAppeared(new WindowId(1), Area));
-        prior.Handle(new Dispatch("focusmonitor", "right"));
+        prior.Handle(new Dispatch("focus-monitor", "right"));
         prior.Handle(new Dispatch("workspace", "4"));
         prior.Handle(new WindowAppeared(new WindowId(2), screens[1].WorkArea));
         Assert.IsTrue(RecoverySnapshot.TryParse(prior.Recovery().ToJson(), out var saved));
@@ -86,17 +86,17 @@ public class CoreRegressionTests
         var core = new WindowManager();
         core.Handle(new MonitorsChanged([Display("left", 0, 1000, 800), Display("right", 1000, 1000, 800)]));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new Dispatch("focusmonitor", "right"));
+        core.Handle(new Dispatch("focus-monitor", "right"));
         core.Handle(new WindowAppeared(new WindowId(2), new Rectangle(1000, 0, 1000, 800)));
-        core.Handle(new Dispatch("togglespecialworkspace", "tools"));
+        core.Handle(new Dispatch("scratchpad", "tools"));
         core.Handle(new WindowAppeared(new WindowId(3), new Rectangle(1000, 0, 1000, 800)));
-        core.Handle(new Dispatch("focusmonitor", "left"));
+        core.Handle(new Dispatch("focus-monitor", "left"));
 
         var closed = core.Handle(new WindowClosed(new WindowId(3)));
 
         Assert.IsNull(closed.Focus);
         Assert.AreEqual(new MonitorId(0), closed.State.ActiveMonitor);
-        Assert.AreEqual("0x1", Json(core.Execute("j/activewindow").Text).GetProperty("address").GetString());
+        Assert.AreEqual("0x1", Json(core.Execute("j/get window").Text).GetProperty("address").GetString());
     }
 
     [TestMethod]
@@ -107,7 +107,7 @@ public class CoreRegressionTests
         var right = Display("right", 1000, 1000, 800);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Handle(new Dispatch("focusmonitor", "right"));
+        core.Handle(new Dispatch("focus-monitor", "right"));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea) { Traits = WindowTraits.Normal with { Dialog = true } });
         core.Handle(new Dispatch("pin"));
         core.Handle(new MonitorsChanged([left]));

@@ -10,9 +10,9 @@ public class LayoutOptionTests
     public void InnerGapsShrinkClientsThatDoNotTouchThatEdge()
     {
         var core = Configured("""
-            general:gaps_in = 10
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 10
+            gaps_out = 0
+            border_size = 0
             """);
 
         core.Handle(Appeared(1, Wide));
@@ -26,9 +26,9 @@ public class LayoutOptionTests
     public void GapSidesFollowTheSameCountRulesAsAMargin()
     {
         var horizontal = Configured("""
-            general:gaps_in = 8 4
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 8 4
+            gaps_out = 0
+            border_size = 0
             """);
         horizontal.Handle(Appeared(1, Wide));
         var sideBySide = horizontal.Handle(Appeared(2, Wide));
@@ -37,9 +37,9 @@ public class LayoutOptionTests
         Assert.AreEqual(new Rectangle(964, 0, 956, 1080), BoundsOf(sideBySide, 2));
 
         var vertical = Configured("""
-            general:gaps_in = 10 0 30 0
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 10 0 30 0
+            gaps_out = 0
+            border_size = 0
             """);
         vertical.Handle(Appeared(1, Tall));
         var stacked = vertical.Handle(Appeared(2, Tall));
@@ -52,9 +52,9 @@ public class LayoutOptionTests
     public void OuterGapsInsetTheTilingArea()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 10 30 50 70
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10 30 50 70
+            border_size = 0
             """);
 
         var outcome = core.Handle(Appeared(1, Wide));
@@ -66,9 +66,9 @@ public class LayoutOptionTests
     public void BorderSizeReservesSpaceOnEverySide()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 2
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 2
             """);
 
         var outcome = core.Handle(Appeared(1, Wide));
@@ -80,9 +80,9 @@ public class LayoutOptionTests
     public void BorderSizeClampsToItsLimit()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 50
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 50
             """);
 
         var outcome = core.Handle(Appeared(1, Wide));
@@ -104,17 +104,17 @@ public class LayoutOptionTests
     public void LatestOptionWinsAndALaterConfigStartsOver()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:gaps_out = 40
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            gaps_out = 40
+            border_size = 0
             """);
         var first = core.Handle(Appeared(1, Wide));
         Assert.AreEqual(new Rectangle(40, 40, 1840, 1000), BoundsOf(first, 1));
 
         var replaced = core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:border_size = 0
+            gaps_in = 0
+            border_size = 0
             """)));
 
         Assert.AreEqual(new Rectangle(8, 8, 1904, 1064), BoundsOf(replaced, 1));
@@ -128,10 +128,10 @@ public class LayoutOptionTests
     public void ANumberThatIsNotFiniteWarnsAndIsSkipped(string value)
     {
         var document = ConfigParser.Parse($"""
-            scrolling:column_width = 0.7
-            scrolling:column_width = {value}
-            decoration:active_opacity = 0.5
-            decoration:active_opacity = {value}
+            column_width = 0.7
+            column_width = {value}
+            active_opacity = 0.5
+            active_opacity = {value}
             """);
 
         var scrolling = ScrollingOptions.From(document);
@@ -146,10 +146,10 @@ public class LayoutOptionTests
     public void InvalidOptionValuesAreLeftOut()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 40
-            general:gaps_out = no
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 40
+            gaps_out = no
+            border_size = 0
             """);
 
         var outcome = core.Handle(Appeared(1, Wide));
@@ -164,9 +164,9 @@ public class LayoutOptionTests
         core.Handle(Appeared(1, Wide));
 
         var outcome = core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
             """)));
 
         Assert.AreEqual(new Rectangle(10, 10, 1900, 1060), BoundsOf(outcome, 1));
@@ -206,7 +206,7 @@ public class LayoutOptionTests
     public void AnotherLayoutNameStillTilesWithDwindle()
     {
         var core = Configured(FlatConfig("""
-            general:layout = tabbed
+            layout = tabbed
             """));
         core.Handle(Appeared(1, Wide));
 
@@ -220,7 +220,7 @@ public class LayoutOptionTests
     public void TheFloatingLayoutFloatsEveryNewClient()
     {
         var core = Configured(FlatConfig("""
-            general:layout = floating
+            layout = floating
             """));
         core.Handle(Appeared(1, Wide));
 
@@ -235,9 +235,9 @@ public class LayoutOptionTests
     public void FloatingClientOpensCenteredWhenGapsAndBorderAreSet()
     {
         var core = Configured("""
-            general:gaps_in = 12
-            general:gaps_out = 20
-            general:border_size = 4
+            gaps_in = 12
+            gaps_out = 20
+            border_size = 4
             """);
         var bounds = new Rectangle(400, 300, 320, 200);
         var tiled = core.Handle(Appeared(1, Wide));

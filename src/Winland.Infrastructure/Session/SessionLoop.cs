@@ -64,6 +64,7 @@ public sealed class SessionLoop : IDisposable
             if (_looping)
                 FollowTaskbar();
         });
+        core.Reloaded += _ => _loop.Post(FollowTaskbar);
         _taskbar = taskbar;
     }
 

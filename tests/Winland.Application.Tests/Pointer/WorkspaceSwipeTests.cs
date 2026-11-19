@@ -91,7 +91,7 @@ public class WorkspaceSwipeTests
                 """);
             desk.AddMonitor(OriginOutput, new Rectangle(20000, 0, 1920, 1080));
             desk.AddMonitor(PeerOutput, new Rectangle(21920, 0, 1920, 1080));
-            desk.Ok("focusmonitor", OriginOutput);
+            desk.Ok("focus-monitor", OriginOutput);
             foreach (var name in new[] { "9901", "9902", "9903" })
             {
                 desk.Ok("workspace", name);
@@ -118,7 +118,7 @@ public class WorkspaceSwipeTests
                 return new Shot(false, false, "");
 
             var monitor = workspace.GetProperty("monitor").GetString() ?? "";
-            using var monitors = JsonDocument.Parse(TestDesktop.Send("j/monitors"));
+            using var monitors = JsonDocument.Parse(TestDesktop.Send("j/get monitors"));
             var active = monitors.RootElement.EnumerateArray().Any(each =>
                 each.GetProperty("name").GetString() == monitor
                 && each.GetProperty("activeWorkspace").GetProperty("name").GetString() == name);

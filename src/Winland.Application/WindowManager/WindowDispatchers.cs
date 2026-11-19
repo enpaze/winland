@@ -2,6 +2,18 @@ namespace Winland.Application;
 
 public sealed partial class WindowManager
 {
+    private Outcome FocusDispatch(string arguments)
+    {
+        var text = arguments.Trim();
+        if (text.Length == 0)
+            return Rejected("error: focus takes a direction or a window");
+
+        if (Sides.TryParse(text, out _))
+            return MoveFocusDirection(text) with { Traits = DispatcherTraits.WarpsToFocused | DispatcherTraits.WarpsToEmptyMonitor };
+
+        return FocusWindow(text);
+    }
+
     private Outcome FocusWindow(string arguments)
     {
         var selector = arguments.Trim();
@@ -45,10 +57,14 @@ public sealed partial class WindowManager
 
     private Outcome FloatWindow(string arguments)
     {
-        if (arguments.Trim().Length > 0)
-            return Rejected("error: togglefloating takes no argument");
+        var word = arguments.Trim().ToLowerInvariant();
+        if (word is not ("" or "on" or "off"))
+            return Rejected("error: float takes on or off");
 
         if (ActiveWindow() is not WindowId id || Find(id) is not Client client || WorkspaceContaining(id) is not LiveWorkspace desk)
+            return View([]);
+
+        if ((word == "on" && client.Floating) || (word == "off" && !client.Floating))
             return View([]);
 
         var covered = desk.Covered();

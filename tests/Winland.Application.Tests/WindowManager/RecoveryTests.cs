@@ -36,7 +36,7 @@ public class RecoveryTests
             Assert.AreEqual(new WorkspaceId("1"), client.Workspace);
             Assert.AreEqual(before[client.Window], client.Bounds);
         }
-        Assert.AreEqual(new WindowId(3), core.Handle(new Dispatch("killactive")).Close);
+        Assert.AreEqual(new WindowId(3), core.Handle(new Dispatch("close")).Close);
     }
 
     [TestMethod]
@@ -239,7 +239,7 @@ public class RecoveryTests
             new RecoveredClient(new WindowId(2), new WorkspaceId("4"), MonitorId.Primary, false, "App", "Two", 10, Floating: false, Bounds: new Rectangle(0, 0, 600, 1080)),
             new RecoveredClient(new WindowId(3), new WorkspaceId("4"), MonitorId.Primary, false, "App", "Three", 10, Floating: false, Bounds: new Rectangle(600, 0, 1320, 1080)),
         ]);
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"));
+        var core = new WindowManager(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\n"));
         core.Restore(snapshot);
         foreach (var client in snapshot.Clients)
         {
@@ -365,7 +365,7 @@ public class RecoveryTests
         var prior = new WindowManager();
         prior.Handle(new WindowAppeared(new WindowId(1), Area));
         prior.Handle(new WindowAppeared(new WindowId(2), Area));
-        prior.Handle(new Dispatch("fullscreen", "1"));
+        prior.Handle(new Dispatch("maximize"));
         Assert.IsTrue(RecoverySnapshot.TryParse(prior.Recovery().ToJson(), out var snapshot));
 
         var core = new WindowManager();

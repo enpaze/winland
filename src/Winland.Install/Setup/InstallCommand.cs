@@ -59,16 +59,16 @@ public closed record InstallCommand
 
         if (Is(args[0], "tweaks"))
         {
-            if (args.Count == 2 && Is(args[1], "--off"))
+            if (args.Count == 2 && Is(args[1], "off"))
                 return new Tweaks(false);
 
-            if (args.Count == 3 && Is(args[1], "--off") && Is(args[2], "--touchpad"))
+            if (args.Count == 3 && Is(args[1], "off") && Is(args[2], "--touchpad"))
                 return new Tweaks(true);
 
-            if (args.Count == 2 && Is(args[1], "--restore"))
+            if (args.Count == 2 && Is(args[1], "restore"))
                 return new RestoreTweaks();
 
-            throw new ArgumentException("usage: winland tweaks --off [--touchpad] | --restore");
+            throw new ArgumentException("usage: winland tweaks off [--touchpad] | restore");
         }
 
         if (!Is(args[0], "install") && !Is(args[0], "uninstall"))
@@ -100,7 +100,7 @@ public closed record InstallCommand
     public string? ElevatedRefusal => this switch
     {
         UserCleanup => "User cleanup must run from a normal terminal.",
-        RestoreTweaks => "winland tweaks --restore puts back your own Windows settings. Run it from a normal terminal, not as administrator.",
+        RestoreTweaks => "winland tweaks restore puts back your own Windows settings. Run it from a normal terminal, not as administrator.",
         _ => null,
     };
 

@@ -7,9 +7,9 @@ public class MonitorTests
     public void AWindowOpensOnTheFallbackMonitorWhenEveryMonitorIsDisabled()
     {
         var core = new WindowManager(ConfigParser.Parse("""
-            general:gaps_out = 0
-            general:border_size = 0
-            general:border_size = 0
+            gaps_out = 0
+            border_size = 0
+            border_size = 0
             """));
         var display = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 2560, 1440, 1, enabled: false);
         core.Handle(new MonitorsChanged([display]));
@@ -45,7 +45,7 @@ public class MonitorTests
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY2"));
+        core.Handle(new Dispatch("focus-monitor", @"\\.\DISPLAY2"));
 
         var opened = core.Handle(new WindowAppeared(new WindowId(2), left.WorkArea) { Bounds = new Rectangle(100, 100, 800, 600), Opened = true });
 
@@ -61,7 +61,7 @@ public class MonitorTests
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY2"));
+        core.Handle(new Dispatch("focus-monitor", @"\\.\DISPLAY2"));
         var flyout = new Rectangle(1480, 340, 440, 700);
 
         var opened = core.Handle(new WindowAppeared(new WindowId(3), left.WorkArea)
@@ -87,7 +87,7 @@ public class MonitorTests
         var right = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 1280, 1024, 1);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), right.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY1"));
+        core.Handle(new Dispatch("focus-monitor", @"\\.\DISPLAY1"));
 
         var opened = core.Handle(new WindowAppeared(new WindowId(2), left.WorkArea) { Owner = new WindowId(1), Opened = true });
 
@@ -149,9 +149,9 @@ public class MonitorTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
             """)));
         var low = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 1920, 1080, 1);
         var high = Display(@"\\.\DISPLAY2", "Samsung", 1920, 0, 3840, 2160, 2);

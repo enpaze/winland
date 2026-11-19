@@ -40,9 +40,9 @@ public class DecorationTests
         Assert.AreEqual(DecorationOptions.Documented, options);
         Assert.AreEqual(new BorderColor(0xFF, 0xFF, 0xFF, 0xFF), options.ActiveBorder);
         Assert.AreEqual(new BorderColor(0xFF, 0x40, 0x40, 0x40), options.InactiveBorder);
-        Assert.IsFalse(options.ActiveBorderSet);
+        Assert.IsTrue(options.AccentBorder);
         Assert.AreEqual(8, options.Rounding);
-        Assert.IsTrue(options.Blur);
+        Assert.IsTrue(options.Acrylic);
         Assert.AreEqual(1f, options.ActiveOpacity);
         Assert.AreEqual(1f, options.InactiveOpacity);
     }
@@ -51,11 +51,11 @@ public class DecorationTests
     public void LatestBorderAndRoundingWinAndAGradientWarnsAndKeepsThePreviousColor()
     {
         var document = ConfigParser.Parse("""
-            general:col.active_border = rgba(ff0000ff)
-            general:col.active_border = rgba(01020304) rgba(ffffffff) 45deg
-            general:col.inactive_border = 0x80aabbcc
-            decoration:rounding = 3
-            decoration:rounding = no
+            border_color = rgba(ff0000ff)
+            border_color = rgba(01020304) rgba(ffffffff) 45deg
+            border_color_inactive = 0x80aabbcc
+            rounding = 3
+            rounding = no
             """);
 
         var options = DecorationOptions.From(document);
@@ -69,7 +69,7 @@ public class DecorationTests
     [TestMethod]
     public void RoundingRejectsANegativeRadius()
     {
-        var options = DecorationOptions.From(ConfigParser.Parse("decoration:rounding = 10\ndecoration:rounding = -1\n"));
+        var options = DecorationOptions.From(ConfigParser.Parse("rounding = 10\nrounding = -1\n"));
 
         Assert.AreEqual(10, options.Rounding);
     }
@@ -126,12 +126,12 @@ public class DecorationTests
         var core = Configured();
         core.Handle(Appeared(1, Area));
 
-        var away = core.Execute("dispatch workspace 2").Effect;
+        var away = core.Execute("workspace 2").Effect;
 
         Assert.AreEqual(Inactive, For(away, 1).Border);
         Assert.IsEmpty(away.ResetDecorations);
 
-        var back = core.Execute("dispatch workspace 1").Effect;
+        var back = core.Execute("workspace 1").Effect;
 
         Assert.AreEqual(Active, For(back, 1).Border);
         Assert.IsEmpty(back.ResetDecorations);
@@ -145,9 +145,9 @@ public class DecorationTests
         core.Handle(Appeared(2, Area));
 
         var reloaded = core.Handle(new Configure(ConfigParser.Parse("""
-            general:col.active_border = rgba(00ff00ff)
-            general:col.inactive_border = rgba(0000ffff)
-            decoration:rounding = 0
+            border_color = rgba(00ff00ff)
+            border_color_inactive = rgba(0000ffff)
+            rounding = 0
             """)));
 
         Assert.AreEqual(new BorderColor(0xFF, 0x00, 0xFF, 0x00), For(reloaded, 2).Border);
@@ -156,8 +156,8 @@ public class DecorationTests
         Assert.IsEmpty(reloaded.ResetDecorations);
 
         var loaded = core.Handle(new ConfigLoaded(ConfigParser.Parse("""
-            general:col.active_border = 0xff112233
-            decoration:rounding = 4
+            border_color = 0xff112233
+            rounding = 4
             """)));
 
         Assert.AreEqual(new BorderColor(0xFF, 0x11, 0x22, 0x33), For(loaded, 2).Border);
@@ -172,11 +172,11 @@ public class DecorationTests
         core.Handle(Appeared(2, Area));
         var notified = false;
         core.ReadConfig = () => new ConfigRead(ConfigParser.Parse("""
-            general:col.active_border = rgba(00ff00ff)
-            general:col.inactive_border = rgba(0000ffff)
-            decoration:rounding = 0
+            border_color = rgba(00ff00ff)
+            border_color_inactive = rgba(0000ffff)
+            rounding = 0
             """));
-        core.AfterReload = _ => notified = true;
+        core.Reloaded += _ => notified = true;
 
         var reply = core.Execute("reload");
 
@@ -195,10 +195,10 @@ public class DecorationTests
     {
         var core = Configured();
         core.Handle(Appeared(1, Area));
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         core.Handle(Appeared(2, Area));
 
-        var back = core.Execute("dispatch workspace 1").Effect;
+        var back = core.Execute("workspace 1").Effect;
 
         Assert.AreEqual(Active, For(back, 1).Border);
         Assert.AreEqual(Inactive, For(back, 2).Border);
@@ -220,7 +220,7 @@ public class DecorationTests
         Assert.AreEqual(Active, For(placed, 1).Border);
         Assert.AreEqual(Inactive, For(placed, 2).Border);
 
-        var moved = core.Handle(new Dispatch("focusmonitor", @"\\.\DISPLAY2"));
+        var moved = core.Handle(new Dispatch("focus-monitor", @"\\.\DISPLAY2"));
 
         Assert.AreEqual(Inactive, For(moved, 1).Border);
         Assert.AreEqual(Active, For(moved, 2).Border);
@@ -269,9 +269,9 @@ public class DecorationTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse($"""
-            general:col.active_border = rgba({Active.R:x2}{Active.G:x2}{Active.B:x2}{Active.A:x2})
-            general:col.inactive_border = 0x{Inactive.A:x2}{Inactive.R:x2}{Inactive.G:x2}{Inactive.B:x2}
-            decoration:rounding = 8
+            border_color = rgba({Active.R:x2}{Active.G:x2}{Active.B:x2}{Active.A:x2})
+            border_color_inactive = 0x{Inactive.A:x2}{Inactive.R:x2}{Inactive.G:x2}{Inactive.B:x2}
+            rounding = 8
             """)));
         return core;
     }

@@ -298,12 +298,12 @@ public class ScrollingLayoutTests
     public void ScrollingOptionsParseAndClamp()
     {
         var options = ScrollingOptions.From(ConfigParser.Parse("""
-            scrolling:column_width = 2
+            column_width = 2
             """));
 
         Assert.AreEqual(1, options.ColumnWidth);
 
-        var narrow = ScrollingOptions.From(ConfigParser.Parse("scrolling:column_width = 0.01\n"));
+        var narrow = ScrollingOptions.From(ConfigParser.Parse("column_width = 0.01\n"));
         Assert.AreEqual(0.1, narrow.ColumnWidth);
     }
 
@@ -311,10 +311,10 @@ public class ScrollingLayoutTests
     public void CoreSelectsScrollingAndConcealsTheHiddenColumn()
     {
         var core = Configured("""
-            general:layout = scrolling
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
+            layout = scrolling
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 0
             """);
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
@@ -415,7 +415,7 @@ public class ScrollingLayoutTests
         return layout;
     }
 
-    private static WindowManager Scrolling() => Flat("general:layout = scrolling\n");
+    private static WindowManager Scrolling() => Flat("layout = scrolling\n");
 
     private static WindowId Window(long id) => new(id);
 
@@ -430,25 +430,25 @@ public class ScrollingLayoutTests
     {
         var core = Scrolling();
         core.Handle(Appeared(1, Area));
-        core.Execute("dispatch layoutmsg colresize 0.8");
+        core.Execute("layoutmsg colresize 0.8");
         var opened = core.Handle(Appeared(2, Area));
         Assert.IsTrue(BoundsOf(opened, 1).X < 0);
 
-        var focused = core.Execute("dispatch movefocus l").Effect;
+        var focused = core.Execute("focus l").Effect;
 
         Assert.AreEqual(0, BoundsOf(focused, 1).X);
         Assert.IsTrue(BoundsOf(focused, 2).X >= 800);
     }
 
     [TestMethod]
-    public void MoveFocusReadsTheWholeDirectionWord()
+    public void FocusReadsTheWholeDirectionWord()
     {
         var core = Scrolling();
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
 
-        Assert.IsNull(core.Execute("dispatch movefocus leftover").Effect.Focus);
-        Assert.AreEqual(Window(1), core.Execute("dispatch movefocus left").Effect.Focus);
+        Assert.IsNull(core.Execute("focus leftover").Effect.Focus);
+        Assert.AreEqual(Window(1), core.Execute("focus left").Effect.Focus);
     }
 
     [TestMethod]
@@ -457,12 +457,12 @@ public class ScrollingLayoutTests
         var core = Scrolling();
         for (var window = 1; window <= 5; window++)
             core.Handle(Appeared(window, Area));
-        core.Execute("dispatch layoutmsg colresize all 0.333");
+        core.Execute("layoutmsg colresize all 0.333");
 
         var widths = new HashSet<int>();
         for (var step = 0; step < 4; step++)
         {
-            foreach (var placement in core.Execute("dispatch movefocus l").Effect.Placements)
+            foreach (var placement in core.Execute("focus l").Effect.Placements)
                 widths.Add(placement.Bounds.Width);
         }
 
@@ -486,12 +486,12 @@ public class ScrollingLayoutTests
         var core = Scrolling();
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
-        core.Execute("dispatch movefocus l");
-        core.Execute("dispatch layoutmsg consume");
-        core.Execute("dispatch focuswindow address:0x2");
-        var smallest = BoundsOf(core.Execute("dispatch resizeactive 0 -2000").Effect, 2).Height;
+        core.Execute("focus l");
+        core.Execute("layoutmsg consume");
+        core.Execute("focus address:0x2");
+        var smallest = BoundsOf(core.Execute("resize 0 -2000").Effect, 2).Height;
 
-        var grown = BoundsOf(core.Execute("dispatch resizeactive 0 100").Effect, 2).Height;
+        var grown = BoundsOf(core.Execute("resize 0 100").Effect, 2).Height;
 
         Assert.IsTrue(grown > smallest);
     }

@@ -83,7 +83,7 @@ internal sealed class VerifyDaemon : IDisposable
             if (Exited)
                 throw new InvalidOperationException($"winland exited {_process.ExitCode}. {Logs()}");
 
-            if (TryRun("clients", TimeSpan.FromSeconds(2), out _, out var error))
+            if (TryRun("get windows", TimeSpan.FromSeconds(2), out _, out var error))
             {
                 Thread.Sleep(300);
                 return;
@@ -96,13 +96,13 @@ internal sealed class VerifyDaemon : IDisposable
         throw new TimeoutException($"winland did not accept commands. {last} {Logs()}");
     }
 
-    public string Clients() => Run("j/clients");
+    public string Clients() => Run("j/get windows");
 
-    public string Workspaces() => Run("j/workspaces");
+    public string Workspaces() => Run("j/get workspaces");
 
-    public string Monitors() => Run("j/monitors");
+    public string Monitors() => Run("j/get monitors");
 
-    public string Dispatch(string arguments) => Run("dispatch " + arguments);
+    public string Dispatch(string arguments) => Run("" + arguments);
 
     public bool TryStopClean()
     {
@@ -149,12 +149,12 @@ internal sealed class VerifyDaemon : IDisposable
         _process.WaitForExit(5_000);
     }
 
-    public VerifyDaemon Restart()
+    public VerifyDaemon Restart(string? config = null)
     {
         if (!Exited)
             throw new InvalidOperationException("Stop winland before starting it again.");
 
-        var again = Launch(_paths, _directory, _config, Pipe, State, _dotnetRoot);
+        var again = Launch(_paths, _directory, config ?? _config, Pipe, State, _dotnetRoot);
         again.WaitUntilReady();
         return again;
     }

@@ -14,16 +14,33 @@ public class TaskbarHostTests
         Assert.AreEqual(0, bars.Hides);
         Assert.AreEqual(0, bars.Restores);
 
-        files.Write("general:hide_taskbar = true\n");
+        files.Write("hide_taskbar = true\n");
         Assert.AreEqual("ok", host.Reload().Text);
         Assert.AreEqual(1, bars.Hides);
 
         Assert.AreEqual("ok", host.Reload().Text);
         Assert.AreEqual(1, bars.Hides);
 
-        files.Write("general:hide_taskbar = false\n");
+        files.Write("hide_taskbar = false\n");
         Assert.AreEqual("ok", host.Reload().Text);
         Assert.AreEqual(1, bars.Restores);
+    }
+
+    [TestMethod]
+    public void AKeyBoundToReloadHidesTheTaskbarTheConfigNowHides()
+    {
+        using var files = new ConfigDir("bind = Win+R, reload\n");
+        var bars = new RecordingTaskbar();
+        var core = Core(files);
+        using var host = new SessionLoop(core, bars);
+        Assert.AreEqual("ok", host.Reload().Text);
+        Assert.AreEqual(0, bars.Hides);
+
+        files.Write("hide_taskbar = true\nbind = Win+R, reload\n");
+        core.Handle(new KeyPressed("Super_L"));
+        core.Handle(new KeyPressed("R"));
+
+        Assert.AreEqual(1, bars.Hides);
     }
 
     [TestMethod]
@@ -44,7 +61,7 @@ public class TaskbarHostTests
     [TestMethod]
     public void ACleanExitRestoresATaskbarThisRunHidAndLeavesOneItDidNot()
     {
-        using var files = new ConfigDir("general:hide_taskbar = true\n");
+        using var files = new ConfigDir("hide_taskbar = true\n");
         var hidden = new RecordingTaskbar();
         var host = Host(files, hidden);
         Assert.AreEqual("ok", host.Reload().Text);
@@ -61,14 +78,12 @@ public class TaskbarHostTests
         Assert.AreEqual(0, left.Restores);
     }
 
-    private static SessionLoop Host(ConfigDir files, RecordingTaskbar bars)
+    private static SessionLoop Host(ConfigDir files, RecordingTaskbar bars) => new(Core(files), bars);
+
+    private static WindowManager Core(ConfigDir files) => new()
     {
-        var core = new WindowManager
-        {
-            ReadConfig = () => new ConfigRead(ConfigParser.Parse(File.ReadAllText(files.Path))),
-        };
-        return new SessionLoop(core, bars);
-    }
+        ReadConfig = () => new ConfigRead(ConfigParser.Parse(File.ReadAllText(files.Path))),
+    };
 
     private sealed class ConfigDir : IDisposable
     {

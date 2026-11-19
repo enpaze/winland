@@ -24,14 +24,14 @@ Preconditions:
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature urgency`. It prints `== feature urgency: passed`.
 - **Follow events.** The driver runs `winland events` and keeps reading it.
 - **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`. Both become Clients and tile side by side across the work area.
-- **Switch away.** The driver runs `winland dispatch workspace 2`. Both windows hide.
-- **Open a dialog.** The driver opens a 220 by 140 window titled `WinlandDialog`, owned by the left window. Its Client in `winland -j clients` reports Workspace `1`, and the dialog stays hidden.
+- **Switch away.** The driver runs `winland workspace 2`. Both windows hide.
+- **Open a dialog.** The driver opens a 220 by 140 window titled `WinlandDialog`, owned by the left window. Its Client in `winland -j get windows` reports Workspace `1`, and the dialog stays hidden.
 - **Urgent event.** The Event stream holds an `urgent` line with the dialog's address, written without the `0x` prefix.
-- **Workspace stays.** `winland -j activeworkspace` still reports id `2`, and the driver prints `saw: the workspace did not change for the urgent window`.
+- **Workspace stays.** `winland -j get workspace` still reports id `2`, and the driver prints `saw: the workspace did not change for the urgent window`.
 
 ## Gotchas
 
 - The driver reaches only the owned window that opens on a hidden Workspace. It does not make a Client flash for attention or take the foreground, the other two ways a Client becomes urgent.
 - The baseline config manages only windows titled `WinlandVerify *`. The dialog is titled `WinlandDialog`, so the driver adds a `float` rule to make it a Client.
-- Addresses on the Event stream have no `0x` prefix, while `winland -j clients` writes them with it. Match the hex digits, not the whole string.
+- Addresses in text events have no `0x` prefix, while `winland -j events` and `winland -j get windows` write them with it. Match the hex digits, not the whole string.
 - The focused Client flashing is not urgent, so a check by hand must flash a Client that does not have the focus.

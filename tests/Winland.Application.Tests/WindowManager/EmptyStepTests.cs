@@ -132,14 +132,14 @@ public class EmptyStepTests
     [TestMethod]
     public void AMoveWithoutAStepStillMovesThePointerATileReturnsTo()
     {
-        var core = new WindowManager(ConfigParser.Parse(FlatConfig("input:follow_mouse = 0\n")));
+        var core = new WindowManager(ConfigParser.Parse(FlatConfig("focus_follows_mouse = 0\n")));
         core.Handle(new WindowAppeared(OneWindow, Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
-        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new Dispatch("float"));
         Move(core, new Point(1700, 1000), 1_000);
 
         var moved = Move(core, new Point(200, 1000), 1_100);
-        var tiled = core.Handle(new Dispatch("togglefloating"));
+        var tiled = core.Handle(new Dispatch("float"));
 
         Assert.IsTrue(moved.IsEmpty);
         Assert.AreEqual(new Rectangle(0, 0, 960, 1080), Client(tiled, 1).Bounds);
@@ -172,29 +172,29 @@ public class EmptyStepTests
     }
 
     [TestMethod]
-    [DataRow("clients")]
-    [DataRow("j/clients")]
-    [DataRow("workspaces")]
-    [DataRow("monitors")]
-    [DataRow("monitors all")]
-    [DataRow("activewindow")]
-    [DataRow("activeworkspace")]
-    [DataRow("binds")]
+    [DataRow("get windows")]
+    [DataRow("j/get windows")]
+    [DataRow("get workspaces")]
+    [DataRow("get monitors")]
+    [DataRow("get monitors all")]
+    [DataRow("get window")]
+    [DataRow("get workspace")]
+    [DataRow("get binds")]
     [DataRow("version")]
-    [DataRow("configerrors")]
-    [DataRow("files")]
+    [DataRow("get errors")]
+    [DataRow("get files")]
     public void AQueryAnswersAndChangesNothing(string query)
     {
         var (core, laid) = Tiled();
         Move(core, Center(laid, 2), 1_000);
-        var before = core.Execute("j/clients").Text;
+        var before = core.Execute("j/get windows").Text;
 
         var reply = core.Execute(query);
 
         Assert.IsNotEmpty(reply.Text);
         Assert.IsTrue(reply.Effect.IsEmpty);
         Assert.AreEqual(2, reply.Effect.State.Clients.Count);
-        Assert.AreEqual(before, core.Execute("j/clients").Text);
+        Assert.AreEqual(before, core.Execute("j/get windows").Text);
         Assert.IsTrue(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_100).IsEmpty);
     }
 
@@ -203,7 +203,7 @@ public class EmptyStepTests
     {
         var (core, _) = Tiled();
 
-        var reply = core.Execute("dispatch togglefloating");
+        var reply = core.Execute("float");
 
         Assert.IsFalse(reply.Effect.IsEmpty);
     }

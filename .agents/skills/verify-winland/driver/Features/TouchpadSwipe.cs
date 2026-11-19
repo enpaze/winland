@@ -12,15 +12,15 @@ public class TouchpadSwipe
         gesture = 3, horizontal, workspace
         gesture = 4, vertical, workspace
         gesture = 3, diagonal, workspace
-        gesture = 3, horizontal, workspace, mod:SUPER
+        gesture = 3, horizontal, workspace, mod:Win
 
         """;
 
     [VerifyFact]
     public void LoadsSwipeGesturesAndRejectsTheOnesItCannotDo() => VerifyRun.Drive(TestContext, Config, run =>
     {
-        var errors = run.Ask("configerrors").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        run.Say("configerrors: " + string.Join(" | ", errors));
+        var errors = run.Ask("get", "errors").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        run.Say("get errors: " + string.Join(" | ", errors));
         Assert.AreEqual(2, errors.Length);
         Assert.Contains(line => line.Contains("winland.conf:10: Invalid direction: diagonal.", StringComparison.Ordinal), errors);
         Assert.Contains(line => line.Contains("winland.conf:11: A gesture is <fingers>, horizontal or vertical, workspace.", StringComparison.Ordinal), errors);

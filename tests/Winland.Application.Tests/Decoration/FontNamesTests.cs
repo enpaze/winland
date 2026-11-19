@@ -20,11 +20,11 @@ public class FontNamesTests
         var core = new WindowManager(ConfigParser.Parse(""));
         core.Handle(new MonitorsChanged([new Monitor("DISPLAY1", "", 0, 0, 1920, 1080, 1, true, new Rectangle(0, 0, 1920, 1040))]));
         core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 800, 600)));
-        core.Execute("dispatch togglegroup");
+        core.Execute("group");
 
-        Assert.AreEqual("Segoe UI", Assert.ContainsSingle(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
+        Assert.AreEqual("Segoe UI", Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style.FontFamily);
 
-        core.Handle(new Configure(ConfigParser.Parse("group:groupbar:font_family = Fira Code\n")));
-        Assert.AreEqual("Fira Code", Assert.ContainsSingle(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.FontFamily);
+        core.Handle(new Configure(ConfigParser.Parse("tab_font = Fira Code\n")));
+        Assert.AreEqual("Fira Code", Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style.FontFamily);
     }
 }

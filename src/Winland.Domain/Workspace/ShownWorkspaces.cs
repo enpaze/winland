@@ -128,21 +128,12 @@ internal sealed class ShownWorkspaces
         _visits.Insert(0, new Visited(workspace, monitor));
     }
 
-    public WorkspaceId? Previous(MonitorId monitor, bool perMonitor)
+    public WorkspaceId? Last(MonitorId monitor)
     {
         Collect();
         var active = ActiveOn(monitor);
         var index = _visits.FindIndex(visit => !visit.Gone && visit.Workspace == active);
-        if (!perMonitor)
-            return index >= 0 && index + 1 < _visits.Count ? _visits[index + 1].Workspace : null;
-
-        for (var i = index < 0 ? 0 : index + 1; i < _visits.Count; i++)
-        {
-            if (_visits[i].Monitor == monitor)
-                return _visits[i].Workspace;
-        }
-
-        return null;
+        return index >= 0 && index + 1 < _visits.Count ? _visits[index + 1].Workspace : null;
     }
 
     private void Unassign(MonitorId monitor)

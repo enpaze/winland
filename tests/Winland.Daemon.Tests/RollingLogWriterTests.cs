@@ -33,7 +33,7 @@ public class RollingLogWriterTests
         var file = new StringWriter();
         using var writer = new RollingLogWriter(new StringWriter());
 
-        writer.Copy(new DebugOptions { DisableLogs = false }, () => file);
+        writer.Copy(new DebugOptions { LogFile = true }, () => file);
         writer.Write("one ");
         writer.WriteLine("line");
         writer.Write("two\n".ToCharArray(), 0, 4);
@@ -59,7 +59,7 @@ public class RollingLogWriterTests
         Thread? write = null;
         var completed = false;
 
-        writer.Copy(new DebugOptions { DisableLogs = false }, () =>
+        writer.Copy(new DebugOptions { LogFile = true }, () =>
         {
             write = new Thread(() =>
             {
@@ -81,7 +81,7 @@ public class RollingLogWriterTests
         var inner = new StringWriter();
         var file = new FullDiskWriter();
         using var writer = new RollingLogWriter(inner);
-        writer.Copy(new DebugOptions { DisableLogs = false }, () => file);
+        writer.Copy(new DebugOptions { LogFile = true }, () => file);
 
         writer.WriteLine("first");
         writer.WriteLine("second");
@@ -121,7 +121,7 @@ public class RollingLogWriterTests
         {
             using (var writer = new RollingLogWriter(TextWriter.Null))
             {
-                writer.Copy(new DebugOptions { DisableLogs = false }, () => RollingLogWriter.OpenFile(path));
+                writer.Copy(new DebugOptions { LogFile = true }, () => RollingLogWriter.OpenFile(path));
                 writer.WriteLine(new string('x', 10 * 1024 * 1024 - 2));
                 writer.WriteLine("after rotation");
             }
@@ -145,10 +145,10 @@ public class RollingLogWriterTests
             using var writer = new RollingLogWriter(TextWriter.Null);
             Assert.IsNull(writer.FilePath);
 
-            writer.Copy(new DebugOptions { DisableLogs = false }, () => null);
+            writer.Copy(new DebugOptions { LogFile = true }, () => null);
             Assert.IsNull(writer.FilePath);
 
-            writer.Copy(new DebugOptions { DisableLogs = false }, () => RollingLogWriter.OpenFile(path));
+            writer.Copy(new DebugOptions { LogFile = true }, () => RollingLogWriter.OpenFile(path));
             Assert.AreEqual(path, writer.FilePath);
 
             writer.Copy(DebugOptions.Documented, () => throw new InvalidOperationException("not wanted"));

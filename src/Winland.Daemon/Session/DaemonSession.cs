@@ -37,7 +37,7 @@ sealed class DaemonSession : IDaemonSession
         {
             try
             {
-                CommandClient.Transact("dispatch exit", pipe);
+                CommandClient.Transact("exit", pipe);
             }
             catch (InvalidOperationException exception) when (exception.Message == "Winland is not running.")
             {

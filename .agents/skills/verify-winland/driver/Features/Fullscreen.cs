@@ -23,12 +23,12 @@ public class Fullscreen
             run.ClientOf(left).GetProperty("fullscreen").GetInt32() == 0
             && VerifyRun.SideBySide(VerifyRun.Frame(left), VerifyRun.Frame(right), VerifyRun.WorkArea(left)));
 
-        run.Dispatch("fullscreen 1");
-        run.Until("fullscreen 1 maximizes the window to the work area", () =>
+        run.Dispatch("maximize");
+        run.Until("maximize fills the work area", () =>
             VerifyRun.Frame(left).Near(VerifyRun.WorkArea(left), 4) && run.ClientOf(left).GetProperty("fullscreen").GetInt32() == 1);
 
-        run.Dispatch("fullscreen 1");
-        run.Until("fullscreen 1 again ends maximize", () =>
+        run.Dispatch("maximize");
+        run.Until("maximize again ends maximize", () =>
             run.ClientOf(left).GetProperty("fullscreen").GetInt32() == 0
             && VerifyRun.SideBySide(VerifyRun.Frame(left), VerifyRun.Frame(right), VerifyRun.WorkArea(left)));
     });

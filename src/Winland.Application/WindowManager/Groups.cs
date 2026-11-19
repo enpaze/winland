@@ -1,3 +1,5 @@
+using static Winland.Domain.OrdinalText;
+
 namespace Winland.Application;
 
 public sealed partial class WindowManager
@@ -38,7 +40,7 @@ public sealed partial class WindowManager
         return group;
     }
 
-    private Outcome ChangeGroupActive(string arguments)
+    private Outcome ShowTab(string arguments)
     {
         var text = arguments.Trim();
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
@@ -51,10 +53,12 @@ public sealed partial class WindowManager
             return Rejected("error: only one window in group");
 
         int index;
-        if (int.TryParse(text, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var number))
-            index = number <= 0 ? group.Count - 1 : Math.Min(number - 1, group.Count - 1);
+        if (Is(text, "next") || Is(text, "prev"))
+            index = Cycled(group, forward: Is(text, "next"));
+        else if (int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var number) && number > 0)
+            index = Math.Min(number - 1, group.Count - 1);
         else
-            index = Cycled(group, forward: text is not ("b" or "prev"));
+            return Rejected("error: tab takes next, prev or a number");
 
         return ShowMember(desk, group, index);
     }
@@ -91,7 +95,7 @@ public sealed partial class WindowManager
         return PresentIfShown(desk, covered, desk.Layout.Visible(), focus: focus);
     }
 
-    private Outcome MoveIntoGroup(string arguments)
+    private Outcome JoinGroup(string arguments)
     {
         var text = arguments.Trim();
         if (!TryGroupDirection(text, out var direction))
@@ -189,11 +193,8 @@ public sealed partial class WindowManager
         return desk.Layout.TryTake(window, out taken);
     }
 
-    private Outcome MoveOutOfGroup(string arguments)
+    private Outcome LeaveGroup()
     {
-        if (arguments.Trim().Length > 0)
-            return Rejected("error: moveoutofgroup takes no argument");
-
         if (ActiveWindow() is not WindowId id || WorkspaceContaining(id) is not LiveWorkspace desk)
             return View([]);
 

@@ -69,12 +69,12 @@ public class MouseHookTests
     }
 
     [TestMethod]
-    [DataRow("movewindow", "", true)]
-    [DataRow("MoveWindow", "", true)]
-    [DataRow("movewindow", "l", false)]
-    [DataRow("resizewindow", "", true)]
-    [DataRow("ResizeWindow", "1", true)]
-    [DataRow("killactive", "", false)]
+    [DataRow("move", "", true)]
+    [DataRow("Move", "", true)]
+    [DataRow("move", "l", false)]
+    [DataRow("resize", "", true)]
+    [DataRow("Resize", "10 0", false)]
+    [DataRow("close", "", false)]
     public void OnlyAWindowDragIsADrag(string dispatcher, string arguments, bool drag)
     {
         Assert.AreEqual(drag, MouseHook.IsDrag(dispatcher, arguments));
@@ -83,10 +83,10 @@ public class MouseHookTests
     [TestMethod]
     public void ASingleDragDispatcherIsTheDrag()
     {
-        Assert.IsTrue(MouseHook.TryDrag(new BindDecision(true, "resizewindow", "1"), out var dispatcher, out var arguments));
-        Assert.AreEqual(("resizewindow", "1"), (dispatcher, arguments));
+        Assert.IsTrue(MouseHook.TryDrag(new BindDecision(true, "resize", ""), out var dispatcher, out var arguments));
+        Assert.AreEqual(("resize", ""), (dispatcher, arguments));
 
-        Assert.IsFalse(MouseHook.TryDrag(new BindDecision(true, "killactive"), out dispatcher, out arguments));
+        Assert.IsFalse(MouseHook.TryDrag(new BindDecision(true, "close"), out dispatcher, out arguments));
         Assert.AreEqual(("", ""), (dispatcher, arguments));
         Assert.IsFalse(MouseHook.TryDrag(new BindDecision(false, null), out dispatcher, out arguments));
         Assert.AreEqual(("", ""), (dispatcher, arguments));
@@ -96,26 +96,26 @@ public class MouseHookTests
     [TestMethod]
     public void APressIsOnlyADragWhenEveryDispatcherDrags()
     {
-        Assert.IsTrue(MouseHook.OnlyDrag(new BindDecision(true, "movewindow")));
-        Assert.IsTrue(MouseHook.OnlyDrag(new BindDecision(true, "movewindow") { Dispatches = [new("movewindow", ""), new("", "")] }));
-        Assert.IsFalse(MouseHook.OnlyDrag(new BindDecision(true, "movewindow") { Dispatches = [new("movewindow", ""), new("killactive", "")] }));
-        Assert.IsFalse(MouseHook.OnlyDrag(new BindDecision(true, "killactive")));
+        Assert.IsTrue(MouseHook.OnlyDrag(new BindDecision(true, "move")));
+        Assert.IsTrue(MouseHook.OnlyDrag(new BindDecision(true, "move") { Dispatches = [new("move", ""), new("", "")] }));
+        Assert.IsFalse(MouseHook.OnlyDrag(new BindDecision(true, "move") { Dispatches = [new("move", ""), new("close", "")] }));
+        Assert.IsFalse(MouseHook.OnlyDrag(new BindDecision(true, "close")));
     }
 
     [TestMethod]
     public void TheFirstDragAmongSeveralDispatchersIsTheDrag()
     {
-        var several = new BindDecision(true, "killactive")
+        var several = new BindDecision(true, "close")
         {
-            Dispatches = [new("killactive", ""), new("movewindow", "r"), new("movewindow", ""), new("resizewindow", "")],
+            Dispatches = [new("close", ""), new("move", "r"), new("move", ""), new("resize", "")],
         };
-        var none = new BindDecision(true, "killactive")
+        var none = new BindDecision(true, "close")
         {
-            Dispatches = [new("killactive", ""), new("movewindow", "r")],
+            Dispatches = [new("close", ""), new("move", "r")],
         };
 
         Assert.IsTrue(MouseHook.TryDrag(several, out var dispatcher, out var arguments));
-        Assert.AreEqual(("movewindow", ""), (dispatcher, arguments));
+        Assert.AreEqual(("move", ""), (dispatcher, arguments));
         Assert.IsFalse(MouseHook.TryDrag(none, out dispatcher, out arguments));
         Assert.AreEqual(("", ""), (dispatcher, arguments));
     }

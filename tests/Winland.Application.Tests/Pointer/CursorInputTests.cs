@@ -8,24 +8,22 @@ public class CursorInputTests
     {
         var options = CursorOptions.From(ConfigParser.Parse(""));
 
-        Assert.IsFalse(options.NoWarps);
+        Assert.IsTrue(options.WarpCursor);
         Assert.IsTrue(options.HideOnKeyPress);
     }
 
     [TestMethod]
-    public void CursorBlockIsHonored()
+    public void CursorOptionsAreHonored()
     {
         var document = ConfigParser.Parse("""
-            cursor {
-                no_warps = true
-                hide_on_key_press = on
-            }
+            warp_cursor = false
+            hide_cursor_while_typing = off
             """);
 
         Assert.IsEmpty(document.Warnings);
         var options = CursorOptions.From(document);
-        Assert.IsTrue(options.NoWarps);
-        Assert.IsTrue(options.HideOnKeyPress);
+        Assert.IsFalse(options.WarpCursor);
+        Assert.IsFalse(options.HideOnKeyPress);
     }
 
     [TestMethod]
@@ -41,7 +39,7 @@ public class CursorInputTests
     public void ASystemInputKeyWarnsAndIsNotApplied()
     {
         var document = ConfigParser.Parse("""
-            input:follow_mouse = 1
+            focus_follows_mouse = 1
             input:repeat_rate = 25
             input:sensitivity = 0
             input:left_handed = true
@@ -54,15 +52,15 @@ public class CursorInputTests
                 new ConfigWarning(4, "Unsupported keyword 'input:left_handed'."),
             ],
             document.Warnings);
-        Assert.AreSequenceEqual([new Setting("input:follow_mouse", "1")], document.Settings);
+        Assert.AreSequenceEqual([new Setting("focus_follows_mouse", "1")], document.Settings);
     }
 
     [TestMethod]
     public void FollowMouseIsReadAndATabletKeyWarns()
     {
-        var document = ConfigParser.Parse("input:follow_mouse = true\ninput:tablet:enabled = true\n");
+        var document = ConfigParser.Parse("focus_follows_mouse = true\ninput:tablet:enabled = true\n");
 
-        Assert.AreSequenceEqual([new Setting("input:follow_mouse", "true")], document.Settings);
+        Assert.AreSequenceEqual([new Setting("focus_follows_mouse", "true")], document.Settings);
         Assert.AreEqual(new ConfigWarning(2, "Unsupported keyword 'input:tablet:enabled'."), Assert.ContainsSingle(document.Warnings));
         Assert.IsTrue(InputOptions.From(document).FollowMouse);
     }
@@ -71,7 +69,7 @@ public class CursorInputTests
     public void WheelDirectionIsNotReversed()
     {
         var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = , mouse_down, workspace, 2\n")));
+        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = mouse_down, workspace 2\n")));
         core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 800, 600)));
 
         var outcome = core.Handle(new WheelTurned("mouse_up", 1_000));

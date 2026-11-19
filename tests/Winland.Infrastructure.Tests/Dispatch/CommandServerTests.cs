@@ -14,7 +14,7 @@ public class CommandServerTests
     {
         var missing = "winland-missing-" + Guid.NewGuid().ToString("N");
 
-        var error = Assert.ThrowsExactly<InvalidOperationException>(() => CommandClient.Transact("clients", missing, 200));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => CommandClient.Transact("get windows", missing, 200));
 
         Assert.AreEqual("Winland is not running.", error.Message);
     }
@@ -73,7 +73,7 @@ public class CommandServerTests
         using var second = new CommandServer(new WindowManager(), _ => { }, name);
 
         Assert.ThrowsExactly<InvalidOperationException>(second.Start);
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
     [TestMethod]
@@ -85,11 +85,11 @@ public class CommandServerTests
         using var server = new CommandServer(core, _ => { }, name);
         server.Start();
 
-        var clients = JsonElement.Parse(CommandClient.Transact("j/clients", name)!);
+        var clients = JsonElement.Parse(CommandClient.Transact("j/get windows", name)!);
         var client = Assert.ContainsSingle(clients.EnumerateArray());
         Assert.AreEqual("0x2a", client.GetProperty("address").GetString());
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch exec", name));
-        Assert.AreEqual("error: unknown request", CommandClient.Transact("nope", name));
+        Assert.AreEqual("ok", CommandClient.Transact("exec", name));
+        Assert.AreEqual("error: unknown command 'nonsense'", CommandClient.Transact("nonsense", name));
     }
 
     [TestMethod]
@@ -99,8 +99,8 @@ public class CommandServerTests
         using var server = new CommandServer(new WindowManager(), _ => { }, name);
         server.Start();
 
-        Assert.AreEqual("", CommandClient.Transact("activewindow", name));
-        Assert.AreEqual("null", CommandClient.Transact("j/activewindow", name));
+        Assert.AreEqual("", CommandClient.Transact("get window", name));
+        Assert.AreEqual("null", CommandClient.Transact("j/get window", name));
     }
 
     [TestMethod]
@@ -122,33 +122,30 @@ public class CommandServerTests
             Traits = WindowTraits.Normal with { Class = "app", Title = "title" },
         });
         Assert.AreSequenceEqual(
-            ["openwindow>>7,1,,app,title", "activewindow>>app,title", "activewindowv2>>7"],
+            ["openwindow>>7,1,1,,app,title", "focus>>,1,1,7,title"],
+            Take(first, 2));
+        Assert.AreSequenceEqual(
+            [
+                """{"event":"openwindow","address":"0x7","workspace":{"id":1,"name":"1"},"monitor":"","class":"app","title":"title"}""",
+                """{"event":"focus","monitor":"","workspace":{"id":1,"name":"1"},"window":{"address":"0x7","title":"title","class":"app","exe":""}}""",
+            ],
+            Take(second, 2));
+
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 2", name));
+        Assert.AreSequenceEqual(
+            [
+                "createworkspace>>2,2,",
+                "workspace>>2,2,",
+                "focus>>,2,2,,",
+            ],
             Take(first, 3));
         Assert.AreSequenceEqual(
-            ["openwindow>>7,1,,app,title", "activewindow>>app,title", "activewindowv2>>7"],
+            [
+                """{"event":"createworkspace","workspace":{"id":2,"name":"2"},"monitor":""}""",
+                """{"event":"workspace","workspace":{"id":2,"name":"2"},"monitor":""}""",
+                """{"event":"focus","monitor":"","workspace":{"id":2,"name":"2"},"window":null}""",
+            ],
             Take(second, 3));
-
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 2", name));
-        Assert.AreSequenceEqual(
-            [
-                "createworkspace>>2,",
-                "createworkspacev2>>2,2,",
-                "workspace>>2,",
-                "workspacev2>>2,2,",
-                "activewindow>>,",
-                "activewindowv2>>",
-            ],
-            Take(first, 6));
-        Assert.AreSequenceEqual(
-            [
-                "createworkspace>>2,",
-                "createworkspacev2>>2,2,",
-                "workspace>>2,",
-                "workspacev2>>2,2,",
-                "activewindow>>,",
-                "activewindowv2>>",
-            ],
-            Take(second, 6));
 
         core.Handle(new WindowClosed(new WindowId(7)));
         Assert.AreSequenceEqual(["closewindow>>7"], Take(first, 1));
@@ -170,8 +167,8 @@ public class CommandServerTests
 
         var expected = warnings.Select(warning => $"warning>>{warning.Line},,bad config").Append("configreloaded>>").ToArray();
         Assert.AreSequenceEqual(expected, Take(listener, expected.Length));
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 2", name));
-        Assert.Contains("workspacev2>>2,2,", Take(listener, 6));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 2", name));
+        Assert.Contains("workspace>>2,2,", Take(listener, 3));
     }
 
     [TestMethod]
@@ -183,16 +180,16 @@ public class CommandServerTests
         server.Start();
         using var idle = Connect(name);
         Send(idle, "events");
-        Assert.AreEqual("[]", CommandClient.Transact("j/clients", name));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name));
 
         var finished = Task.Run(() =>
         {
             for (var i = 0; i < 600; i++)
-                core.Execute(i % 2 == 0 ? "dispatch workspace 2" : "dispatch workspace 1");
+                core.Execute(i % 2 == 0 ? "workspace 2" : "workspace 1");
         });
 
         await finished.WaitAsync(TimeSpan.FromSeconds(5));
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
     [TestMethod]
@@ -204,15 +201,15 @@ public class CommandServerTests
         server.Start();
         var idle = Connect(name);
         Send(idle, "events");
-        Assert.AreEqual("[]", CommandClient.Transact("j/clients", name));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name));
         idle.Dispose();
 
         using var listener = new Listener(name);
         WaitUntilSubscribed(core, listener);
         Sync(core, listener);
         core.Handle(new WindowAppeared(new WindowId(3), new Rectangle(0, 0, 10, 10)));
-        Assert.AreSequenceEqual(["openwindow>>3,1,,,", "activewindow>>,", "activewindowv2>>3"], Take(listener, 3));
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreSequenceEqual(["openwindow>>3,1,1,,,", "focus>>,1,1,3,"], Take(listener, 2));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
     [TestMethod]
@@ -228,7 +225,7 @@ public class CommandServerTests
             Thread.Sleep(100);
         }
 
-        Assert.AreEqual("[]", CommandClient.Transact("j/clients", name, timeoutMs: 5000));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name, timeoutMs: 5000));
     }
 
     [TestMethod]
@@ -240,8 +237,8 @@ public class CommandServerTests
         server.Start();
         using var silent = Connect(name);
 
-        Assert.AreEqual("[]", CommandClient.Transact("j/clients", name));
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
     [TestMethod]
@@ -328,9 +325,21 @@ public class CommandServerTests
             while (!seen)
             {
                 Assert.IsTrue(listener.TryTake(TimeSpan.FromSeconds(10), out var line), "The marker window was never reported.");
-                seen = line == "activewindowv2>>270f";
+                seen = line == "focus>>,1,1,270f," || IsJsonFocusOn(line, "0x270f");
             }
         }
+    }
+
+    private static bool IsJsonFocusOn(string line, string address)
+    {
+        if (!line.StartsWith('{'))
+            return false;
+
+        using var parsed = JsonDocument.Parse(line);
+        var root = parsed.RootElement;
+        return root.GetProperty("event").GetString() == "focus"
+            && root.GetProperty("window") is { ValueKind: JsonValueKind.Object } window
+            && window.GetProperty("address").GetString() == address;
     }
 
     private static List<string> Take(Listener listener, int count)

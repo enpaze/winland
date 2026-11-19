@@ -32,7 +32,7 @@ public class AnimationOptionsTests
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
-        var closed = core.Handle(new Dispatch("killactive"));
+        var closed = core.Handle(new Dispatch("close"));
 
         Assert.AreEqual(new WindowId(1), closed.Close);
         Assert.DoesNotContain(motion => motion.Window == new WindowId(1), closed.Motions);

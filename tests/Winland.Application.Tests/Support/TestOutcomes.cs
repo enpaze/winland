@@ -44,7 +44,7 @@ internal static class TestOutcomes
     private static readonly Rectangle FullHd = new(0, 0, 1920, 1080);
 
     public static string FlatConfig(string extra = "") =>
-        "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n" + extra;
+        "gaps_in = 0\ngaps_out = 0\nborder_size = 0\n" + extra;
 
     public static WindowManager Flat(string extra = "") => Configured(FlatConfig(extra));
 

@@ -12,7 +12,7 @@ public class PersistentWorkspaceTests
 
         desk.AddMonitor("HEADLESS-LIFECYCLE-OWNERSHIP", TestDesktop.Second);
         Assert.Contains("HEADLESS-LIFECYCLE-OWNERSHIP", MonitorNames(desk));
-        desk.Ok("focusmonitor", "HEADLESS-LIFECYCLE-OWNERSHIP");
+        desk.Ok("focus-monitor", "HEADLESS-LIFECYCLE-OWNERSHIP");
         desk.Ok("workspace", "410");
         Assert.AreEqual("410 (410)", Label(desk.ActiveWorkspace()));
 
@@ -23,7 +23,7 @@ public class PersistentWorkspaceTests
         desk.AddMonitor("HEADLESS-LIFECYCLE-OWNERSHIP", TestDesktop.Second);
         Assert.Contains("HEADLESS-LIFECYCLE-OWNERSHIP", MonitorNames(desk));
         Assert.Contains("410 (410)", Labels(desk));
-        desk.Ok("focusmonitor", "HEADLESS-LIFECYCLE-OWNERSHIP");
+        desk.Ok("focus-monitor", "HEADLESS-LIFECYCLE-OWNERSHIP");
         Assert.AreEqual("410 (410)", Label(desk.ActiveWorkspace()));
 
         desk.RemoveMonitor("HEADLESS-LIFECYCLE-OWNERSHIP");
@@ -42,7 +42,7 @@ public class PersistentWorkspaceTests
 
     private static string[] MonitorNames(TestDesktop desk)
     {
-        using var document = JsonDocument.Parse(desk.Send("j/monitors"));
+        using var document = JsonDocument.Parse(desk.Send("j/get monitors"));
         return [.. document.RootElement.EnumerateArray().Select(monitor => monitor.GetProperty("name").GetString() ?? "")];
     }
 }

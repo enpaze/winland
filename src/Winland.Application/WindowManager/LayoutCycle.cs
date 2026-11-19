@@ -7,20 +7,16 @@ public sealed partial class WindowManager
     private Outcome SelectLayout(string arguments)
     {
         var name = arguments.Trim();
-        if (LayoutFactory.Named(name) is not Layout created)
-            return Rejected(DidYouMean.After($"error: unknown layout '{name}'", name, LayoutFactory.Names));
-
         var desk = TopWorkspace();
+        if (Is(name, "next") || Is(name, "prev"))
+            return ChangeLayout(desk, LayoutFactory.Named(NextLayout(LayoutFactory.NameOf(desk.Layout), back: Is(name, "prev")))!);
+
+        if (LayoutFactory.Named(name) is not Layout created)
+            return Rejected(DidYouMean.After($"error: unknown layout '{name}'", name, [.. LayoutFactory.Names, "next", "prev"]));
+
         return LayoutFactory.NameOf(created) == LayoutFactory.NameOf(desk.Layout)
             ? View([])
             : ChangeLayout(desk, created);
-    }
-
-    private Outcome CycleWorkspaceLayout(string arguments)
-    {
-        var desk = TopWorkspace();
-        var next = NextLayout(LayoutFactory.NameOf(desk.Layout), Is(FirstToken(arguments), "back"));
-        return ChangeLayout(desk, LayoutFactory.Named(next)!);
     }
 
     private Outcome ChangeLayout(LiveWorkspace desk, Layout created)

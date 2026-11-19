@@ -76,7 +76,7 @@ public class FocusTests
         var clicked = core.Handle(new WindowFocused(new WindowId(1), FocusCause.User));
 
         Assert.IsNull(clicked.Focus);
-        Assert.AreSequenceEqual(["activewindow>>,", "activewindowv2>>1"], Lines(clicked));
+        Assert.AreSequenceEqual(["focus>>,1,1,1,"], Lines(clicked));
     }
 
     [TestMethod]
@@ -132,7 +132,7 @@ public class FocusTests
     }
 
     [TestMethod]
-    public void MoveFocusSkipsAClientThatRefusesFocus()
+    public void FocusSkipsAClientThatRefusesFocus()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = no_focus, class:bar\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
@@ -142,7 +142,7 @@ public class FocusTests
         });
         core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));
 
-        var moved = core.Handle(new Dispatch("movefocus", "r"));
+        var moved = core.Handle(new Dispatch("focus", "r"));
 
         Assert.IsNull(moved.Focus);
         Assert.AreEqual(new WindowId(1), Active(core));
@@ -165,13 +165,13 @@ public class FocusTests
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = no_focus, class:quiet\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Class = "quiet" } });
-        core.Execute("dispatch workspace 1");
+        core.Execute("workspace 1");
 
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
-        Assert.AreEqual("null", core.Execute("j/activewindow").Text);
+        Assert.AreEqual("null", core.Execute("j/get window").Text);
     }
 
     [TestMethod]
@@ -206,11 +206,11 @@ public class FocusTests
     [TestMethod]
     public void TheForegroundReportAfterAFocusDispatcherDoesNotScrollTheStripAgain()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:layout = scrolling\n"));
+        var core = new WindowManager(ConfigParser.Parse("layout = scrolling\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
         core.Handle(new WindowAppeared(new WindowId(3), Area));
-        var focused = core.Handle(new Dispatch("focuswindow", "address:0x1"));
+        var focused = core.Handle(new Dispatch("focus", "address:0x1"));
         Assert.IsNotEmpty(focused.Placements);
 
         var reported = core.Handle(new WindowFocused(new WindowId(1), FocusCause.Requested));
@@ -220,7 +220,7 @@ public class FocusTests
 
     private static WindowId? Active(WindowManager core)
     {
-        var outcome = core.Handle(new Dispatch("killactive"));
+        var outcome = core.Handle(new Dispatch("close"));
         return outcome.Close;
     }
 

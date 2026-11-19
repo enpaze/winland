@@ -203,9 +203,9 @@ public class SizeLimitTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse("""
-            general:border_size = 10
-            general:gaps_in = 0
-            general:gaps_out = 0
+            border_size = 10
+            gaps_in = 0
+            gaps_out = 0
             """)));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 

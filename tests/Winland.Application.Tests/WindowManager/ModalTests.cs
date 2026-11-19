@@ -19,12 +19,12 @@ public class ModalTests
         Assert.AreEqual(Dialog, clicked.Focus);
         Assert.AreEqual(255, AlphaOf(clicked, Owner));
 
-        core.Handle(new Dispatch("focuswindow", "address:0x1"));
-        Assert.AreEqual(Dialog, core.Handle(new Dispatch("killactive")).Close);
+        core.Handle(new Dispatch("focus", "address:0x1"));
+        Assert.AreEqual(Dialog, core.Handle(new Dispatch("close")).Close);
 
         core.Handle(new WindowEnabledChanged(Owner, Enabled: true));
         core.Handle(new WindowFocused(Owner, FocusCause.User));
-        Assert.AreEqual(Owner, core.Handle(new Dispatch("killactive")).Close);
+        Assert.AreEqual(Owner, core.Handle(new Dispatch("close")).Close);
     }
 
     [TestMethod]
@@ -35,7 +35,7 @@ public class ModalTests
         core.Handle(new WindowAppeared(new WindowId(3), Area));
 
         core.Handle(new WindowFocused(Owner, FocusCause.User));
-        Assert.AreEqual(Owner, core.Handle(new Dispatch("killactive")).Close);
+        Assert.AreEqual(Owner, core.Handle(new Dispatch("close")).Close);
     }
 
     [TestMethod]

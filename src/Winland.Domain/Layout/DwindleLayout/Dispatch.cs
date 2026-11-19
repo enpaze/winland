@@ -159,28 +159,18 @@ internal sealed partial class DwindleLayout
 
     public IReadOnlyList<Placement> LayoutMessage(WindowId? active, string arguments)
     {
-        LayoutMessageError = null;
-        var tokens = Tokens.Of(arguments);
-        if (tokens.Length == 0)
-        {
-            LayoutMessageError = "error: bad layoutmsg";
-            return [];
-        }
-
-        if (Is(tokens[0], "togglesplit"))
-            return ToggleSplit(active);
-
-        LayoutMessageError = "error: bad layoutmsg '" + tokens[0] + "'";
+        LayoutMessageError = "error: layoutmsg works in the scrolling layout";
         return [];
     }
 
-    private IReadOnlyList<Placement> ToggleSplit(WindowId? active)
+    public IReadOnlyList<Placement> ToggleSplit(WindowId? active)
     {
+        LayoutMessageError = null;
         if (!TryNode(active, out var node))
             return [];
         if (node.Parent is null || Covers(node.Id!.Value))
         {
-            LayoutMessageError = "error: can't togglesplit in the current workspace";
+            LayoutMessageError = "error: can't split in the current workspace";
             return [];
         }
 

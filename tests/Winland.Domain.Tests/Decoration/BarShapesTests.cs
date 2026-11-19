@@ -6,7 +6,7 @@ public class BarShapesTests
     [TestMethod]
     public void PriorityWarnsAndTheBarLineBesideItStillApplies()
     {
-        var document = ConfigParser.Parse("group:groupbar:priority = 5\ngroup:groupbar:font_size = 10\n");
+        var document = ConfigParser.Parse("group:groupbar:priority = 5\ntab_font_size = 10\n");
 
         var warning = Assert.ContainsSingle(document.Warnings);
         Assert.AreEqual(1, warning.Line);

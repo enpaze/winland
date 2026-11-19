@@ -291,7 +291,7 @@ internal static class GroupBarHost
         {
             case LeftDownMessage:
                 var tab = bar.Spec.TabAt(x, y);
-                Run("focuswindow", tab >= 0 ? bar.Spec.Tabs[tab].Window : bar.Spec.Shown);
+                Run("focus", tab >= 0 ? bar.Spec.Tabs[tab].Window : bar.Spec.Shown);
                 return default;
             case MiddleDownMessage:
                 bar.Pressed = (x, y);

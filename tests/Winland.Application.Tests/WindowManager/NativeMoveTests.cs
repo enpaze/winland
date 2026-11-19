@@ -41,7 +41,7 @@ public class NativeMoveTests
     {
         var core = Flat("");
         Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new Dispatch("float"));
 
         var started = core.Handle(new WindowMoveStarted(new WindowId(1), new Point(700, 400)));
         var dropped = core.Handle(new WindowMoveEnded(new WindowId(1), new Point(900, 500)));
@@ -56,7 +56,7 @@ public class NativeMoveTests
     {
         var core = Flat("");
         Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new Dispatch("float"));
         var window = new WindowId(1);
 
         core.Handle(new WindowMoveStarted(window, new Point(700, 400)));
@@ -77,7 +77,7 @@ public class NativeMoveTests
     [TestMethod]
     public void MasterDropsTheClientOntoTheMasterWhenThePointerEndsOverIt()
     {
-        var core = Flat("general:layout = master\n");
+        var core = Flat("layout = master\n");
         Appear(core, 1);
         Appear(core, 2);
 
@@ -91,7 +91,7 @@ public class NativeMoveTests
     [TestMethod]
     public void ScrollingTilesTheClientAgainAfterTheDrop()
     {
-        var core = Flat("general:layout = scrolling\n");
+        var core = Flat("layout = scrolling\n");
         Appear(core, 1);
         Appear(core, 2);
 
@@ -110,7 +110,7 @@ public class NativeMoveTests
         var core = Flat("");
         Appear(core, 1);
         Appear(core, 2);
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
+        core.Handle(new Dispatch("focus", "address:0x2"));
         core.Handle(new Dispatch("fullscreen", mode));
 
         var started = core.Handle(new WindowMoveStarted(new WindowId(2), new Point(900, 20)));
@@ -176,10 +176,10 @@ public class NativeMoveTests
         var core = Flat("");
         Appear(core, 1);
         Appear(core, 2);
-        core.Handle(new PointerGesture("movewindow", new Point(1500, 100), PointerDragPhase.Begin, "mouse:left"));
+        core.Handle(new PointerGesture("move", new Point(1500, 100), PointerDragPhase.Begin, "mouse:left"));
         core.Handle(new WindowClosed(new WindowId(2)));
 
-        var moved = core.Handle(new PointerGesture("movewindow", new Point(1400, 200), PointerDragPhase.Move, "mouse:left"));
+        var moved = core.Handle(new PointerGesture("move", new Point(1400, 200), PointerDragPhase.Move, "mouse:left"));
         var started = core.Handle(new WindowMoveStarted(new WindowId(1), new Point(500, 100)));
 
         Assert.IsEmpty(moved.Placements);

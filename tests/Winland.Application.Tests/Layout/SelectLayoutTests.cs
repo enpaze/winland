@@ -10,7 +10,7 @@ public class SelectLayoutTests
     [DataRow("floating", "scrolling")]
     public void LayoutSelectsTheNamedLayout(string from, string to)
     {
-        var core = Configured($"general:layout = {from}\n");
+        var core = Configured($"layout = {from}\n");
         core.Handle(Appeared(1));
 
         var selected = core.Handle(new Dispatch("layout", to));
@@ -26,7 +26,7 @@ public class SelectLayoutTests
     [DataRow("scrolling dwindle")]
     public void ANameThatIsNoLayoutErrorsAndChangesNothing(string name)
     {
-        var core = Configured("general:layout = scrolling\n");
+        var core = Configured("layout = scrolling\n");
         core.Handle(Appeared(1));
 
         var refused = core.Handle(new Dispatch("layout", name));
@@ -98,7 +98,7 @@ public class SelectLayoutTests
     {
         var core = new WindowManager();
         core.Handle(Appeared(1));
-        core.Handle(new Dispatch("movetoworkspace", "special:scratch"));
+        core.Handle(new Dispatch("move", "special:scratch"));
 
         var selected = core.Handle(new Dispatch("layout", "floating"));
 
@@ -112,7 +112,7 @@ public class SelectLayoutTests
         var desk = new TestDesktop();
         desk.Spawn("c");
         desk.Spawn("a");
-        desk.Ok("togglegroup");
+        desk.Ok("group");
         desk.Spawn("b");
 
         foreach (var layout in new[] { "scrolling", "floating", "dwindle" })
@@ -123,7 +123,7 @@ public class SelectLayoutTests
             Assert.AreEqual(2, Grouped(desk.Client("a")));
             Assert.AreEqual(2, Grouped(desk.Client("b")));
             Assert.AreEqual(0, Grouped(desk.Client("c")));
-            desk.Ok("changegroupactive", "f");
+            desk.Ok("tab", "next");
         }
     }
 
@@ -133,11 +133,11 @@ public class SelectLayoutTests
         var desk = new TestDesktop();
         desk.Spawn("tiled", "Tiled title");
         desk.Spawn("pinned");
-        desk.Ok("togglefloating");
+        desk.Ok("float");
         desk.Ok("pin");
         desk.Spawn("small");
         desk.Handle(new WindowMinimized(desk.Window("small")));
-        desk.Ok("focuswindow", "class:tiled");
+        desk.Ok("focus", "class:tiled");
 
         foreach (var layout in new[] { "scrolling", "floating", "dwindle" })
         {
@@ -164,7 +164,7 @@ public class SelectLayoutTests
         var desk = new TestDesktop();
         desk.Spawn("a");
         desk.Spawn("b");
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
 
         desk.Ok("layout", layout);
 
@@ -179,7 +179,7 @@ public class SelectLayoutTests
 
     private static WindowManager ScrollingWithANarrowColumn()
     {
-        var core = Flat("general:layout = scrolling\n");
+        var core = Flat("layout = scrolling\n");
         core.Handle(Appeared(1));
         core.Handle(Appeared(2));
         core.Handle(new Dispatch("layoutmsg", "colresize 0.3"));
@@ -191,8 +191,8 @@ public class SelectLayoutTests
         var core = Flat();
         core.Handle(Appeared(1));
         core.Handle(Appeared(2));
-        core.Handle(new Dispatch("layoutmsg", "togglesplit"));
-        core.Handle(new Dispatch("resizeactive", "0 100"));
+        core.Handle(new Dispatch("split"));
+        core.Handle(new Dispatch("resize", "0 100"));
         return core;
     }
 

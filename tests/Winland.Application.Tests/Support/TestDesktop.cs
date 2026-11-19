@@ -5,30 +5,16 @@ namespace Winland.Application.Tests;
 internal sealed class TestDesktop
 {
     internal const string Config = """
-        general {
-            gaps_in = 5
-            gaps_out = 20
-            border_size = 2
-            col.active_border = rgba(33ccffee)
-            col.inactive_border = rgba(595959aa)
-            layout = dwindle
-        }
-        decoration {
-            rounding = 10
-        }
-        animations {
-            enabled = false
-        }
-        master {
-            new_status = master
-        }
-        scrolling {
-            column_width = 0.5
-            explicit_column_widths = 0.25, 0.333, 0.5, 0.667, 0.75, 1.0
-        }
-        input {
-            follow_mouse = 1
-        }
+        gaps_in = 5
+        gaps_out = 20
+        border_size = 2
+        border_color = rgba(33ccffee)
+        border_color_inactive = rgba(595959aa)
+        layout = dwindle
+        rounding = 10
+        animations = false
+        column_width = 0.5
+        focus_follows_mouse = 1
         windowrule = float, class:wr_kitty
         windowrule = size 200 200, class:wr_kitty
         """;
@@ -197,21 +183,21 @@ internal sealed class TestDesktop
         _placed.TryGetValue(window, out var bounds) ? bounds : throw new InvalidOperationException($"Window {window.Value} was never placed.");
 
     internal string Dispatch(string dispatcher, string arguments = "") =>
-        Send(arguments.Length == 0 ? $"dispatch {dispatcher}" : $"dispatch {dispatcher} {arguments}");
+        Send(arguments.Length == 0 ? $"{dispatcher}" : $"{dispatcher} {arguments}");
 
     internal void Ok(string dispatcher, string arguments = "") =>
         Assert.AreEqual("ok", Dispatch(dispatcher, arguments));
 
-    internal JsonElement ActiveWindow() => Json(Send("j/activewindow"));
+    internal JsonElement ActiveWindow() => Json(Send("j/get window"));
 
-    internal JsonElement[] Clients() => [.. Json(Send("j/clients")).EnumerateArray()];
+    internal JsonElement[] Clients() => [.. Json(Send("j/get windows")).EnumerateArray()];
 
     internal JsonElement Client(string windowClass) =>
         Clients().Single(client => client.GetProperty("class").GetString() == windowClass);
 
-    internal JsonElement ActiveWorkspace() => Json(Send("j/activeworkspace"));
+    internal JsonElement ActiveWorkspace() => Json(Send("j/get workspace"));
 
-    internal JsonElement[] Workspaces() => [.. Json(Send("j/workspaces")).EnumerateArray()];
+    internal JsonElement[] Workspaces() => [.. Json(Send("j/get workspaces")).EnumerateArray()];
 
     internal static string At(JsonElement client) => Pair(client.GetProperty("at"));
 
@@ -220,8 +206,6 @@ internal sealed class TestDesktop
     internal static string ClassOf(JsonElement client) => client.GetProperty("class").GetString() ?? "";
 
     internal static int Fullscreen(JsonElement client) => client.GetProperty("fullscreen").GetInt32();
-
-    internal static int FullscreenClient(JsonElement client) => client.GetProperty("fullscreenClient").GetInt32();
 
     internal static bool Floating(JsonElement client) => client.GetProperty("floating").GetBoolean();
 

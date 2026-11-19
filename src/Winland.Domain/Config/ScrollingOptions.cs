@@ -16,7 +16,7 @@ public sealed record ScrollingOptions
 
     internal static OptionSet<ScrollingOptions> Options { get; } = new(
     [
-        Option<ScrollingOptions>.Of("scrolling:column_width", OptionValue.Number(0.1, 1), (o, v) => o with { ColumnWidth = v }),
+        Option<ScrollingOptions>.Of("column_width", OptionValue.Number(0.1, 1), (o, v) => o with { ColumnWidth = v }),
     ]);
 
     public static ScrollingOptions From(ConfigDocument document) => Options.From(Documented, document);

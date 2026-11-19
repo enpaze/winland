@@ -73,7 +73,7 @@ public class ShownWorkspacesTests
 
         shown.Rename(Number(2, Left), Number(7, Left));
 
-        Assert.AreEqual(Number(7, Left), shown.Previous(Left, perMonitor: false));
+        Assert.AreEqual(Number(7, Left), shown.Last(Left));
     }
 
     [TestMethod]
@@ -92,7 +92,7 @@ public class ShownWorkspacesTests
     }
 
     [TestMethod]
-    public void PreviousPerMonitorSkipsVisitsOnOtherMonitors()
+    public void LastIsTheVisitBeforeEvenOnAnotherMonitor()
     {
         var shown = new ShownWorkspaces();
         shown.SetLive([Left, Right]);
@@ -101,8 +101,7 @@ public class ShownWorkspacesTests
         shown.Visit(Number(1, Left), Left);
         shown.Show(Left, Number(1, Left));
 
-        Assert.AreEqual(Number(1, Right), shown.Previous(Left, perMonitor: false));
-        Assert.AreEqual(Number(5, Left), shown.Previous(Left, perMonitor: true));
+        Assert.AreEqual(Number(1, Right), shown.Last(Left));
     }
 
     [TestMethod]
@@ -115,7 +114,7 @@ public class ShownWorkspacesTests
         shown.Visit(Number(1, Left), Left);
         shown.Show(Left, Number(1, Left));
 
-        Assert.AreEqual(Number(2, Left), shown.Previous(Left, perMonitor: false));
+        Assert.AreEqual(Number(2, Left), shown.Last(Left));
     }
 
     [TestMethod]

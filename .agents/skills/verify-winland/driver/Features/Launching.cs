@@ -44,8 +44,8 @@ public class Launching
                 CloseLaunched(formPid);
                 run.Until("the launched window closed", () => Launched(run, title) is null);
 
-                Assert.AreEqual("ok", run.Ask("dispatch", "exec", $"echo first&& echo second> \"{exec}\""));
-                run.Until("dispatch exec ran the command line through cmd, with && and redirection", () => Read(exec) == "second");
+                Assert.AreEqual("ok", run.Ask("exec", $"echo first&& echo second> \"{exec}\""));
+                run.Until("exec ran the command line through cmd, with && and redirection", () => Read(exec) == "second");
             });
         }
         finally
@@ -57,7 +57,7 @@ public class Launching
 
     private static JsonElement? Launched(VerifyRun run, string title)
     {
-        foreach (var client in run.Json("clients").EnumerateArray())
+        foreach (var client in run.Json("get", "windows").EnumerateArray())
         {
             if (client.GetProperty("title").GetString() == title)
                 return client;

@@ -6,14 +6,14 @@ public class CycleLayoutTests
     private static readonly Rectangle Area = new(0, 0, 800, 600);
 
     [TestMethod]
-    public void CycleLayoutWalksDwindleScrollingAndFloating()
+    public void LayoutNextWalksDwindleScrollingAndFloating()
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
 
-        var scrolling = core.Handle(new Dispatch("cyclelayout", ""));
-        var floating = core.Handle(new Dispatch("cyclelayout", ""));
-        var dwindle = core.Handle(new Dispatch("cyclelayout", ""));
+        var scrolling = core.Handle(new Dispatch("layout", "next"));
+        var floating = core.Handle(new Dispatch("layout", "next"));
+        var dwindle = core.Handle(new Dispatch("layout", "next"));
 
         Assert.AreEqual("scrolling", Layout(scrolling));
         Assert.IsFalse(Client(scrolling, 1).Floating);
@@ -24,27 +24,25 @@ public class CycleLayoutTests
     }
 
     [TestMethod]
-    [DataRow("")]
     [DataRow("next")]
-    [DataRow("prev")]
-    public void OtherWordsGoForward(string arguments)
+    [DataRow("NEXT")]
+    public void NextGoesForward(string arguments)
     {
         var core = new WindowManager();
 
-        Assert.AreEqual("scrolling", Layout(core.Handle(new Dispatch("cyclelayout", arguments))));
+        Assert.AreEqual("scrolling", Layout(core.Handle(new Dispatch("layout", arguments))));
     }
 
     [TestMethod]
-    [DataRow("back")]
-    [DataRow("BACK")]
-    [DataRow("back now")]
-    public void BackGoesTheOtherWay(string arguments)
+    [DataRow("prev")]
+    [DataRow("PREV")]
+    public void PrevGoesTheOtherWay(string arguments)
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
 
-        var floating = core.Handle(new Dispatch("cyclelayout", arguments));
-        var scrolling = core.Handle(new Dispatch("cyclelayout", "back"));
+        var floating = core.Handle(new Dispatch("layout", arguments));
+        var scrolling = core.Handle(new Dispatch("layout", "prev"));
 
         Assert.AreEqual("floating", Layout(floating));
         Assert.IsTrue(Client(floating, 1).Floating);
@@ -57,24 +55,24 @@ public class CycleLayoutTests
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
-        core.Handle(new Dispatch("togglefloating", ""));
+        core.Handle(new Dispatch("float"));
 
-        core.Handle(new Dispatch("cyclelayout", ""));
-        core.Handle(new Dispatch("cyclelayout", ""));
-        var dwindle = core.Handle(new Dispatch("cyclelayout", ""));
+        core.Handle(new Dispatch("layout", "next"));
+        core.Handle(new Dispatch("layout", "next"));
+        var dwindle = core.Handle(new Dispatch("layout", "next"));
 
         Assert.AreEqual("dwindle", Layout(dwindle));
         Assert.IsTrue(Client(dwindle, 1).Floating);
     }
 
     [TestMethod]
-    public void TogglefloatingDoesNotTileInsideTheFloatingLayout()
+    public void FloatDoesNotTileInsideTheFloatingLayout()
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
-        core.Handle(new Dispatch("cyclelayout", "back"));
+        core.Handle(new Dispatch("layout", "prev"));
 
-        var tiled = core.Handle(new Dispatch("togglefloating", ""));
+        var tiled = core.Handle(new Dispatch("float"));
 
         Assert.AreEqual("floating", Layout(tiled));
         Assert.IsTrue(Client(tiled, 1).Floating);
@@ -88,7 +86,7 @@ public class CycleLayoutTests
         core.Handle(new Dispatch("workspace", "2"));
         core.Handle(Appeared(2, Area));
 
-        var cycled = core.Handle(new Dispatch("cyclelayout", ""));
+        var cycled = core.Handle(new Dispatch("layout", "next"));
 
         Assert.AreEqual("scrolling", LayoutOf(cycled, "2"));
         Assert.AreEqual("dwindle", LayoutOf(cycled, "1"));
@@ -99,9 +97,9 @@ public class CycleLayoutTests
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
-        core.Handle(new Dispatch("movetoworkspace", "special:scratch"));
+        core.Handle(new Dispatch("move", "special:scratch"));
 
-        var cycled = core.Handle(new Dispatch("cyclelayout", ""));
+        var cycled = core.Handle(new Dispatch("layout", "next"));
 
         Assert.AreEqual("scrolling", LayoutOf(cycled, "special:scratch"));
         Assert.AreEqual("dwindle", LayoutOf(cycled, "1"));
@@ -110,10 +108,10 @@ public class CycleLayoutTests
     [TestMethod]
     public void AReloadReturnsToTheConfigLayout()
     {
-        var config = ConfigParser.Parse("general:layout = scrolling\n");
+        var config = ConfigParser.Parse("layout = scrolling\n");
         var core = new WindowManager(config);
         core.Handle(Appeared(1, Area));
-        var cycled = core.Handle(new Dispatch("cyclelayout", ""));
+        var cycled = core.Handle(new Dispatch("layout", "next"));
         Assert.AreEqual("floating", Layout(cycled));
 
         var reloaded = core.Handle(new Configure(config));

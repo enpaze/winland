@@ -85,7 +85,7 @@ body:
     id: configerrors
     attributes:
       label: Config errors
-      description: Paste the output of winland configerrors while Winland is running.
+      description: Paste the output of winland get errors while Winland is running.
       render: shell
 
   - type: textarea
@@ -95,7 +95,7 @@ body:
       description: >-
         The default elevated install writes no log file. For a crash, open Event Viewer > Windows Logs > Application
         and copy the .NET Runtime event 1026 for Winland, including its time, exception and stack trace.
-        An unelevated run such as winland install --user writes winland.log when debug:disable_logs = false.
+        An unelevated run such as winland install --user writes winland.log when log_file = true.
         Attach that file and winland.log.1 if present. Redact secrets.
       render: shell
 

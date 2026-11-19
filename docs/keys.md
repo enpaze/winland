@@ -4,7 +4,7 @@ How Winland names keys: the XKB keycode, the Windows scan code and the evdev cod
 
 ## Winland notes
 
-`code:N` is the XKB keycode, which is the evdev keycode plus 8. It names a physical key, so it does not follow the active layout. A bare number above 9 in a bind is the same keycode, so `bind = SUPER, 36, exec, kitty` is `code:36`. `0` to `9` are the digit keys. A config is resolved when it is read. Character names such as `ä` and `adiaeresis` follow the layout that is active when the key is pressed. A virtual-key alias such as `bracketleft` is resolved against the layout active when the config is read. Named binds also match the physical key in that config layout after the foreground layout changes.
+`code:N` is the XKB keycode, which is the evdev keycode plus 8. It names a physical key, so it does not follow the active layout. A bare number above 9 in a bind is the same keycode, so `bind = Win+36, exec kitty` is `code:36`. `0` to `9` are the digit keys. A config is resolved when it is read. Character names such as `ä` and `adiaeresis` follow the layout that is active when the key is pressed. A virtual-key alias such as `bracketleft` is resolved against the layout active when the config is read. Named binds also match the physical key in that config layout after the foreground layout changes.
 
 Mouse buttons are `mouse:left`, `mouse:right`, `mouse:middle`, `mouse:x1` and `mouse:x2`, in any case. Printed binds write them in lower case.
 

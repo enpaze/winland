@@ -10,10 +10,10 @@ public class Decoration
     public TestContext TestContext { get; set; } = null!;
         private const string Config =
         """
-        general:border_size = 6
-        general:col.active_border = 0xffff0000
-        general:col.inactive_border = 0xff0000ff
-        decoration:inactive_opacity = 0.5
+        border_size = 6
+        border_color = 0xffff0000
+        border_color_inactive = 0xff0000ff
+        inactive_opacity = 0.5
 
         """;
 
