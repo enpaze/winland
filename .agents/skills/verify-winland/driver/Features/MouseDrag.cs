@@ -63,12 +63,14 @@ public class MouseDrag
     });
 
     [VerifyFact]
-    public void ATiledNeighbourFollowsABorderDragLive() => VerifyRun.Drive(TestContext, Config, run =>
+    public void ATiledNeighbourFollowsABorderDragLive() => VerifyRun.Drive(TestContext, Config + "gaps_in = 8\n", run =>
     {
         using var slow = new VerifyWindows(NeighbourLayoutMs);
         var left = slow.Open(VerifyRun.Title + " 1");
         run.Say($"opened test window '{VerifyRun.Title} 1' {VerifyRun.Address(left)}, which takes {NeighbourLayoutMs} ms to take each move");
         run.Until("the slow window is a Client", () => run.Client(left) is not null);
+        var tile = VerifyRun.Frame(left);
+        Desktop.MoveMouse(tile.Left + (tile.Width * 3 / 4), (tile.Top + tile.Bottom) / 2);
         var right = run.OpenManaged("2");
         run.Until("the two windows tile side by side with the slow one on the left", () =>
             VerifyRun.SideBySide(VerifyRun.Frame(left), VerifyRun.Frame(right), VerifyRun.WorkArea(left))
@@ -78,6 +80,8 @@ public class MouseDrag
         var start = VerifyRun.Frame(right);
         var rest = Gap(left, right);
         var grab = (X: start.Left - 3, Y: (start.Top + start.Bottom) / 2);
+        var leftFrame = VerifyRun.Frame(left);
+        Assert.IsTrue(grab.X >= leftFrame.Right, $"the grab {grab} is inside the left window {leftFrame}");
         var hit = (int)PInvoke.SendMessage(right, HitTest, default, new LPARAM(((grab.Y & 0xFFFF) << 16) | (grab.X & 0xFFFF))).Value;
         Assert.AreEqual(HitLeft, hit, $"{grab} is not on the left sizing border of {VerifyRun.Address(right)}");
         run.Say($"saw: the windows meet with a {rest} px gap, and {grab} is on the right window's left sizing border");
