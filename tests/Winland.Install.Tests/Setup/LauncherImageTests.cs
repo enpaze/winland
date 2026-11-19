@@ -1,15 +1,16 @@
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class LauncherImageTests
 {
-    [Fact]
+    [TestMethod]
     public void TheLauncherImageIsAConsoleSubsystemWithADetachedConsoleAllocationPolicy()
     {
         const string policy = "<consoleAllocationPolicy xmlns=\"http://schemas.microsoft.com/SMI/2024/WindowsSettings\">detached</consoleAllocationPolicy>";
         var image = File.ReadAllBytes(LauncherExecutable());
 
-        Assert.Equal(3, Subsystem(image));
-        Assert.True(Contains(image, policy), "consoleAllocationPolicy detached is absent");
+        Assert.AreEqual(3, Subsystem(image));
+        Assert.IsTrue(Contains(image, policy), "consoleAllocationPolicy detached is absent");
     }
 
     private static string LauncherExecutable()
@@ -26,7 +27,7 @@ public class LauncherImageTests
         }
 
         var path = Path.Combine(root, "src", "Winland.Launcher", "bin", configuration, "net11.0-windows", "winland-launcher.exe");
-        Assert.True(File.Exists(path), path);
+        Assert.IsTrue(File.Exists(path), path);
         return path;
     }
 
