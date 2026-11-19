@@ -13,32 +13,22 @@ public class ControlRequestTests
     }
 
     [TestMethod]
-    public void ABareDispatchListsInOrderEveryDispatcherWinlandRuns()
+    public void TheUsageListsInOrderEveryActionWinlandRuns()
     {
-        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["dispatch"], out var list));
+        var actions = Assert.ContainsSingle(line => line.StartsWith("actions: ", StringComparison.Ordinal), ControlInvocation.Usage.Split('\n'));
 
-        var names = list.Split('\n');
+        var names = actions["actions: ".Length..].Split(", ");
         Assert.AreSequenceEqual(names.Order(StringComparer.Ordinal), names);
-        Assert.Contains("killactive", names);
+        Assert.Contains("close", names);
+        Assert.Contains("reload", names);
         var core = new WindowManager();
         foreach (var name in names)
-{
-    Assert.DoesNotContain("unknown dispatcher", core.Execute("dispatch " + name).Text, StringComparison.Ordinal);
-}
+            Assert.DoesNotContain("unknown command", core.Execute(name).Text, StringComparison.Ordinal);
     }
 
     [TestMethod]
-    public void TheDispatcherListWithJIsAJsonArrayOfTheSameNames()
-    {
-        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["dispatch"], out var plain));
-        Assert.IsTrue(ControlInvocation.TryAnswerLocally(["-j", "dispatch"], out var json));
-
-        Assert.AreSequenceEqual(plain.Split('\n'), JsonSerializer.Deserialize<string[]>(json));
-    }
-
-    [TestMethod]
-    [DataRow("dispatch killactive")]
-    [DataRow("clients")]
+    [DataRow("close")]
+    [DataRow("get windows")]
     public void ANamedRequestStillGoesToTheRunningWinland(string request)
     {
         var args = request.Split(' ');
@@ -53,18 +43,18 @@ public class ControlRequestTests
     {
         const string description = "hyprctl binds JSON regression";
         var desk = new TestDesktop();
-        desk.Set("bindd", $"SUPER, F12, {description}, exec, true");
+        desk.Set("bind", $"Win+F12, \"{description}\", exec true");
 
-        var binds = Json(desk.Send("j/binds")).EnumerateArray().ToArray();
+        var binds = Json(desk.Send("j/get binds")).EnumerateArray().ToArray();
         Assert.ContainsSingle(bind => bind.GetProperty("key").GetString() == "F12", binds);
         Assert.Contains(bind =>
             bind.GetProperty("key").GetString() == "F12"
-            && bind.GetProperty("has_description").GetBoolean()
+            && bind.GetProperty("hasDescription").GetBoolean()
             && bind.GetProperty("description").GetString() == description, binds);
 
-        Assert.Contains($"bindd = SUPER, F12, {description}, exec, true", desk.Send("binds").Split('\n'));
+        Assert.Contains($"bind = Win+F12, \"{description}\", exec true", desk.Send("get binds").Split('\n'));
 
-        desk.Set("unbind", "SUPER, F12");
+        desk.Set("unbind", "Win+F12");
     }
 
     private static void ExpectConfigured(TestDesktop desk)

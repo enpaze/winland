@@ -10,14 +10,14 @@ public class LayoutRegressionTests
     [DataRow("scrolling")]
     public void FloatingResizeAndPlacementKeepTheClientsLimits(string name)
     {
-        var core = Configured($"general:layout = {name}");
+        var core = Configured($"layout = {name}");
         core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
             Traits = WindowTraits.Normal with { Dialog = true, MinSize = new Size(200, 100), MaxSize = new Size(400, 300) },
             Bounds = new Rectangle(100, 100, 300, 200),
         });
 
-        var resized = core.Handle(new Dispatch("resizeactive", "1000 1000"));
+        var resized = core.Handle(new Dispatch("resize", "1000 1000"));
         Assert.AreEqual(new Size(400, 300), SizeOf(BoundsOf(resized, 1)));
 
         var placed = Place(core, 1, new Rectangle(100, 100, 50, 50));
@@ -29,7 +29,7 @@ public class LayoutRegressionTests
     [TestMethod]
     public void AScrollingColumnCannotCoverTheNeighbouringMonitorsClients()
     {
-        var core = Configured("general:layout = scrolling");
+        var core = Configured("layout = scrolling");
         core.Handle(new MonitorsChanged([Display("left", 0, 1000, 800), Display("right", 1000, 1000, 800)]));
         for (var id = 1; id <= 3; id++)
             core.Handle(new WindowAppeared(new WindowId(id), Area));
@@ -43,7 +43,7 @@ public class LayoutRegressionTests
     [TestMethod]
     public void ScrollingFullscreenKeepsTheWholeMonitorAfterItsWorkAreaChanges()
     {
-        var core = Configured("general:layout = scrolling");
+        var core = Configured("layout = scrolling");
         var screen = Display("screen", "screen", 0, 0, 1000, 800, workArea: new Rectangle(0, 0, 1000, 760));
         core.Handle(new MonitorsChanged([screen]));
         core.Handle(new WindowAppeared(new WindowId(1), screen.WorkArea));
@@ -105,18 +105,18 @@ public class LayoutRegressionTests
     [DataRow("scrolling")]
     public void FloatingPointerResizeKeepsTheClientsLimits(string name)
     {
-        var core = Configured($"general:layout = {name}\n");
+        var core = Configured($"layout = {name}\n");
         core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
             Traits = WindowTraits.Normal with { Dialog = true, MinSize = new Size(200, 100), MaxSize = new Size(400, 300) },
             Bounds = new Rectangle(0, 0, 300, 200),
         });
-        core.Handle(new PointerGesture("resizewindow", new Point(640, 490), PointerDragPhase.Begin, "mouse:right"));
+        core.Handle(new PointerGesture("resize", new Point(640, 490), PointerDragPhase.Begin, "mouse:right"));
 
-        var grown = core.Handle(new PointerGesture("resizewindow", new Point(900, 700), PointerDragPhase.Move, "mouse:right"));
+        var grown = core.Handle(new PointerGesture("resize", new Point(900, 700), PointerDragPhase.Move, "mouse:right"));
 
         Assert.AreEqual(new Size(400, 300), SizeOf(Client(grown, 1).Bounds));
-        var shrunk = core.Handle(new PointerGesture("resizewindow", new Point(400, 350), PointerDragPhase.Move, "mouse:right"));
+        var shrunk = core.Handle(new PointerGesture("resize", new Point(400, 350), PointerDragPhase.Move, "mouse:right"));
         Assert.AreEqual(new Size(200, 100), SizeOf(Client(shrunk, 1).Bounds));
     }
 }

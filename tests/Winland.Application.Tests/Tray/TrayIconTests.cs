@@ -6,7 +6,7 @@ public class TrayIconTests
     [TestMethod]
     public void TheIconStartsOnWorkspaceOne()
     {
-        var outcome = new WindowManager().Execute("dispatch workspace 1").Effect;
+        var outcome = new WindowManager().Execute("workspace 1").Effect;
 
         Assert.IsNotNull(outcome.Tray);
         Assert.AreEqual("1", outcome.Tray.Number);
@@ -18,7 +18,7 @@ public class TrayIconTests
     {
         var core = new WindowManager();
 
-        var outcome = core.Execute("dispatch workspace 2").Effect;
+        var outcome = core.Execute("workspace 2").Effect;
 
         Assert.AreEqual(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
         Assert.AreEqual("2", outcome.Tray!.Number);
@@ -27,7 +27,7 @@ public class TrayIconTests
     [TestMethod]
     public void ANamedWorkspaceIsNotCreated()
     {
-        var reply = new WindowManager().Execute("dispatch workspace name:dev");
+        var reply = new WindowManager().Execute("workspace name:dev");
 
         Assert.AreEqual("error: no such workspace", reply.Text);
         Assert.AreEqual(WorkspaceId.Initial, reply.Effect.State.ActiveWorkspace);
@@ -39,9 +39,9 @@ public class TrayIconTests
     public void ASpecialWorkspaceKeepsTheNumberUnderneath()
     {
         var core = new WindowManager();
-        core.Execute("dispatch workspace 4");
+        core.Execute("workspace 4");
 
-        var opened = core.Execute("dispatch togglespecialworkspace scratch").Effect;
+        var opened = core.Execute("scratchpad scratch").Effect;
 
         Assert.AreEqual(new WorkspaceId("4"), opened.State.ActiveWorkspace);
         Assert.IsNotNull(opened.State.SpecialWorkspace);
@@ -52,10 +52,10 @@ public class TrayIconTests
     public void TheFocusedMonitorsWorkspaceIsTheNumber()
     {
         var core = TwoMonitors();
-        Assert.AreEqual(new WorkspaceId("1"), core.Execute("dispatch workspace 1").Effect.State.ActiveWorkspace);
-        Assert.AreEqual("1", core.Execute("dispatch focusmonitor LEFT").Effect.Tray!.Number);
+        Assert.AreEqual(new WorkspaceId("1"), core.Execute("workspace 1").Effect.State.ActiveWorkspace);
+        Assert.AreEqual("1", core.Execute("focus-monitor LEFT").Effect.Tray!.Number);
 
-        var right = core.Execute("dispatch focusmonitor RIGHT").Effect;
+        var right = core.Execute("focus-monitor RIGHT").Effect;
 
         Assert.AreEqual(WorkspaceId.FromNumber(1, new MonitorId(1)), right.State.ActiveWorkspace);
         Assert.AreEqual("1", right.Tray!.Number);
@@ -103,7 +103,7 @@ public class TrayIconTests
             new Monitor("LEFT", "Left", 0, 0, 1920, 1080, 1, true, new Rectangle(0, 0, 1920, 1080)),
             new Monitor("RIGHT", "Right", 1920, 0, 1920, 1080, 1, true, new Rectangle(1920, 0, 1920, 1080)),
         ]));
-        core.Execute("dispatch focusmonitor LEFT");
+        core.Execute("focus-monitor LEFT");
         return core;
     }
 }

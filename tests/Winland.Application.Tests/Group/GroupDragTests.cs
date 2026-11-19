@@ -20,7 +20,7 @@ public class GroupDragTests
     public void ATileDroppedOnTheFirstTabGoesInFrontOfIt()
     {
         var core = Grouped("group:drag_into_group = 2\n");
-        var bar = Assert.ContainsSingle(core.Handle(new Dispatch("resizewindow")).GroupBars);
+        var bar = Assert.ContainsSingle(core.Handle(new Dispatch("resize")).GroupBars);
 
         var dropped = Drag(core, 2, new Point(bar.Bounds.X + 2, bar.Bounds.Y + (bar.Bounds.Height / 2)));
 
@@ -31,9 +31,9 @@ public class GroupDragTests
     public void AFloatingWindowDoesNotJoinATiledGroup()
     {
         var core = Grouped("");
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
-        core.Handle(new Dispatch("togglefloating"));
-        var bar = Assert.ContainsSingle(core.Handle(new Dispatch("resizewindow")).GroupBars);
+        core.Handle(new Dispatch("focus", "address:0x2"));
+        core.Handle(new Dispatch("float"));
+        var bar = Assert.ContainsSingle(core.Handle(new Dispatch("resize")).GroupBars);
 
         var onMember = Drag(core, 2, Middle(Tile(core, 1)));
         Assert.ContainsSingle(Assert.ContainsSingle(onMember.State.Groups));
@@ -46,9 +46,9 @@ public class GroupDragTests
     public void AMoveStartedOnATabTakesThatMemberOutAndDragsItAlone()
     {
         var core = Grouped("");
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
-        core.Handle(new Dispatch("moveintogroup", "l"));
-        var bar = Assert.ContainsSingle(core.Handle(new Dispatch("resizewindow")).GroupBars);
+        core.Handle(new Dispatch("focus", "address:0x2"));
+        core.Handle(new Dispatch("join", "l"));
+        var bar = Assert.ContainsSingle(core.Handle(new Dispatch("resize")).GroupBars);
         var tab = new Point(bar.Bounds.X + bar.TabWidth + bar.Style.GapsIn + 5, bar.Bounds.Y + (bar.Bounds.Height / 2));
         core.Handle(new KeyPressed("Super_L"));
 
@@ -62,7 +62,7 @@ public class GroupDragTests
     public void AMoveStartedOnTheTabOfAGroupOfOneDragsTheWholeGroup()
     {
         var core = Grouped("");
-        var bar = Assert.ContainsSingle(core.Handle(new Dispatch("resizewindow")).GroupBars);
+        var bar = Assert.ContainsSingle(core.Handle(new Dispatch("resize")).GroupBars);
         core.Handle(new KeyPressed("Super_L"));
 
         var pressed = core.Handle(new PointerButtonPressed("mouse:left") { Position = new Point(bar.Bounds.X + 5, bar.Bounds.Y + (bar.Bounds.Height / 2)) });
@@ -76,8 +76,8 @@ public class GroupDragTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(
-            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"
-            + "bind = SUPER, mouse:left, movewindow\n")));
+            "gaps_in = 0\ngaps_out = 0\nborder_size = 0\n"
+            + "bind = Win+mouse:left, move\n")));
         var right = new Rectangle(1920, 0, 1920, 1080);
         core.Handle(new MonitorsChanged(
         [
@@ -86,8 +86,8 @@ public class GroupDragTests
         ]));
         core.Handle(new WindowAppeared(new WindowId(1), Wide));
         core.Handle(new WindowAppeared(new WindowId(2), right));
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
-        core.Handle(new Dispatch("togglegroup"));
+        core.Handle(new Dispatch("focus", "address:0x2"));
+        core.Handle(new Dispatch("group"));
         core.Handle(new KeyPressed("Super_L"));
         var onto = Middle(Tile(core, 2));
         core.Handle(new PointerButtonPressed("mouse:left") { Position = Middle(Tile(core, 1)) });
@@ -130,8 +130,8 @@ public class GroupDragTests
     public void AWindowThatCannotJoinMarksNothingAndTheMarkGoesWhenItStopsBeingAllowed()
     {
         var floating = GroupOfTwo("");
-        floating.Handle(new Dispatch("focuswindow", "address:0x2"));
-        floating.Handle(new Dispatch("togglefloating"));
+        floating.Handle(new Dispatch("focus", "address:0x2"));
+        floating.Handle(new Dispatch("float"));
         var bar = Bar(floating);
         Hold(floating, 2);
 
@@ -194,13 +194,13 @@ public class GroupDragTests
     {
         var core = Grouped(extra);
         core.Handle(new WindowAppeared(new WindowId(3), Wide));
-        core.Handle(new Dispatch("focuswindow", "address:0x3"));
-        core.Handle(new Dispatch("moveintogroup", "address:0x1"));
-        core.Handle(new Dispatch("changegroupactive", "1"));
+        core.Handle(new Dispatch("focus", "address:0x3"));
+        core.Handle(new Dispatch("join", "address:0x1"));
+        core.Handle(new Dispatch("tab", "1"));
         return core;
     }
 
-    private static GroupBar Bar(WindowManager core) => Assert.ContainsSingle(core.Handle(new Dispatch("resizewindow")).GroupBars);
+    private static GroupBar Bar(WindowManager core) => Assert.ContainsSingle(core.Handle(new Dispatch("resize")).GroupBars);
 
     private static void Hold(WindowManager core, long window)
     {
@@ -213,12 +213,12 @@ public class GroupDragTests
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse(
-            "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"
-            + "bind = SUPER, mouse:left, movewindow\n" + extra)));
+            "gaps_in = 0\ngaps_out = 0\nborder_size = 0\n"
+            + "bind = Win+mouse:left, move\n" + extra)));
         core.Handle(new WindowAppeared(new WindowId(1), Wide));
         core.Handle(new WindowAppeared(new WindowId(2), Wide));
-        core.Handle(new Dispatch("focuswindow", "address:0x1"));
-        core.Handle(new Dispatch("togglegroup"));
+        core.Handle(new Dispatch("focus", "address:0x1"));
+        core.Handle(new Dispatch("group"));
         return core;
     }
 
@@ -234,7 +234,7 @@ public class GroupDragTests
     }
 
     private static Rectangle Tile(WindowManager core, long window) =>
-        Assert.ContainsSingle(client => client.Window == new WindowId(window), core.Handle(new Dispatch("resizewindow")).State.Clients).Bounds;
+        Assert.ContainsSingle(client => client.Window == new WindowId(window), core.Handle(new Dispatch("resize")).State.Clients).Bounds;
 
     private static IReadOnlyList<string> MoveLines(Outcome outcome) =>
         [.. CommandProtocol.FormatStream(outcome.Events, outcome.State).Where(line =>

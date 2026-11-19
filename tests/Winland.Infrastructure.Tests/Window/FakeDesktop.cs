@@ -180,6 +180,29 @@ internal sealed class FakeDesktop(Func<double> clock) : IDesktop
         if (!_windows.TryGetValue(window, out var found))
             return;
 
+        if (found.Holding && delivery != Delivery.Wait)
+        {
+            found.Held.Enqueue(outer);
+            Log($"held {Id(window)} {Text(outer)} {delivery}");
+            return;
+        }
+
+        Land(window, found, outer, delivery);
+    }
+
+    internal bool Land(long id)
+    {
+        var window = new WindowId(id);
+        var found = _windows[window];
+        if (!found.Held.TryDequeue(out var outer))
+            return false;
+
+        Land(window, found, outer, Delivery.Post);
+        return true;
+    }
+
+    private void Land(WindowId window, FakeWindow found, Rectangle outer, Delivery delivery)
+    {
         var grew = outer.Width != found.Outer.Width || outer.Height != found.Outer.Height;
         found.Visible = new Rectangle(outer.X + Inset, outer.Y + Inset, outer.Width - (2 * Inset), outer.Height - (2 * Inset));
         if (grew)
@@ -277,6 +300,10 @@ internal sealed class FakeWindow
     internal bool Minimized { get; set; }
 
     internal bool Hung { get; set; }
+
+    internal bool Holding { get; set; }
+
+    internal Queue<Rectangle> Held { get; } = [];
 
     internal int Dpi { get; set; } = 96;
 

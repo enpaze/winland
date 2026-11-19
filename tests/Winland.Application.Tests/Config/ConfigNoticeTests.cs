@@ -54,7 +54,7 @@ public class ConfigNoticeTests
     {
         var core = Loaded("blur = on\n");
 
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 4\n", path: Path)));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 4\n", path: Path)));
 
         Assert.IsNull(Notice(core));
     }
@@ -105,13 +105,13 @@ public class ConfigNoticeTests
     public void TheFirstStartWelcomesTheUserAndAClickOpensTheConfig()
     {
         var core = new WindowManager { FirstStart = true };
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 4\n", path: Path)));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 4\n", path: Path)));
         var notice = Notice(core);
 
         Assert.IsNotNull(notice);
         Assert.AreEqual("Winland", notice.Title);
         Assert.AreEqual(
-            "Winland is tiling your windows. Run winland binds to list the hotkeys. Right-click the Winland icon to edit the config or quit.",
+            "Winland is tiling your windows. Run winland get binds to list the hotkeys. Right-click the Winland icon to edit the config or quit.",
             notice.Text);
         Assert.IsInRange(1, 255, notice.Text.Length);
         Assert.AreEqual(Path, notice.File);
@@ -121,15 +121,15 @@ public class ConfigNoticeTests
 
     [TestMethod]
     public void AStartThatWroteNoConfigShowsNoWelcome() =>
-        Assert.IsNull(Load("general:gaps_in = 4\n"));
+        Assert.IsNull(Load("gaps_in = 4\n"));
 
     [TestMethod]
     public void ALaterLoadTakesTheWelcomeAwayAndDoesNotShowItAgain()
     {
         var core = new WindowManager { FirstStart = true };
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 4\n", path: Path)));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 4\n", path: Path)));
 
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 5\n", path: Path)));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 5\n", path: Path)));
 
         Assert.IsNull(Notice(core));
     }
@@ -148,7 +148,7 @@ public class ConfigNoticeTests
 
     [TestMethod]
     public void SetErrorIsNotARequest() =>
-        Assert.AreEqual("error: unknown request", new WindowManager().Execute("seterror rgb(ff0000) broke").Text);
+        Assert.AreEqual("error: unknown command 'seterror'", new WindowManager().Execute("seterror rgb(ff0000) broke").Text);
 
     private static ConfigNotice? Load(string text) => Notice(Loaded(text));
 
@@ -159,5 +159,5 @@ public class ConfigNoticeTests
         return core;
     }
 
-    private static ConfigNotice? Notice(WindowManager core) => core.Execute("dispatch resizewindow").Effect.ConfigNotice;
+    private static ConfigNotice? Notice(WindowManager core) => core.Execute("resize").Effect.ConfigNotice;
 }

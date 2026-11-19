@@ -27,8 +27,8 @@ public class WindowEventTests
         using var windows = new TestWindows(reducedMotion: true);
         var floating = windows.Open(0x7021);
         var tiled = windows.Open(0x7022);
-        windows.Dispatch("focuswindow", "address:0x7021");
-        windows.Dispatch("togglefloating");
+        windows.Dispatch("focus", "address:0x7021");
+        windows.Dispatch("float");
         var tile = windows.Desktop[tiled.Value].Visible;
         windows.Advance(5000);
         windows.Desktop[tiled.Value].Visible = new Rectangle(50, 60, 1000, 700);
@@ -41,10 +41,41 @@ public class WindowEventTests
             windows.Adapter.Notice(Events.EVENT_OBJECT_LOCATIONCHANGE, (nint)tiled.Value);
         };
 
-        windows.Dispatch("resizeactive", "10 10");
+        windows.Dispatch("resize", "10 10");
 
         Assert.IsNull(windows.Desktop.OnSetBounds);
         Assert.AreEqual(tile, windows.Desktop[tiled.Value].Visible);
+    }
+
+    [TestMethod]
+    public void ANeighbourStillBusyDuringALiveResizeCatchesUpToTheNewestStep()
+    {
+        using var windows = new TestWindows(reducedMotion: true);
+        var left = windows.Open(0x7031);
+        var right = windows.Open(0x7032);
+        var gap = Gap(windows, left, right);
+        var start = windows.Desktop[right.Value].Visible;
+        var middle = start.Y + (start.Height / 2);
+        windows.Apply(windows.Core.Handle(new WindowSizeStarted(right, new Point(start.X, middle), start)));
+        windows.Desktop[left.Value].Holding = true;
+
+        for (var step = 1; step <= 3; step++)
+        {
+            var sized = start with { X = start.X + (step * 40), Width = start.Width - (step * 40) };
+            windows.Desktop[right.Value].Visible = sized;
+            windows.Apply(windows.Core.Handle(new WindowSizing(right, new Point(sized.X, middle), sized)));
+        }
+
+        while (windows.Desktop.Land(left.Value))
+            windows.Adapter.Notice(Events.EVENT_OBJECT_LOCATIONCHANGE, (nint)left.Value);
+
+        Assert.AreEqual(gap, Gap(windows, left, right), string.Join(" | ", windows.Desktop.Calls));
+    }
+
+    private static int Gap(TestWindows windows, WindowId left, WindowId right)
+    {
+        var before = windows.Desktop[left.Value].Visible;
+        return windows.Desktop[right.Value].Visible.X - (before.X + before.Width);
     }
 
     [TestMethod]

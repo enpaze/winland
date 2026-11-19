@@ -18,7 +18,7 @@ public class HideTaskbarOptionTests
     [DataRow("1")]
     public void HideTaskbarIsHonored(string value)
     {
-        var text = $"general:hide_taskbar = {value}\n";
+        var text = $"hide_taskbar = {value}\n";
         var document = ConfigParser.Parse(text);
         var core = new WindowManager(document);
 
@@ -29,8 +29,8 @@ public class HideTaskbarOptionTests
     [TestMethod]
     public void AReloadAppliesTheOption()
     {
-        var text = "general:hide_taskbar = false\n";
-        var core = new WindowManager(ConfigParser.Parse("general:hide_taskbar = true\n"))
+        var text = "hide_taskbar = false\n";
+        var core = new WindowManager(ConfigParser.Parse("hide_taskbar = true\n"))
         {
             ReadConfig = () => new ConfigRead(ConfigParser.Parse(text)),
         };

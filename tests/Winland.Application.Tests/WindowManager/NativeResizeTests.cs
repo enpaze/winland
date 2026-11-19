@@ -105,7 +105,7 @@ public class NativeResizeTests
     {
         var core = Flat("");
         Appear(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new Dispatch("float"));
 
         var started = core.Handle(new WindowSizeStarted(new WindowId(1), new Point(900, 700)));
         var ended = core.Handle(new WindowSizeEnded(new WindowId(1), new Point(950, 750)));
@@ -128,7 +128,7 @@ public class NativeResizeTests
     [TestMethod]
     public void TheEndPlacesTheClientWhereTheLayoutHoldsItAfterTheRelease()
     {
-        var core = Flat("general:layout = scrolling\nscrolling:column_width = 0.3\n");
+        var core = Flat("layout = scrolling\ncolumn_width = 0.3\n");
         Appear(core, 1);
         Appear(core, 2);
 

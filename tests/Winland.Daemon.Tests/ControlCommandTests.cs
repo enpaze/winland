@@ -3,12 +3,12 @@ namespace Winland.Daemon.Tests;
 public class ControlCommandTests
 {
     [TestMethod]
-    [DataRow("error: unknown dispatcher 'bogus'")]
+    [DataRow("error: unknown command 'bogus'")]
     [DataRow("error: no such workspace")]
     [DataRow(null)]
     public void ASingleFailureWritesToStandardError(string? reply)
     {
-        var result = WriteReply("dispatch bogus", reply);
+        var result = WriteReply("bogus", reply);
 
         Assert.AreEqual(1, result.Exit);
         Assert.AreEqual("", result.Output);
@@ -18,7 +18,7 @@ public class ControlCommandTests
     [TestMethod]
     public void AnEmptyReplyWritesNothingAndSucceeds()
     {
-        var result = WriteReply("activewindow", "");
+        var result = WriteReply("get window", "");
 
         Assert.AreEqual(0, result.Exit);
         Assert.AreEqual("", result.Output);

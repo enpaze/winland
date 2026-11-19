@@ -22,13 +22,13 @@ public class ConfigTests
     [TestMethod]
     public void AssignmentStoresTheKeywordAndValue()
     {
-        var document = ConfigParser.Parse("  general:gaps_in   =   5  \nexec-once = notepad\nexec-once = explorer\n");
+        var document = ConfigParser.Parse("  gaps_in   =   5  \nexec-once = notepad\nexec-once = explorer\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreSequenceEqual(
             new[]
             {
-                new Setting("general:gaps_in", "5"),
+                new Setting("gaps_in", "5"),
                 new Setting("exec-once", "notepad"),
                 new Setting("exec-once", "explorer"),
             },
@@ -59,14 +59,14 @@ public class ConfigTests
     [TestMethod]
     public void MalformedWindowRuleWarnsAndTheConfigStillLoads()
     {
-        var document = ConfigParser.Parse("windowrule = confine_pointer, class:kitty\nwindowrule = size 10, class:box\ngeneral:gaps_in = 2\n");
+        var document = ConfigParser.Parse("windowrule = confine_pointer, class:kitty\nwindowrule = size 10, class:box\ngaps_in = 2\n");
 
         Assert.AreSequenceEqual(
             new[]
             {
                 new Setting("windowrule", "confine_pointer, class:kitty"),
                 new Setting("windowrule", "size 10, class:box"),
-                new Setting("general:gaps_in", "2"),
+                new Setting("gaps_in", "2"),
             },
             document.Settings);
         Assert.IsEmpty(document.WindowRules);
@@ -117,54 +117,14 @@ public class ConfigTests
     [TestMethod]
     public void CommentTextIsIgnored()
     {
-        var text = "# full line\ngeneral:gaps_in = 5 # trailing\ngeneral:layout = dwindle ## hash\n";
+        var text = "# full line\ngaps_in = 5 # trailing\nlayout = dwindle ## hash\n";
 
         var document = ConfigParser.Parse(text);
 
         Assert.AreEqual(
-            new ConfigWarning(3, "Invalid value 'dwindle # hash' for general:layout."),
+            new ConfigWarning(3, "Invalid value 'dwindle # hash' for layout."),
             Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("general:gaps_in", "5"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void CategoryBracesPrefixNestedKeywords()
-    {
-        var braced = ConfigParser.Parse("general {\n    gaps_in = 5\n    col.active_border = rgba(33ccffee)\n}\n");
-        var flat = ConfigParser.Parse("general:gaps_in = 5\ngeneral:col.active_border = rgba(33ccffee)\n");
-
-        Assert.IsEmpty(braced.Warnings);
-        Assert.IsEmpty(flat.Warnings);
-        Assert.AreSequenceEqual(flat.Settings, braced.Settings);
-    }
-
-    [TestMethod]
-    public void NestedGapKeywordWarnsAndSiblingSettingsRemain()
-    {
-        var text = "decoration {\n    rounding = 10\n    blur {\n        popups = true\n    }\n}\n";
-
-        var document = ConfigParser.Parse(text);
-
-        Assert.AreEqual(new Setting("decoration:rounding", "10"), Assert.ContainsSingle(document.Settings));
-        Assert.AreEqual(
-            new ConfigWarning(4, "Unsupported keyword 'decoration:blur:popups'."),
-            Assert.ContainsSingle(document.Warnings));
-    }
-
-    [TestMethod]
-    [DataRow("general")]
-    [DataRow("decoration")]
-    [DataRow("dwindle")]
-    [DataRow("binds")]
-    [DataRow("windowrule")]
-    public void UnhonoredCategoryKeywordWarnsAndIsSkipped(string category)
-    {
-        var document = ConfigParser.Parse($"{category} {{\n    sample = 1\n}}\n");
-
-        Assert.IsEmpty(document.Settings);
-        Assert.AreEqual(
-            new ConfigWarning(2, $"Unsupported keyword '{category}:sample'."),
-            Assert.ContainsSingle(document.Warnings));
+        Assert.AreEqual(new Setting("gaps_in", "5"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
@@ -186,21 +146,21 @@ public class ConfigTests
     {
         var source = new MemorySource(new Dictionary<string, string>
         {
-            ["extra.conf"] = "general:not_a_thing = 1\n",
+            ["extra.conf"] = "not_a_thing = 1\n",
         });
 
         var document = ConfigParser.Parse("source = extra.conf\n", source);
 
         Assert.IsEmpty(document.Settings);
         Assert.AreEqual(
-            new ConfigWarning(1, "Unsupported keyword 'general:not_a_thing'.", "extra.conf"),
+            new ConfigWarning(1, "Unsupported keyword 'not_a_thing'.", "extra.conf"),
             Assert.ContainsSingle(document.Warnings));
     }
 
     [TestMethod]
     public void VariablesExpandWhereTheyAreUsed()
     {
-        var text = "$b = 1\n$a = $b\ngeneral:gaps_in = $a\n$a = 2\ngeneral:gaps_out = $a\n$name = gaps_in\ngeneral:$name = 9\n";
+        var text = "$b = 1\n$a = $b\ngaps_in = $a\n$a = 2\ngaps_out = $a\n$side = in\ngaps_$side = 9\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -208,9 +168,9 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new[]
             {
-                new Setting("general:gaps_in", "1"),
-                new Setting("general:gaps_out", "2"),
-                new Setting("general:gaps_in", "9"),
+                new Setting("gaps_in", "1"),
+                new Setting("gaps_out", "2"),
+                new Setting("gaps_in", "9"),
             },
             document.Settings);
     }
@@ -218,32 +178,32 @@ public class ConfigTests
     [TestMethod]
     public void LongerVariableNamesExpandBeforeShorterOnes()
     {
-        var text = "$main = SUPER\n$mainMod = ALT\nbind = $mainMod, Q, killactive\n";
+        var text = "$m = Win\n$mod = Alt\nbind = $mod+Q, close\n";
 
         var document = ConfigParser.Parse(text);
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Alt, "Q", "killactive", "", null),
+            new Bind(Modifier.Alt, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
     [TestMethod]
     public void CyclicVariablesWarnAndTheConfigStillLoads()
     {
-        var document = ConfigParser.Parse("$a = $b\n$b = $a\ngeneral:layout = $a\ngeneral:gaps_in = 1\n");
+        var document = ConfigParser.Parse("$a = $b\n$b = $a\nlayout = $a\ngaps_in = 1\n");
 
         Assert.AreEqual(new ConfigWarning(3, "Variable expansion did not finish."), Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("general:gaps_in", "1"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "1"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
     public void UndefinedVariablesStayInTheValue()
     {
-        var document = ConfigParser.Parse("general:layout = $PATH\n");
+        var document = ConfigParser.Parse("layout = $PATH\n");
 
         Assert.IsEmpty(document.Settings);
-        Assert.AreEqual(new ConfigWarning(1, "Invalid value '$PATH' for general:layout."), Assert.ContainsSingle(document.Warnings));
+        Assert.AreEqual(new ConfigWarning(1, "Invalid value '$PATH' for layout."), Assert.ContainsSingle(document.Warnings));
     }
 
     [TestMethod]
@@ -251,38 +211,22 @@ public class ConfigTests
     {
         var source = new MemorySource(new Dictionary<string, string>
         {
-            ["colors.conf"] = "general:gaps_in = $gap\n",
+            ["colors.conf"] = "gaps_in = $gap\n",
         });
 
         var document = ConfigParser.Parse("$gap = 9\n$file = colors.conf\nsource=$file\n", source);
 
         Assert.IsEmpty(document.Warnings);
-        Assert.AreEqual(new Setting("general:gaps_in", "9"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void SourceInsideACategoryInheritsIt()
-    {
-        var source = new MemorySource(new Dictionary<string, string>
-        {
-            ["inner.conf"] = "gaps_in = 4\n",
-        });
-
-        var document = ConfigParser.Parse("general {\n    source = inner.conf\n    gaps_out = 8\n}\n", source);
-
-        Assert.IsEmpty(document.Warnings);
-        Assert.AreSequenceEqual(
-            new[] { new Setting("general:gaps_in", "4"), new Setting("general:gaps_out", "8") },
-            document.Settings);
+        Assert.AreEqual(new Setting("gaps_in", "9"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
     public void MissingSourceWarnsAndTheConfigStillLoads()
     {
-        var document = ConfigParser.Parse("source = missing.conf\ngeneral:gaps_in = 4\n");
+        var document = ConfigParser.Parse("source = missing.conf\ngaps_in = 4\n");
 
         Assert.AreEqual(new ConfigWarning(1, "Could not read source 'missing.conf'."), Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("general:gaps_in", "4"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "4"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
@@ -290,12 +234,12 @@ public class ConfigTests
     {
         var source = new MemorySource(new Dictionary<string, string>
         {
-            ["bad.conf"] = "general:gaps_in = 1\nnot a line\n",
+            ["bad.conf"] = "gaps_in = 1\nnot a line\n",
         });
 
         var document = ConfigParser.Parse("source = bad.conf\n", source);
 
-        Assert.AreEqual(new Setting("general:gaps_in", "1"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "1"), Assert.ContainsSingle(document.Settings));
         Assert.AreEqual(new ConfigWarning(2, "Malformed line.", "bad.conf"), Assert.ContainsSingle(document.Warnings));
     }
 
@@ -305,19 +249,19 @@ public class ConfigTests
         var source = new MemorySource(new Dictionary<string, string>
         {
             ["a.conf"] = "source = b.conf\n",
-            ["b.conf"] = "source = a.conf\ngeneral:gaps_in = 3\n",
+            ["b.conf"] = "source = a.conf\ngaps_in = 3\n",
         });
 
         var document = ConfigParser.Parse("source = a.conf\n", source);
 
         Assert.AreEqual(new ConfigWarning(1, "Source 'a.conf' includes itself.", "b.conf"), Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("general:gaps_in", "3"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "3"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
     public void MalformedLineWarnsWithItsLineNumber()
     {
-        var document = ConfigParser.Parse("general:gaps_in = 5\r\nthis is bad\r\nexec-once = notepad\r\n}\n");
+        var document = ConfigParser.Parse("gaps_in = 5\r\nthis is bad\r\nexec-once = notepad\r\n}\n");
 
         Assert.AreSequenceEqual(
             new[]
@@ -327,14 +271,14 @@ public class ConfigTests
             },
             document.Warnings);
         Assert.AreSequenceEqual(
-            new[] { new Setting("general:gaps_in", "5"), new Setting("exec-once", "notepad") },
+            new[] { new Setting("gaps_in", "5"), new Setting("exec-once", "notepad") },
             document.Settings);
     }
 
     [TestMethod]
     public void UnsupportedKeywordWarnsAndIsSkipped()
     {
-        var text = "general:gaps_in = 5\nghostkeyword = path\nxwayland:enabled = true\nexecr = app\ngeneral:border_size = 2\n";
+        var text = "gaps_in = 5\nghostkeyword = path\nxwayland:enabled = true\nexecr = app\nborder_size = 2\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -347,17 +291,17 @@ public class ConfigTests
             },
             document.Warnings);
         Assert.AreSequenceEqual(
-            new[] { new Setting("general:gaps_in", "5"), new Setting("general:border_size", "2") },
+            new[] { new Setting("gaps_in", "5"), new Setting("border_size", "2") },
             document.Settings);
     }
 
     [TestMethod]
     public void MistypedOptionWarnsWithTheOneOptionItIsCloseTo()
     {
-        var document = ConfigParser.Parse("general:gap_in = 5\n");
+        var document = ConfigParser.Parse("gap_in = 5\n");
 
         Assert.AreEqual(
-            new ConfigWarning(1, "Unsupported keyword 'general:gap_in'. Did you mean 'general:gaps_in'?"),
+            new ConfigWarning(1, "Unsupported keyword 'gap_in'. Did you mean 'gaps_in'?"),
             Assert.ContainsSingle(document.Warnings));
     }
 
@@ -372,22 +316,36 @@ public class ConfigTests
     }
 
     [TestMethod]
-    public void MistypedOptionInACategoryBlockWarnsWithTheQualifiedOption()
+    public void AnOldSectionNameGetsNoHint()
     {
-        var document = ConfigParser.Parse("general {\n    gaps_outt = 5\n}\n");
+        var document = ConfigParser.Parse("general:gaps_out = 5\ncursor:no_warps = true\n");
+
+        Assert.AreSequenceEqual(
+            new[]
+            {
+                new ConfigWarning(1, "Unsupported keyword 'general:gaps_out'."),
+                new ConfigWarning(2, "Unsupported keyword 'cursor:no_warps'."),
+            },
+            document.Warnings);
+    }
+
+    [TestMethod]
+    public void AMistypedBorderColorNamesTheBorderColor()
+    {
+        var document = ConfigParser.Parse("border_colour = accent\n");
 
         Assert.AreEqual(
-            new ConfigWarning(2, "Unsupported keyword 'general:gaps_outt'. Did you mean 'general:gaps_out'?"),
+            new ConfigWarning(1, "Unsupported keyword 'border_colour'. Did you mean 'border_color'?"),
             Assert.ContainsSingle(document.Warnings));
     }
 
     [TestMethod]
     public void MistypedDispatcherWarnsWithTheOneDispatcherItIsCloseTo()
     {
-        var document = ConfigParser.Parse("bind = SUPER, Q, killactiv\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("bind = Win+Q, closs\n", dispatchers: WindowManager.DispatcherNames);
 
         Assert.AreEqual(
-            new ConfigWarning(1, "Unknown dispatcher 'killactiv'. Did you mean 'killactive'?"),
+            new ConfigWarning(1, "Unknown dispatcher 'closs'. Did you mean 'close'?"),
             Assert.ContainsSingle(document.Warnings));
     }
 
@@ -424,12 +382,12 @@ public class ConfigTests
     [TestMethod]
     public void ANameCloseToTwoNamesGetsNoHint()
     {
-        var document = ConfigParser.Parse("general:gaps_ou = 5\nbind = SUPER, Q, ex\nwindowrule = pize, class:kitty\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("gaps_on = 5\nbind = Win+Q, ex\nwindowrule = pize, class:kitty\n", dispatchers: WindowManager.DispatcherNames);
 
         Assert.AreSequenceEqual(
             new[]
             {
-                new ConfigWarning(1, "Unsupported keyword 'general:gaps_ou'."),
+                new ConfigWarning(1, "Unsupported keyword 'gaps_on'."),
                 new ConfigWarning(2, "Unknown dispatcher 'ex'."),
                 new ConfigWarning(3, "Unsupported window rule 'pize'."),
             },
@@ -439,7 +397,7 @@ public class ConfigTests
     [TestMethod]
     public void ANameFarFromEveryNameGetsNoHint()
     {
-        var document = ConfigParser.Parse("ghostkeyword = path\nbind = SUPER, Q, teleportwindow\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("ghostkeyword = path\nbind = Win+Q, teleportwindow\n", dispatchers: WindowManager.DispatcherNames);
 
         Assert.AreSequenceEqual(
             new[]
@@ -453,63 +411,38 @@ public class ConfigTests
     [TestMethod]
     public void PluginKeywordWarnsAndIsSkipped()
     {
-        var document = ConfigParser.Parse("plugin = plugins\\sample.dll\ngeneral:gaps_in = 2\n");
+        var document = ConfigParser.Parse("plugin = plugins\\sample.dll\ngaps_in = 2\n");
 
         Assert.AreEqual(new ConfigWarning(1, "Unsupported keyword 'plugin'."), Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("general:gaps_in", "2"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void UnclosedCategoryWarnsAndTheSettingRemains()
-    {
-        var document = ConfigParser.Parse("general {\n    gaps_in = 5\n");
-
-        Assert.AreEqual(new Setting("general:gaps_in", "5"), Assert.ContainsSingle(document.Settings));
-        Assert.AreEqual(new ConfigWarning(1, "Unclosed category 'general'."), Assert.ContainsSingle(document.Warnings));
-    }
-
-    [TestMethod]
-    public void UnclosedCategoryInASourceDoesNotLeak()
-    {
-        var source = new MemorySource(new Dictionary<string, string>
-        {
-            ["inner.conf"] = "general {\n    border_size = 3\n",
-        });
-
-        var document = ConfigParser.Parse("source = inner.conf\ngeneral:gaps_in = 1\n", source);
-
-        Assert.AreEqual(new ConfigWarning(1, "Unclosed category 'general'.", "inner.conf"), Assert.ContainsSingle(document.Warnings));
-        Assert.AreSequenceEqual(
-            new[] { new Setting("general:border_size", "3"), new Setting("general:gaps_in", "1") },
-            document.Settings);
+        Assert.AreEqual(new Setting("gaps_in", "2"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
     public void BackslashJoinsTheNextLine()
     {
-        var document = ConfigParser.Parse("general:gaps_in = \\\n    15\n");
+        var document = ConfigParser.Parse("gaps_in = \\\n    15\n");
 
         Assert.IsEmpty(document.Warnings);
-        Assert.AreEqual(new Setting("general:gaps_in", "15"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "15"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
     public void ACommentEndingInABackslashDoesNotSwallowTheNextLine()
     {
-        var document = ConfigParser.Parse("# path C:\\dir\\\ngeneral:gaps_in = 15\n");
+        var document = ConfigParser.Parse("# path C:\\dir\\\ngaps_in = 15\n");
 
         Assert.IsEmpty(document.Warnings);
-        Assert.AreEqual(new Setting("general:gaps_in", "15"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "15"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
     public void AnInlineCommentEndingInABackslashWarnsAndDoesNotSwallowTheNextLine()
     {
-        var document = ConfigParser.Parse("general:gaps_out = 4 # C:\\dir\\\ngeneral:gaps_in = 15\n");
+        var document = ConfigParser.Parse("gaps_out = 4 # C:\\dir\\\ngaps_in = 15\n");
 
         Assert.AreEqual(new ConfigWarning(1, "A backslash at the end of a comment does not join the next line."), Assert.ContainsSingle(document.Warnings));
         Assert.AreSequenceEqual(
-            new[] { new Setting("general:gaps_out", "4"), new Setting("general:gaps_in", "15") },
+            new[] { new Setting("gaps_out", "4"), new Setting("gaps_in", "15") },
             document.Settings);
     }
 
@@ -525,31 +458,32 @@ public class ConfigTests
     [TestMethod]
     public void DanglingBackslashWarns()
     {
-        var document = ConfigParser.Parse("general:gaps_in = 5\\");
+        var document = ConfigParser.Parse("gaps_in = 5\\");
 
         Assert.AreEqual(new ConfigWarning(1, "Line ends with a backslash."), Assert.ContainsSingle(document.Warnings));
         Assert.IsEmpty(document.Settings);
     }
 
     [TestMethod]
-    public void EmptyDispatcherParsesWithoutAWarning()
+    public void ABindWithoutAnActionWarnsAndIsSkipped()
     {
-        var document = ConfigParser.Parse("bind = SUPER, Q,\nbindd = , Super_L, Menu, \n");
+        var document = ConfigParser.Parse("bind = Win+Q\nbind = Super_L, \"Menu\"\nbind = Win+W,\n");
 
-        Assert.IsEmpty(document.Warnings);
         Assert.AreSequenceEqual(
-            new BindDirective[]
+            new[]
             {
-                new Bind(Modifier.Super, "Q", "", "", null),
-                new Bind(Modifier.None, "Super_L", "", "", "Menu"),
+                new ConfigWarning(1, "Bind is missing an action."),
+                new ConfigWarning(2, "Bind is missing an action."),
+                new ConfigWarning(3, "Bind is missing an action."),
             },
-            document.Binds);
+            document.Warnings);
+        Assert.IsEmpty(document.Binds);
     }
 
     [TestMethod]
     public void BindIsParsedIntoModifiersKeyAndDispatcher()
     {
-        var text = "$mainMod = SUPER\nbind = $mainMod, Q, killactive\nbind = WIN SHIFT, code:28, exec, notepad --title hello\n";
+        var text = "$mod = Win\nbind = $mod+Q, close\nbind = Win+Shift+code:28, exec notepad --title hello\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -557,8 +491,8 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "Q", "killactive", "", null),
-                new Bind(Modifier.Super | Modifier.Shift, "code:28", "exec", "notepad --title hello", null),
+                new Bind(Modifier.Win, "Q", "close", "", null),
+                new Bind(Modifier.Win | Modifier.Shift, "code:28", "exec", "notepad --title hello", null),
             },
             document.Binds);
     }
@@ -567,8 +501,8 @@ public class ConfigTests
     public void AMouseKeyBindAndADescriptionAreParsed()
     {
         var text =
-            "bind = SUPER, mouse:left, movewindow\n" +
-            "bindd = SUPER, Return, Open a terminal, exec, kitty\n";
+            "bind = Win+mouse:left, move\n" +
+            "bind = Win+Return, \"Open a terminal\", exec kitty\n";
 
         var document = ConfigParser.Parse(text);
 
@@ -576,79 +510,74 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "mouse:left", "movewindow", "", null),
-                new Bind(Modifier.Super, "Return", "exec", "kitty", "Open a terminal"),
+                new Bind(Modifier.Win, "mouse:left", "move", "", null),
+                new Bind(Modifier.Win, "Return", "exec", "kitty", "Open a terminal"),
             },
             document.Binds);
     }
 
     [TestMethod]
-    [DataRow("SUPER", Modifier.Super)]
-    [DataRow("WIN", Modifier.Super)]
-    [DataRow("LOGO", Modifier.Super)]
-    [DataRow("MOD4", Modifier.Super)]
-    [DataRow("ALT", Modifier.Alt)]
-    [DataRow("MOD1", Modifier.Alt)]
-    [DataRow("CTRL", Modifier.Ctrl)]
-    [DataRow("CONTROL", Modifier.Ctrl)]
-    [DataRow("SHIFT", Modifier.Shift)]
-    [DataRow("META", Modifier.Super)]
-    [DataRow("super", Modifier.Super)]
-    [DataRow("SUPER_SHIFT", Modifier.Super | Modifier.Shift)]
-    [DataRow("SUPER+SHIFT", Modifier.Super | Modifier.Shift)]
-    [DataRow("SUPER + SHIFT", Modifier.Super | Modifier.Shift)]
-    [DataRow("SUPERSHIFT", Modifier.Super | Modifier.Shift)]
-    [DataRow("Ctrl_Alt", Modifier.Ctrl | Modifier.Alt)]
-    [DataRow("SUPER SHIFT CTRL ALT", Modifier.Super | Modifier.Shift | Modifier.Ctrl | Modifier.Alt)]
+    [DataRow("Win", Modifier.Win)]
+    [DataRow("win", Modifier.Win)]
+    [DataRow("WIN", Modifier.Win)]
+    [DataRow("Alt", Modifier.Alt)]
+    [DataRow("Ctrl", Modifier.Ctrl)]
+    [DataRow("ctrl", Modifier.Ctrl)]
+    [DataRow("Shift", Modifier.Shift)]
+    [DataRow("Win+Shift", Modifier.Win | Modifier.Shift)]
+    [DataRow("Win + Shift", Modifier.Win | Modifier.Shift)]
+    [DataRow("Shift+Win", Modifier.Win | Modifier.Shift)]
+    [DataRow("Win+Shift+Ctrl+Alt", Modifier.Win | Modifier.Shift | Modifier.Ctrl | Modifier.Alt)]
     public void ModifierNamesAreParsed(string name, Modifier expected)
     {
-        var document = ConfigParser.Parse($"bind = {name}, Q, killactive\n");
+        var document = ConfigParser.Parse($"bind = {name}+Q, close\n");
 
+        Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(
-            new Bind(expected, "Q", "killactive", "", null),
+            new Bind(expected, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
     [TestMethod]
-    public void AModifierVariableJoinedWithAnUnderscoreIsParsed()
+    [DataRow("SUPER")]
+    [DataRow("CONTROL")]
+    [DataRow("MOD4")]
+    [DataRow("CAPS")]
+    [DataRow("Win Shift")]
+    public void AModifierOtherThanWinShiftCtrlOrAltWarnsAndTheBindIsSkipped(string name)
     {
-        var document = ConfigParser.Parse("$mainMod = SUPER\nbind = $mainMod_SHIFT, Q, killactive\n");
+        var document = ConfigParser.Parse($"bind = {name}+Q, close\n");
+
+        Assert.AreEqual(
+            $"Unknown modifier '{name}' in chord '{name}+Q'. The modifiers are Win, Shift, Ctrl and Alt.",
+            Assert.ContainsSingle(document.Warnings).Message);
+        Assert.IsEmpty(document.Binds);
+    }
+
+    [TestMethod]
+    public void AModifierVariableJoinedWithAPlusIsParsed()
+    {
+        var document = ConfigParser.Parse("$mod = Win\nbind = $mod+Shift+Q, close\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Super | Modifier.Shift, "Q", "killactive", "", null),
+            new Bind(Modifier.Win | Modifier.Shift, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
     [TestMethod]
-    [DataRow("CAPS", Modifier.Caps, 2)]
-    [DataRow("SUPER_MOD5", Modifier.Super | Modifier.Mod5, 64 | 128)]
-    [DataRow("MOD2", Modifier.Mod2, 16)]
-    [DataRow("MOD3 SHIFT", Modifier.Mod3 | Modifier.Shift, 32 | 1)]
-    public void TheLockAndLevelModifiersAreRead(string name, Modifier modifiers, int mask)
-    {
-        var document = ConfigParser.Parse($"bind = {name}, Q, killactive\n");
-
-        Assert.IsEmpty(document.Warnings);
-        Assert.AreEqual(modifiers, Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds)).Modifiers);
-        Assert.AreEqual(mask, CommandProtocol.ModMask(modifiers));
-    }
-
-    [TestMethod]
-    public void ABindOnCapsFiresWhileCapsLockIsHeldAndAnotherDoesNot()
+    public void HoldingCapsLockKeepsAModifierBindFromFiringAndNumLockIsAKey()
     {
         var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("bind = CAPS, Q, exec, held\nbind = SUPER, Q, exec, super\nbind = , Num_Lock, exec, lock\n")));
+        core.Handle(new Configure(ConfigParser.Parse("bind = Win+Q, exec super\nbind = Num_Lock, exec lock\n")));
 
-        core.Handle(new KeyPressed("Caps_Lock"));
-        var held = core.Handle(new KeyPressed("q"));
-        core.Handle(new KeyReleased("q"));
-        core.Handle(new KeyReleased("Caps_Lock"));
         core.Handle(new KeyPressed("Super_L"));
+        var alone = core.Handle(new KeyPressed("q"));
+        core.Handle(new KeyReleased("q"));
         core.Handle(new KeyPressed("Caps_Lock"));
         var both = core.Handle(new KeyPressed("q"));
 
-        Assert.AreSequenceEqual(["held"], held.Launches.Select(launch => launch.CommandLine));
+        Assert.AreSequenceEqual(["super"], alone.Launches.Select(launch => launch.CommandLine));
         Assert.IsEmpty(both.Launches);
         core.Handle(new KeyReleased("q"));
         core.Handle(new KeyReleased("Caps_Lock"));
@@ -660,25 +589,29 @@ public class ConfigTests
     public void InvalidBindIsSkippedAndALaterBindLoads()
     {
         var text =
-            "bindz = SUPER, Q, killactive\n" +
-            "bind = SUPER, Q\n" +
-            "bindzz = SUPER, Q, killactive\n" +
-            "bind = FOO, Q, killactive\n" +
-            "bind = SUPER, Q, killactive\n";
+            "bindd = Win+Q, \"Close\", close\n" +
+            "bind = Win+Q\n" +
+            "bind = SUPER, Q, close\n" +
+            "bind = FOO+Q, close\n" +
+            "bind = Win+Q, \"Close, close\n" +
+            "bind = Win+, close\n" +
+            "bind = Win+Q, close\n";
 
         var document = ConfigParser.Parse(text);
 
         Assert.AreSequenceEqual(
             new[]
             {
-                new ConfigWarning(1, "Bind flag 'z' is not supported."),
-                new ConfigWarning(2, "Bind has too few arguments."),
-                new ConfigWarning(3, "Bind flag 'z' is not supported."),
-                new ConfigWarning(4, "Invalid modifier 'FOO'."),
+                new ConfigWarning(1, "Unsupported keyword 'bindd'. Did you mean 'bind'?"),
+                new ConfigWarning(2, "Bind is missing an action."),
+                new ConfigWarning(3, "Unknown key 'SUPER'."),
+                new ConfigWarning(4, "Unknown modifier 'FOO' in chord 'FOO+Q'. The modifiers are Win, Shift, Ctrl and Alt."),
+                new ConfigWarning(5, "Bind description is missing its closing quote."),
+                new ConfigWarning(6, "Chord 'Win+' is missing a key."),
             },
             document.Warnings);
         Assert.AreEqual(
-            new Bind(Modifier.Super, "Q", "killactive", "", null),
+            new Bind(Modifier.Win, "Q", "close", "", null),
             Assert.ContainsSingle(document.Binds));
     }
 
@@ -686,9 +619,9 @@ public class ConfigTests
     public void UnbindIsParsedInOrder()
     {
         var text =
-            "bind = SUPER, Q, killactive\n" +
-            "unbind = SUPER, Q\n" +
-            "bind = SUPER, R, killactive\n" +
+            "bind = Win+Q, close\n" +
+            "unbind = Win+Q\n" +
+            "bind = Win+R, close\n" +
             "unbind = all\n";
 
         var document = ConfigParser.Parse(text);
@@ -697,9 +630,9 @@ public class ConfigTests
         Assert.AreSequenceEqual(
             new BindDirective[]
             {
-                new Bind(Modifier.Super, "Q", "killactive", "", null),
-                new Unbind(Modifier.Super, "Q"),
-                new Bind(Modifier.Super, "R", "killactive", "", null),
+                new Bind(Modifier.Win, "Q", "close", "", null),
+                new Unbind(Modifier.Win, "Q"),
+                new Bind(Modifier.Win, "R", "close", "", null),
                 new UnbindAll(),
             },
             document.Binds);
@@ -708,27 +641,27 @@ public class ConfigTests
     [TestMethod]
     public void DwindleLayoutDoesNotWarn()
     {
-        var document = ConfigParser.Parse("general:layout = dwindle\n");
+        var document = ConfigParser.Parse("layout = dwindle\n");
 
         Assert.IsEmpty(document.Warnings);
-        Assert.AreEqual(new Setting("general:layout", "dwindle"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("layout", "dwindle"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
     public void ScrollingLayoutDoesNotWarn()
     {
-        var document = ConfigParser.Parse("general:layout = scrolling\nscrolling:column_width = 0.4\n");
+        var document = ConfigParser.Parse("layout = scrolling\ncolumn_width = 0.4\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreSequenceEqual(
-            new[] { new Setting("general:layout", "scrolling"), new Setting("scrolling:column_width", "0.4") },
+            new[] { new Setting("layout", "scrolling"), new Setting("column_width", "0.4") },
             document.Settings);
     }
 
     [TestMethod]
     public void FloatingLayoutDoesNotWarn()
     {
-        var document = ConfigParser.Parse("general:layout = floating\n");
+        var document = ConfigParser.Parse("layout = floating\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual("floating", LayoutOptions.From(document).Layout);
@@ -739,17 +672,17 @@ public class ConfigTests
     [DataRow("master")]
     public void OtherLayoutsWarnAndAreSkipped(string name)
     {
-        var document = ConfigParser.Parse($"general {{\n    layout = scrolling\n    layout = {name}\n}}\n");
+        var document = ConfigParser.Parse($"layout = scrolling\nlayout = {name}\n");
 
-        Assert.AreEqual(new Setting("general:layout", "scrolling"), Assert.ContainsSingle(document.Settings));
-        Assert.AreEqual(new ConfigWarning(3, $"Invalid value '{name}' for general:layout."), Assert.ContainsSingle(document.Warnings));
+        Assert.AreEqual(new Setting("layout", "scrolling"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new ConfigWarning(2, $"Invalid value '{name}' for layout."), Assert.ContainsSingle(document.Warnings));
         Assert.AreEqual("scrolling", LayoutOptions.From(document).Layout);
     }
 
     [TestMethod]
     public void ALayoutNameReadsInAnyCase()
     {
-        var document = ConfigParser.Parse("general:layout = Scrolling\n");
+        var document = ConfigParser.Parse("layout = Scrolling\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.AreEqual("scrolling", LayoutOptions.From(document).Layout);
@@ -758,20 +691,20 @@ public class ConfigTests
     [TestMethod]
     public void ExpandedLayoutNameUsesTheSameRule()
     {
-        var honored = ConfigParser.Parse("$name = dwindle\ngeneral:layout = $name\n");
-        var rejected = ConfigParser.Parse("$name = tabbed\ngeneral:layout = $name\n");
+        var honored = ConfigParser.Parse("$name = dwindle\nlayout = $name\n");
+        var rejected = ConfigParser.Parse("$name = tabbed\nlayout = $name\n");
 
         Assert.IsEmpty(honored.Warnings);
-        Assert.AreEqual(new Setting("general:layout", "dwindle"), Assert.ContainsSingle(honored.Settings));
-        Assert.AreEqual(new ConfigWarning(2, "Invalid value 'tabbed' for general:layout."), Assert.ContainsSingle(rejected.Warnings));
+        Assert.AreEqual(new Setting("layout", "dwindle"), Assert.ContainsSingle(honored.Settings));
+        Assert.AreEqual(new ConfigWarning(2, "Invalid value 'tabbed' for layout."), Assert.ContainsSingle(rejected.Warnings));
     }
 
     [TestMethod]
     public void AWorkspaceLineWarnsAndIsSkipped()
     {
-        var document = ConfigParser.Parse("workspace = 1, monitor:DP-1, default:true\ngeneral:gaps_in = 2\n");
+        var document = ConfigParser.Parse("workspace = 1, monitor:DP-1, default:true\ngaps_in = 2\n");
 
         Assert.AreSequenceEqual([new ConfigWarning(1, "Unsupported keyword 'workspace'.")], document.Warnings);
-        Assert.AreEqual(new Setting("general:gaps_in", "2"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "2"), Assert.ContainsSingle(document.Settings));
     }
 }

@@ -15,7 +15,7 @@ public sealed partial class WindowManager
         var warp = SwitchWarp(before, outcome);
         if (warp is null && monitorChanged)
             warp = EmptyMonitorMiddle(outcome);
-        if (warp is null && _crossMonitorWarp is WarpTo crossed && !_config.Cursor.NoWarps)
+        if (warp is null && _crossMonitorWarp is WarpTo crossed && _config.Cursor.WarpCursor)
         {
             warp = crossed;
             _pointer = crossed.Position;
@@ -55,7 +55,7 @@ public sealed partial class WindowManager
         if (target is null || left is { Fullscreen: not FullscreenMode.None, LayoutFullscreen: false } && left.Workspace == target.Workspace)
             return null;
 
-        if (_config.Cursor.NoWarps)
+        if (!_config.Cursor.WarpCursor)
             return null;
 
         var bounds = target.Bounds;
@@ -66,7 +66,7 @@ public sealed partial class WindowManager
 
     private WarpTo? EmptyMonitorMiddle(Outcome outcome)
     {
-        if (_config.Cursor.NoWarps || outcome.Traits?.HasFlag(DispatcherTraits.WarpsToEmptyMonitor) != true || FocusedClient(outcome.State) is not null)
+        if (!_config.Cursor.WarpCursor || outcome.Traits?.HasFlag(DispatcherTraits.WarpsToEmptyMonitor) != true || FocusedClient(outcome.State) is not null)
             return null;
 
         if (outcome.State.ScreenOf(outcome.State.ActiveMonitor) is not { Monitor.Enabled: true } screen)

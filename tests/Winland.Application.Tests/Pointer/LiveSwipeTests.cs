@@ -5,7 +5,7 @@ public class LiveSwipeTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    private const string Horizontal = "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\ngesture = 3, horizontal, workspace\n";
+    private const string Horizontal = "gaps_in = 0\ngaps_out = 0\nborder_size = 0\ngesture = 3, horizontal, workspace\n";
 
     [TestMethod]
     public void TheWorkspaceFollowsTheFingersAndItsNeighbourComesInBeside()

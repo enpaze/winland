@@ -13,7 +13,7 @@ Winland starts programs for the user. An `exec-once` line runs each time Winland
 
 - Press `Win+Enter` to open Windows Terminal, `Win+Shift+Enter` or `Win+Shift+B` to open the browser, `Win+Shift+F` to open File Explorer, or `Win+Shift+N` to open Notepad. The starter config binds these to `exec`.
 - Add `exec-once = <command>` to the config. It runs each time Winland starts. Add `exec-once = [workspace 2] <command>` to open its first window on workspace 2.
-- Run `winland dispatch exec <command>`, such as `winland dispatch exec "notepad C:\a b.txt"`.
+- Run `winland exec <command>`, such as `winland exec "notepad C:\a b.txt"`.
 
 ## Driving it with drive.ps1
 
@@ -29,8 +29,8 @@ Preconditions:
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature launching`. It prints `== feature launching: passed`.
 - **exec-once at start.** Winland starts. `once.txt` appears and holds `started`, so `exec-once` ran its command through cmd.
 - **Rule block.** `once.txt.block` does not appear for half a second, so the line with `[float]` did not launch.
-- **Workspace block.** Within 30 seconds, `winland -j clients` lists the `WinlandLaunched <guid>` window on workspace `3`, and `winland -j activeworkspace` still answers workspace 1. The driver then ends the PowerShell process whose id is in `form.pid`, and the window leaves the client list.
-- **exec on request.** The driver runs `winland dispatch exec 'echo first&& echo second> "<folder>\exec.txt"'`, with the command line as one argument. The reply is `ok`, and `exec.txt` holds `second`, so cmd ran both commands and the redirection.
+- **Workspace block.** Within 30 seconds, `winland -j get windows` lists the `WinlandLaunched <guid>` window on workspace `3`, and `winland -j get workspace` still answers workspace 1. The driver then ends the PowerShell process whose id is in `form.pid`, and the window leaves the client list.
+- **exec on request.** The driver runs `winland exec 'echo first&& echo second> "<folder>\exec.txt"'`, with the command line as one argument. The reply is `ok`, and `exec.txt` holds `second`, so cmd ran both commands and the redirection.
 
 ## Gotchas
 

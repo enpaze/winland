@@ -9,7 +9,7 @@ public class FocusOnActivateTests
     [TestMethod]
     public void ActivationIsHonoredOnlyAfterUserInput()
     {
-        var desk = new TestDesktop("misc:focus_on_activate = true\ninput:follow_mouse = 0\n");
+        var desk = new TestDesktop("misc:focus_on_activate = true\nfocus_follows_mouse = 0\n");
         desk.Spawn(Source);
         var target = desk.Spawn(Target);
         Assert.AreEqual(2, desk.Clients().Length);
@@ -35,7 +35,7 @@ public class FocusOnActivateTests
 
     private static void FocusSource(TestDesktop desk)
     {
-        desk.Ok("focuswindow", $"class:{Source}");
+        desk.Ok("focus", $"class:{Source}");
         Assert.AreEqual(Source, desk.ActiveClass());
     }
 

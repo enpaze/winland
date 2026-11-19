@@ -11,7 +11,7 @@ Winland's Workspaces are not Windows virtual desktops. When the user switches to
 ## How to get to it (user POV)
 
 - Press `Win+Ctrl+D` to make and show a new virtual desktop, and `Win+Ctrl+F4` to close it and go back.
-- Run `winland clients` after the switch and after coming back to see which windows Winland holds.
+- Run `winland get windows` after the switch and after coming back to see which windows Winland holds.
 
 ## Driving it with drive.ps1
 
@@ -22,7 +22,7 @@ Preconditions:
 
 - **Run the driver.** Run `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Feature virtual-desktops`. It prints `== feature virtual-desktops: passed`.
 - **Tile two windows.** The driver opens `WinlandVerify 1` and `WinlandVerify 2`. Both become Clients and tile side by side across the work area, and the driver notes both tiles.
-- **Switch desktop.** The driver presses `Win+Ctrl+D` as real keys. Within 15 seconds neither window is in `winland -j clients`.
+- **Switch desktop.** The driver presses `Win+Ctrl+D` as real keys. Within 15 seconds neither window is in `winland -j get windows`.
 - **Come back.** The driver presses `Win+Ctrl+F4` as real keys to close that desktop and go back. Within 15 seconds both windows are Clients again, and each reports Workspace `1`.
 - **Former tiles.** Both windows return to the tiles they had before the switch.
 

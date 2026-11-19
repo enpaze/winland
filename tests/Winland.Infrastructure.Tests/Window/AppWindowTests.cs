@@ -10,7 +10,7 @@ public class AppWindowTests
     public void AWindowWithoutASizingFrameIsAdoptedFloating()
     {
         using var window = new Probe(resizable: false);
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0"));
         using var adapter = new WindowAdapter(core);
         core.ReducedMotion = () => true;
 
@@ -24,7 +24,7 @@ public class AppWindowTests
     {
         using var window = new Probe();
         var expected = ProbeNative.Visible((nint)window.Handle);
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0\nwindowrule = float, class:*"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0\nwindowrule = float, class:*"));
         using var adapter = new WindowAdapter(core);
         core.ReducedMotion = () => true;
 
@@ -41,7 +41,7 @@ public class AppWindowTests
     public void ADialogWhoseOwnerWinlandHidStillFloatsOnItsOwnersWorkspace()
     {
         using var owner = new Probe();
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0"));
         using var adapter = new WindowAdapter(core);
         core.ReducedMotion = () => true;
         adapter.AdoptExisting([(nint)owner.Handle]);
@@ -143,7 +143,7 @@ public class AppWindowTests
     private static void ShowToolWindow(string title, bool adopted)
     {
         using var window = new Probe(extended: WINDOW_EX_STYLE.WS_EX_TOOLWINDOW, title: title);
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0\nwindowrule = float, class:*"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0\nwindowrule = float, class:*"));
         using var adapter = new WindowAdapter(core);
         core.ReducedMotion = () => true;
 

@@ -31,9 +31,7 @@ public static partial class ConfigParser
         private readonly List<WindowRule> _windowRules = [];
         private readonly List<string> _sources = [];
         private readonly Dictionary<string, string> _variables = new(StringComparer.Ordinal);
-        private readonly List<OpenCategory> _categories = [];
 
-        private int _floor;
         private readonly HashSet<string> _openSources = new(StringComparer.OrdinalIgnoreCase);
         private string? _source;
         private string? _rootFolder;
@@ -48,7 +46,6 @@ public static partial class ConfigParser
             }
 
             ParseLines(text);
-            WarnUnclosed(_categories.Count);
             return new ConfigDocument([.. _settings], [.. _binds], [.. _warnings])
             {
                 WindowRules = [.. _windowRules],
@@ -104,41 +101,23 @@ public static partial class ConfigParser
 
         private void ParseLine(int lineNumber, string raw)
         {
-            if (ConfigDirectives.IsCondition(raw))
-            {
-                Warn(lineNumber, "Winland does not evaluate hyprlang conditions. The lines inside apply.");
-                return;
-            }
-
             var line = CutComment(raw);
             if (line.Length == 0)
                 return;
 
             var equals = line.IndexOf('=');
-            if (equals < 0)
-            {
-                ParseBrace(lineNumber, line);
-                return;
-            }
-
-            var lhs = line[..equals].Trim();
-            var rhs = line[(equals + 1)..].Trim();
-            if (lhs.Length == 0)
+            if (equals < 0 || line[..equals].Trim() is not { Length: > 0 } lhs)
             {
                 Warn(lineNumber, "Malformed line.");
                 return;
             }
 
+            var rhs = line[(equals + 1)..].Trim();
+
             var definingVariable = lhs[0] == '$';
             if (!TryExpand(ref rhs) || (!definingVariable && !TryExpand(ref lhs)))
             {
                 Warn(lineNumber, "Variable expansion did not finish.");
-                return;
-            }
-
-            if (!ConfigExpression.TryApply(ref rhs, _variables, out var expressionError))
-            {
-                Warn(lineNumber, expressionError);
                 return;
             }
 
@@ -169,9 +148,9 @@ public static partial class ConfigParser
                 return;
             }
 
-            if (lhs.StartsWith("bind", StringComparison.Ordinal) && !lhs.Contains(':'))
+            if (lhs == "bind")
             {
-                HandleBind(lhs, rhs, lineNumber);
+                HandleBind(rhs, lineNumber);
                 return;
             }
 
@@ -189,68 +168,19 @@ public static partial class ConfigParser
                 return;
             }
 
-            if (TryDevice(lhs, lineNumber))
-                return;
-
-            var keyword = KeyedName.TryInline(lhs, out var inline) ? inline : Qualify(lhs);
-            if (OptionTable.Find(keyword) is not IOption option)
+            if (OptionTable.Find(lhs) is not IOption option)
             {
-                Warn(lineNumber, $"Unsupported keyword '{keyword}'.{DidYouMean.For(keyword, OptionTable.Names.Concat(Keywords))}");
+                Warn(lineNumber, $"Unsupported keyword '{lhs}'.{DidYouMean.For(lhs, OptionTable.Names.Concat(Keywords))}");
                 return;
             }
 
             if (!option.Reads(rhs))
             {
-                Warn(lineNumber, $"Invalid value '{rhs}' for {keyword}.");
+                Warn(lineNumber, $"Invalid value '{rhs}' for {lhs}.");
                 return;
             }
 
-            _settings.Add(new Setting(keyword, rhs));
-        }
-
-        private void ParseBrace(int lineNumber, string line)
-        {
-            if (line.Contains('}'))
-            {
-                if (line != "}" || _categories.Count <= _floor)
-                {
-                    Warn(lineNumber, "Malformed line.");
-                    return;
-                }
-
-                _categories.RemoveAt(_categories.Count - 1);
-                return;
-            }
-
-            if (!line.EndsWith('{'))
-            {
-                Warn(lineNumber, "Malformed line.");
-                return;
-            }
-
-            var name = line[..^1].Trim();
-            if (name.Length == 0)
-            {
-                Warn(lineNumber, "Malformed line.");
-                return;
-            }
-
-            if (KeyedName.TrySplit(name, out var category, out var key))
-                _categories.Add(new OpenCategory(category, lineNumber, _source, key));
-            else
-                _categories.Add(new OpenCategory(name, lineNumber, _source));
-        }
-
-        private string Qualify(string lhs)
-        {
-            if (_categories.Count == 0)
-                return lhs;
-
-            var parts = new string[_categories.Count + 1];
-            for (var i = 0; i < _categories.Count; i++)
-                parts[i] = _categories[i].Name;
-            parts[^1] = lhs;
-            return string.Join(':', parts);
+            _settings.Add(new Setting(lhs, rhs));
         }
 
         private bool TryExpand(ref string text)
@@ -286,52 +216,17 @@ public static partial class ConfigParser
 
         private void RememberRule(string value, int lineNumber)
         {
-            if (!WindowRuleParser.TryParse(value, out var rule, out var error) || rule is null)
-                Warn(lineNumber, error);
-            else
+            var parsed = WindowRuleParser.Parse(value);
+            foreach (var warning in parsed.Warnings)
+                Warn(lineNumber, warning);
+
+            if (parsed.Rule is { } rule)
                 _windowRules.Add(rule);
         }
 
         private void Warn(int line, string message)
         {
             _warnings.Add(new ConfigWarning(line, message, _source));
-        }
-
-        private bool TryDevice(string lhs, int lineNumber)
-        {
-            if (!TryDeviceField(lhs, out var name, out var field) || name.Length == 0)
-                return false;
-
-            var keyword = lhs.StartsWith("device[", StringComparison.Ordinal) ? lhs : $"device[{name}]:{field}";
-            Warn(lineNumber, $"Unsupported keyword '{keyword}'.");
-            return true;
-        }
-
-        private bool TryDeviceField(string lhs, out string name, out string field)
-        {
-            name = "";
-            field = "";
-            if (lhs.StartsWith("device[", StringComparison.Ordinal))
-            {
-                var marker = lhs.IndexOf("]:", StringComparison.Ordinal);
-                if (marker < "device[".Length || marker + 2 >= lhs.Length)
-                    return false;
-
-                name = lhs["device[".Length..marker];
-                field = lhs[(marker + 2)..];
-                return field.Length > 0;
-            }
-
-            if (_categories.Count == 0)
-                return false;
-
-            var category = _categories[^1];
-            if (category.Name != "device" || category.Key is not string key)
-                return false;
-
-            name = key;
-            field = lhs;
-            return field.Length > 0;
         }
 
         private static bool IsLaunchKeyword(string keyword) =>
@@ -405,7 +300,5 @@ public static partial class ConfigParser
             parts.Add(value[start..].Trim());
             return parts;
         }
-
-        private readonly record struct OpenCategory(string Name, int Line, string? Source, string? Key = null);
     }
 }

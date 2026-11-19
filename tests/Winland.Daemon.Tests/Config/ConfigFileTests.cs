@@ -11,14 +11,14 @@ public sealed class ConfigFileTests : IDisposable
     public void ABindForAnUnknownDispatcherWarnsWithItsLineAndTheNameItIsCloseTo()
     {
         var path = Path.Combine(_root, "winland.conf");
-        File.WriteAllText(path, "bind = SUPER, Q, killactive\nbind = SUPER, W, killactiv\n");
+        File.WriteAllText(path, "bind = Win+Q, close\nbind = Win+W, closs\n");
 
         var document = ConfigFile.Read(path);
 
         Assert.ContainsSingle(document.Binds);
         var warning = Assert.ContainsSingle(document.Warnings);
         Assert.AreEqual(2, warning.Line);
-        Assert.AreEqual("Unknown dispatcher 'killactiv'. Did you mean 'killactive'?", warning.Message);
+        Assert.AreEqual("Unknown dispatcher 'closs'. Did you mean 'close'?", warning.Message);
     }
 
     public void Dispose() => Directory.Delete(_root, recursive: true);

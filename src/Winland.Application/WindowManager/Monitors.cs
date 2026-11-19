@@ -52,16 +52,36 @@ public sealed partial class WindowManager
         return false;
     }
 
-    private Outcome MoveWindowDirection(string arguments)
+    private Outcome MoveDispatch(string arguments)
     {
-        if (TryMonitorArgument(arguments, out var monitorText, out var silent))
-        {
-            if (ResolveMonitor(monitorText) is not LiveMonitor chosen)
-                return Rejected("error: monitor not found");
+        var text = arguments.Trim();
+        if (text.Length == 0)
+            return Drag("move");
 
-            return MoveActiveOnto(chosen, silent);
+        var stay = text.EndsWith(" stay", StringComparison.OrdinalIgnoreCase);
+        if (stay)
+            text = text[..^5].TrimEnd();
+
+        if (Sides.TryParse(text, out _))
+            return stay ? Rejected("error: stay goes with a workspace or a monitor") : MoveWindowDirection(text);
+
+        if (text.StartsWith("mon:", StringComparison.OrdinalIgnoreCase))
+        {
+            return ResolveMonitor(text[4..].Trim()) is LiveMonitor chosen
+                ? MoveActiveOnto(chosen, stay)
+                : Rejected("error: monitor not found");
         }
 
+        if (!WorkspaceAddress.TryParse(text, out var address))
+            return Rejected("error: no such workspace");
+
+        return address.Resolve(Context()) is WorkspaceId target
+            ? MoveTo(target, stay, consumed: false)
+            : View([]);
+    }
+
+    private Outcome MoveWindowDirection(string arguments)
+    {
         var active = ActiveWindow();
         var desk = active is WindowId owned && WorkspaceContaining(owned) is LiveWorkspace own ? own : ShownWorkspace();
         var covered = desk.Covered();
@@ -80,7 +100,7 @@ public sealed partial class WindowManager
             var focal = Sides.Focal(Ideal(desk, window, box), direction);
             var hit = MonitorSelector.At(Targets(), focal);
             if (hit is MonitorTarget other && other.Id != origin.Id && MonitorOf(other) is LiveMonitor across)
-                return MoveActiveOnto(across, silent: false, focal);
+                return MoveActiveOnto(across, stay: false, focal);
         }
 
         var placements = desk.Layout.MoveWindow(window, arguments);
@@ -90,7 +110,7 @@ public sealed partial class WindowManager
             && TargetOf(home) is MonitorTarget from
             && MonitorSelector.InDirection(Targets(), from, direction) is MonitorTarget neighbor
             && MonitorOf(neighbor) is LiveMonitor next)
-            return MoveActiveOnto(next, silent: false);
+            return MoveActiveOnto(next, stay: false);
 
         return Present(desk, covered, placements);
     }
@@ -100,7 +120,7 @@ public sealed partial class WindowManager
         if (ResolveMonitor(arguments) is not LiveMonitor screen)
             return Rejected("error: monitor not found");
 
-        return FocusOnto(screen, preferred: null);
+        return FocusOnto(screen, preferred: null) with { Traits = DispatcherTraits.WarpsToEmptyMonitor };
     }
 
     private Outcome MoveCurrentWorkspace(string arguments)
@@ -150,12 +170,12 @@ public sealed partial class WindowManager
         return View(ShownPlacements(), show, hide, focus: focus);
     }
 
-    private Outcome MoveActiveOnto(LiveMonitor screen, bool silent, Point? focal = null)
+    private Outcome MoveActiveOnto(LiveMonitor screen, bool stay, Point? focal = null)
     {
         if (_workspaces.Shown.Shown(screen.Id) is not WorkspaceId target)
             return View([]);
 
-        return MoveTo(target, silent, consumed: false, focal: focal);
+        return MoveTo(target, stay, consumed: false, focal: focal);
     }
 
     private Outcome FocusOnto(LiveMonitor screen, WindowId? preferred)
@@ -301,24 +321,6 @@ public sealed partial class WindowManager
         }
 
         return (show.ToArray(), hide.ToArray());
-    }
-
-    private static bool TryMonitorArgument(string arguments, out string monitor, out bool silent)
-    {
-        silent = false;
-        monitor = "";
-        var text = arguments.Trim();
-        if (text.EndsWith(" silent", StringComparison.OrdinalIgnoreCase))
-        {
-            silent = true;
-            text = text[..^7].TrimEnd();
-        }
-
-        if (!text.StartsWith("mon:", StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        monitor = text[4..].Trim();
-        return true;
     }
 
     private static string FirstToken(string arguments)

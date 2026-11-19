@@ -26,7 +26,7 @@ public class InspectTests
         desktop.Spawn("b");
         desktop.Ok("workspace", "1");
         desktop.Spawn("a");
-        var clients = desktop.Send("j/clients");
+        var clients = desktop.Send("j/get windows");
 
         var reply = desktop.WindowManager.Execute("inspect class:b");
 
@@ -39,7 +39,7 @@ public class InspectTests
         Assert.IsEmpty(reply.Effect.Placements);
         Assert.IsNull(reply.Effect.Focus);
         Assert.AreEqual("a", desktop.ActiveClass());
-        Assert.AreEqual(clients, desktop.Send("j/clients"));
+        Assert.AreEqual(clients, desktop.Send("j/get windows"));
     }
 
     [TestMethod]
@@ -64,7 +64,7 @@ public class InspectTests
     {
         var desktop = new TestDesktop();
         desktop.Spawn("term");
-        desktop.Ok("togglefloating");
+        desktop.Ok("float");
 
         var inspected = Inspect(desktop, "class:term");
 
@@ -172,7 +172,7 @@ public class InspectTests
     {
         var before = new TestDesktop();
         before.Spawn("term");
-        before.Ok("togglefloating");
+        before.Ok("float");
         var after = new TestDesktop();
         after.WindowManager.Restore(before.WindowManager.Recovery());
         after.Spawn("term");

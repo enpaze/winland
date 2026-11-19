@@ -13,9 +13,9 @@ public class BindTests
     }
 
     [TestMethod]
-    public void SuperQRunsKillActiveAndAsksToCloseTheActiveClient()
+    public void SuperQRunsCloseAndAsksToCloseTheActiveClient()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -28,9 +28,9 @@ public class BindTests
     }
 
     [TestMethod]
-    public void KillActiveDoesNotRemoveTheClientUntilTheWindowCloses()
+    public void CloseDoesNotRemoveTheClientUntilTheWindowCloses()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -44,9 +44,9 @@ public class BindTests
     }
 
     [TestMethod]
-    public void FocusedClientIsTheOneKillActiveCloses()
+    public void FocusedClientIsTheOneCloseCloses()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Appear(core, 2);
         core.Handle(new WindowFocused(new WindowId(1)));
@@ -56,9 +56,9 @@ public class BindTests
     }
 
     [TestMethod]
-    public void KillActiveWithNoClientRunsAndClosesNothing()
+    public void CloseWithNoClientRunsAndClosesNothing()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Press(core, "Super_L");
 
         var outcome = Press(core, "Q");
@@ -70,7 +70,7 @@ public class BindTests
     [TestMethod]
     public void UnmanagedFocusIsNotAClientToClose()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         core.Handle(new WindowFocused(new WindowId(99)));
         Press(core, "Super_L");
@@ -82,7 +82,7 @@ public class BindTests
     [TestMethod]
     public void KeyWithoutTheModifierDoesNotMatch()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
 
         AssertPassed(Press(core, "Q"));
@@ -91,7 +91,7 @@ public class BindTests
     [TestMethod]
     public void ExtraModifierDoesNotMatch()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Press(core, "Super_L");
         Press(core, "Shift_L");
@@ -100,17 +100,17 @@ public class BindTests
     }
 
     [TestMethod]
-    [DataRow("Super_L", "SUPER")]
-    [DataRow("Super_R", "SUPER")]
-    [DataRow("Alt_L", "ALT")]
-    [DataRow("Alt_R", "ALT")]
-    [DataRow("Control_L", "CTRL")]
-    [DataRow("Control_R", "CTRL")]
-    [DataRow("Shift_L", "SHIFT")]
-    [DataRow("Shift_R", "SHIFT")]
+    [DataRow("Super_L", "Win")]
+    [DataRow("Super_R", "Win")]
+    [DataRow("Alt_L", "Alt")]
+    [DataRow("Alt_R", "Alt")]
+    [DataRow("Control_L", "Ctrl")]
+    [DataRow("Control_R", "Ctrl")]
+    [DataRow("Shift_L", "Shift")]
+    [DataRow("Shift_R", "Shift")]
     public void EachModifierKeyMatchesItsBind(string key, string modifier)
     {
-        var core = Load($"bind = {modifier}, Q, killactive");
+        var core = Load($"bind = {modifier}+Q, close");
         Appear(core, 1);
         Press(core, key);
 
@@ -120,7 +120,7 @@ public class BindTests
     [TestMethod]
     public void EveryModifierInTheChordIsRequired()
     {
-        var core = Load("bind = ALT CTRL SHIFT, Q, killactive");
+        var core = Load("bind = Ctrl+Alt+Shift+Q, close");
         Appear(core, 1);
         Press(core, "Alt_L");
         Press(core, "Control_L");
@@ -135,7 +135,7 @@ public class BindTests
     [TestMethod]
     public void BindWithNoModifiersDoesNotMatchWhileAModifierIsHeld()
     {
-        var core = Load("bind = , Q, killactive");
+        var core = Load("bind = Q, close");
         Appear(core, 1);
 
         AssertRan(Press(core, "Q"), 1);
@@ -148,7 +148,7 @@ public class BindTests
     [TestMethod]
     public void BoundSuperComboConsumesTheKeyAndPassesTheSuperRelease()
     {
-        var core = Load("bind = SUPER, L, killactive");
+        var core = Load("bind = Win+L, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -160,7 +160,7 @@ public class BindTests
     [TestMethod]
     public void UnboundSuperComboPassesTheKeyAndTheSuperKey()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Press(core, "Super_L");
 
         AssertPassed(Press(core, "E"));
@@ -171,7 +171,7 @@ public class BindTests
     [TestMethod]
     public void SuperAlonePassesThrough()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
 
         AssertPassed(Press(core, "Super_L"));
         AssertPassed(Release(core, "Super_L"));
@@ -180,7 +180,7 @@ public class BindTests
     [TestMethod]
     public void PressBindFiresOnceAndConsumesTheRestOfTheSequence()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -196,7 +196,7 @@ public class BindTests
     [TestMethod]
     public void ABindDoesNotRunWhileInputIsInhibitedAndRunsAgainAfter()
     {
-        var core = Load("bind = SUPER, Q, killactive\n");
+        var core = Load("bind = Win+Q, close\n");
         Appear(core, 1);
         core.KeyState.Inhibit(true);
         Press(core, "Super_L");
@@ -211,7 +211,7 @@ public class BindTests
     [TestMethod]
     public void MouseBindFiresOnTheButtonAndNotOnAKey()
     {
-        var core = Load("bind = SUPER, mouse:left, movewindow\nbind = SUPER, Q, killactive\n");
+        var core = Load("bind = Win+mouse:left, move\nbind = Win+Q, close\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -228,7 +228,7 @@ public class BindTests
     [TestMethod]
     public void KeyboardBindDoesNotFireOnAMouseButton()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -238,7 +238,7 @@ public class BindTests
     [TestMethod]
     public void OtherDispatcherIsReportedAndDoesNotClose()
     {
-        var core = Load("bind = SUPER, E, exec, notepad");
+        var core = Load("bind = Win+E, exec notepad");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -252,7 +252,7 @@ public class BindTests
     [TestMethod]
     public void TwoBindsOnOneKeyLaunchBothPrograms()
     {
-        var core = Load("bind = SUPER, E, exec, a\nbind = SUPER, E, exec, b");
+        var core = Load("bind = Win+E, exec a\nbind = Win+E, exec b");
         Press(core, "Super_L");
 
         var outcome = Press(core, "E");
@@ -263,7 +263,7 @@ public class BindTests
     [TestMethod]
     public void KeyNameMatchIsCaseInsensitive()
     {
-        var core = Load("bind = super, q, killactive");
+        var core = Load("bind = Win+q, close");
         Appear(core, 1);
         Press(core, "Super_R");
 
@@ -273,7 +273,7 @@ public class BindTests
     [TestMethod]
     public void ScanCodeMatchesACodeBind()
     {
-        var core = Load("bind = SUPER, code:28, killactive");
+        var core = Load("bind = Win+code:28, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -285,7 +285,7 @@ public class BindTests
     [TestMethod]
     public void UnbindRemovesOnlyTheMatchingBind()
     {
-        var core = Load("bind = SUPER, Q, killactive\nunbind = SUPER, Q\nbind = SUPER, R, killactive\n");
+        var core = Load("bind = Win+Q, close\nunbind = Win+Q\nbind = Win+R, close\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -296,7 +296,7 @@ public class BindTests
     [TestMethod]
     public void UnbindAllClearsBinds()
     {
-        var core = Load("bind = SUPER, Q, killactive\nunbind = all\n");
+        var core = Load("bind = Win+Q, close\nunbind = all\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -306,7 +306,7 @@ public class BindTests
     [TestMethod]
     public void EveryBindOnAChordRunsInConfigOrder()
     {
-        var core = Load("bind = , Q, killactive\nbind = , Q, workspace, 2\n");
+        var core = Load("bind = Q, close\nbind = Q, workspace 2\n");
         Appear(core, 1);
         Appear(core, 2);
 
@@ -318,22 +318,9 @@ public class BindTests
     }
 
     [TestMethod]
-    public void EmptyDispatcherConsumesTheKeyAndClosesNothing()
-    {
-        var core = Load("bind = , Q,\n");
-        Appear(core, 1);
-
-        var outcome = Press(core, "Q");
-
-        AssertCaught(outcome);
-        Assert.Contains(client => client.Window == new WindowId(1), outcome.State.Clients);
-        AssertCaught(Release(core, "Q"));
-    }
-
-    [TestMethod]
     public void ModifierKeyBindClosesTheActiveClient()
     {
-        var core = Load("bind = , Super_L, killactive");
+        var core = Load("bind = Super_L, close");
         Appear(core, 1);
 
         AssertRan(Press(core, "Super_L"), 1);
@@ -342,7 +329,7 @@ public class BindTests
     [TestMethod]
     public void LoadingConfigReplacesBinds()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         core.Handle(new ConfigLoaded(ConfigParser.Parse("")));
         Press(core, "Super_L");

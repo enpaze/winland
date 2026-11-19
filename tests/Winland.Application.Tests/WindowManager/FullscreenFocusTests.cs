@@ -6,13 +6,13 @@ public class FullscreenFocusTests
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
     [TestMethod]
-    [DataRow("1")]
-    [DataRow("0")]
+    [DataRow("maximize")]
+    [DataRow("fullscreen")]
     public void ThePointerOverACoveredTileDoesNotFocusIt(string mode)
     {
         var core = Desk();
         Move(core, new Point(1500, 500), 1_000);
-        core.Handle(new Dispatch("fullscreen", mode));
+        core.Handle(new Dispatch(mode));
         Assert.AreEqual("\"address\":\"0x2\"", Address(core));
 
         var over = Move(core, new Point(300, 500), 1_100);
@@ -26,7 +26,7 @@ public class FullscreenFocusTests
     public void AMaximizedClientTakesTheFocusWhenThePointerIsOverIt()
     {
         var core = Desk();
-        core.Handle(new Dispatch("focuswindow", "address:0x1"));
+        core.Handle(new Dispatch("focus", "address:0x1"));
         core.Handle(new WindowMaximizeRequested(new WindowId(2)));
         Assert.AreEqual("\"address\":\"0x1\"", Address(core));
 
@@ -67,7 +67,7 @@ public class FullscreenFocusTests
     [TestMethod]
     public void AClientThatGoesFullscreenOrLeavesItByItselfIsPlacedWithoutAMotion()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0\nanimation = global, 1, 5, default\n"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0\nanimation = global, 1, 5, default\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
@@ -84,7 +84,7 @@ public class FullscreenFocusTests
     public void AWindowThatLeavesAFullscreenItNeverHadChangesNothing()
     {
         var core = Desk();
-        core.Handle(new Dispatch("fullscreen", "1"));
+        core.Handle(new Dispatch("maximize"));
 
         var left = core.Handle(new WindowFullscreenRequested(new WindowId(2), false));
 
@@ -105,7 +105,7 @@ public class FullscreenFocusTests
 
     private static WindowManager Desk()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"));
+        var core = new WindowManager(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
         return core;
@@ -116,7 +116,7 @@ public class FullscreenFocusTests
 
     private static string Address(WindowManager core)
     {
-        var text = core.Execute("j/activewindow").Text;
+        var text = core.Execute("j/get window").Text;
         var at = text.IndexOf("\"address\":", StringComparison.Ordinal);
         Assert.IsTrue(at >= 0, text);
         return text[at..(at + "\"address\":\"0x0\"".Length)];

@@ -8,7 +8,7 @@ public class TitleRuleTests
     [DataRow("windowrule = float, class:kitty, title:negative:Settings", true)]
     [DataRow("windowrule = float, initial_title:Settings", false)]
     [DataRow("windowrule = float, class:kitty", false)]
-    [DataRow("general:gaps_in = 0", false)]
+    [DataRow("gaps_in = 0", false)]
     public void OnlyARuleOnTitleReadsTitles(string line, bool expected)
     {
         var core = new WindowManager(ConfigParser.Parse(line + "\n"));

@@ -74,8 +74,8 @@ static class MaintenanceCommand
                 return 0;
             case InstallCommand.RestoreTweaks:
                 Console.WriteLine(RecordedTweaks().Restore()
-                    ? "The Windows settings winland tweaks --off recorded are back as they were."
-                    : "winland tweaks --off recorded no settings for this user. Nothing changed.");
+                    ? "The Windows settings winland tweaks off recorded are back as they were."
+                    : "winland tweaks off recorded no settings for this user. Nothing changed.");
                 return 0;
             default:
                 throw new InvalidOperationException("Unexpected install command.");

@@ -22,7 +22,7 @@ public class AccentBorderTests
         var changed = core.Handle(new AccentChanged(new BorderColor(0xFF, 0x01, 0x02, 0x03)));
         Assert.AreEqual(new BorderColor(0xFF, 0x01, 0x02, 0x03), Border(changed, 1));
 
-        var pinned = core.Handle(new Configure(ConfigParser.Parse("general:col.active_border = rgba(aabbccff)\n")));
+        var pinned = core.Handle(new Configure(ConfigParser.Parse("border_color = rgba(aabbccff)\n")));
         Assert.AreEqual(Chosen, Border(pinned, 1));
         var ignored = core.Handle(new AccentChanged(Accent));
         Assert.AreEqual(Chosen, Border(ignored, 1));
@@ -34,13 +34,33 @@ public class AccentBorderTests
     [TestMethod]
     public void AGradientDoesNotOverrideTheAccent()
     {
-        var core = Configured("general:col.active_border = rgba(ff00ffff) 90deg\n");
+        var core = Configured("border_color = rgba(ff00ffff) 90deg\n");
         core.Handle(Appeared(1, Area));
 
         var followed = core.Handle(new AccentChanged(Accent));
 
         Assert.AreEqual(Accent, Border(followed, 1));
-        Assert.IsFalse(DecorationOptions.From(ConfigParser.Parse("general:col.active_border = rgba(ff00ffff) 90deg\n")).ActiveBorderSet);
+        Assert.IsTrue(DecorationOptions.From(ConfigParser.Parse("border_color = rgba(ff00ffff) 90deg\n")).AccentBorder);
+    }
+
+    [TestMethod]
+    public void AccentAfterAColorFollowsTheAccentAgain()
+    {
+        var core = Configured("border_color = rgba(aabbccff)\nborder_color = Accent\n");
+        core.Handle(Appeared(1, Area));
+
+        var followed = core.Handle(new AccentChanged(Accent));
+
+        Assert.AreEqual(Accent, Border(followed, 1));
+    }
+
+    [TestMethod]
+    public void AccentAfterAColorDropsThatColorWithoutAnAccentOrUnderHighContrast()
+    {
+        var document = ConfigParser.Parse("border_color = rgba(aabbccff)\nborder_color = accent\n");
+
+        Assert.AreEqual(new BorderColor(0xFF, 0xFF, 0xFF, 0xFF), DecorationOptions.From(document).ActiveBorder);
+        Assert.AreEqual(Contrast.Highlight, DecorationOptions.From(document, Contrast).ActiveBorder);
     }
 
     [TestMethod]
@@ -65,13 +85,13 @@ public class AccentBorderTests
         var core = Configured("");
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
-        core.Execute("dispatch togglegroup");
+        core.Execute("group");
 
         var contrasted = core.Handle(new AccentChanged(Accent) { Contrast = Contrast });
         var borders = new[] { Border(contrasted, 1), Border(contrasted, 2) };
         Assert.Contains(Contrast.Highlight, borders);
         Assert.Contains(Contrast.GrayText, borders);
-        var style = Assert.ContainsSingle(core.Execute("dispatch resizewindow").Effect.GroupBars).Style;
+        var style = Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style;
         Assert.AreEqual((Contrast.Text, Contrast.Highlight, Contrast.GrayText), (style.TextColor, style.Active, style.Inactive));
 
         var ended = core.Handle(new AccentChanged(Accent));
@@ -81,15 +101,15 @@ public class AccentBorderTests
     [TestMethod]
     public void AConfiguredColorWinsOverHighContrast()
     {
-        var core = Configured("general:col.inactive_border = rgba(aabbccff)\ngroup:groupbar:text_color = rgba(aabbccff)\n");
+        var core = Configured("border_color_inactive = rgba(aabbccff)\ntab_text_color = rgba(aabbccff)\n");
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
-        core.Execute("dispatch togglegroup");
+        core.Execute("group");
 
         var contrasted = core.Handle(new AccentChanged(Accent) { Contrast = Contrast });
 
         Assert.Contains(Chosen, new[] { Border(contrasted, 1), Border(contrasted, 2) });
-        Assert.AreEqual(Chosen, Assert.ContainsSingle(core.Execute("dispatch resizewindow").Effect.GroupBars).Style.TextColor);
+        Assert.AreEqual(Chosen, Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style.TextColor);
     }
 
     [TestMethod]
@@ -97,11 +117,11 @@ public class AccentBorderTests
     {
         var core = Configured("");
         core.Handle(Appeared(1, Area));
-        core.Execute("dispatch togglegroup");
-        var plain = Assert.ContainsSingle(core.Execute("dispatch resizewindow").Effect.GroupBars).Style;
+        core.Execute("group");
+        var plain = Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style;
 
         core.Handle(new AccentChanged(Accent) { TextScale = 1.5 });
-        var larger = Assert.ContainsSingle(core.Execute("dispatch resizewindow").Effect.GroupBars).Style;
+        var larger = Assert.ContainsSingle(core.Execute("resize").Effect.GroupBars).Style;
 
         Assert.AreEqual((12, 21), (larger.FontSize, larger.Height));
         Assert.AreEqual(plain.IndicatorHeight, larger.IndicatorHeight);

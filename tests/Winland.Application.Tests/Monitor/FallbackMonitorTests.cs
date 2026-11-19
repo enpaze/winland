@@ -8,15 +8,15 @@ public class FallbackMonitorTests
     {
         var desk = new TestDesktop();
 
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         desk.Ok("workspace", "9");
         desk.Spawn("fallback-workspace-a");
 
-        Assert.DoesNotContain("FALLBACK", desk.Send("j/monitors"), StringComparison.Ordinal);
+        Assert.DoesNotContain("FALLBACK", desk.Send("j/get monitors"), StringComparison.Ordinal);
         Assert.AreEqual("HEADLESS-2", MonitorOf(desk, 9));
 
         desk.ReportEnabled(false);
-        Assert.Contains("FALLBACK", desk.Send("j/monitors"), StringComparison.Ordinal);
+        Assert.Contains("FALLBACK", desk.Send("j/get monitors"), StringComparison.Ordinal);
         Assert.AreEqual("FALLBACK", desk.ActiveWorkspace().GetProperty("monitor").GetString());
         Assert.AreEqual(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
 

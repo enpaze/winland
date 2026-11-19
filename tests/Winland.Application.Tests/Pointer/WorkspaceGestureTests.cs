@@ -43,10 +43,10 @@ public class WorkspaceGestureTests
         touchpad.Swipe("left", 3);
         Assert.AreEqual(5, desk.ActiveWorkspace().GetProperty("id").GetInt32());
 
-        desk.Ok("workspace", "previous");
+        desk.Ok("workspace", "last");
         Assert.AreEqual(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
 
-        desk.Ok("workspace", "previous");
+        desk.Ok("workspace", "last");
         Assert.AreEqual(5, desk.ActiveWorkspace().GetProperty("id").GetInt32());
 
         desk.Ok("workspace", "1");

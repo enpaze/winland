@@ -23,7 +23,7 @@ public class OffWindowAxisTests
     [TestMethod]
     public void AFloatingWindowsRingIsItsOffWindowTargetAndTheNearestPointInsideIsClamped()
     {
-        var core = CoreWith("general:border_size = 4\n");
+        var core = CoreWith("border_size = 4\n");
         Float(core, 1);
 
         var target = core.OffWindowTarget(new Point(1282, 500));
@@ -35,14 +35,14 @@ public class OffWindowAxisTests
     [TestMethod]
     public void InsideTheWindowBeyondTheRingOrWithNoBorderThereIsNoTarget()
     {
-        var core = CoreWith("general:border_size = 4\n");
+        var core = CoreWith("border_size = 4\n");
         Float(core, 1);
 
         Assert.IsNull(core.OffWindowTarget(new Point(900, 500)));
         Assert.IsNull(core.OffWindowTarget(new Point(1290, 500)));
         Assert.IsNull(core.OffWindowTarget(new Point(10, 10)));
 
-        var bare = CoreWith("general:border_size = 0\n");
+        var bare = CoreWith("border_size = 0\n");
         Float(bare, 1);
         Assert.IsNull(bare.OffWindowTarget(new Point(1280, 500)));
     }
@@ -50,13 +50,13 @@ public class OffWindowAxisTests
     private static WindowManager CoreWith(string config)
     {
         var core = new WindowManager();
-        core.Handle(new Configure(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\n" + config)));
+        core.Handle(new Configure(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\n" + config)));
         return core;
     }
 
     private static void Float(WindowManager core, long window)
     {
         core.Handle(new WindowAppeared(new WindowId(window), Wide));
-        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new Dispatch("float"));
     }
 }

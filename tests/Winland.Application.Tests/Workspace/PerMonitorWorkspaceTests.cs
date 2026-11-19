@@ -12,7 +12,7 @@ public class PerMonitorWorkspaceTests
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new Dispatch("workspace", "3"));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new Dispatch("workspace", "3"));
         var opened = core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
 
@@ -31,7 +31,7 @@ public class PerMonitorWorkspaceTests
         var right = Screen(@"\\.\DISPLAY2", "Samsung", "S27", "B", 1920);
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new Dispatch("workspace", "2"));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
         core.Handle(new Dispatch("workspace", "4"));
@@ -55,12 +55,12 @@ public class PerMonitorWorkspaceTests
         core.Handle(new MonitorsChanged([left, right]));
         for (var number = 1; number <= 10; number++)
         {
-            core.Handle(new Dispatch("focusmonitor", left.Name));
+            core.Handle(new Dispatch("focus-monitor", left.Name));
             core.Handle(new Dispatch("workspace", number.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             core.Handle(new WindowAppeared(new WindowId(100 + number), left.WorkArea));
         }
 
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
         core.Handle(new Dispatch("workspace", "4"));
         core.Handle(new WindowAppeared(new WindowId(4), right.WorkArea));
@@ -80,7 +80,7 @@ public class PerMonitorWorkspaceTests
         var left = Screen(@"\\.\DISPLAY1", "Dell", "P2415Q", "A", 0);
         var right = Screen(@"\\.\DISPLAY2", "Samsung", "S27", "B", 1920);
         core.Handle(new MonitorsChanged([left, right]));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new Dispatch("workspace", "2"));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
         core.Handle(new Dispatch("workspace", "4"));
@@ -106,7 +106,7 @@ public class PerMonitorWorkspaceTests
         core.Handle(new Dispatch("workspace", "3"));
         core.Handle(new WindowAppeared(new WindowId(3), left.WorkArea));
 
-        var moved = core.Handle(new Dispatch("movecurrentworkspacetomonitor", @"\\.\DISPLAY2"));
+        var moved = core.Handle(new Dispatch("move-workspace", @"\\.\DISPLAY2"));
 
         var destination = Assert.ContainsSingle(screen => screen.Monitor.Name == right.Name, moved.State.Screens);
         Assert.AreEqual(WorkspaceId.FromNumber(3, destination.Id), Client(moved, 3).Workspace);
@@ -123,12 +123,12 @@ public class PerMonitorWorkspaceTests
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new Dispatch("workspace", "3"));
         core.Handle(new WindowAppeared(new WindowId(3), left.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("focus-monitor", right.Name));
         core.Handle(new Dispatch("workspace", "3"));
         core.Handle(new WindowAppeared(new WindowId(8), right.WorkArea));
-        core.Handle(new Dispatch("focusmonitor", left.Name));
+        core.Handle(new Dispatch("focus-monitor", left.Name));
 
-        var moved = core.Handle(new Dispatch("movecurrentworkspacetomonitor", @"\\.\DISPLAY2"));
+        var moved = core.Handle(new Dispatch("move-workspace", @"\\.\DISPLAY2"));
 
         var destination = Assert.ContainsSingle(screen => screen.Monitor.Name == right.Name, moved.State.Screens);
         Assert.AreEqual(WorkspaceId.FromNumber(1, destination.Id), Client(moved, 3).Workspace);

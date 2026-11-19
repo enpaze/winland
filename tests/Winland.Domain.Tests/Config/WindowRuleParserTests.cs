@@ -9,10 +9,9 @@ public class WindowRuleParserTests
     [DataRow("ignore")]
     public void AdoptionEffectsAcceptAnExplicitBoolean(string effect)
     {
-        Assert.IsTrue(WindowRuleParser.TryParse($"{effect} on, class:kitty", out var enabled, out _));
-        Assert.IsTrue(enabled!.Enabled);
-        Assert.IsTrue(WindowRuleParser.TryParse($"{effect} off, class:kitty", out var disabled, out _));
-        Assert.IsFalse(disabled!.Enabled);
+        Assert.IsTrue(Assert.ContainsSingle(Rule($"{effect} on, class:kitty").Effects).Enabled);
+        var disabled = Rule($"{effect} off, class:kitty");
+        Assert.IsFalse(Assert.ContainsSingle(disabled.Effects).Enabled);
         Assert.AreEqual(
             WindowRuleParser.Decide(WindowTraits.Normal with { Class = "kitty" }, []),
             WindowRuleParser.Decide(WindowTraits.Normal with { Class = "kitty" }, [disabled]));
@@ -72,9 +71,7 @@ public class WindowRuleParserTests
     [TestMethod]
     public void ARuleCannotAdoptAnOverlayAndADecisionSaysSo()
     {
-        Assert.IsTrue(WindowRuleParser.TryParse("float, class:osd", out var rule, out _));
-
-        var decision = WindowRuleParser.Decide(WindowTraits.Normal with { Class = "osd", Overlay = true }, [rule!]);
+        var decision = WindowRuleParser.Decide(WindowTraits.Normal with { Class = "osd", Overlay = true }, [Rule("float, class:osd")]);
 
         Assert.IsFalse(decision.Adopt);
         Assert.AreEqual(Admission.Overlay, decision.Admission);
@@ -103,7 +100,7 @@ public class WindowRuleParserTests
         var warning = Assert.ContainsSingle(document.Warnings);
         Assert.AreEqual(1, warning.Line);
         Assert.StartsWith($"Unsupported window rule match '{field}'.", warning.Message, StringComparison.Ordinal);
-        Assert.AreEqual(WindowRuleEffect.Pin, Assert.ContainsSingle(document.WindowRules).Effect);
+        Assert.AreEqual(WindowRuleEffect.Pin, Assert.ContainsSingle(Assert.ContainsSingle(document.WindowRules).Effects).Kind);
     }
 
     [TestMethod]
@@ -114,7 +111,7 @@ public class WindowRuleParserTests
         var warning = Assert.ContainsSingle(document.Warnings);
         Assert.AreEqual(1, warning.Line);
         Assert.StartsWith("Unsupported keyword 'windowrulev2'.", warning.Message, StringComparison.Ordinal);
-        Assert.AreEqual(WindowRuleEffect.Pin, Assert.ContainsSingle(document.WindowRules).Effect);
+        Assert.AreEqual(WindowRuleEffect.Pin, Assert.ContainsSingle(Assert.ContainsSingle(document.WindowRules).Effects).Kind);
     }
 
     [TestMethod]
@@ -133,31 +130,29 @@ public class WindowRuleParserTests
     [TestMethod]
     public void ACommaInsideAPatternStaysInThePattern()
     {
-        Assert.IsTrue(WindowRuleParser.TryParse("float, title:a{1,2}, class:kitty", out var rule, out _));
+        var rule = Rule("float, title:a{1,2}, class:kitty");
 
-        Assert.AreEqual("a{1,2}", rule!.TitlePattern);
+        Assert.AreEqual("a{1,2}", rule.TitlePattern);
         Assert.AreEqual("kitty", rule.ClassPattern);
     }
 
     [TestMethod]
     public void ATrailingOrDoubledCommaIsDropped()
     {
-        Assert.IsTrue(WindowRuleParser.TryParse("float, class:foo,, title:bar,", out var rule, out _));
+        var rule = Rule("float, class:foo,, title:bar,");
 
-        Assert.AreEqual("foo", rule!.ClassPattern);
+        Assert.AreEqual("foo", rule.ClassPattern);
         Assert.AreEqual("bar", rule.TitlePattern);
     }
 
     [TestMethod]
     public void ALiteralPatternMatchesThatTextAndAStarMatchesARun()
     {
-        Assert.IsTrue(WindowRuleParser.TryParse("float, class:a)|(b", out var rule, out _));
-        var literal = rule!;
+        var literal = Rule("float, class:a)|(b");
         Assert.IsTrue(WindowRuleParser.Decide(WindowTraits.Normal with { Class = "a)|(b" }, [literal]).Floating);
         Assert.IsFalse(WindowRuleParser.Decide(WindowTraits.Normal with { Class = "ab" }, [literal]).Floating);
 
-        Assert.IsTrue(WindowRuleParser.TryParse("float, title:Release *", out var titled, out _));
-        var star = titled!;
+        var star = Rule("float, title:Release *");
         Assert.IsTrue(WindowRuleParser.Decide(WindowTraits.Normal with { Title = "release notes" }, [star]).Floating);
         Assert.IsFalse(WindowRuleParser.Decide(WindowTraits.Normal with { Title = "Notes" }, [star]).Floating);
     }
@@ -171,7 +166,7 @@ public class WindowRuleParserTests
         var document = ConfigParser.Parse($"windowrule = {effect}, {match}\nwindowrule = float, class:kept\n");
 
         Assert.StartsWith("Unsupported window rule '", Assert.ContainsSingle(document.Warnings).Message, StringComparison.Ordinal);
-        Assert.AreEqual(WindowRuleEffect.Float, Assert.ContainsSingle(document.WindowRules).Effect);
+        Assert.AreEqual(WindowRuleEffect.Float, Assert.ContainsSingle(Assert.ContainsSingle(document.WindowRules).Effects).Kind);
     }
 
     [TestMethod]
@@ -179,7 +174,95 @@ public class WindowRuleParserTests
     [DataRow("size 10, class:x")]
     public void AnArgumentThatDoesNotReadDropsTheRule(string text)
     {
-        Assert.IsFalse(WindowRuleParser.TryParse(text, out _, out var error));
-        Assert.AreEqual("Malformed window rule.", error);
+        var parsed = WindowRuleParser.Parse(text);
+
+        Assert.IsNull(parsed.Rule);
+        Assert.AreEqual("Malformed window rule.", Assert.ContainsSingle(parsed.Warnings));
+    }
+
+    [TestMethod]
+    [DataRow("workspace 9 garbage")]
+    [DataRow("workspace 2 silent")]
+    [DataRow("workspace name:dev")]
+    [DataRow("workspace dev")]
+    [DataRow("workspace +1")]
+    [DataRow("workspace 2 stay now")]
+    public void AWorkspaceEffectThatDoesNotReadWarnsWhenTheConfigIsRead(string effect)
+    {
+        var document = ConfigParser.Parse($"windowrule = float; {effect}, class:kitty\n");
+
+        var decision = WindowRuleParser.Decide(WindowTraits.Normal with { Class = "kitty" }, document.WindowRules);
+
+        Assert.AreEqual("Malformed window rule.", Assert.ContainsSingle(document.Warnings).Message);
+        Assert.IsTrue(decision.Floating);
+        Assert.IsNull(decision.Workspace);
+    }
+
+    [TestMethod]
+    [DataRow("workspace 2 stay", "2 stay")]
+    [DataRow("workspace special:notes", "special:notes")]
+    [DataRow("workspace empty", "empty")]
+    public void AWorkspaceEffectTakesAnAddressAndStay(string effect, string workspace)
+    {
+        var document = ConfigParser.Parse($"windowrule = {effect}, class:kitty\n");
+
+        Assert.IsEmpty(document.Warnings);
+        Assert.AreEqual(workspace, WindowRuleParser.Decide(WindowTraits.Normal with { Class = "kitty" }, document.WindowRules).Workspace);
+    }
+
+    [TestMethod]
+    public void EveryEffectInAChainAppliesToTheMatchedWindow()
+    {
+        var document = ConfigParser.Parse("windowrule = float; size 900 600; workspace 9, exe:Spotify.exe\n");
+        var spotify = WindowTraits.Normal with { Exe = "Spotify.exe" };
+
+        var decision = WindowRuleParser.Decide(spotify, document.WindowRules);
+
+        Assert.IsEmpty(document.Warnings);
+        Assert.IsTrue(decision.Floating);
+        Assert.AreEqual("9", decision.Workspace);
+        Assert.AreEqual(new RulePoint(new RuleLength(900, false), new RuleLength(600, false)), decision.Placement.Size);
+        Assert.AreEqual(WindowRuleParser.Decide(spotify with { Exe = "Other.exe" }, []), WindowRuleParser.Decide(spotify with { Exe = "Other.exe" }, document.WindowRules));
+    }
+
+    [TestMethod]
+    [DataRow("float; no_blur; workspace 9", "Unsupported window rule 'no_blur'.")]
+    [DataRow("float; size 10; workspace 9", "Malformed window rule.")]
+    public void AnEffectThatDoesNotReadWarnsAndTheRestOfTheChainApplies(string effects, string warning)
+    {
+        var document = ConfigParser.Parse($"windowrule = {effects}, class:kitty\n");
+
+        var decision = WindowRuleParser.Decide(WindowTraits.Normal with { Class = "kitty" }, document.WindowRules);
+
+        Assert.StartsWith(warning, Assert.ContainsSingle(document.Warnings).Message, StringComparison.Ordinal);
+        Assert.IsTrue(decision.Floating);
+        Assert.AreEqual("9", decision.Workspace);
+        Assert.IsNull(decision.Placement.Size);
+    }
+
+    [TestMethod]
+    public void ALaterEffectInTheChainWinsOverAnEarlierOne()
+    {
+        var decision = WindowRuleParser.Decide(WindowTraits.Normal with { Class = "kitty" }, [Rule("float; tile, class:kitty")]);
+
+        Assert.IsFalse(decision.Floating);
+    }
+
+    [TestMethod]
+    [DataRow("no_blur; min_size 10 10")]
+    [DataRow(";")]
+    public void AChainWithNoEffectThatReadsAddsNoRule(string effects)
+    {
+        var document = ConfigParser.Parse($"windowrule = {effects}, class:kitty\n");
+
+        Assert.IsNotEmpty(document.Warnings);
+        Assert.IsEmpty(document.WindowRules);
+    }
+
+    private static WindowRule Rule(string text)
+    {
+        var parsed = WindowRuleParser.Parse(text);
+        Assert.IsEmpty(parsed.Warnings);
+        return parsed.Rule!;
     }
 }

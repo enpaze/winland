@@ -7,7 +7,7 @@ public class ConfigSyntaxTests
     [TestMethod]
     public void AnimationOptionsAcceptABooleanPrefix()
     {
-        var document = ConfigParser.Parse("animations {\nenabled = yes, please :)\n}\n");
+        var document = ConfigParser.Parse("animations = yes, please :)\n");
 
         Assert.IsEmpty(document.Warnings);
         Assert.IsTrue(AnimationOptions.From(document).Enabled);
@@ -16,34 +16,21 @@ public class ConfigSyntaxTests
     [TestMethod]
     public void AnEscapedHashAtTheStartStillCommentsOutATrailingBackslash()
     {
-        var document = ConfigParser.Parse("  ## path\\\ngeneral:gaps_in = 4\n");
+        var document = ConfigParser.Parse("  ## path\\\ngaps_in = 4\n");
 
         Assert.IsEmpty(document.Warnings);
-        Assert.AreEqual(new Setting("general:gaps_in", "4"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "4"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
-    [DataRow("SUPER SHFT")]
-    [DataRow("SUPERunknown")]
+    [DataRow("Win+Shft")]
+    [DataRow("Winunknown")]
     public void UnrecognisedLettersInModifiersDropTheBind(string modifiers)
     {
-        var document = ConfigParser.Parse($"bind = {modifiers}, Q, killactive\n");
+        var document = ConfigParser.Parse($"bind = {modifiers}+Q, close\n");
 
         Assert.ContainsSingle(document.Warnings);
         Assert.IsEmpty(document.Binds);
-    }
-
-    [TestMethod]
-    [DataRow("SUPER_SHIFT")]
-    [DataRow("SUPER+SHIFT")]
-    [DataRow("SUPER SHIFT")]
-    [DataRow("CONTROLALT")]
-    public void ModifierNamesStillAllowSeparatorsAndConcatenation(string modifiers)
-    {
-        var document = ConfigParser.Parse($"bind = {modifiers}, Q, killactive\n");
-
-        Assert.IsEmpty(document.Warnings);
-        Assert.ContainsSingle(document.Binds);
     }
 
     [TestMethod]
@@ -54,61 +41,95 @@ public class ConfigSyntaxTests
     [DataRow("c")]
     [DataRow("g")]
     [DataRow("u")]
-    public void UnsupportedBindFlagsSayTheyAreNotSupported(string flag)
+    [DataRow("d")]
+    [DataRow("m")]
+    public void ABindKeywordWithAFlagIsAnUnsupportedKeyword(string flag)
     {
-        var document = ConfigParser.Parse($"bind{flag} = SUPER, Q, killactive\n");
+        var document = ConfigParser.Parse($"bind{flag} = Win+Q, close\n");
 
-        Assert.Contains("not supported", Assert.ContainsSingle(document.Warnings).Message);
+        Assert.StartsWith($"Unsupported keyword 'bind{flag}'.", Assert.ContainsSingle(document.Warnings).Message, StringComparison.Ordinal);
         Assert.IsEmpty(document.Binds);
     }
 
     [TestMethod]
-    public void AnUnknownBindFlagWarnsAndTheBindBesideItStillApplies()
+    public void AnUnknownBindKeywordWarnsAndTheBindBesideItStillApplies()
     {
-        var document = ConfigParser.Parse("bindp = SUPER, Q, killactive\nbind = SUPER, L, resizeactive, 10 0\n");
+        var document = ConfigParser.Parse("bindp = Win+Q, close\nbind = Win+L, resize 10 0\n");
 
         var warning = Assert.ContainsSingle(document.Warnings);
         Assert.AreEqual(1, warning.Line);
-        Assert.AreEqual("Bind flag 'p' is not supported.", warning.Message);
+        Assert.AreEqual("Unsupported keyword 'bindp'. Did you mean 'bind'?", warning.Message);
         Assert.AreEqual("L", Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(document.Binds)).Key);
     }
 
     [TestMethod]
     public void VariableExpansionThatExceeds64KWarnsAndSkipsTheLine()
     {
-        var document = ConfigParser.Parse($"$large = {new string('x', 32768)}\nexec-once = $large$large$large\ngeneral:gaps_in = 4\n");
+        var document = ConfigParser.Parse($"$large = {new string('x', 32768)}\nexec-once = $large$large$large\ngaps_in = 4\n");
 
         Assert.ContainsSingle(document.Warnings);
         Assert.DoesNotContain(setting => setting.Keyword == "exec", document.Settings);
-        Assert.Contains(new Setting("general:gaps_in", "4"), document.Settings);
+        Assert.Contains(new Setting("gaps_in", "4"), document.Settings);
     }
 
     [TestMethod]
     public void ADoublingVariableWarnsWithoutExhaustingMemory()
     {
-        var document = ConfigParser.Parse("$a = $a$a\nexec-once = $a\ngeneral:gaps_in = 4\n");
+        var document = ConfigParser.Parse("$a = $a$a\nexec-once = $a\ngaps_in = 4\n");
 
         Assert.ContainsSingle(document.Warnings);
-        Assert.AreEqual(new Setting("general:gaps_in", "4"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "4"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
-    public void AConditionMarkerWarnsThatItIsNotEvaluatedAndEveryLineApplies()
+    public void AConditionMarkerIsACommentAndEveryLineApplies()
     {
         var document = ConfigParser.Parse("""
             # hyprlang if MISSING
-            general:gaps_in = 3
+            gaps_in = 3
             #hyprlang else # the other branch
-            general:gaps_out = 5
+            gaps_out = 5
             # hyprlang endif
             # hyprlang iffy
             # Hyprlang if MISSING
-            # hyprlang noerror true
             """);
 
-        const string message = "Winland does not evaluate hyprlang conditions. The lines inside apply.";
-        Assert.AreSequenceEqual([new ConfigWarning(1, message), new ConfigWarning(3, message), new ConfigWarning(5, message)], document.Warnings);
-        Assert.AreSequenceEqual([new Setting("general:gaps_in", "3"), new Setting("general:gaps_out", "5")], document.Settings);
+        Assert.IsEmpty(document.Warnings);
+        Assert.AreSequenceEqual([new Setting("gaps_in", "3"), new Setting("gaps_out", "5")], document.Settings);
+    }
+
+    [TestMethod]
+    [DataRow("general {", "Malformed line.")]
+    [DataRow("}", "Malformed line.")]
+    [DataRow("gaps_in = {{2 + 3}}", "Invalid value '{{2 + 3}}' for gaps_in.")]
+    [DataRow("device[mouse]:sensitivity = 1", "Unsupported keyword 'device[mouse]:sensitivity'.")]
+    public void AHyprlandOnlyLineWarnsAndTheNextLineStillApplies(string line, string warning)
+    {
+        var document = ConfigParser.Parse($"{line}\ngaps_out = 4\n");
+
+        Assert.AreEqual(new ConfigWarning(1, warning), Assert.ContainsSingle(document.Warnings));
+        Assert.AreEqual(new Setting("gaps_out", "4"), Assert.ContainsSingle(document.Settings));
+    }
+
+    [TestMethod]
+    public void BracesInATextValueAreKeptAsWritten()
+    {
+        var document = ConfigParser.Parse("""
+            $n = 2
+            exec-once = echo {{$n + 1}} \{x\}
+            """);
+
+        Assert.IsEmpty(document.Warnings);
+        Assert.AreEqual(new Setting("exec-once", @"echo {{2 + 1}} \{x\}"), Assert.ContainsSingle(document.Settings));
+    }
+
+    [TestMethod]
+    public void TheLinesInsideABraceBlockAreOrdinaryLines()
+    {
+        var document = ConfigParser.Parse("general {\n    gaps_in = 5\n}\n");
+
+        Assert.AreSequenceEqual([new ConfigWarning(1, "Malformed line."), new ConfigWarning(3, "Malformed line.")], document.Warnings);
+        Assert.AreEqual(new Setting("gaps_in", "5"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
@@ -122,7 +143,7 @@ public class ConfigSyntaxTests
         var document = ConfigParser.Parse($"""
             # hyprlang noerror {word}
             ghostkeyword = 1
-            general:gaps_in = 3
+            gaps_in = 3
             # hyprlang noerror false
             ghostkeyword = 2
             """);
@@ -130,60 +151,7 @@ public class ConfigSyntaxTests
         Assert.AreSequenceEqual(
             [new ConfigWarning(2, "Unsupported keyword 'ghostkeyword'."), new ConfigWarning(5, "Unsupported keyword 'ghostkeyword'.")],
             document.Warnings);
-        Assert.AreEqual(new Setting("general:gaps_in", "3"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void ExpressionReplacesASumProductAndQuotient()
-    {
-        var document = ConfigParser.Parse("""
-            $VAR1 = 2
-            $VAR2 = {{VAR1 + 3}}
-            general:gaps_in = {{VAR2 * 2}}
-            scrolling:column_width = {{1 / 4}}
-            """);
-
-        Assert.IsEmpty(document.Warnings);
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new Setting("general:gaps_in", "10"),
-                new Setting("scrolling:column_width", "0.25"),
-            },
-            document.Settings);
-    }
-
-    [TestMethod]
-    public void ExpressionWithoutSpacesIsRejected()
-    {
-        var document = ConfigParser.Parse("""
-            general:gaps_in = {{2+3}}
-            general:gaps_out = 4
-            """);
-
-        Assert.AreEqual(new ConfigWarning(1, "Invalid expression."), Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("general:gaps_out", "4"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void EscapedExpressionStaysLiteralAndADoubledBackslashEvaluates()
-    {
-        var document = ConfigParser.Parse("""
-            $VAR1 = 2
-            exec-once = \{{10 + 10}}
-            exec-once = \\{{VAR1 + 10}}
-            exec-once = \\{ hello \\}
-            """);
-
-        Assert.IsEmpty(document.Warnings);
-        Assert.AreSequenceEqual(
-            new[]
-            {
-                new Setting("exec-once", "{{10 + 10}}"),
-                new Setting("exec-once", @"\12"),
-                new Setting("exec-once", @"\{ hello \}"),
-            },
-            document.Settings);
+        Assert.AreEqual(new Setting("gaps_in", "3"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
@@ -192,8 +160,8 @@ public class ConfigSyntaxTests
         var source = new MemorySource(
             new Dictionary<string, string>
             {
-                [@"C:\winland-home\colors.conf"] = "general:gaps_in = 4\n",
-                ["colors.conf"] = "general:gaps_out = 8\n",
+                [@"C:\winland-home\colors.conf"] = "gaps_in = 4\n",
+                ["colors.conf"] = "gaps_out = 8\n",
             },
             new Dictionary<string, string>
             {
@@ -207,22 +175,11 @@ public class ConfigSyntaxTests
         Assert.AreSequenceEqual(
             new[]
             {
-                new Setting("general:gaps_in", "4"),
-                new Setting("general:gaps_out", "8"),
+                new Setting("gaps_in", "4"),
+                new Setting("gaps_out", "8"),
             },
             document.Settings);
         Assert.AreSequenceEqual([@"C:\winland-home\colors.conf", "colors.conf"], document.Sources);
-    }
-
-    [TestMethod]
-    public void AStrayBraceInASourcedFileDoesNotCloseTheCategoryAroundIt()
-    {
-        var source = new MemorySource(new Dictionary<string, string> { ["a.conf"] = "}\n" });
-
-        var document = ConfigParser.Parse("general {\nsource = a.conf\ngaps_in = 7\n}\n", source);
-
-        Assert.Contains(new Setting("general:gaps_in", "7"), document.Settings);
-        Assert.Contains(warning => warning.Source == "a.conf", document.Warnings);
     }
 
     [TestMethod]
@@ -230,9 +187,9 @@ public class ConfigSyntaxTests
     {
         var source = new MemorySource(new Dictionary<string, string>
         {
-            ["a.conf"] = "general:gaps_in = 1\n",
-            ["b.conf"] = "general:gaps_out = 2\n",
-            ["c.txt"] = "general:border_size = 9\n",
+            ["a.conf"] = "gaps_in = 1\n",
+            ["b.conf"] = "gaps_out = 2\n",
+            ["c.txt"] = "border_size = 9\n",
         });
 
         var document = ConfigParser.Parse("source = *.conf\n", source);
@@ -241,8 +198,8 @@ public class ConfigSyntaxTests
         Assert.AreSequenceEqual(
             new[]
             {
-                new Setting("general:gaps_in", "1"),
-                new Setting("general:gaps_out", "2"),
+                new Setting("gaps_in", "1"),
+                new Setting("gaps_out", "2"),
             },
             document.Settings);
     }
@@ -250,10 +207,10 @@ public class ConfigSyntaxTests
     [TestMethod]
     public void SourceGlobInTheConfigFolderDoesNotReadTheConfigAgain()
     {
-        const string root = "bind = SUPER, Q, killactive\nsource = C:/cfg/*.conf\n";
+        const string root = "bind = Win+Q, close\nsource = C:/cfg/*.conf\n";
         var source = new MemorySource(new Dictionary<string, string>
         {
-            [@"C:\cfg\colors.conf"] = "general:gaps_in = 1\n",
+            [@"C:\cfg\colors.conf"] = "gaps_in = 1\n",
             [@"C:\cfg\winland.conf"] = root,
         });
 
@@ -261,7 +218,7 @@ public class ConfigSyntaxTests
 
         Assert.IsEmpty(document.Warnings);
         Assert.ContainsSingle(document.Binds);
-        Assert.AreEqual(new Setting("general:gaps_in", "1"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "1"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
@@ -271,7 +228,7 @@ public class ConfigSyntaxTests
     [DataRow(@"C:\cfg\sub\..\winland.conf")]
     public void SourceNamingTheConfigItselfWarns(string named)
     {
-        var root = $"bind = SUPER, Q, killactive\nsource = {named}\n";
+        var root = $"bind = Win+Q, close\nsource = {named}\n";
         var source = new MemorySource(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.GetFullPath(Path.Combine(@"C:\cfg", named))] = root,
@@ -289,22 +246,22 @@ public class ConfigSyntaxTests
         var source = new MemorySource(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["a.conf"] = "source = B.CONF\n",
-            ["b.conf"] = "source = A.conf\ngeneral:gaps_in = 3\n",
+            ["b.conf"] = "source = A.conf\ngaps_in = 3\n",
         });
 
         var document = ConfigParser.Parse("source = a.conf\n", source);
 
         Assert.AreEqual(new ConfigWarning(1, "Source 'A.conf' includes itself.", "B.CONF"), Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("general:gaps_in", "3"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "3"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
     public void SourceGlobWithNoMatchWarns()
     {
-        var document = ConfigParser.Parse("source = *.missing\ngeneral:gaps_in = 2\n", new MemorySource(new Dictionary<string, string>()));
+        var document = ConfigParser.Parse("source = *.missing\ngaps_in = 2\n", new MemorySource(new Dictionary<string, string>()));
 
         Assert.AreEqual(new ConfigWarning(1, "Could not read source '*.missing'."), Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("general:gaps_in", "2"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "2"), Assert.ContainsSingle(document.Settings));
         Assert.AreSequenceEqual(["*.missing"], document.Sources);
     }
 
@@ -314,48 +271,14 @@ public class ConfigSyntaxTests
         var source = new MemorySource(new Dictionary<string, string>
         {
             [@"C:\cfg\parts\extra.conf"] = "source = colors.conf\n",
-            [@"C:\cfg\parts\colors.conf"] = "general:gaps_in = 4\nunknown = 1\n",
+            [@"C:\cfg\parts\colors.conf"] = "gaps_in = 4\nunknown = 1\n",
         });
 
         var document = ConfigParser.Parse("source = parts/extra.conf\n", source, path: @"C:\cfg\winland.conf");
 
-        Assert.AreEqual(new Setting("general:gaps_in", "4"), Assert.ContainsSingle(document.Settings));
+        Assert.AreEqual(new Setting("gaps_in", "4"), Assert.ContainsSingle(document.Settings));
         Assert.AreEqual(@"C:\cfg\parts\colors.conf", Assert.ContainsSingle(document.Warnings).Source);
         Assert.AreSequenceEqual([@"C:\cfg\parts\extra.conf", @"C:\cfg\parts\colors.conf"], document.Sources);
-    }
-
-    [TestMethod]
-    public void KeyedBlockDoesNotLeakItsLines()
-    {
-        var document = ConfigParser.Parse("""
-            device[mouse] {
-                sensitivity = 1
-                gaps_in = 9
-            }
-            general:gaps_in = 2
-            """);
-
-        Assert.AreSequenceEqual(
-            [
-                new ConfigWarning(2, "Unsupported keyword 'device[mouse]:sensitivity'."),
-                new ConfigWarning(3, "Unsupported keyword 'device[mouse]:gaps_in'."),
-            ],
-            document.Warnings);
-        Assert.AreEqual(new Setting("general:gaps_in", "2"), Assert.ContainsSingle(document.Settings));
-    }
-
-    [TestMethod]
-    public void InlineKeyedDeviceLineIsKeptAndDoesNotJoinTheEnclosingCategory()
-    {
-        var document = ConfigParser.Parse("""
-            general {
-                device[mouse]:sensitivity = 1
-                gaps_in = 2
-            }
-            """);
-
-        Assert.AreEqual(new ConfigWarning(2, "Unsupported keyword 'device[mouse]:sensitivity'."), Assert.ContainsSingle(document.Warnings));
-        Assert.AreEqual(new Setting("general:gaps_in", "2"), Assert.ContainsSingle(document.Settings));
     }
 
     [TestMethod]
@@ -369,10 +292,11 @@ public class ConfigSyntaxTests
         Assert.AreEqual(EdgeInsets.Uniform(4), layout.GapsIn);
         Assert.AreEqual(EdgeInsets.Uniform(8), layout.GapsOut);
         Assert.AreEqual(2, layout.BorderSize);
+        Assert.IsTrue(decoration.AccentBorder);
         Assert.AreEqual(new BorderColor(0xFF, 0xFF, 0xFF, 0xFF), decoration.ActiveBorder);
         Assert.AreEqual(new BorderColor(0xFF, 0x40, 0x40, 0x40), decoration.InactiveBorder);
         Assert.AreEqual(8, decoration.Rounding);
-        Assert.IsTrue(decoration.Blur);
+        Assert.IsTrue(decoration.Acrylic);
     }
 
     private sealed class MemorySource(IReadOnlyDictionary<string, string> files, IReadOnlyDictionary<string, string>? variables = null) : IConfigSource

@@ -14,22 +14,22 @@ public class TwoMonitorMoveTests
     {
         var desk = Prepare(new TestDesktop());
 
-        desk.Ok("focusmonitor", Left);
+        desk.Ok("focus-monitor", Left);
         desk.Ok("workspace", "270");
         desk.Spawn("workspace_move_active");
 
-        desk.Ok("focusmonitor", Right);
+        desk.Ok("focus-monitor", Right);
         desk.Ok("workspace", "271");
 
-        desk.Ok("focusmonitor", Left);
+        desk.Ok("focus-monitor", Left);
         desk.Ok("workspace", "270");
 
-        desk.Ok("movecurrentworkspacetomonitor", Right);
+        desk.Ok("move-workspace", Right);
 
-        desk.Ok("focusmonitor", Right);
+        desk.Ok("focus-monitor", Right);
         ExpectActiveWorkspace(desk, 270, Right);
 
-        desk.Ok("focusmonitor", Left);
+        desk.Ok("focus-monitor", Left);
         var active = desk.ActiveWorkspace();
         Assert.AreNotEqual(270, active.GetProperty("id").GetInt32());
         Assert.AreEqual(Left, active.GetProperty("monitor").GetString());
@@ -39,34 +39,34 @@ public class TwoMonitorMoveTests
     public void WorkspacePlacementWindowState()
     {
         var desk = Prepare(new TestDesktop());
-        desk.Ok("focusmonitor", Left);
+        desk.Ok("focus-monitor", Left);
         desk.Ok("workspace", "280");
 
         desk.Spawn("workspace_move_pinned");
-        desk.Ok("togglefloating");
+        desk.Ok("float");
         desk.Ok("pin");
 
         desk.Spawn("workspace_move_float");
-        desk.Ok("togglefloating");
+        desk.Ok("float");
         desk.Place(desk.ActiveId(), 200, 200, 400, 300);
 
         desk.Spawn("workspace_move_fullscreen");
-        desk.Ok("fullscreen", "0 set");
+        desk.Ok("fullscreen", "on");
 
-        desk.Ok("movecurrentworkspacetomonitor", Right);
+        desk.Ok("move-workspace", Right);
 
-        desk.Ok("focusmonitor", Left);
+        desk.Ok("focus-monitor", Left);
         var pinned = desk.Client("workspace_move_pinned");
         Assert.IsTrue(TestDesktop.Pinned(pinned));
         Assert.IsTrue(TestDesktop.Floating(pinned));
         Assert.IsTrue(pinned.GetProperty("visible").GetBoolean());
 
-        desk.Ok("focusmonitor", Right);
-        desk.Ok("focuswindow", "class:workspace_move_float");
+        desk.Ok("focus-monitor", Right);
+        desk.Ok("focus", "class:workspace_move_float");
         Assert.AreEqual("workspace_move_float", desk.ActiveClass());
         Assert.AreEqual("2120,200", desk.ActivePlace().At);
 
-        desk.Ok("focuswindow", "class:workspace_move_fullscreen");
+        desk.Ok("focus", "class:workspace_move_fullscreen");
         Assert.AreEqual("workspace_move_fullscreen", desk.ActiveClass());
         Assert.AreEqual(2, TestDesktop.Fullscreen(desk.ActiveWindow()));
         desk.ExpectActive("1920,0", "1920,1080");
@@ -77,60 +77,56 @@ public class TwoMonitorMoveTests
     {
         var desk = Prepare(new TestDesktop());
 
-        desk.Ok("focusmonitor", Right);
+        desk.Ok("focus-monitor", Right);
         desk.Ok("workspace", "291");
 
-        desk.Ok("focusmonitor", Left);
+        desk.Ok("focus-monitor", Left);
         desk.Ok("workspace", "290");
         desk.Spawn("global_move_fullscreen");
-        desk.Ok("fullscreen", "0 set");
-        desk.Ok("movewindow", $"mon:{Right} silent");
+        desk.Ok("fullscreen", "on");
+        desk.Ok("move", $"mon:{Right} stay");
 
-        desk.Ok("focusmonitor", Right);
-        desk.Ok("focuswindow", "class:global_move_fullscreen");
+        desk.Ok("focus-monitor", Right);
+        desk.Ok("focus", "class:global_move_fullscreen");
         Assert.AreEqual(2, TestDesktop.Fullscreen(desk.ActiveWindow()));
 
         desk.Ok("workspace", "294");
 
-        desk.Ok("focusmonitor", Left);
+        desk.Ok("focus-monitor", Left);
         desk.Ok("workspace", "292");
         desk.Spawn("global_move_float");
-        desk.Ok("togglefloating");
+        desk.Ok("float");
         desk.Place(desk.ActiveId(), 200, 200, 400, 300);
 
-        desk.Ok("movewindow", $"mon:{Right}");
+        desk.Ok("move", $"mon:{Right}");
         Assert.AreEqual("global_move_float", desk.ActiveClass());
         Assert.AreEqual("2120,200", desk.ActivePlace().At);
 
         desk.Ok("workspace", "293");
         desk.Spawn("global_move_group_anchor");
-        desk.Ok("togglegroup");
+        desk.Ok("group");
 
-        desk.Ok("focusmonitor", Left);
+        desk.Ok("focus-monitor", Left);
         desk.Ok("workspace", "295");
         desk.Spawn("global_move_group_member");
-        desk.Ok("movewindow", $"mon:{Right}");
+        desk.Ok("move", $"mon:{Right}");
         Assert.AreEqual("global_move_group_member", desk.ActiveClass());
     }
 
     [TestMethod]
-    public void PointerNoWarpsFocusesMonitorOnly()
+    public void PointerWithoutWarpFocusesMonitorOnly()
     {
-        var desk = Prepare(new TestDesktop("""
-            cursor {
-                no_warps = true
-            }
-            """));
+        var desk = Prepare(new TestDesktop("warp_cursor = false\n"));
 
-        desk.Ok("focusmonitor", Right);
+        desk.Ok("focus-monitor", Right);
         desk.Ok("workspace", "301");
-        desk.Ok("focusmonitor", Left);
+        desk.Ok("focus-monitor", Left);
         desk.Ok("workspace", "300");
 
         desk.MovePointer(100, 100);
         var original = CursorPos(desk);
 
-        desk.Ok("focusmonitor", Right);
+        desk.Ok("focus-monitor", Right);
         Assert.AreEqual(original, CursorPos(desk));
         ExpectActiveWorkspace(desk, 301, Right);
 

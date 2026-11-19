@@ -12,7 +12,7 @@ public class SpecialWorkspaceTests
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
 
-        var moved = core.Handle(new Dispatch("movetoworkspace", "special:scratch"));
+        var moved = core.Handle(new Dispatch("move", "special:scratch"));
 
         Assert.AreEqual(WorkspaceId.Initial, moved.State.ActiveWorkspace);
         Assert.AreEqual(new WorkspaceId("special:scratch"), Client(moved, 2).Workspace);
@@ -22,7 +22,7 @@ public class SpecialWorkspaceTests
         Assert.AreEqual(new WorkspaceId("special:scratch"), moved.State.SpecialWorkspace);
         Assert.AreEqual(new WindowId(2), moved.Focus);
 
-        var closed = core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        var closed = core.Handle(new Dispatch("scratchpad", "scratch"));
 
         Assert.AreEqual(WorkspaceId.Initial, closed.State.ActiveWorkspace);
         Assert.IsNull(closed.State.SpecialWorkspace);
@@ -31,7 +31,7 @@ public class SpecialWorkspaceTests
         Assert.DoesNotContain(client => client.Window == new WindowId(1), closed.State.Hidden);
         Assert.AreEqual(new WindowId(1), closed.Focus);
 
-        var opened = core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        var opened = core.Handle(new Dispatch("scratchpad", "scratch"));
 
         Assert.AreEqual(WorkspaceId.Initial, opened.State.ActiveWorkspace);
         Assert.AreEqual(new WorkspaceId("special:scratch"), opened.State.SpecialWorkspace);
@@ -48,14 +48,14 @@ public class SpecialWorkspaceTests
         foreach (var window in new long[] { 1, 2, 3, 4 })
             core.Handle(Appeared(window, Area));
         core.Handle(new WindowFocused(new WindowId(4), FocusCause.User));
-        core.Handle(new Dispatch("togglefloating", ""));
+        core.Handle(new Dispatch("float"));
         foreach (var window in new long[] { 2, 3, 4 })
         {
             core.Handle(new WindowFocused(new WindowId(window), FocusCause.User));
-            core.Handle(new Dispatch("movetoworkspacesilent", "special:scratch"));
+            core.Handle(new Dispatch("move", "special:scratch stay"));
         }
 
-        var opened = core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        var opened = core.Handle(new Dispatch("scratchpad", "scratch"));
 
         Assert.AreSequenceEqual(
             [new ZOrderRequest(new WindowId(2), true), new ZOrderRequest(new WindowId(3), true), new ZOrderRequest(new WindowId(4), true)],
@@ -66,13 +66,13 @@ public class SpecialWorkspaceTests
     [TestMethod]
     [DataRow("special:scratch")]
     [DataRow("2")]
-    public void ASilentMoveGivesTheKeyboardToTheWindowLeftFocused(string workspace)
+    public void AMoveThatStaysGivesTheKeyboardToTheWindowLeftFocused(string workspace)
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
 
-        var moved = core.Handle(new Dispatch("movetoworkspacesilent", workspace));
+        var moved = core.Handle(new Dispatch("move", workspace + " stay"));
 
         Assert.AreEqual(new WindowId(1), moved.Focus);
     }
@@ -87,17 +87,17 @@ public class SpecialWorkspaceTests
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(2), right.WorkArea));
 
-        core.Handle(new Dispatch("movetoworkspace", "special:notes"));
-        var second = core.Handle(new Dispatch("focusmonitor", right.Name));
+        core.Handle(new Dispatch("move", "special:notes"));
+        var second = core.Handle(new Dispatch("focus-monitor", right.Name));
         Assert.AreEqual(new MonitorId(1), second.State.ActiveMonitor);
-        var other = core.Handle(new Dispatch("movetoworkspace", "special:term"));
+        var other = core.Handle(new Dispatch("move", "special:term"));
 
         Assert.AreEqual(new WorkspaceId("special:notes"), Screen(other, 0).SpecialWorkspace);
         Assert.AreEqual(new WorkspaceId("special:term"), Screen(other, 1).SpecialWorkspace);
         Assert.DoesNotContain(client => client.Window == new WindowId(1), other.State.Hidden);
         Assert.DoesNotContain(client => client.Window == new WindowId(2), other.State.Hidden);
 
-        var replaced = core.Handle(new Dispatch("togglespecialworkspace", "notes"));
+        var replaced = core.Handle(new Dispatch("scratchpad", "notes"));
 
         Assert.IsNull(Screen(replaced, 0).SpecialWorkspace);
         Assert.AreEqual(new WorkspaceId("special:notes"), Screen(replaced, 1).SpecialWorkspace);
@@ -109,18 +109,18 @@ public class SpecialWorkspaceTests
     public void AddressesRulesAndEventsCoverSpecial()
     {
         var core = new WindowManager(ConfigParser.Parse("""
-            windowrule = workspace special:scratch silent, class:quiet
+            windowrule = workspace special:scratch stay, class:quiet
             windowrule = workspace special, class:loud
             """));
         var display = Display(@"\\.\DISPLAY1", "Dell", 0, 0, 800, 600);
         core.Handle(new MonitorsChanged([display]));
         core.Handle(Appeared(1, Area));
 
-        var silent = core.Handle(Appeared(2, Area, windowClass: "quiet"));
-        Assert.AreEqual(new WorkspaceId("special:scratch"), Client(silent, 2).Workspace);
-        Assert.IsNull(silent.State.SpecialWorkspace);
-        Assert.Contains(window => window == new WindowId(2), silent.Hide);
-        Assert.DoesNotContain(line => line.StartsWith("activespecial", StringComparison.Ordinal), Lines(silent));
+        var stayed = core.Handle(Appeared(2, Area, windowClass: "quiet"));
+        Assert.AreEqual(new WorkspaceId("special:scratch"), Client(stayed, 2).Workspace);
+        Assert.IsNull(stayed.State.SpecialWorkspace);
+        Assert.Contains(window => window == new WindowId(2), stayed.Hide);
+        Assert.DoesNotContain(line => line.StartsWith("activespecial", StringComparison.Ordinal), Lines(stayed));
 
         var named = core.Handle(new Dispatch("workspace", "special:scratch"));
         Assert.AreSequenceEqual(
@@ -146,7 +146,7 @@ public class SpecialWorkspaceTests
         Assert.AreEqual(WorkspaceId.DefaultSpecial, Client(loud, 3).Workspace);
         Assert.AreEqual(WorkspaceId.DefaultSpecial, loud.State.SpecialWorkspace);
 
-        var closed = core.Handle(new Dispatch("togglespecialworkspace", ""));
+        var closed = core.Handle(new Dispatch("scratchpad", ""));
         Assert.AreSequenceEqual(
             [
                 @"activespecial>>,,\\.\DISPLAY1",
@@ -155,12 +155,12 @@ public class SpecialWorkspaceTests
             Lines(closed));
         Assert.IsNull(closed.State.SpecialWorkspace);
 
-        var monitors = Json(core.Execute("j/monitors").Text);
+        var monitors = Json(core.Execute("j/get monitors").Text);
         Assert.IsFalse(monitors[0].GetProperty("specialWorkspace").TryGetProperty("id", out _));
         Assert.AreEqual("", monitors[0].GetProperty("specialWorkspace").GetProperty("name").GetString());
 
-        core.Handle(new Dispatch("togglespecialworkspace", ""));
-        var open = Json(core.Execute("j/monitors").Text);
+        core.Handle(new Dispatch("scratchpad", ""));
+        var open = Json(core.Execute("j/get monitors").Text);
         Assert.IsFalse(open[0].GetProperty("specialWorkspace").TryGetProperty("id", out _));
         Assert.AreEqual("special", open[0].GetProperty("specialWorkspace").GetProperty("type").GetString());
         Assert.AreEqual("special:special", open[0].GetProperty("specialWorkspace").GetProperty("name").GetString());
@@ -172,7 +172,7 @@ public class SpecialWorkspaceTests
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
-        core.Handle(new Dispatch("movetoworkspace", "special"));
+        core.Handle(new Dispatch("move", "special"));
         var closed = core.Handle(new WindowClosed(new WindowId(1)));
 
         Assert.IsNull(closed.State.SpecialWorkspace);
@@ -184,7 +184,7 @@ public class SpecialWorkspaceTests
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
-        core.Handle(new Dispatch("movetoworkspace", "special:scratch"));
+        core.Handle(new Dispatch("move", "special:scratch"));
         var changed = core.Handle(new Dispatch("workspace", "2"));
 
         Assert.AreEqual(new WorkspaceId("2"), changed.State.ActiveWorkspace);
@@ -198,9 +198,9 @@ public class SpecialWorkspaceTests
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
         core.Handle(Appeared(2, Area));
-        core.Handle(new Dispatch("movetoworkspace", "special"));
+        core.Handle(new Dispatch("move", "special"));
 
-        var closed = core.Handle(new Dispatch("focuswindow", "address:0x1"));
+        var closed = core.Handle(new Dispatch("focus", "address:0x1"));
 
         Assert.IsNull(closed.State.SpecialWorkspace);
         Assert.AreEqual(new WindowId(1), closed.Focus);
@@ -208,11 +208,11 @@ public class SpecialWorkspaceTests
     }
 
     [TestMethod]
-    public void ASilentMoveDoesNotShowTheSpecialWorkspace()
+    public void AMoveThatStaysDoesNotShowTheSpecialWorkspace()
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Area));
-        var moved = core.Handle(new Dispatch("movetoworkspacesilent", "special:scratch"));
+        var moved = core.Handle(new Dispatch("move", "special:scratch stay"));
 
         Assert.IsNull(moved.State.SpecialWorkspace);
         Assert.AreEqual(new WorkspaceId("special:scratch"), Client(moved, 1).Workspace);

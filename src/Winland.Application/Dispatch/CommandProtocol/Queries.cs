@@ -15,16 +15,20 @@ public static partial class CommandProtocol
     internal static string FormatActiveWorkspace(State state) =>
         ActiveWorkspaceEntries(state).FirstOrDefault() is { } entry ? JsonSerializer.Serialize(entry) : "{}";
 
-    internal static string FormatMonitors(State state, bool includeDisabled = false)
+    internal static string FormatMonitors(State state, bool includeDisabled = false) =>
+        JsonSerializer.Serialize(ListedMonitors(state, includeDisabled));
+
+    internal static string FormatActiveWindow(State state, WindowId? active) =>
+        ActiveClient(state, active) is { } client ? JsonSerializer.Serialize(client) : "null";
+
+    private static List<MonitorJson> ListedMonitors(State state, bool includeDisabled)
     {
         var indexed = Index(state);
         if (state.Screens.Count == 0)
         {
             var active = indexed.ByWorkspace[state.ActiveWorkspace];
             var synthetic = new Monitor("", "", 0, 0, 0, 0, 1, true, default);
-            return JsonSerializer.Serialize<MonitorJson[]>([
-                DescribeMonitor(state.ActiveMonitor.Value, synthetic, true, active, SpecialJson(state.SpecialWorkspace, indexed), "none"),
-            ]);
+            return [DescribeMonitor(state.ActiveMonitor.Value, synthetic, true, active, SpecialJson(state.SpecialWorkspace, indexed))];
         }
 
         var views = new List<MonitorJson>(state.Screens.Count);
@@ -38,15 +42,11 @@ public static partial class CommandProtocol
                 screen.Monitor,
                 screen.Focused,
                 indexed.ByWorkspace[screen.ActiveWorkspace],
-                SpecialJson(screen.SpecialWorkspace, indexed),
-                MirrorOf(state, screen.Monitor)));
+                SpecialJson(screen.SpecialWorkspace, indexed)));
         }
 
-        return JsonSerializer.Serialize(views);
+        return views;
     }
-
-    internal static string FormatActiveWindow(State state, WindowId? active) =>
-        ActiveClient(state, active) is { } client ? JsonSerializer.Serialize(client) : "null";
 
     private static List<ClientJson> ListedClients(State state)
     {
@@ -72,7 +72,7 @@ public static partial class CommandProtocol
     {
         var indexed = Index(state);
         var active = indexed.ByWorkspace[state.ActiveWorkspace];
-        return indexed.Workspaces.Where(entry => entry.Address == active.Address && entry.Monitor == active.Monitor && entry.Id == active.Id);
+        return indexed.Workspaces.Where(entry => entry.Name == active.Name && entry.Monitor == active.Monitor && entry.Id == active.Id);
     }
 
     private static string[] GroupedOf(State state, WindowId window)
@@ -94,19 +94,15 @@ public static partial class CommandProtocol
     private static ClientJson ClientOf(Client client, State state, Indexed indexed)
     {
         var hidden = client.Minimized || ListedHidden(state, client.Window);
-        var shown = !hidden;
-        var reachable = shown && !client.BelowFullscreen;
         return new(
             client.Window.Address,
-            shown,
             hidden,
-            reachable,
-            reachable,
+            !hidden && !client.BelowFullscreen,
             [client.Bounds.X, client.Bounds.Y],
             [client.Bounds.Width, client.Bounds.Height],
             indexed.ByWorkspace[client.Workspace],
             client.Floating,
-            MonitorOf(state, client.Workspace).Value,
+            MonitorName(state, client.Workspace),
             client.Class,
             client.Title,
             client.InitialClass,
@@ -114,31 +110,15 @@ public static partial class CommandProtocol
             client.ProcessId,
             client.Pinned,
             (int)client.Fullscreen,
-            (int)client.Fullscreen,
             FullscreenHandlerOf(state, client),
             client.AllowedOverFullscreen,
-            GroupedOf(state, client.Window),
-            client.Id.Value.ToString("x", CultureInfo.InvariantCulture));
+            GroupedOf(state, client.Window));
     }
 
     private static WorkspaceJson SpecialJson(WorkspaceId? workspace, Indexed indexed) =>
         workspace is WorkspaceId id && indexed.ByWorkspace.TryGetValue(id, out var described) ? described : NoSpecial;
 
-    private static string MirrorOf(State state, Monitor monitor)
-    {
-        if (monitor.MirrorOf.Length == 0)
-            return "none";
-
-        foreach (var screen in state.Screens)
-        {
-            if (string.Equals(screen.Monitor.Name, monitor.MirrorOf, StringComparison.OrdinalIgnoreCase))
-                return screen.Id.Value.ToString(CultureInfo.InvariantCulture);
-        }
-
-        return "none";
-    }
-
-    private static MonitorJson DescribeMonitor(int id, Monitor monitor, bool focused, WorkspaceJson active, WorkspaceJson special, string mirrorOf) =>
+    private static MonitorJson DescribeMonitor(int id, Monitor monitor, bool focused, WorkspaceJson active, WorkspaceJson special) =>
         new(
             id,
             monitor.Name,
@@ -148,8 +128,6 @@ public static partial class CommandProtocol
             monitor.Serial,
             monitor.Width,
             monitor.Height,
-            monitor.PhysicalWidth,
-            monitor.PhysicalHeight,
             monitor.RefreshRate,
             monitor.X,
             monitor.Y,
@@ -157,27 +135,10 @@ public static partial class CommandProtocol
             special,
             Reserved(monitor),
             monitor.Scale,
-            0,
             focused,
-            monitor.Enabled,
-            false,
-            "0",
-            null,
-            false,
-            null,
-            "0",
-            null,
-            !monitor.Enabled && monitor.MirrorOf.Length == 0,
+            !monitor.Enabled,
             DisplayColors.Format(monitor.BitsPerChannel),
-            mirrorOf,
-            Modes(monitor),
-            monitor.ColorPreset.Length == 0 ? DisplayColors.StandardPreset : monitor.ColorPreset,
-            monitor.SdrBrightness,
-            monitor.SdrSaturation,
-            monitor.SdrMinLuminance,
-            monitor.SdrMaxLuminance,
-            false,
-            new HardwareDetailsJson("windows", monitor.HdrCapable, monitor.Chroma, monitor.WideCapable, false));
+            new HardwareDetailsJson(monitor.HdrCapable, monitor.Chroma, monitor.WideCapable));
 
     private static int[] Reserved(Monitor monitor)
     {
@@ -192,14 +153,6 @@ public static partial class CommandProtocol
             monitor.X + monitor.Width - (work.X + work.Width),
             monitor.Y + monitor.Height - (work.Y + work.Height),
         ];
-    }
-
-    private static string[] Modes(Monitor monitor)
-    {
-        if (monitor.Width <= 0 || monitor.Height <= 0 || !(monitor.RefreshRate > 0) || !double.IsFinite(monitor.RefreshRate))
-            return NoStrings;
-
-        return [FormattableString.Invariant($"{monitor.Width}x{monitor.Height}@{monitor.RefreshRate:0.00}Hz")];
     }
 
     internal static long WorkspaceNumber(State state, WorkspaceId id) => WorkspaceNumber(id, Index(state));
@@ -319,7 +272,6 @@ public static partial class CommandProtocol
             }
 
             counts.Add(new WorkspaceEntryJson(
-                json.Address,
                 json.Id,
                 json.Type,
                 json.Name,
@@ -329,7 +281,6 @@ public static partial class CommandProtocol
                 fullscreen.Contains(id),
                 lastAddress,
                 lastTitle,
-                false,
                 known is null ? "dwindle" : known.TiledLayout));
         }
 
@@ -386,12 +337,12 @@ public static partial class CommandProtocol
     {
         var name = id.Name;
         if (id.IsSpecial)
-            return new WorkspaceJson(id.Name, null, "special", name, monitor) { Order = specialIds[id.Name] };
+            return new WorkspaceJson(null, "special", name, monitor) { Order = specialIds[id.Name] };
 
         if (id.TryGetNumber(out var number))
-            return new WorkspaceJson(id.Name, number, "normal", name, monitor) { Order = number };
+            return new WorkspaceJson(number, "normal", name, monitor) { Order = number };
 
-        return new WorkspaceJson(id.Name, null, "normal", name, monitor) { Order = namedIds[id.Name] };
+        return new WorkspaceJson(null, "normal", name, monitor) { Order = namedIds[id.Name] };
     }
 
     private static int IndexOfWhitespace(string text)
@@ -409,15 +360,13 @@ public static partial class CommandProtocol
 
     private sealed record ClientJson(
         [property: JsonPropertyName("address")] string Address,
-        [property: JsonPropertyName("mapped")] bool Mapped,
         [property: JsonPropertyName("hidden")] bool Hidden,
         [property: JsonPropertyName("visible")] bool Visible,
-        [property: JsonPropertyName("acceptsInput")] bool AcceptsInput,
         [property: JsonPropertyName("at")] int[] At,
         [property: JsonPropertyName("size")] int[] Size,
         [property: JsonPropertyName("workspace")] WorkspaceJson Workspace,
         [property: JsonPropertyName("floating")] bool Floating,
-        [property: JsonPropertyName("monitor")] int Monitor,
+        [property: JsonPropertyName("monitor")] string Monitor,
         [property: JsonPropertyName("class")] string Class,
         [property: JsonPropertyName("title")] string Title,
         [property: JsonPropertyName("initialClass")] string InitialClass,
@@ -425,14 +374,11 @@ public static partial class CommandProtocol
         [property: JsonPropertyName("pid")] long Pid,
         [property: JsonPropertyName("pinned")] bool Pinned,
         [property: JsonPropertyName("fullscreen")] int Fullscreen,
-        [property: JsonPropertyName("fullscreenClient")] int FullscreenClient,
         [property: JsonPropertyName("fullscreenHandler")] string FullscreenHandler,
         [property: JsonPropertyName("allowedOverFullscreen")] bool AllowedOverFullscreen,
-        [property: JsonPropertyName("grouped")] string[] Grouped,
-        [property: JsonPropertyName("stableId")] string StableId);
+        [property: JsonPropertyName("grouped")] string[] Grouped);
 
     private sealed record WorkspaceJson(
-        [property: JsonPropertyName("address")] string Address,
         [property: JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] long? Id,
         [property: JsonPropertyName("type")] string Type,
         [property: JsonPropertyName("name")] string Name,
@@ -443,17 +389,15 @@ public static partial class CommandProtocol
     }
 
     private sealed record WorkspaceEntryJson(
-        [property: JsonPropertyName("address")] string Address,
         [property: JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] long? Id,
         [property: JsonPropertyName("type")] string Type,
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("monitor")] string Monitor,
-        [property: JsonPropertyName("monitorID")] int MonitorId,
+        [property: JsonPropertyName("monitorId")] int MonitorId,
         [property: JsonPropertyName("windows")] int Windows,
-        [property: JsonPropertyName("hasfullscreen")] bool HasFullscreen,
-        [property: JsonPropertyName("lastwindow")] string LastWindow,
-        [property: JsonPropertyName("lastwindowtitle")] string LastWindowTitle,
-        [property: JsonPropertyName("ispersistent")] bool IsPersistent,
+        [property: JsonPropertyName("hasFullscreen")] bool HasFullscreen,
+        [property: JsonPropertyName("lastWindow")] string LastWindow,
+        [property: JsonPropertyName("lastWindowTitle")] string LastWindowTitle,
         [property: JsonPropertyName("tiledLayout")] string TiledLayout);
 
     private sealed record MonitorJson(
@@ -465,8 +409,6 @@ public static partial class CommandProtocol
         [property: JsonPropertyName("serial")] string Serial,
         [property: JsonPropertyName("width")] int Width,
         [property: JsonPropertyName("height")] int Height,
-        [property: JsonPropertyName("physicalWidth")] int PhysicalWidth,
-        [property: JsonPropertyName("physicalHeight")] int PhysicalHeight,
         [property: JsonPropertyName("refreshRate")] double RefreshRate,
         [property: JsonPropertyName("x")] int X,
         [property: JsonPropertyName("y")] int Y,
@@ -474,32 +416,13 @@ public static partial class CommandProtocol
         [property: JsonPropertyName("specialWorkspace")] WorkspaceJson SpecialWorkspace,
         [property: JsonPropertyName("reserved")] int[] Reserved,
         [property: JsonPropertyName("scale")] double Scale,
-        [property: JsonPropertyName("transform")] int Transform,
         [property: JsonPropertyName("focused")] bool Focused,
-        [property: JsonPropertyName("dpmsStatus")] bool DpmsStatus,
-        [property: JsonPropertyName("vrr")] bool Vrr,
-        [property: JsonPropertyName("solitary")] string Solitary,
-        [property: JsonPropertyName("solitaryBlockedBy")] string[]? SolitaryBlockedBy,
-        [property: JsonPropertyName("activelyTearing")] bool ActivelyTearing,
-        [property: JsonPropertyName("tearingBlockedBy")] string[]? TearingBlockedBy,
-        [property: JsonPropertyName("directScanoutTo")] string DirectScanoutTo,
-        [property: JsonPropertyName("directScanoutBlockedBy")] string[]? DirectScanoutBlockedBy,
         [property: JsonPropertyName("disabled")] bool Disabled,
         [property: JsonPropertyName("currentFormat")] string CurrentFormat,
-        [property: JsonPropertyName("mirrorOf")] string MirrorOf,
-        [property: JsonPropertyName("availableModes")] string[] AvailableModes,
-        [property: JsonPropertyName("colorManagementPreset")] string ColorManagementPreset,
-        [property: JsonPropertyName("sdrBrightness")] double SdrBrightness,
-        [property: JsonPropertyName("sdrSaturation")] double SdrSaturation,
-        [property: JsonPropertyName("sdrMinLuminance")] double SdrMinLuminance,
-        [property: JsonPropertyName("sdrMaxLuminance")] int SdrMaxLuminance,
-        [property: JsonPropertyName("hardwareCursorsInUse")] bool HardwareCursorsInUse,
         [property: JsonPropertyName("hardwareDetails")] HardwareDetailsJson HardwareDetails);
 
     private sealed record HardwareDetailsJson(
-        [property: JsonPropertyName("backend")] string Backend,
         [property: JsonPropertyName("hdr")] bool Hdr,
         [property: JsonPropertyName("chroma")] bool Chroma,
-        [property: JsonPropertyName("bt2020")] bool Bt2020,
-        [property: JsonPropertyName("vrrCapable")] bool VrrCapable);
+        [property: JsonPropertyName("bt2020")] bool Bt2020);
 }

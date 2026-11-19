@@ -6,7 +6,7 @@ namespace Winland.Application.Tests;
 [TestClass]
 public class ScrollingBehaviorTests
 {
-    private const string Scrolling = "general:layout = scrolling\n";
+    private const string Scrolling = "layout = scrolling\n";
 
     [TestMethod]
     public void ScrollFocusCycling()
@@ -15,20 +15,20 @@ public class ScrollingBehaviorTests
         foreach (var name in new[] { "a", "b", "c", "d" })
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:a");
-        desk.Ok("movefocus", "r");
+        desk.Ok("focus", "class:a");
+        desk.Ok("focus", "r");
         Assert.AreEqual("b", desk.ActiveClass());
 
-        desk.Ok("movefocus", "r");
+        desk.Ok("focus", "r");
         Assert.AreEqual("c", desk.ActiveClass());
 
-        desk.Ok("movefocus", "r");
+        desk.Ok("focus", "r");
         Assert.AreEqual("d", desk.ActiveClass());
 
-        desk.Ok("movewindow", "l");
+        desk.Ok("move", "l");
         Assert.AreEqual("d", desk.ActiveClass());
 
-        desk.Ok("movefocus", "u");
+        desk.Ok("focus", "u");
         Assert.AreEqual("c", desk.ActiveClass());
     }
 
@@ -39,7 +39,7 @@ public class ScrollingBehaviorTests
         foreach (var name in new[] { "a", "b", "c", "d" })
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:a");
+        desk.Ok("focus", "class:a");
         desk.Ok("layoutmsg", "focus l");
         Assert.AreEqual("d", desk.ActiveClass());
 
@@ -55,7 +55,7 @@ public class ScrollingBehaviorTests
         foreach (var name in names)
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:a");
+        desk.Ok("focus", "class:a");
         desk.Ok("layoutmsg", "swapcol l");
         desk.Ok("layoutmsg", "focus l");
         Assert.AreEqual("c", desk.ActiveClass());
@@ -64,7 +64,7 @@ public class ScrollingBehaviorTests
         foreach (var name in names)
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:d");
+        desk.Ok("focus", "class:d");
         desk.Ok("layoutmsg", "swapcol r");
         desk.Ok("layoutmsg", "focus r");
         Assert.AreEqual("b", desk.ActiveClass());
@@ -77,8 +77,8 @@ public class ScrollingBehaviorTests
         foreach (var name in new[] { "kitty_scroll_A", "kitty_scroll_B", "kitty_scroll_C" })
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:kitty_scroll_B");
-        desk.Ok("fullscreen", "0");
+        desk.Ok("focus", "class:kitty_scroll_B");
+        desk.Ok("fullscreen");
         Assert.AreEqual("1920,1080", desk.ActivePlace().Size);
         Assert.AreEqual("kitty_scroll_B", desk.ActiveClass());
 
@@ -101,8 +101,8 @@ public class ScrollingBehaviorTests
         foreach (var name in new[] { "kitty_scroll_A", "kitty_scroll_B", "kitty_scroll_C" })
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:kitty_scroll_B");
-        desk.Ok("fullscreen", "1");
+        desk.Ok("focus", "class:kitty_scroll_B");
+        desk.Ok("maximize");
         Assert.AreEqual("1866,1036", desk.ActivePlace().Size);
         Assert.AreEqual("kitty_scroll_B", desk.ActiveClass());
         Assert.AreEqual(1, TestDesktop.Fullscreen(desk.ActiveWindow()));
@@ -125,62 +125,62 @@ public class ScrollingBehaviorTests
     {
         var desk = new TestDesktop(Scrolling);
         desk.Spawn("under");
-        desk.Ok("focuswindow", "class:under");
-        desk.Ok("togglefloating");
+        desk.Ok("focus", "class:under");
+        desk.Ok("float");
 
         desk.Spawn("tiledOne");
-        desk.Ok("fullscreen", "0");
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false, visible: false);
+        desk.Ok("fullscreen");
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
         desk.Spawn("tiledTwo");
-        desk.Ok("fullscreen", "1");
+        desk.Ok("maximize");
 
-        desk.Ok("focuswindow", "class:tiledOne");
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: true, fullscreen: 2, visible: true);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        desk.Ok("focus", "class:tiledOne");
+        ExpectClient(desk, "tiledOne", floating: false, visible: true, fullscreen: 2);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
         desk.Set("windowrule", "float, class:floating*");
         desk.Set("windowrule", "size 950 500, class:floating*");
         desk.Spawn("floatingOne");
         desk.Spawn("floatingTwo");
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: true, fullscreen: 0, over: true);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingOne", floating: true, visible: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: true, fullscreen: 0, over: true);
 
-        desk.Ok("focuswindow", "class:floatingOne");
-        desk.Ok("fullscreen", "1");
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: true, fullscreen: 1, over: true);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: false, fullscreen: 2);
-        ExpectClient(desk, "tiledTwo", floating: false, acceptsInput: false, fullscreen: 1);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        desk.Ok("focus", "class:floatingOne");
+        desk.Ok("maximize");
+        ExpectClient(desk, "floatingOne", floating: true, visible: true, fullscreen: 1, over: true);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "tiledOne", floating: false, visible: false, fullscreen: 2);
+        ExpectClient(desk, "tiledTwo", floating: false, visible: false, fullscreen: 1);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
         desk.Spawn("floatingThree");
-        ExpectClient(desk, "floatingThree", floating: true, acceptsInput: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingThree", floating: true, visible: true, fullscreen: 0, over: true);
 
-        desk.Ok("focuswindow", "class:floatingOne");
-        desk.Ok("fullscreen", "1 unset");
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: true, fullscreen: 0, over: true);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: true, fullscreen: 0, over: true);
-        ExpectClient(desk, "floatingThree", floating: true, acceptsInput: true, fullscreen: 0, over: true);
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: true, fullscreen: 2);
-        ExpectClient(desk, "tiledTwo", floating: false, acceptsInput: false, fullscreen: 1);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        desk.Ok("focus", "class:floatingOne");
+        desk.Ok("maximize", "off");
+        ExpectClient(desk, "floatingOne", floating: true, visible: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "floatingThree", floating: true, visible: true, fullscreen: 0, over: true);
+        ExpectClient(desk, "tiledOne", floating: false, visible: true, fullscreen: 2);
+        ExpectClient(desk, "tiledTwo", floating: false, visible: false, fullscreen: 1);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
-        desk.Ok("focuswindow", "class:tiledTwo");
-        ExpectClient(desk, "tiledTwo", floating: false, acceptsInput: true, fullscreen: 1);
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "floatingThree", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: false, fullscreen: 2);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        desk.Ok("focus", "class:tiledTwo");
+        ExpectClient(desk, "tiledTwo", floating: false, visible: true, fullscreen: 1);
+        ExpectClient(desk, "floatingOne", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingThree", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "tiledOne", floating: false, visible: false, fullscreen: 2);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
 
-        desk.Ok("focuswindow", "class:tiledOne");
-        ExpectClient(desk, "tiledOne", floating: false, acceptsInput: true, fullscreen: 2);
-        ExpectClient(desk, "floatingOne", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "floatingTwo", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "floatingThree", floating: true, acceptsInput: false, fullscreen: 0, over: false);
-        ExpectClient(desk, "tiledTwo", floating: false, acceptsInput: false, fullscreen: 1);
-        ExpectClient(desk, "under", floating: true, acceptsInput: false, fullscreen: 0, over: false);
+        desk.Ok("focus", "class:tiledOne");
+        ExpectClient(desk, "tiledOne", floating: false, visible: true, fullscreen: 2);
+        ExpectClient(desk, "floatingOne", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingTwo", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "floatingThree", floating: true, visible: false, fullscreen: 0, over: false);
+        ExpectClient(desk, "tiledTwo", floating: false, visible: false, fullscreen: 1);
+        ExpectClient(desk, "under", floating: true, visible: false, fullscreen: 0, over: false);
     }
 
     [TestMethod]
@@ -191,13 +191,13 @@ public class ScrollingBehaviorTests
         desk.Spawn("fs");
         desk.Spawn("normal2");
 
-        desk.Ok("focuswindow", "class:fs");
-        desk.Ok("fullscreen", "0 set");
+        desk.Ok("focus", "class:fs");
+        desk.Ok("fullscreen", "on");
         ExpectActiveFullscreen(desk, "fs", 2);
 
         foreach (var direction in new[] { "r", "l", "u", "d" })
         {
-            desk.Ok("movefocus", direction);
+            desk.Ok("focus", direction);
             ExpectActiveFullscreen(desk, "fs", 2);
         }
     }
@@ -213,18 +213,18 @@ public class ScrollingBehaviorTests
         desk.Spawn("kitty_A");
         desk.Spawn("kitty_B");
 
-        desk.Ok("focuswindow", "class:kitty_A");
-        desk.Ok("fullscreen", "0 set");
-        ExpectFullscreen(desk, 2, 2);
+        desk.Ok("focus", "class:kitty_A");
+        desk.Ok("fullscreen", "on");
+        ExpectFullscreen(desk, 2);
 
-        desk.Ok("fullscreen", "0 unset");
-        ExpectFullscreen(desk, 0, 0);
+        desk.Ok("fullscreen", "off");
+        ExpectFullscreen(desk, 0);
 
-        desk.Ok("fullscreen", "1 toggle");
-        ExpectFullscreen(desk, 1, 1);
+        desk.Ok("maximize");
+        ExpectFullscreen(desk, 1);
 
-        desk.Ok("fullscreen", "1 toggle");
-        ExpectFullscreen(desk, 0, 0);
+        desk.Ok("maximize");
+        ExpectFullscreen(desk, 0);
     }
 
     [TestMethod]
@@ -234,8 +234,8 @@ public class ScrollingBehaviorTests
         foreach (var name in new[] { "one", "two", "three" })
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:one");
-        desk.Ok("fullscreen", "1 default");
+        desk.Ok("focus", "class:one");
+        desk.Ok("maximize", "default");
         desk.ExpectActive("22,22", "1876,1036");
         Assert.AreEqual("one", desk.ActiveClass());
 
@@ -249,7 +249,7 @@ public class ScrollingBehaviorTests
     {
         var desk = new TestDesktop(Scrolling);
         desk.Spawn("kitty_A");
-        desk.Ok("fullscreen", "0 default");
+        desk.Ok("fullscreen", "default");
         ExpectActiveFullscreen(desk, "kitty_A", 2);
 
         desk.Spawn("kitty_B");
@@ -263,11 +263,11 @@ public class ScrollingBehaviorTests
         desk.Spawn("kitty_A");
         desk.Spawn("kitty_B");
 
-        desk.Ok("fullscreen", "0 default");
-        ExpectFullscreen(desk, 2, 2);
+        desk.Ok("fullscreen", "default");
+        ExpectFullscreen(desk, 2);
 
         desk.CloseActive();
-        ExpectFullscreen(desk, 0, 0);
+        ExpectFullscreen(desk, 0);
     }
 
     [TestMethod]
@@ -278,11 +278,11 @@ public class ScrollingBehaviorTests
         foreach (var name in names)
             desk.Spawn(name);
 
-        desk.Ok("focuswindow", "class:red");
+        desk.Ok("focus", "class:red");
         ExpectUnmovedByMaximize(desk, names);
 
-        desk.Ok("focuswindow", "class:red");
-        desk.Ok("togglefloating");
+        desk.Ok("focus", "class:red");
+        desk.Ok("float");
         ExpectUnmovedByMaximize(desk, names);
     }
 
@@ -291,14 +291,14 @@ public class ScrollingBehaviorTests
         FloatingOntopFullscreenWorkspaceFocusRetention(" default");
 
     [TestMethod]
-    public void TestScrollingViewBehaviourDispatchFocusWindowFollowFocustrue()
+    public void TestScrollingViewBehaviourDispatchFocusSelectorFollowFocustrue()
     {
         var desk = new TestDesktop(Scrolling);
         desk.Spawn("a");
         desk.Ok("layoutmsg", "colresize 0.8");
         desk.Spawn("b");
 
-        desk.Ok("focuswindow", "class:a");
+        desk.Ok("focus", "class:a");
 
         Assert.IsTrue(ActiveX(desk) >= 0);
     }
@@ -311,41 +311,41 @@ public class ScrollingBehaviorTests
         desk.Ok("layoutmsg", "colresize 0.8");
         desk.Spawn("b");
         desk.Spawn("c");
-        desk.Ok("focuswindow", "class:a");
-        desk.Ok("togglegroup");
+        desk.Ok("focus", "class:a");
+        desk.Ok("group");
 
-        desk.Ok("focuswindow", "class:b");
-        desk.Ok("moveintogroup", "l");
+        desk.Ok("focus", "class:b");
+        desk.Ok("join", "l");
 
         Assert.IsTrue(ActiveX(desk) >= 0);
     }
 
     [TestMethod]
-    public void TestScrollingViewBehaviourMoveFocusFollowFocusTrue()
+    public void TestScrollingViewBehaviourFocusFollowFocusTrue()
     {
         var desk = new TestDesktop(Scrolling);
         desk.Spawn("a");
         desk.Ok("layoutmsg", "colresize 0.8");
         desk.Spawn("b");
 
-        desk.Ok("movefocus", "l");
+        desk.Ok("focus", "l");
 
         Assert.IsTrue(ActiveX(desk) >= 0);
     }
 
     [TestMethod]
-    public void TestScrollingViewBehaviourMoveFocusInGroupFollowFocusTrue()
+    public void TestScrollingViewBehaviourFocusInGroupFollowFocusTrue()
     {
         var desk = new TestDesktop(Scrolling + "binds:movefocus_cycles_groupfirst = true\n");
         desk.Spawn("a");
-        desk.Ok("togglegroup");
+        desk.Ok("group");
         desk.Ok("layoutmsg", "colresize 0.8");
         desk.Spawn("b");
         desk.Spawn("c");
 
-        desk.Ok("focuswindow", "class:b");
-        desk.Ok("moveintogroup", "l");
-        desk.Ok("movefocus", "l");
+        desk.Ok("focus", "class:b");
+        desk.Ok("join", "l");
+        desk.Ok("focus", "l");
 
         Assert.IsTrue(ActiveX(desk) >= 0);
     }
@@ -372,7 +372,7 @@ public class ScrollingBehaviorTests
         desk.Ok("layoutmsg", "colresize 0.8");
         desk.Spawn("b");
 
-        desk.Ok("focuswindow", "class:a");
+        desk.Ok("focus", "class:a");
         desk.Ok("layoutmsg", "fit_into_view");
 
         Assert.AreEqual("22,22", desk.ActivePlace().At);
@@ -382,21 +382,21 @@ public class ScrollingBehaviorTests
     public void LayoutRuleExpand()
     {
         var desk = new TestDesktop(Scrolling + """
-            general:gaps_in = 0
-            general:border_size = 0
-            general:gaps_out = 0
-            scrolling:column_width = 0.5
+            gaps_in = 0
+            border_size = 0
+            gaps_out = 0
+            column_width = 0.5
             """);
         desk.Spawn("a");
         var single = X(desk.ActivePlace().Size);
 
         desk.Spawn("b");
         desk.Spawn("c");
-        desk.Ok("focuswindow", "class:a");
-        desk.Ok("resizeactive", "exact 100 500");
-        desk.Ok("focuswindow", "class:c");
-        desk.Ok("resizeactive", "exact 100 500");
-        desk.Ok("focuswindow", "class:b");
+        desk.Ok("focus", "class:a");
+        desk.Ok("resize", "exact 100 500");
+        desk.Ok("focus", "class:c");
+        desk.Ok("resize", "exact 100 500");
+        desk.Ok("focus", "class:b");
         desk.Ok("layoutmsg", "fit expand");
 
         Assert.IsTrue(X(desk.ActivePlace().Size) >= single - 200);
@@ -408,30 +408,30 @@ public class ScrollingBehaviorTests
         var desk = new TestDesktop(Scrolling);
         desk.AddMonitor("HEADLESS-3", TestDesktop.Second);
 
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         desk.Spawn("a");
 
-        desk.Ok("focusmonitor", "HEADLESS-3");
+        desk.Ok("focus-monitor", "HEADLESS-3");
         foreach (var name in new[] { "b", "c", "d" })
         {
             desk.Spawn(name);
-            desk.Ok("focuswindow", "class:" + name);
+            desk.Ok("focus", "class:" + name);
         }
 
         Assert.AreEqual("d", desk.ActiveClass());
         foreach (var (direction, expected) in new[] { ("l", "c"), ("l", "b"), ("l", "a"), ("r", "b"), ("r", "c"), ("r", "d"), ("l", "c") })
         {
-            desk.Ok("movefocus", direction);
+            desk.Ok("focus", direction);
             Assert.AreEqual(expected, desk.ActiveClass());
         }
 
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         Assert.AreEqual("a", desk.ActiveClass());
 
-        desk.Ok("focusmonitor", "HEADLESS-3");
+        desk.Ok("focus-monitor", "HEADLESS-3");
         Assert.AreEqual("c", desk.ActiveClass());
 
-        desk.Ok("movefocus", "l");
+        desk.Ok("focus", "l");
         Assert.AreEqual("b", desk.ActiveClass());
 
         CloseAll(desk);
@@ -443,25 +443,25 @@ public class ScrollingBehaviorTests
         var desk = new TestDesktop(Scrolling + "windowrule = float, class:kitty_floated\n");
         desk.Ok("workspace", "1");
 
-        foreach (var mode in new[] { "0", "1" })
+        foreach (var mode in new[] { "fullscreen", "maximize" })
         {
-            var expected = mode == "0" ? 2 : 1;
+            var expected = mode == "fullscreen" ? 2 : 1;
             desk.Spawn("kitty_tiled");
-            desk.Ok("fullscreen", mode + " set" + handler);
+            desk.Ok(mode, "on" + handler);
             Assert.AreEqual("kitty_tiled", desk.ActiveClass());
             Assert.IsFalse(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, expected, expected);
+            ExpectFullscreen(desk, expected);
 
             desk.Spawn("kitty_floated");
             Assert.AreEqual("kitty_floated", desk.ActiveClass());
             Assert.IsTrue(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, 0, 0);
+            ExpectFullscreen(desk, 0);
 
             desk.Ok("workspace", "2");
             desk.Ok("workspace", "1");
             Assert.AreEqual("kitty_floated", desk.ActiveClass());
             Assert.IsTrue(TestDesktop.Floating(desk.ActiveWindow()));
-            ExpectFullscreen(desk, 0, 0);
+            ExpectFullscreen(desk, 0);
 
             CloseAll(desk);
             Assert.IsEmpty(desk.Clients());
@@ -490,30 +490,23 @@ public class ScrollingBehaviorTests
     private static void ExpectPlace(TestDesktop desk, string windowClass, string at, string size) =>
         Assert.AreEqual((at, size), desk.PlaceOf(windowClass));
 
-    private static void ExpectFullscreen(TestDesktop desk, int fullscreen, int fullscreenClient)
-    {
-        var active = desk.ActiveWindow();
-        Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(active));
-        Assert.AreEqual(fullscreenClient, TestDesktop.FullscreenClient(active));
-    }
+    private static void ExpectFullscreen(TestDesktop desk, int fullscreen) =>
+        Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(desk.ActiveWindow()));
 
     private static void ExpectActiveFullscreen(TestDesktop desk, string windowClass, int mode)
     {
         Assert.AreEqual(windowClass, desk.ActiveClass());
-        ExpectFullscreen(desk, mode, mode);
+        ExpectFullscreen(desk, mode);
     }
 
-    private static void ExpectClient(TestDesktop desk, string windowClass, bool floating, bool acceptsInput, int fullscreen, bool? over = null, bool? visible = null)
+    private static void ExpectClient(TestDesktop desk, string windowClass, bool floating, bool visible, int fullscreen, bool? over = null)
     {
         var client = desk.Client(windowClass);
         Assert.AreEqual(floating, TestDesktop.Floating(client));
         if (over is bool allowed)
             Assert.AreEqual(allowed, client.GetProperty("allowedOverFullscreen").GetBoolean());
-        if (visible is bool shown)
-            Assert.AreEqual(shown, client.GetProperty("visible").GetBoolean());
-        Assert.AreEqual(acceptsInput, client.GetProperty("acceptsInput").GetBoolean());
+        Assert.AreEqual(visible, client.GetProperty("visible").GetBoolean());
         Assert.AreEqual(fullscreen, TestDesktop.Fullscreen(client));
-        Assert.AreEqual(fullscreen, TestDesktop.FullscreenClient(client));
     }
 
     private static void ExpectUnmovedByMaximize(TestDesktop desk, string[] names)
@@ -521,17 +514,17 @@ public class ScrollingBehaviorTests
         var before = new Dictionary<string, (string At, string Size)>(StringComparer.Ordinal);
         foreach (var name in names)
         {
-            desk.Ok("focuswindow", "class:" + name);
+            desk.Ok("focus", "class:" + name);
             before[name] = desk.ActivePlace();
         }
 
-        desk.Ok("focuswindow", "class:red");
-        desk.Ok("fullscreen", "1 default");
-        desk.Ok("fullscreen", "1 default");
+        desk.Ok("focus", "class:red");
+        desk.Ok("maximize", "default");
+        desk.Ok("maximize", "default");
 
         foreach (var name in names)
         {
-            desk.Ok("focuswindow", "class:" + name);
+            desk.Ok("focus", "class:" + name);
             Assert.AreEqual(before[name], desk.ActivePlace());
         }
     }

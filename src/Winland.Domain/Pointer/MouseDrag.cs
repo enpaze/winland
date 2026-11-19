@@ -44,7 +44,7 @@ internal sealed class MouseDrag
         }
 
         var (left, top) = BorderPointer.GrabbedCorner(drag.Pointer, bounds);
-        _grab = new Grab(id, drag.Resize, floating, drag.Pointer, bounds, left, top, drag.KeepRatio);
+        _grab = new Grab(id, drag.Resize, floating, drag.Pointer, bounds, left, top);
         return [];
     }
 
@@ -65,7 +65,7 @@ internal sealed class MouseDrag
             if (!grab.WasFloating)
                 return host.ResizeTile(grab.Id, dx, dy, (grab.Left, grab.Top));
 
-            var resized = BorderPointer.Resize(grab.Start, grab.Pressed, pointer, grab.Left, grab.Top, grab.KeepRatio);
+            var resized = BorderPointer.Resize(grab.Start, grab.Pressed, pointer, grab.Left, grab.Top);
             floating.Set(grab.Id, host.FloatingLimits(grab.Id).Clamp(resized));
             return Dragged(host.ShowFloating(grab.Id), grab.Id);
         }
@@ -106,7 +106,7 @@ internal sealed class MouseDrag
         return host.EndInPlace();
     }
 
-    private sealed class Grab(ClientId id, bool resize, bool wasFloating, Point grab, Rectangle start, bool left, bool top, bool keepRatio)
+    private sealed class Grab(ClientId id, bool resize, bool wasFloating, Point grab, Rectangle start, bool left, bool top)
     {
         public ClientId Id { get; } = id;
 
@@ -123,8 +123,6 @@ internal sealed class MouseDrag
         public bool Left { get; } = left;
 
         public bool Top { get; } = top;
-
-        public bool KeepRatio { get; } = keepRatio;
 
         public bool Lifted { get; set; }
 
@@ -153,7 +151,7 @@ internal interface IMouseDragHost
     IReadOnlyList<Placement> EndInPlace();
 }
 
-internal readonly record struct PointerDrag(bool Resize, PointerDragPhase Phase, Point Pointer, bool KeepRatio = false);
+internal readonly record struct PointerDrag(bool Resize, PointerDragPhase Phase, Point Pointer);
 
 public enum PointerDragPhase
 {

@@ -12,6 +12,7 @@ internal sealed class VerifyWindows : IDisposable
     public const string ClassName = "WinlandVerifyWindow";
 
     private const uint InvokeMessage = 0x8001;
+    private const uint PositionChanging = 0x0046;
     private const int ClassAlreadyExists = 1410;
 
     private static readonly WNDPROC Proc = WindowProc;
@@ -20,11 +21,16 @@ internal sealed class VerifyWindows : IDisposable
     private readonly List<HWND> _opened = [];
     private readonly Thread _thread;
     private readonly ManualResetEventSlim _started = new(false);
+    private readonly int _layoutMs;
     private uint _threadId;
     private bool _closed;
 
-    public VerifyWindows()
+    [ThreadStatic]
+    private static int _threadLayoutMs;
+
+    public VerifyWindows(int layoutMs = 0)
     {
+        _layoutMs = layoutMs;
         _thread = new Thread(Run)
         {
             IsBackground = true,
@@ -121,6 +127,7 @@ internal sealed class VerifyWindows : IDisposable
     private void Run()
     {
         _threadId = PInvoke.GetCurrentThreadId();
+        _threadLayoutMs = _layoutMs;
         _ = PInvoke.PeekMessage(out _, default, 0, 0, PEEK_MESSAGE_REMOVE_TYPE.PM_NOREMOVE);
         Register();
         _started.Set();
@@ -190,6 +197,11 @@ internal sealed class VerifyWindows : IDisposable
         return area;
     }
 
-    private static LRESULT WindowProc(HWND hwnd, uint message, WPARAM wParam, LPARAM lParam) =>
-        PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
+    private static LRESULT WindowProc(HWND hwnd, uint message, WPARAM wParam, LPARAM lParam)
+    {
+        if (message == PositionChanging && _threadLayoutMs > 0)
+            Thread.Sleep(_threadLayoutMs);
+
+        return PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
+    }
 }

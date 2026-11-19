@@ -81,7 +81,7 @@ public class PlacementRuleTests
     public void KeepingANewFloatOnScreenLeavesItsBorderOut()
     {
         var core = Configured("""
-            general:border_size = 3
+            border_size = 3
             windowrule = float, class:box
             windowrule = move 1900 1000, class:box
             """);
@@ -95,7 +95,7 @@ public class PlacementRuleTests
     public void AMovedFloatIsKeptOnScreen()
     {
         var core = Configured("""
-            general:border_size = 0
+            border_size = 0
             windowrule = float, class:box
             """);
         core.Handle(Box(1));
@@ -129,9 +129,9 @@ public class PlacementRuleTests
     public void MoveAndSizeOnlyApplyToFloatingClients()
     {
         var core = new WindowManager(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 0
             windowrule = move 10 10, class:box
             windowrule = size 400 300, class:box
             """));
@@ -208,9 +208,9 @@ public class PlacementRuleTests
     }
 
     [TestMethod]
-    public void SilentMonitorOpensTheWindowThereWithoutFocusingIt()
+    public void MonitorRuleWithStayOpensTheWindowThereWithoutFocusingIt()
     {
-        var core = Monitors("windowrule = monitor desc:Samsung silent, class:box\n");
+        var core = Monitors("windowrule = monitor desc:Samsung stay, class:box\n");
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(1), Left) { Traits = WindowTraits.Normal with { Class = "box" } });
 
@@ -276,7 +276,7 @@ public class PlacementRuleTests
 
     private static WindowManager Monitors(string config)
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_out = 0\ngeneral:border_size = 0\n" + config));
+        var core = new WindowManager(ConfigParser.Parse("gaps_out = 0\nborder_size = 0\n" + config));
         core.Handle(new MonitorsChanged([Display(@"\\.\DISPLAY1", "Dell", Left), Display(@"\\.\DISPLAY2", "Samsung", Right)]));
         return core;
     }

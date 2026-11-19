@@ -8,7 +8,7 @@ public sealed record SessionOptions
 
     internal static OptionSet<SessionOptions> Options { get; } = new(
     [
-        Option<SessionOptions>.Of("general:hide_taskbar", OptionValue.Bool, (o, v) => o with { HideTaskbar = v }),
+        Option<SessionOptions>.Of("hide_taskbar", OptionValue.Bool, (o, v) => o with { HideTaskbar = v }),
     ]);
 
     public static SessionOptions From(ConfigDocument document) => Options.From(Documented, document);

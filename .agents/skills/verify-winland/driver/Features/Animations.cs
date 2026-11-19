@@ -23,7 +23,7 @@ public class Animations
 
         try
         {
-            VerifyRun.Drive(TestContext, "animations:enabled = true\n", run =>
+            VerifyRun.Drive(TestContext, "animations = true\n", run =>
             {
                 var window = run.OpenManaged("1");
                 run.Until("the window fills the work area", () => VerifyRun.Frame(window).Near(VerifyRun.WorkArea(window), 12), 5_000);
@@ -31,7 +31,7 @@ public class Animations
                 var monitor = VerifyRun.MonitorArea(window);
 
                 run.Focus(window);
-                run.Dispatch("movetoworkspacesilent 2");
+                run.Dispatch("move 2 stay");
                 run.Until("the window leaves for hidden workspace 2", () => !VerifyRun.Visible(window));
 
                 run.Dispatch("workspace 2");

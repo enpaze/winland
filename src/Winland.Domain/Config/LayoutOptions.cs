@@ -28,10 +28,10 @@ public sealed record LayoutOptions
 
     internal static OptionSet<LayoutOptions> Options { get; } = new(
     [
-        Option<LayoutOptions>.Of("general:layout", OptionValue.OneOf([.. LayoutFactory.Names]), (o, v) => o with { Layout = v }),
-        Option<LayoutOptions>.Of("general:gaps_in", OptionValue.Gaps, (o, v) => o with { GapsIn = v }),
-        Option<LayoutOptions>.Of("general:gaps_out", OptionValue.Gaps, (o, v) => o with { GapsOut = v }),
-        Option<LayoutOptions>.Of("general:border_size", OptionValue.Int(0, 20), (o, v) => o with { BorderSize = v }),
+        Option<LayoutOptions>.Of("layout", OptionValue.OneOf([.. LayoutFactory.Names]), (o, v) => o with { Layout = v }),
+        Option<LayoutOptions>.Of("gaps_in", OptionValue.Gaps, (o, v) => o with { GapsIn = v }),
+        Option<LayoutOptions>.Of("gaps_out", OptionValue.Gaps, (o, v) => o with { GapsOut = v }),
+        Option<LayoutOptions>.Of("border_size", OptionValue.Int(0, 20), (o, v) => o with { BorderSize = v }),
     ]);
 
     public static LayoutOptions From(ConfigDocument document) => Options.From(Documented, document);

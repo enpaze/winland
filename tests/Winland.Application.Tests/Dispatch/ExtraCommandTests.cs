@@ -9,13 +9,13 @@ public class ExtraCommandTests
 
     private const string SuperKill =
         """
-        [{"mouse":false,"has_description":false,"modmask":64,"key":"Q","keycode":0,"description":"","dispatcher":"killactive","arg":""}]
+        [{"mouse":false,"hasDescription":false,"modMask":64,"key":"Q","keyCode":0,"description":"","dispatcher":"close","arg":""}]
         """;
 
     [TestMethod]
     public void FlagPrefixSelectsJson()
     {
-        var json = Assert.IsExactInstanceOfType<CommandParsed>(CommandProtocol.Parse("j/binds"));
+        var json = Assert.IsExactInstanceOfType<CommandParsed>(CommandProtocol.Parse("j/get binds"));
         Assert.IsExactInstanceOfType<BindsRequest>(json.Request);
         Assert.AreEqual(CommandFlags.Json, json.Request.Flags);
     }
@@ -30,41 +30,38 @@ public class ExtraCommandTests
     public void BindsReportModifierBitsDescriptionsAndKeycodes()
     {
         var core = new WindowManager();
-        Assert.AreEqual("[]", core.Execute("j/binds").Text);
+        Assert.AreEqual("[]", core.Execute("j/get binds").Text);
 
-        core.Handle(new Configure(ConfigParser.Parse("bind = SUPER, Q, killactive\n")));
-        Assert.AreEqual(SuperKill, core.Execute("j/binds").Text);
+        core.Handle(new Configure(ConfigParser.Parse("bind = Win+Q, close\n")));
+        Assert.AreEqual(SuperKill, core.Execute("j/get binds").Text);
 
         core.Handle(new Configure(ConfigParser.Parse("""
-            bind = SUPER, Q, killactive
-            bind = SUPER SHIFT, E, killactive
-            bindd = SUPER, F, Close, killactive
-            bind = SUPER, code:42, killactive
+            bind = Win+Q, close
+            bind = Win+Shift+E, close
+            bind = Win+F, "Close", close
+            bind = Win+code:42, close
             """)));
-        var binds = Json(core.Execute("j/binds").Text);
+        var binds = Json(core.Execute("j/get binds").Text);
         var second = binds[1];
-        Assert.AreEqual(65, second.GetProperty("modmask").GetInt32());
+        Assert.AreEqual(65, second.GetProperty("modMask").GetInt32());
         Assert.AreEqual("E", second.GetProperty("key").GetString());
 
         var described = binds[2];
-        Assert.IsTrue(described.GetProperty("has_description").GetBoolean());
+        Assert.IsTrue(described.GetProperty("hasDescription").GetBoolean());
         Assert.AreEqual("Close", described.GetProperty("description").GetString());
 
         var coded = binds[3];
         Assert.AreEqual("", coded.GetProperty("key").GetString());
-        Assert.AreEqual(42, coded.GetProperty("keycode").GetInt32());
+        Assert.AreEqual(42, coded.GetProperty("keyCode").GetInt32());
     }
 
     [TestMethod]
     public void VersionHasItsShape()
     {
         Assert.IsTrue(ControlInvocation.TryAnswerLocally(["-j", "version"], out var json));
-        var version = Json(json);
-        Assert.AreEqual(BuildStamp.Version, version.GetProperty("version").GetString());
-        Assert.AreEqual(BuildStamp.Commit, version.GetProperty("commit").GetString());
-        Assert.AreEqual("", version.GetProperty("tag").GetString());
-        Assert.AreEqual(JsonValueKind.Array, version.GetProperty("flags").ValueKind);
-        Assert.StartsWith("{\"branch\":", json, StringComparison.Ordinal);
+        Assert.AreEqual(
+            JsonSerializer.Serialize(new { version = BuildStamp.Version, commit = BuildStamp.Commit, dirty = BuildStamp.Dirty }),
+            json);
     }
 
     [TestMethod]
@@ -74,8 +71,8 @@ public class ExtraCommandTests
         Assert.IsFalse(ControlInvocation.TryCreate(["version"], out _, out _));
 
         var core = new WindowManager();
-        Assert.AreEqual("error: unknown request", core.Execute("version").Text);
-        Assert.AreEqual("error: unknown request", core.Execute("j/version").Text);
+        Assert.AreEqual("error: unknown command 'version'", core.Execute("version").Text);
+        Assert.AreEqual("error: unknown command 'version'", core.Execute("j/version").Text);
     }
 
     [TestMethod]
@@ -84,9 +81,9 @@ public class ExtraCommandTests
         var core = new WindowManager();
 
         Assert.AreEqual("Unsupported keyword 'input:kb_variant'.", Assert.ContainsSingle(ConfigParser.Parse("input:kb_variant = nodeadkeys\n").Warnings).Message);
-        Assert.AreEqual("error: unknown request", core.Execute("devices").Text);
-        Assert.AreEqual("error: unknown request", core.Execute("j/devices").Text);
-        Assert.AreEqual("error: unknown request", core.Execute("switchxkblayout all next").Text);
+        Assert.AreEqual("error: unknown command 'devices'", core.Execute("devices").Text);
+        Assert.AreEqual("error: unknown command 'devices'", core.Execute("j/devices").Text);
+        Assert.AreEqual("error: unknown command 'switchxkblayout'", core.Execute("switchxkblayout all next").Text);
     }
 
     [TestMethod]
@@ -97,10 +94,10 @@ public class ExtraCommandTests
         core.Handle(new WindowAppeared(new WindowId(1), area));
         core.Handle(new WindowAppeared(new WindowId(2), area));
         core.Handle(new WindowMinimized(new WindowId(2)));
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         core.Handle(new WindowAppeared(new WindowId(3), area));
 
-        var shown = Json(core.Execute("j/clients").Text).EnumerateArray().ToArray();
+        var shown = Json(core.Execute("j/get windows").Text).EnumerateArray().ToArray();
         Assert.AreEqual(2, shown.Length);
         Assert.AreEqual("0x1", shown[0].GetProperty("address").GetString());
         Assert.AreEqual("0x3", shown[1].GetProperty("address").GetString());
@@ -109,30 +106,43 @@ public class ExtraCommandTests
     [TestMethod]
     public void ControlToolMapsFlagsAndSubcommands()
     {
-        Assert.IsTrue(ControlInvocation.TryCreate(["-j", "binds"], out var line, out var events));
+        Assert.IsTrue(ControlInvocation.TryCreate(["-j", "get", "binds"], out var line, out var events));
         Assert.IsFalse(events);
-        Assert.AreEqual("j/binds", line);
+        Assert.AreEqual("j/get binds", line);
 
-        Assert.IsTrue(ControlInvocation.TryCreate(["dispatch", "resizeactive", "-20", "0"], out line, out events));
-        Assert.AreEqual("dispatch resizeactive -20 0", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["get", "monitors", "all", "-j"], out line, out events));
+        Assert.AreEqual("j/get monitors all", line);
 
-        Assert.IsTrue(ControlInvocation.TryCreate(["dispatch", "exec", "wt", "-p", "pwsh"], out line, out events));
-        Assert.AreEqual("dispatch exec wt -p pwsh", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["reload"], out line, out events));
+        Assert.AreEqual("reload", line);
 
-        Assert.IsTrue(ControlInvocation.TryCreate(["dispatch", "exec", @"C:\Program Files\App\app.exe", "--flag"], out line, out events));
-        Assert.AreEqual(@"dispatch exec ""C:\Program Files\App\app.exe"" --flag", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["resize", "-20", "0"], out line, out events));
+        Assert.AreEqual("resize -20 0", line);
 
-        Assert.IsTrue(ControlInvocation.TryCreate(["dispatch", "exec", @"notepad C:\a b.txt"], out line, out events));
-        Assert.AreEqual(@"dispatch exec notepad C:\a b.txt", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["exec", "wt", "-p", "pwsh"], out line, out events));
+        Assert.AreEqual("exec wt -p pwsh", line);
 
-        Assert.IsTrue(ControlInvocation.TryCreate(["dispatch", "exec", "[float; size 800 600] notepad", "x y"], out line, out events));
-        Assert.AreEqual(@"dispatch exec [float; size 800 600] notepad ""x y""", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["exec", @"C:\Program Files\App\app.exe", "--flag"], out line, out events));
+        Assert.AreEqual(@"exec ""C:\Program Files\App\app.exe"" --flag", line);
 
-        Assert.IsTrue(ControlInvocation.TryCreate(["dispatch", "exec", "wsl", "--", "ls"], out line, out events));
-        Assert.AreEqual("dispatch exec wsl -- ls", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["exec", @"notepad C:\a b.txt"], out line, out events));
+        Assert.AreEqual(@"exec notepad C:\a b.txt", line);
 
-        Assert.IsTrue(ControlInvocation.TryCreate(["dispatch", "EXEC", "wt", "-p", "pwsh"], out line, out events));
-        Assert.AreEqual("dispatch EXEC wt -p pwsh", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["exec", "[float; size 800 600] notepad", "x y"], out line, out events));
+        Assert.AreEqual(@"exec [float; size 800 600] notepad ""x y""", line);
+
+        Assert.IsTrue(ControlInvocation.TryCreate(["exec", "wsl", "--", "ls"], out line, out events));
+        Assert.AreEqual("exec wsl -- ls", line);
+
+        Assert.IsTrue(ControlInvocation.TryCreate(["exec", "notepad", "-j"], out line, out events));
+        Assert.AreEqual("j/exec notepad", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["-j", "exec", "notepad"], out line, out events));
+        Assert.AreEqual("j/exec notepad", line);
+        Assert.IsTrue(ControlInvocation.TryCreate(["exec", "tool -j"], out line, out events));
+        Assert.AreEqual("exec tool -j", line);
+
+        Assert.IsTrue(ControlInvocation.TryCreate(["EXEC", "wt", "-p", "pwsh"], out line, out events));
+        Assert.AreEqual("EXEC wt -p pwsh", line);
 
         Assert.IsTrue(ControlInvocation.TryCreate(["events"], out line, out events));
         Assert.IsTrue(events);
@@ -140,8 +150,12 @@ public class ExtraCommandTests
         Assert.IsTrue(events);
         Assert.AreEqual("j/events", line);
         Assert.IsFalse(ControlInvocation.TryCreate(["nope"], out _, out _));
-        Assert.IsFalse(ControlInvocation.TryCreate(["-r", "clients"], out _, out _));
-        Assert.IsFalse(ControlInvocation.TryCreate(["-a", "clients"], out _, out _));
+        Assert.IsFalse(ControlInvocation.TryCreate(["dispatch", "close"], out _, out _));
+        Assert.IsFalse(ControlInvocation.TryCreate(["clients"], out _, out _));
+        Assert.IsFalse(ControlInvocation.TryCreate(["get", "clients"], out _, out _));
+        Assert.IsFalse(ControlInvocation.TryCreate(["get"], out _, out _));
+        Assert.IsFalse(ControlInvocation.TryCreate(["-r", "get", "windows"], out _, out _));
+        Assert.IsFalse(ControlInvocation.TryCreate(["-a", "get", "windows"], out _, out _));
         Assert.IsFalse(ControlInvocation.TryCreate(["eval", "1"], out _, out _));
         Assert.IsFalse(ControlInvocation.TryCreate(["repl"], out _, out _));
         Assert.IsFalse(ControlInvocation.TryCreate(["plugin", "list"], out _, out _));
@@ -152,20 +166,19 @@ public class ExtraCommandTests
     public void ControlToolTakesEveryVerbThePipeAnswersAndListsIt()
     {
         foreach (var form in CommandProtocol.VerbForms)
-        {
             Assert.Contains(" " + form + "\n", ControlInvocation.Usage, StringComparison.Ordinal);
-            var verb = form.Split(' ')[0];
-            if (!form.Contains('<', StringComparison.Ordinal))
-                Assert.IsTrue(ControlInvocation.TryCreate([verb], out _, out _), verb);
-        }
 
-        Assert.IsFalse(ControlInvocation.TryCreate(["clients", "extra"], out _, out _));
+        foreach (var verb in CommandProtocol.VerbNames)
+            Assert.IsTrue(ControlInvocation.TryCreate(verb.Split(' '), out _, out _), verb);
+
+        Assert.Contains("winland [-j] <action> [args]\n", ControlInvocation.Usage, StringComparison.Ordinal);
+        Assert.IsFalse(ControlInvocation.TryCreate(["get", "windows", "extra"], out _, out _));
     }
 
     [TestMethod]
-    [DataRow(new[] { "dispatch", "resizeactive", "-0.1", "0" }, "dispatch resizeactive -0.1 0")]
-    [DataRow(new[] { "dispatch", "resizeactive", "-1.5", "-2.25" }, "dispatch resizeactive -1.5 -2.25")]
-    [DataRow(new[] { "-j", "dispatch", "resizeactive", "-12", "0" }, "j/dispatch resizeactive -12 0")]
+    [DataRow(new[] { "resize", "-0.1", "0" }, "resize -0.1 0")]
+    [DataRow(new[] { "resize", "-1.5", "-2.25" }, "resize -1.5 -2.25")]
+    [DataRow(new[] { "-j", "resize", "-12", "0" }, "j/resize -12 0")]
     public void ControlToolPassesNegativeNumbersThrough(string[] args, string expected)
     {
         Assert.IsTrue(ControlInvocation.TryCreate(args, out var line, out _));
@@ -180,7 +193,7 @@ public class ExtraCommandTests
     [DataRow("-50,")]
     public void ControlToolRefusesAFlagThatIsNotANumber(string arg)
     {
-        Assert.IsFalse(ControlInvocation.TryCreate(["dispatch", "resizeactive", arg], out _, out _));
+        Assert.IsFalse(ControlInvocation.TryCreate(["resize", arg], out _, out _));
     }
 
     private static Rectangle PlacedAt(Outcome outcome, long window)

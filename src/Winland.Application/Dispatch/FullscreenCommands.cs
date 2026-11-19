@@ -9,31 +9,26 @@ internal enum FullscreenAction
     Unset,
 }
 
-internal readonly record struct FullscreenParse(bool Ignored, FullscreenMode Mode, FullscreenAction Action, bool LayoutAware = true);
+internal readonly record struct FullscreenParse(FullscreenAction Action, bool LayoutAware = true);
 
 internal static class FullscreenCommands
 {
     internal const string DefaultHandler = "default";
 
-    internal static FullscreenParse Parse(string arguments)
+    internal static FullscreenParse? Parse(string arguments)
     {
-        var tokens = Tokens(arguments);
-        var mode = tokens.Length > 0 && IsMaximize(tokens[0])
-            ? FullscreenMode.Maximized
-            : FullscreenMode.Fullscreen;
-        var layoutAware = !(tokens.Length > 1 && Is(tokens[^1], DefaultHandler));
-        var words = layoutAware ? tokens.Length : tokens.Length - 1;
-        if (words < 2)
-            return new FullscreenParse(false, mode, FullscreenAction.Toggle, layoutAware);
+        var tokens = arguments.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var layoutAware = !(tokens.Length > 0 && Is(tokens[^1], DefaultHandler));
+        if (!layoutAware)
+            tokens = tokens[..^1];
 
-        if (Is(tokens[1], "toggle"))
-            return new FullscreenParse(false, mode, FullscreenAction.Toggle, layoutAware);
-        if (Is(tokens[1], "set"))
-            return new FullscreenParse(false, mode, FullscreenAction.Set, layoutAware);
-        if (Is(tokens[1], "unset"))
-            return new FullscreenParse(false, mode, FullscreenAction.Unset, layoutAware);
-
-        return new FullscreenParse(true, mode, FullscreenAction.Toggle, layoutAware);
+        return tokens switch
+        {
+            [] => new FullscreenParse(FullscreenAction.Toggle, layoutAware),
+            [var word] when Is(word, "on") => new FullscreenParse(FullscreenAction.Set, layoutAware),
+            [var word] when Is(word, "off") => new FullscreenParse(FullscreenAction.Unset, layoutAware),
+            _ => null,
+        };
     }
 
     internal static bool Changed(FullscreenMode current, FullscreenMode mode, FullscreenAction action, out FullscreenMode next)
@@ -54,10 +49,4 @@ internal static class FullscreenCommands
                 return false;
         }
     }
-
-    private static bool IsMaximize(string token) =>
-        token == "1" || Is(token, "maximize") || Is(token, "maximized");
-
-    private static string[] Tokens(string arguments) =>
-        arguments.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }

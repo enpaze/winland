@@ -10,7 +10,7 @@ public class AppWindowTests
     [DataRow("scrolling")]
     public void AWindowAdoptedUnderADragKeepsItsFrameUntilTheButtonIsReleased(string layout)
     {
-        var core = new WindowManager(ConfigParser.Parse($"general:layout = {layout}"));
+        var core = new WindowManager(ConfigParser.Parse($"layout = {layout}"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         var bounds = new Rectangle(200, 250, 500, 350);
         var opened = core.Handle(new WindowAppeared(new WindowId(2), Area)
@@ -83,7 +83,7 @@ public class AppWindowTests
         Assert.AreEqual(new WorkspaceId("1"), Assert.ContainsSingle(client => client.Window == new WindowId(3), opened.State.Clients).Workspace);
         Assert.Contains(new WindowId(3), opened.Hide);
         Assert.Contains(item => item is ClientUrgent, opened.Events);
-        Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("killactive")).Close);
+        Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("close")).Close);
     }
 
     [TestMethod]
@@ -106,7 +106,7 @@ public class AppWindowTests
         Assert.IsTrue(client.Floating);
         Assert.IsTrue(client.Pinned);
         Assert.AreEqual(bounds, client.Bounds);
-        Assert.AreEqual(new WindowId(foreground ? 2 : 1), core.Handle(new Dispatch("killactive")).Close);
+        Assert.AreEqual(new WindowId(foreground ? 2 : 1), core.Handle(new Dispatch("close")).Close);
         var switched = core.Handle(new Dispatch("workspace", "2"));
         Assert.DoesNotContain(new WindowId(2), switched.Hide);
         var focused = core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));

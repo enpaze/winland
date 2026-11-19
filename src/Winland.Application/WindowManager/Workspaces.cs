@@ -12,20 +12,8 @@ public sealed partial class WindowManager
     }
 
     private Outcome MoveTo(
-        string argument,
-        bool silent,
-        bool consumed,
-        Point? focal = null)
-    {
-        if (!WorkspaceAddress.TryResolve(argument, Context(), out var resolved))
-            return View([], consumed: consumed) with { Error = WorkspaceAddress.IsNamed(argument) ? "error: no such workspace" : null };
-
-        return MoveTo(resolved, silent, consumed, focal);
-    }
-
-    private Outcome MoveTo(
         WorkspaceId target,
-        bool silent,
+        bool stay,
         bool consumed,
         Point? focal = null)
     {
@@ -35,7 +23,7 @@ public sealed partial class WindowManager
         var source = WorkspaceContaining(id);
         if (source is not null && target.IsSpecial && _pins.IsPinned(id))
         {
-            if (silent)
+            if (stay)
                 return View([], consumed: consumed);
 
             var opened = OpenSpecial(target, null);
@@ -65,15 +53,15 @@ public sealed partial class WindowManager
         Restamp(destination, []);
 
         if (target.IsSpecial)
-            return FinishSpecialMove(source, destination, id, silent, consumed, sourceCovered, destinationCovered);
+            return FinishSpecialMove(source, destination, id, stay, consumed, sourceCovered, destinationCovered);
 
-        if (!silent && source.Id.IsSpecial && _workspaces.Shown.SpecialOn(source.Monitor) == source.Id)
+        if (!stay && source.Id.IsSpecial && _workspaces.Shown.SpecialOn(source.Monitor) == source.Id)
         {
             var concealed = ConcealSpecial(source.Monitor);
             return FollowMove(SwitchTo(target, id, consumed), id, concealed, destination);
         }
 
-        if (!silent && elsewhere is { } owner)
+        if (!stay && elsewhere is { } owner)
         {
             var followed = FocusShown(owner, target, id, consumed);
             var show = new List<WindowId>();
@@ -95,7 +83,7 @@ public sealed partial class WindowManager
             };
         }
 
-        if (!silent)
+        if (!stay)
         {
             var here = _workspaces.Shown.ActiveOn(FocusedId()) == target;
             var followedSwitch = SwitchTo(target, id, consumed);
@@ -298,8 +286,6 @@ public sealed partial class WindowManager
         _crossMonitorWarp = new WarpTo(new Point(bounds.X + (bounds.Width / 2), bounds.Y + (bounds.Height / 2)));
     }
 
-    private WorkspaceId? Previous(MonitorId monitor, bool perMonitor) => _workspaces.Shown.Previous(monitor, perMonitor);
-
     private WorkspaceAddress.Context Context() => Context(FocusedId());
 
     private WorkspaceAddress.Context Context(MonitorId monitor)
@@ -310,8 +296,7 @@ public sealed partial class WindowManager
 
         return new WorkspaceAddress.Context(
             active,
-            () => Previous(monitor, perMonitor: false),
-            () => Previous(monitor, perMonitor: true),
+            () => _workspaces.Shown.Last(monitor),
             _workspaces.Listed(monitor),
             number => _workspaces.NumberIsEmpty(number, monitor));
     }

@@ -23,7 +23,7 @@ public class LaunchTests
     public void BoundExecLaunchesTheCommand()
     {
         var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = SUPER, E, exec, notepad")));
+        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = Win+E, exec notepad")));
         core.Handle(new KeyPressed("Super_L"));
 
         var plain = core.Handle(new KeyPressed("E"));
@@ -53,7 +53,7 @@ public class LaunchTests
     [TestMethod]
     [DataRow("[float; size 800 600] kitty")]
     [DataRow("[workspace 3; float] kitty")]
-    [DataRow("[workspace 3 silent] kitty")]
+    [DataRow("[workspace 3 stay] kitty")]
     [DataRow("[workspace special:scratch] kitty")]
     [DataRow("[workspace 0] kitty")]
     [DataRow("[workspace 3 kitty")]

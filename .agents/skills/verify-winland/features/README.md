@@ -20,7 +20,7 @@ This directory is the maintained source for verifying what a Winland user sees. 
 
 ## Proof and skip reporting
 
-- The driver writes each action with its reply, as `winland dispatch workspace 2 -> exit 0 stdout: ok`, and each observed state, as `saw: workspace 2 hides both windows`. The console and `TestResults/feature-<id>.trx` both hold these lines.
+- The driver writes each action with its reply, as `winland workspace 2 -> exit 0 stdout: ok`, and each observed state, as `saw: workspace 2 hides both windows`. The console and `TestResults/feature-<id>.trx` both hold these lines.
 - A pass prints `== feature <id>: passed, evidence in TestResults/feature-<id>.trx`.
 - After its journey, every driver stops its Winland and checks that every test window is visible again, the taskbars are visible, and no `winland` process remains. A pass includes that check.
 - A driver whose every test skipped fails, because it verified nothing. Report the skip reason it prints.
@@ -31,7 +31,7 @@ This directory is the maintained source for verifying what a Winland user sees. 
 
 Each feature file starts with an H1 title and one paragraph that says what the user sees and links its sections of `docs/behavior.md`. It then has exactly four H2 sections in this order.
 
-1. `Sub-features` lists one bullet per behavior, starting with a backticked id. `dispatcher:<name>`, `request:<verb>` and `install:<command>` name a Dispatcher, a pipe request or an install command, and each of those belongs to exactly one feature. Other ids are lowercase words joined by hyphens.
+1. `Sub-features` lists one bullet per behavior, starting with a backticked id. `dispatcher:<name>`, `request:<request>` and `install:<command>` name a Dispatcher, a pipe request such as `get windows`, or an install command, and each of those belongs to exactly one feature. Other ids are lowercase words joined by hyphens.
 2. `How to get to it (user POV)` lists every way a user reaches the feature.
 3. `Driving it with drive.ps1` starts with `Preconditions:`, names the driver command, and uses labeled bullets that pair each user action with the exact command or input and the observable result.
 4. `Gotchas` lists traps that can waste or invalidate a run, and what the driver does not reach.

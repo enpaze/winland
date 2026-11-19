@@ -14,7 +14,7 @@ public class CommandServerTests
     {
         var missing = "winland-missing-" + Guid.NewGuid().ToString("N");
 
-        var error = Assert.ThrowsExactly<InvalidOperationException>(() => CommandClient.Transact("clients", missing, 200));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => CommandClient.Transact("get windows", missing, 200));
 
         Assert.AreEqual("Winland is not running.", error.Message);
     }
@@ -73,7 +73,7 @@ public class CommandServerTests
         using var second = new CommandServer(new WindowManager(), _ => { }, name);
 
         Assert.ThrowsExactly<InvalidOperationException>(second.Start);
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
     [TestMethod]
@@ -85,11 +85,11 @@ public class CommandServerTests
         using var server = new CommandServer(core, _ => { }, name);
         server.Start();
 
-        var clients = JsonElement.Parse(CommandClient.Transact("j/clients", name)!);
+        var clients = JsonElement.Parse(CommandClient.Transact("j/get windows", name)!);
         var client = Assert.ContainsSingle(clients.EnumerateArray());
         Assert.AreEqual("0x2a", client.GetProperty("address").GetString());
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch exec", name));
-        Assert.AreEqual("error: unknown request", CommandClient.Transact("nope", name));
+        Assert.AreEqual("ok", CommandClient.Transact("exec", name));
+        Assert.AreEqual("error: unknown command 'nonsense'", CommandClient.Transact("nonsense", name));
     }
 
     [TestMethod]
@@ -99,8 +99,8 @@ public class CommandServerTests
         using var server = new CommandServer(new WindowManager(), _ => { }, name);
         server.Start();
 
-        Assert.AreEqual("", CommandClient.Transact("activewindow", name));
-        Assert.AreEqual("null", CommandClient.Transact("j/activewindow", name));
+        Assert.AreEqual("", CommandClient.Transact("get window", name));
+        Assert.AreEqual("null", CommandClient.Transact("j/get window", name));
     }
 
     [TestMethod]
@@ -131,7 +131,7 @@ public class CommandServerTests
             ],
             Take(second, 2));
 
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 2", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 2", name));
         Assert.AreSequenceEqual(
             [
                 "createworkspace>>2,2,",
@@ -167,7 +167,7 @@ public class CommandServerTests
 
         var expected = warnings.Select(warning => $"warning>>{warning.Line},,bad config").Append("configreloaded>>").ToArray();
         Assert.AreSequenceEqual(expected, Take(listener, expected.Length));
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 2", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 2", name));
         Assert.Contains("workspace>>2,2,", Take(listener, 3));
     }
 
@@ -180,16 +180,16 @@ public class CommandServerTests
         server.Start();
         using var idle = Connect(name);
         Send(idle, "events");
-        Assert.AreEqual("[]", CommandClient.Transact("j/clients", name));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name));
 
         var finished = Task.Run(() =>
         {
             for (var i = 0; i < 600; i++)
-                core.Execute(i % 2 == 0 ? "dispatch workspace 2" : "dispatch workspace 1");
+                core.Execute(i % 2 == 0 ? "workspace 2" : "workspace 1");
         });
 
         await finished.WaitAsync(TimeSpan.FromSeconds(5));
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
     [TestMethod]
@@ -201,7 +201,7 @@ public class CommandServerTests
         server.Start();
         var idle = Connect(name);
         Send(idle, "events");
-        Assert.AreEqual("[]", CommandClient.Transact("j/clients", name));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name));
         idle.Dispose();
 
         using var listener = new Listener(name);
@@ -209,7 +209,7 @@ public class CommandServerTests
         Sync(core, listener);
         core.Handle(new WindowAppeared(new WindowId(3), new Rectangle(0, 0, 10, 10)));
         Assert.AreSequenceEqual(["openwindow>>3,1,1,,,", "focus>>,1,1,3,"], Take(listener, 2));
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
     [TestMethod]
@@ -225,7 +225,7 @@ public class CommandServerTests
             Thread.Sleep(100);
         }
 
-        Assert.AreEqual("[]", CommandClient.Transact("j/clients", name, timeoutMs: 5000));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name, timeoutMs: 5000));
     }
 
     [TestMethod]
@@ -237,8 +237,8 @@ public class CommandServerTests
         server.Start();
         using var silent = Connect(name);
 
-        Assert.AreEqual("[]", CommandClient.Transact("j/clients", name));
-        Assert.AreEqual("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
     [TestMethod]
