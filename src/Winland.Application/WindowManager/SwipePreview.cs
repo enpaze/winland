@@ -13,10 +13,11 @@ public sealed partial class WindowManager
             return View([]);
 
         var preview = _swipePreview ??= new SwipePreview(swipe.Begin);
-        var span = (screen?.Bounds ?? _area).Width;
+        var monitor = screen?.Bounds ?? _area;
+        var span = monitor.Width;
         var offset = -swipe.Delta / SwipeDistance * span;
         var motions = new List<Motion>();
-        Offset(swipe.Begin, offset, preview, motions);
+        Offset(swipe.Begin, offset, preview, motions, monitor);
 
         var show = new List<WindowId>();
         var hide = new List<WindowId>();
@@ -32,7 +33,7 @@ public sealed partial class WindowManager
         if (neighbour is WorkspaceId beside && swipe.Delta != 0)
         {
             var besideOffset = offset + (swipe.Delta < 0 ? -span : span);
-            foreach (var window in Offset(beside, besideOffset, preview, motions))
+            foreach (var window in Offset(beside, besideOffset, preview, motions, monitor))
             {
                 if (preview.Revealed.Add(window))
                     show.Add(window);
@@ -42,7 +43,7 @@ public sealed partial class WindowManager
         return View([], show, hide) with { Motions = motions };
     }
 
-    private List<WindowId> Offset(WorkspaceId workspace, double offset, SwipePreview preview, List<Motion> motions)
+    private List<WindowId> Offset(WorkspaceId workspace, double offset, SwipePreview preview, List<Motion> motions, Rectangle monitor)
     {
         var moved = new List<WindowId>();
         if (_workspaces.Find(workspace) is not { } desk)
@@ -57,7 +58,7 @@ public sealed partial class WindowManager
             var rest = PlacedBounds(client, desk, slot);
             var at = rest with { X = rest.X + shift };
             preview.Shown[client.Window] = at;
-            motions.Add(new Motion(client.Window, at) { From = at, Warp = true, Rest = rest });
+            motions.Add(new Motion(client.Window, at) { From = at, Warp = true, Rest = rest, Within = monitor });
             moved.Add(client.Window);
         }
 
@@ -69,7 +70,8 @@ public sealed partial class WindowManager
         if (TakePreview() is not { } preview)
             return View([]);
 
-        var span = (MonitorById(swipe.Monitor)?.Bounds ?? _area).Width;
+        var monitor = MonitorById(swipe.Monitor)?.Bounds ?? _area;
+        var span = monitor.Width;
         var back = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.TransitionTiming : null;
         var away = _config.Animations.Enabled && ReducedMotion?.Invoke() != true ? _config.Animations.TransitionTiming : null;
         var motions = new List<Motion>();
@@ -83,12 +85,12 @@ public sealed partial class WindowManager
             var rest = PlacedBounds(client, desk, slot);
             if (!preview.Revealed.Contains(window))
             {
-                motions.Add(new Motion(window, rest) { From = at, Warp = true, Move = back });
+                motions.Add(new Motion(window, rest) { From = at, Warp = true, Move = back, Within = monitor });
                 continue;
             }
 
             var gone = rest with { X = rest.X + side };
-            motions.Add(new Motion(window, gone) { From = at, Warp = true, Move = away, End = MotionEnd.Hide, Rest = rest });
+            motions.Add(new Motion(window, gone) { From = at, Warp = true, Move = away, End = MotionEnd.Hide, Rest = rest, Within = monitor });
             hide.Add(window);
         }
 

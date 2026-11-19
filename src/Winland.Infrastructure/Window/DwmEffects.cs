@@ -23,6 +23,7 @@ internal sealed class DwmEffects
     private readonly Func<WindowId, bool> _hung;
     private readonly Dictionary<WindowId, Backdrop> _backdrops = [];
     private readonly Dictionary<WindowId, Cut> _regions = [];
+    private readonly Dictionary<WindowId, Rectangle> _clips = [];
     private readonly HashSet<WindowId> _foreignRegions = [];
     private readonly Lock _gate = new();
     private bool _closed;
@@ -64,16 +65,44 @@ internal sealed class DwmEffects
         }
     }
 
+    internal void Clip(WindowId window, Rectangle? local)
+    {
+        lock (_gate)
+        {
+            if (_closed || _foreignRegions.Contains(window))
+                return;
+
+            if (local is not Rectangle cut)
+            {
+                if (!_clips.Remove(window))
+                    return;
+
+                if (_regions.TryGetValue(window, out var corner))
+                    Fit(window, corner.Region, null);
+                else
+                    _surface.TrySetRegion(window, []);
+                return;
+            }
+
+            if (_clips.TryGetValue(window, out var have) && have == cut)
+                return;
+
+            _clips[window] = cut;
+            PaintClip(window, cut);
+        }
+    }
+
     internal void Reset(WindowId window)
     {
         lock (_gate)
         {
+            var clipped = _clips.Remove(window);
             if (_backdrops.Remove(window, out var backdrop))
                 _surface.TrySetBackdrop(window, backdrop.Original);
             if (_regions.ContainsKey(window) && _hung(window))
                 Console.Error.WriteLine($"Window 0x{window.Value:x} is not answering. Its corners are put back at the next start.");
-            else
-                ClearRegion(window);
+            else if (_regions.Remove(window) || clipped)
+                _surface.TrySetRegion(window, []);
             _foreignRegions.Remove(window);
         }
     }
@@ -87,6 +116,7 @@ internal sealed class DwmEffects
             windows = [.. _backdrops.Keys];
             windows.UnionWith(_regions.Keys);
             windows.UnionWith(_foreignRegions);
+            windows.UnionWith(_clips.Keys);
         }
 
         foreach (var window in windows)
@@ -116,6 +146,7 @@ internal sealed class DwmEffects
     {
         lock (_gate)
         {
+            _clips.Remove(window);
             _regions.Remove(window);
             _foreignRegions.Remove(window);
             _surface.TrySetRegion(window, []);
@@ -147,7 +178,7 @@ internal sealed class DwmEffects
             return;
         }
 
-        if (_surface.HasRegion(window))
+        if (_surface.HasRegion(window) && !_clips.ContainsKey(window))
         {
             _foreignRegions.Add(window);
             return;
@@ -159,25 +190,57 @@ internal sealed class DwmEffects
     private void Fit(WindowId window, CornerRegion region, Cut? previous)
     {
         if (!_surface.TryFrame(window, out var outer, out var visible) || visible.Width <= 0 || visible.Height <= 0)
+        {
+            RepaintClip(window);
             return;
+        }
 
         var cut = new Cut(region, outer.Width, outer.Height, visible.X - outer.X, visible.Y - outer.Y, visible.Width, visible.Height);
-        if (cut == previous)
-            return;
+        if (cut != previous)
+        {
+            var outline = CornerShape.Outline(visible.Width, visible.Height, region);
+            var shifted = new Point[outline.Count];
+            for (var i = 0; i < outline.Count; i++)
+                shifted[i] = new Point(outline[i].X + cut.Left, outline[i].Y + cut.Top);
 
-        var outline = CornerShape.Outline(visible.Width, visible.Height, region);
-        var shifted = new Point[outline.Count];
-        for (var i = 0; i < outline.Count; i++)
-            shifted[i] = new Point(outline[i].X + cut.Left, outline[i].Y + cut.Top);
+            if (_surface.TrySetRegion(window, shifted))
+                _regions[window] = cut;
+        }
 
-        if (_surface.TrySetRegion(window, shifted))
-            _regions[window] = cut;
+        RepaintClip(window);
     }
 
     private void ClearRegion(WindowId window)
     {
         if (_regions.Remove(window))
             _surface.TrySetRegion(window, []);
+
+        RepaintClip(window);
+    }
+
+    private void RepaintClip(WindowId window)
+    {
+        if (_clips.TryGetValue(window, out var local))
+            PaintClip(window, local);
+    }
+
+    private void PaintClip(WindowId window, Rectangle local)
+    {
+        if (local.Width <= 0 || local.Height <= 0)
+        {
+            _surface.TrySetRegion(window, [new Point(0, 0)]);
+            return;
+        }
+
+        var right = local.X + local.Width;
+        var bottom = local.Y + local.Height;
+        _surface.TrySetRegion(window,
+        [
+            new Point(local.X, local.Y),
+            new Point(right, local.Y),
+            new Point(right, bottom),
+            new Point(local.X, bottom),
+        ]);
     }
 
     private readonly record struct Backdrop(uint Original, uint Current);

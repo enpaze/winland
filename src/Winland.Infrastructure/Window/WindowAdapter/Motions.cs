@@ -6,6 +6,8 @@ namespace Winland.Infrastructure;
 
 public sealed partial class WindowAdapter
 {
+    private readonly Dictionary<WindowId, Rectangle> _within = [];
+
     private static Dictionary<WindowId, Motion> MotionsOf(Outcome outcome)
     {
         var motions = new Dictionary<WindowId, Motion>(outcome.Motions.Count);
@@ -20,7 +22,7 @@ public sealed partial class WindowAdapter
     {
         lock (_motions.For(window))
         {
-            if (motions.Remove(window, out var motion) && motion.End == MotionEnd.Hide && _motions.Begin(motion))
+            if (motions.Remove(window, out var motion) && motion.End == MotionEnd.Hide && BeginMotion(motion))
                 return;
 
             _motions.Halt(window);
@@ -34,14 +36,20 @@ public sealed partial class WindowAdapter
         {
             if (motions.Remove(window, out var motion))
             {
+                RememberSlide(motion);
                 if (motion.FadeFrom == 0 && (motion.Warp || !_motions.Running(window)))
-                    PlaceFrame(window, motion.From ?? bounds, borderless);
+                {
+                    var from = motion.From ?? bounds;
+                    ClipSlide(window, from);
+                    PlaceFrame(window, from, borderless);
+                }
 
-                if (_motions.Begin(motion) && (motion.Move is not null || _motions.Settle(window, bounds)))
+                if (BeginMotion(motion) && (motion.Move is not null || _motions.Settle(window, bounds)))
                     return;
 
                 PlaceFrame(window, bounds, borderless);
                 EndStandIn(window, null);
+                EndSlide(window);
                 return;
             }
 
@@ -95,7 +103,7 @@ public sealed partial class WindowAdapter
         foreach (var motion in motions.Values)
         {
             lock (_motions.For(motion.Window))
-                _ = _motions.Begin(motion);
+                _ = BeginMotion(motion);
         }
 
         motions.Clear();
@@ -105,7 +113,7 @@ public sealed partial class WindowAdapter
     {
         lock (_motions.For(window))
         {
-            if (motions.Remove(window, out var motion) && motion.End == MotionEnd.Close && _motions.Begin(motion))
+            if (motions.Remove(window, out var motion) && motion.End == MotionEnd.Close && BeginMotion(motion))
                 return;
 
             if (TryVisible(window, out var rest))
@@ -118,6 +126,64 @@ public sealed partial class WindowAdapter
     private void LandMotions() => _motions.Land();
 
     private void DropMotion(WindowId window) => _motions.Drop(window);
+
+    private void RememberSlide(Motion motion)
+    {
+        if (motion.Within is Rectangle monitor)
+            _within[motion.Window] = monitor;
+        else
+            _within.Remove(motion.Window);
+    }
+
+    private bool BeginMotion(Motion motion)
+    {
+        RememberSlide(motion);
+        return _motions.Begin(motion);
+    }
+
+    private void ClipSlide(WindowId window, Rectangle bounds)
+    {
+        if (!_within.TryGetValue(window, out var monitor))
+            return;
+
+        BorderHost.Clip(window, monitor);
+        var destination = InsetsFor(window, _desktop.Dpi(window)).OuterFor(bounds);
+        var shown = TryOuter(window, out var actual) && actual.Width > 0 && actual.Height > 0 ? actual : destination;
+        _effects.Clip(window, SharedClip(shown, destination, monitor));
+    }
+
+    private static Rectangle? SharedClip(Rectangle shown, Rectangle destination, Rectangle monitor)
+    {
+        var here = Inside(shown, monitor);
+        var there = Inside(destination, monitor);
+        if (here is null)
+            return there;
+        if (there is null)
+            return here;
+
+        return here.Value.Intersection(there.Value);
+    }
+
+    private static Rectangle? Inside(Rectangle outer, Rectangle monitor)
+    {
+        if (monitor.Covers(outer))
+            return null;
+
+        var drawn = outer.Intersection(monitor);
+        if (drawn.Width <= 0 || drawn.Height <= 0)
+            return new Rectangle(0, 0, 0, 0);
+
+        return new Rectangle(drawn.X - outer.X, drawn.Y - outer.Y, drawn.Width, drawn.Height);
+    }
+
+    private void EndSlide(WindowId window)
+    {
+        if (!_within.Remove(window))
+            return;
+
+        _effects.Clip(window, null);
+        BorderHost.Clip(window, null);
+    }
 
     private static readonly Lock SettingsGate = new();
     private static bool? _reducedMotion;
@@ -148,20 +214,20 @@ public sealed partial class WindowAdapter
         public void Move(WindowId window, Rectangle bounds, Rectangle content)
         {
             GroupBarHost.Moves(window, true);
+            var borderless = adapter._borderless.Owns(window);
             if (!adapter._desktop.Shown(window))
-            {
-                adapter.PlaceFrame(window, bounds, adapter._borderless.Owns(window));
-                return;
-            }
+                adapter.PlaceFrame(window, bounds, borderless);
+            else if (!adapter.StandFor(window, bounds, content))
+                adapter.QuickPlace(window, bounds, borderless);
 
-            if (!adapter.StandFor(window, bounds, content))
-                adapter.QuickPlace(window, bounds, adapter._borderless.Owns(window));
+            adapter.ClipSlide(window, bounds);
         }
 
         public void PlaceAsync(WindowId window, Rectangle bounds)
         {
             adapter.PlaceAsync(window, bounds, adapter._borderless.Owns(window));
             adapter.EndStandIn(window, null);
+            adapter.EndSlide(window);
             GroupBarHost.Moves(window, false);
         }
 
@@ -169,6 +235,7 @@ public sealed partial class WindowAdapter
         {
             adapter.PlaceFrame(window, bounds, adapter._borderless.Owns(window));
             adapter.EndStandIn(window, null);
+            adapter.EndSlide(window);
             GroupBarHost.Moves(window, false);
         }
 
@@ -191,6 +258,7 @@ public sealed partial class WindowAdapter
         public void Hide(WindowId window)
         {
             adapter.Conceal(window);
+            adapter.EndSlide(window);
             adapter.EndStandIn(window, null);
             GroupBarHost.Moves(window, false);
         }
@@ -198,6 +266,7 @@ public sealed partial class WindowAdapter
         public void Release(WindowId window)
         {
             adapter.EndStandIn(window, null);
+            adapter.EndSlide(window);
             GroupBarHost.Moves(window, false);
             MotionAlpha.Set(window, null);
         }
@@ -205,6 +274,7 @@ public sealed partial class WindowAdapter
         public void Close(WindowId window)
         {
             adapter.HideStandIn(window);
+            adapter.EndSlide(window);
             adapter._desktop.Close(window);
         }
 

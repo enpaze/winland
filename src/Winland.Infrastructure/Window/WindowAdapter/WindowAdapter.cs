@@ -247,6 +247,7 @@ public sealed partial class WindowAdapter : IDisposable
                     Apply(_core.Handle(new WindowClosed(window)));
                     _opacity.Forget(window);
                     BorderHost.Forget(window);
+                    EndSlide(window);
                     _motions.Forget(window);
                     return;
                 case PInvoke.EVENT_OBJECT_LOCATIONCHANGE:

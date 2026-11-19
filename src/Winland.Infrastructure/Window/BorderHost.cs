@@ -18,6 +18,7 @@ internal static class BorderHost
     private static readonly Dictionary<WindowId, Entry> Entries = [];
     private static readonly HashSet<WindowId> Moved = [];
     private static readonly Dictionary<WindowId, BorderColor?> Tints = [];
+    private static readonly Dictionary<WindowId, Rectangle> Clips = [];
     private static Dictionary<WindowId, BorderRing>? _pending;
     private static HashSet<WindowId> _keep = [];
     private static bool _restack;
@@ -82,10 +83,37 @@ internal static class BorderHost
         }
     }
 
+    internal static void Clip(WindowId window, Rectangle? monitor)
+    {
+        lock (Gate)
+        {
+            if (monitor is Rectangle next)
+            {
+                if (Clips.TryGetValue(window, out var current) && current == next)
+                    return;
+
+                Clips[window] = next;
+            }
+            else if (!Clips.Remove(window))
+            {
+                return;
+            }
+
+            if (_worker is null || !Entries.ContainsKey(window) && _pending?.ContainsKey(window) != true)
+                return;
+
+            Moved.Add(window);
+            Post();
+        }
+    }
+
     internal static void Forget(WindowId window)
     {
         lock (Gate)
+        {
             Tints.Remove(window);
+            Clips.Remove(window);
+        }
     }
 
     internal static void Stop()
@@ -104,6 +132,7 @@ internal static class BorderHost
             _posted = false;
             Moved.Clear();
             Tints.Clear();
+            Clips.Clear();
         }
 
         if (worker is null)
@@ -239,13 +268,18 @@ internal static class BorderHost
         foreach (var window in touched)
         {
             Entry? entry;
+            Rectangle? within;
             lock (Gate)
+            {
                 Entries.TryGetValue(window, out entry);
+                within = Clips.TryGetValue(window, out var monitor) ? monitor : null;
+            }
 
             if (entry is null)
                 continue;
 
             entry.Tint = tints.GetValueOrDefault(window);
+            entry.Within = within;
             entry.Place();
         }
 
@@ -287,6 +321,7 @@ internal static class BorderHost
         private readonly HWND[] _pieces = new HWND[4];
 
         private readonly bool[] _drawn = new bool[4];
+        private readonly bool[] _cut = new bool[4];
         private Rectangle _box;
         private BorderRing? _painted;
         private bool _shown;
@@ -297,6 +332,8 @@ internal static class BorderHost
         public BorderRing Ring { get; set; } = new(default, 0, 0, 0);
 
         public BorderColor? Tint { get; set; }
+
+        public Rectangle? Within { get; set; }
 
         private BorderRing Drawn(bool fading)
         {
@@ -325,6 +362,7 @@ internal static class BorderHost
             var box = new Rectangle(frame.X - thickness, frame.Y - thickness, frame.Width + (2 * thickness), frame.Height + (2 * thickness));
             var drawn = Drawn(fading);
             var pieces = BorderPainter.Pieces(box.Width, box.Height, drawn);
+            ClipPieces(box, pieces);
             if (box.Width != _box.Width || box.Height != _box.Height || !drawn.Equals(_painted) || !_shown)
             {
                 PaintAll(box, pieces, drawn);
@@ -485,6 +523,67 @@ internal static class BorderHost
 
             for (var i = 0; i < pieces.Length; i++)
                 Move(i, box, pieces[i]);
+        }
+
+        private void ClipPieces(Rectangle box, Rectangle[] pieces)
+        {
+            for (var i = 0; i < pieces.Length; i++)
+                ClipPiece(i, box, pieces[i]);
+        }
+
+        private void ClipPiece(int index, Rectangle box, Rectangle piece)
+        {
+            if (_pieces[index].IsNull || piece.Width <= 0 || piece.Height <= 0)
+            {
+                ClearPiece(index);
+                return;
+            }
+
+            if (Within is not Rectangle monitor)
+            {
+                ClearPiece(index);
+                return;
+            }
+
+            var screen = new Rectangle(box.X + piece.X, box.Y + piece.Y, piece.Width, piece.Height);
+            if (monitor.Covers(screen))
+            {
+                ClearPiece(index);
+                return;
+            }
+
+            var hit = screen.Intersection(monitor);
+            if (hit.Width <= 0 || hit.Height <= 0)
+                CutPiece(index, 0, 0, 0, 0);
+            else
+                CutPiece(index, hit.X - screen.X, hit.Y - screen.Y, hit.Width, hit.Height);
+        }
+
+        private void ClearPiece(int index)
+        {
+            if (!_cut[index] || _pieces[index].IsNull)
+            {
+                _cut[index] = false;
+                return;
+            }
+
+            _ = PInvoke.SetWindowRgn(_pieces[index], HRGN.Null, false);
+            _cut[index] = false;
+        }
+
+        private void CutPiece(int index, int x, int y, int width, int height)
+        {
+            var region = PInvoke.CreateRectRgn(x, y, x + width, y + height);
+            if (region.IsNull)
+                return;
+
+            if (PInvoke.SetWindowRgn(_pieces[index], region, false) == 0)
+            {
+                _ = PInvoke.DeleteObject(region);
+                return;
+            }
+
+            _cut[index] = true;
         }
 
         private void Move(int index, Rectangle box, Rectangle piece)

@@ -28,6 +28,8 @@ public sealed record Motion(WindowId Window, Rectangle To)
 
     public MotionEnd End { get; init; }
 
+    public Rectangle? Within { get; init; }
+
     public int? CloseGraceMilliseconds { get; init; }
 
     public Rectangle Rest { get; init; } = To;

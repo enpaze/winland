@@ -131,6 +131,7 @@ public sealed partial class WindowManager
                         Move = moves ? timing : null,
                         FadeFrom = shift.Fades ? 0 : null,
                         Fade = shift.Fades ? timing : null,
+                        Within = monitor,
                     }
                     : new Motion(window, moves ? away : rest)
                     {
@@ -140,6 +141,7 @@ public sealed partial class WindowManager
                         Fade = shift.Fades ? timing : null,
                         End = MotionEnd.Hide,
                         Rest = rest,
+                        Within = monitor,
                     };
             }
         }
