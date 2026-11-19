@@ -159,6 +159,12 @@ public sealed partial class WindowAdapter
         _ = _quick.Request(window, OuterOf(window, target, borderless), current, (bounds, keepSize) => SendQuick(window, bounds, keepSize));
     }
 
+    private void CatchUp(WindowId window, Rectangle current)
+    {
+        lock (_motions.For(window))
+            _quick.CatchUp(window, current, (bounds, keepSize) => SendQuick(window, bounds, keepSize));
+    }
+
     internal void PlaceAsync(WindowId window, Rectangle target, bool borderless) =>
         SendQuick(window, OuterOf(window, target, borderless), keepSize: false);
 

@@ -224,6 +224,16 @@ internal sealed class Win32Desktop : IDesktop
         return false;
     }
 
+    public unsafe bool InMoveSize(WindowId window)
+    {
+        var thread = PInvoke.GetWindowThreadProcessId(Handle(window), out _);
+        if (thread == 0)
+            return false;
+
+        var info = new GUITHREADINFO { cbSize = (uint)sizeof(GUITHREADINFO) };
+        return PInvoke.GetGUIThreadInfo(thread, &info) && info.flags.HasFlag(GUITHREADINFO_FLAGS.GUI_INMOVESIZE);
+    }
+
     private void Timed(WindowId window, Action call)
     {
         var start = Environment.TickCount64;

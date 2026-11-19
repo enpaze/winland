@@ -26,6 +26,8 @@ internal interface IDesktop : IWindowStyles, IWindowFrame, IDwmSurface
 
     bool Hung(WindowId window);
 
+    bool InMoveSize(WindowId window);
+
     int Dpi(WindowId window);
 
     bool Repainting(WindowId window);
