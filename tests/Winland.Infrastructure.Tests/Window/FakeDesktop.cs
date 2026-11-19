@@ -130,6 +130,7 @@ internal sealed class FakeDesktop(Func<double> clock) : IDesktop
             return false;
 
         found.Region = outline.Count > 0;
+        found.RegionOutline = outline.Count == 0 ? [] : [.. outline];
         Log($"region {Id(window)} {outline.Count}");
         return true;
     }
@@ -328,6 +329,8 @@ internal sealed class FakeWindow
     internal uint Backdrop { get; set; }
 
     internal bool Region { get; set; }
+
+    internal Point[] RegionOutline { get; set; } = [];
 
     internal double PaintedAt { get; set; }
 
