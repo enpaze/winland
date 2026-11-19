@@ -23,6 +23,7 @@ internal interface Layout
         WorkspaceId workspace,
         string windowClass = "",
         string title = "",
+        string exe = "",
         Rectangle monitor = default,
         long processId = 0,
         string? initialClass = null,

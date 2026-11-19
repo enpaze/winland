@@ -25,10 +25,4 @@ public sealed partial class BindSession
     public bool ButtonsHeld => _buttonsHeld > 0;
 
     public void Inhibit(bool inhibited) => _inhibited = inhibited;
-
-    public void ForgetCaught(string key)
-    {
-        lock (_gate)
-            _caughtKeys.Remove(key);
-    }
 }

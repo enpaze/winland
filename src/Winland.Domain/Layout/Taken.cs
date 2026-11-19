@@ -6,6 +6,7 @@ internal readonly record struct Taken(
     Rectangle Bounds,
     string Class = "",
     string Title = "",
+    string Exe = "",
     long ProcessId = 0,
     string? InitialClass = null,
     string? InitialTitle = null,

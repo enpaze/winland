@@ -4,8 +4,8 @@ public sealed partial class BindSession
 {
     private static readonly Dictionary<string, Modifier> ModifierKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["Super_L"] = Modifier.Super,
-        ["Super_R"] = Modifier.Super,
+        ["Super_L"] = Modifier.Win,
+        ["Super_R"] = Modifier.Win,
         ["Alt_L"] = Modifier.Alt,
         ["Alt_R"] = Modifier.Alt,
         ["Control_L"] = Modifier.Ctrl,
@@ -13,9 +13,9 @@ public sealed partial class BindSession
         ["Shift_L"] = Modifier.Shift,
         ["Shift_R"] = Modifier.Shift,
 
-        ["Caps_Lock"] = Modifier.Caps,
-        ["Num_Lock"] = Modifier.Mod2,
-        ["ISO_Level3_Shift"] = Modifier.Mod5,
+        ["Caps_Lock"] = Modifier.CapsLock,
+        ["Num_Lock"] = Modifier.NumLock,
+        ["ISO_Level3_Shift"] = Modifier.AltGr,
     };
 
     public BindDecision Decide(BindTable table, Input input)
@@ -138,7 +138,7 @@ public sealed partial class BindSession
         var mask = false;
         foreach (var key in _passedKeys)
         {
-            if (ModifierKeys.TryGetValue(key, out var modifier) && modifier is Modifier.Super or Modifier.Alt && _maskedKeys.Add(key))
+            if (ModifierKeys.TryGetValue(key, out var modifier) && modifier is Modifier.Win or Modifier.Alt && _maskedKeys.Add(key))
                 mask = true;
         }
 
@@ -168,19 +168,10 @@ public sealed partial class BindSession
 
     private static BindDecision Ran(List<Bind> binds)
     {
-        var dispatches = new List<BindDispatch>(binds.Count);
-        foreach (var bind in binds)
-        {
-            if (bind.Dispatcher.Length > 0)
-                dispatches.Add(new BindDispatch(bind.Dispatcher, bind.Arguments) { Drag = bind.Flags.HasFlag(BindFlag.Mouse) });
-        }
-
-        if (dispatches.Count == 0)
-            return Caught();
-
+        var dispatches = binds.Select(bind => new BindDispatch(bind.Dispatcher, bind.Arguments)).ToArray();
         return new BindDecision(true, dispatches[0].Dispatcher, dispatches[0].Arguments)
         {
-            Dispatches = dispatches.ToArray(),
+            Dispatches = dispatches,
         };
     }
 }

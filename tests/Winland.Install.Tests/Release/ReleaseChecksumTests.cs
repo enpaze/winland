@@ -2,65 +2,66 @@ using System.Security.Cryptography;
 
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class ReleaseChecksumTests
 {
     private static readonly byte[] Archive = "zip-bytes"u8.ToArray();
 
-    [Fact]
+    [TestMethod]
     public void ThePublishedLineMatchesTheZip()
     {
         var sums = Hash(Archive).ToLowerInvariant() + "  Winland-win-x64.zip\n"
             + new string('b', 64) + "  version.json\n";
 
-        Assert.True(ReleaseChecksum.Matches(Archive, sums));
+        Assert.IsTrue(ReleaseChecksum.Matches(Archive, sums));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUppercaseHashAndACarriageReturnStillMatch()
     {
-        Assert.True(ReleaseChecksum.Matches(Archive, Hash(Archive) + "  Winland-win-x64.zip\r\n"));
+        Assert.IsTrue(ReleaseChecksum.Matches(Archive, Hash(Archive) + "  Winland-win-x64.zip\r\n"));
     }
 
-    [Theory]
-    [InlineData("  ")]
-    [InlineData(" ")]
-    [InlineData(" *")]
-    [InlineData("  *")]
+    [TestMethod]
+    [DataRow("  ")]
+    [DataRow(" ")]
+    [DataRow(" *")]
+    [DataRow("  *")]
     public void ASha256SumSeparatorIsAccepted(string separator)
     {
-        Assert.True(ReleaseChecksum.Matches(Archive, Hash(Archive).ToLowerInvariant() + separator + "Winland-win-x64.zip\n"));
+        Assert.IsTrue(ReleaseChecksum.Matches(Archive, Hash(Archive).ToLowerInvariant() + separator + "Winland-win-x64.zip\n"));
     }
 
-    [Fact]
+    [TestMethod]
     public void ADifferentHashIsRefused()
     {
-        Assert.False(ReleaseChecksum.Matches(Archive, new string('a', 64) + "  Winland-win-x64.zip\n"));
+        Assert.IsFalse(ReleaseChecksum.Matches(Archive, new string('a', 64) + "  Winland-win-x64.zip\n"));
     }
 
-    [Fact]
+    [TestMethod]
     public void ALineForAnotherFileIsRefused()
     {
-        Assert.False(ReleaseChecksum.Matches(Archive, Hash(Archive) + "  version.json\n"));
-        Assert.False(ReleaseChecksum.Matches(Archive, Hash(Archive) + "  Winland-win-x64.zip.extra\n"));
+        Assert.IsFalse(ReleaseChecksum.Matches(Archive, Hash(Archive) + "  version.json\n"));
+        Assert.IsFalse(ReleaseChecksum.Matches(Archive, Hash(Archive) + "  Winland-win-x64.zip.extra\n"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheSameVersionTextIsCurrent()
     {
-        Assert.True(ReleaseVersion.IsCurrent("0.1.0", "0.1.0"));
-        Assert.False(ReleaseVersion.IsCurrent("0.1.0", "0.1.1"));
-        Assert.False(ReleaseVersion.IsCurrent("0.0.0-dev", "0.1.0"));
-        Assert.False(ReleaseVersion.IsCurrent("0.1.0", "0.1.0 "));
+        Assert.IsTrue(ReleaseVersion.IsCurrent("0.1.0", "0.1.0"));
+        Assert.IsFalse(ReleaseVersion.IsCurrent("0.1.0", "0.1.1"));
+        Assert.IsFalse(ReleaseVersion.IsCurrent("0.0.0-dev", "0.1.0"));
+        Assert.IsFalse(ReleaseVersion.IsCurrent("0.1.0", "0.1.0 "));
     }
 
-    [Fact]
+    [TestMethod]
     public void ADevBuildIsCurrentOnlyWhenTheCommitMatches()
     {
-        Assert.True(ReleaseVersion.IsSameCommit("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"));
-        Assert.False(ReleaseVersion.IsSameCommit("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
-        Assert.False(ReleaseVersion.IsSameCommit("", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-        Assert.False(ReleaseVersion.IsSameCommit("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ""));
-        Assert.False(ReleaseVersion.IsSameCommit("  ", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+        Assert.IsTrue(ReleaseVersion.IsSameCommit("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"));
+        Assert.IsFalse(ReleaseVersion.IsSameCommit("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+        Assert.IsFalse(ReleaseVersion.IsSameCommit("", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+        Assert.IsFalse(ReleaseVersion.IsSameCommit("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ""));
+        Assert.IsFalse(ReleaseVersion.IsSameCommit("  ", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
     }
 
     private static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes));

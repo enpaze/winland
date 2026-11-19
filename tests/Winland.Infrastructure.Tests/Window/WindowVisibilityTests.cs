@@ -2,68 +2,69 @@ using Events = Windows.Win32.PInvoke;
 
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class WindowVisibilityTests
 {
     private static readonly WindowFacts ShownClient = new(Minimized: false, Visible: true, Managed: true, Concealed: false);
 
-    [Fact]
+    [TestMethod]
     public void AMinimizeWinlandDidNotAskForIsTakenBack()
     {
-        Assert.Equal(VisibilityAction.UndoMinimize, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, ShownClient with { Minimized = true }));
+        Assert.AreEqual(VisibilityAction.UndoMinimize, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, ShownClient with { Minimized = true }));
     }
 
-    [Fact]
+    [TestMethod]
     public void AMinimizedClientHiddenToTheTrayStopsBeingAClient()
     {
         var tray = ShownClient with { Minimized = true, Visible = false };
 
-        Assert.Equal(VisibilityAction.Close, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, tray));
-        Assert.Equal(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, tray with { Concealed = true }));
+        Assert.AreEqual(VisibilityAction.Close, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, tray));
+        Assert.AreEqual(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, tray with { Concealed = true }));
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientItsApplicationHidesStopsBeingAClientUnlessWinlandHidIt()
     {
         var hidden = ShownClient with { Visible = false };
 
-        Assert.Equal(VisibilityAction.Close, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, hidden));
-        Assert.Equal(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, hidden with { Concealed = true }));
-        Assert.Equal(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, ShownClient));
-        Assert.Equal(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, hidden with { Managed = false }));
+        Assert.AreEqual(VisibilityAction.Close, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, hidden));
+        Assert.AreEqual(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, hidden with { Concealed = true }));
+        Assert.AreEqual(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, ShownClient));
+        Assert.AreEqual(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_HIDE, hidden with { Managed = false }));
     }
 
-    [Fact]
+    [TestMethod]
     public void AHiddenClientThatIsCloakedStaysAClient()
     {
-        Assert.Equal(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_CLOAKED, ShownClient with { Visible = false }));
-        Assert.Equal(VisibilityAction.Close, WindowVisibility.Decide(Events.EVENT_OBJECT_CLOAKED, ShownClient));
+        Assert.AreEqual(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_CLOAKED, ShownClient with { Visible = false }));
+        Assert.AreEqual(VisibilityAction.Close, WindowVisibility.Decide(Events.EVENT_OBJECT_CLOAKED, ShownClient));
     }
 
-    [Theory]
-    [InlineData(Events.EVENT_OBJECT_SHOW)]
-    [InlineData(Events.EVENT_OBJECT_UNCLOAKED)]
-    [InlineData(Events.EVENT_OBJECT_CREATE)]
+    [TestMethod]
+    [DataRow(Events.EVENT_OBJECT_SHOW)]
+    [DataRow(Events.EVENT_OBJECT_UNCLOAKED)]
+    [DataRow(Events.EVENT_OBJECT_CREATE)]
     public void AShownClientIsRestoredAndAnyOtherWindowOffered(uint @event)
     {
-        Assert.Equal(VisibilityAction.Restore, WindowVisibility.Decide(@event, ShownClient));
-        Assert.Equal(VisibilityAction.Adopt, WindowVisibility.Decide(@event, ShownClient with { Managed = false }));
-        Assert.Equal(VisibilityAction.None, WindowVisibility.Decide(@event, ShownClient with { Minimized = true }));
+        Assert.AreEqual(VisibilityAction.Restore, WindowVisibility.Decide(@event, ShownClient));
+        Assert.AreEqual(VisibilityAction.Adopt, WindowVisibility.Decide(@event, ShownClient with { Managed = false }));
+        Assert.AreEqual(VisibilityAction.None, WindowVisibility.Decide(@event, ShownClient with { Minimized = true }));
     }
 
-    [Fact]
+    [TestMethod]
     public void ARenamedClientIsRetitledAndARenamedWindowOffered()
     {
-        Assert.Equal(VisibilityAction.Retitle, WindowVisibility.Decide(Events.EVENT_OBJECT_NAMECHANGE, ShownClient));
-        Assert.Equal(VisibilityAction.Adopt, WindowVisibility.Decide(Events.EVENT_OBJECT_NAMECHANGE, ShownClient with { Managed = false }));
+        Assert.AreEqual(VisibilityAction.Retitle, WindowVisibility.Decide(Events.EVENT_OBJECT_NAMECHANGE, ShownClient));
+        Assert.AreEqual(VisibilityAction.Adopt, WindowVisibility.Decide(Events.EVENT_OBJECT_NAMECHANGE, ShownClient with { Managed = false }));
     }
 
-    [Fact]
+    [TestMethod]
     public void ADeclinedWindowIsOfferedAgainOnlyWhenTheRenameCouldChangeTheAnswer()
     {
         var declined = ShownClient with { Managed = false, Declined = true };
 
-        Assert.Equal(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_NAMECHANGE, declined));
-        Assert.Equal(VisibilityAction.Adopt, WindowVisibility.Decide(Events.EVENT_OBJECT_NAMECHANGE, declined with { Declined = false }));
-        Assert.Equal(VisibilityAction.Adopt, WindowVisibility.Decide(Events.EVENT_OBJECT_SHOW, declined));
+        Assert.AreEqual(VisibilityAction.None, WindowVisibility.Decide(Events.EVENT_OBJECT_NAMECHANGE, declined));
+        Assert.AreEqual(VisibilityAction.Adopt, WindowVisibility.Decide(Events.EVENT_OBJECT_NAMECHANGE, declined with { Declined = false }));
+        Assert.AreEqual(VisibilityAction.Adopt, WindowVisibility.Decide(Events.EVENT_OBJECT_SHOW, declined));
     }
 }

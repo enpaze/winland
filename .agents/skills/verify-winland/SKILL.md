@@ -21,7 +21,7 @@ The script builds the driver project in Release, which builds `winland.exe`, the
 
 Add `-NoBuild` to reuse the last Release build. Omit `-Feature` to drive every feature in turn, as CI does.
 
-To explore by hand instead, start an isolated dev build as [Run a dev build](../../../docs/development.md#run-a-dev-build) says, with your own `WINLAND_PIPE`, `WINLAND_STATE` and a `-Config` that ignores every window but yours. It is ready when `winland version` answers on that pipe. Stop it with `scripts/run.ps1 -Stop` from the same shell.
+To explore by hand instead, start an isolated dev build as [Run a dev build](../../../docs/development.md#run-a-dev-build) says, with your own `WINLAND_PIPE`, `WINLAND_STATE` and a `-Config` that ignores every window but yours. It is ready when `winland get windows` answers on that pipe. Stop it with `scripts/run.ps1 -Stop` from the same shell.
 
 ## Doctor
 
@@ -51,7 +51,7 @@ A driver sends real key and mouse input to the desktop. Tell the user before a r
 
 ## Evidence
 
-- The console holds each action with its reply, such as `winland dispatch workspace 2 -> exit 0 stdout: ok`, and each observed state, such as `saw: workspace 2 hides both windows`.
+- The console holds each action with its reply, such as `winland workspace 2 -> exit 0 stdout: ok`, and each observed state, such as `saw: workspace 2 hides both windows`.
 - `TestResults/feature-<id>.trx` holds the same lines. It is in the repository root, ignored by git, and kept by cleanup.
 - A pass prints `== feature <id>: passed, evidence in TestResults/feature-<id>.trx`. Quote that line and the `saw:` lines it rests on.
 - Every driver ends by checking that every test window is visible again, the taskbars are visible, and no `winland` process remains. That is part of the pass.
@@ -86,6 +86,6 @@ It stops only the test hosts and `winland.exe` processes this checkout's driver 
 | `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1` | Drives every feature, and runs a failed driver once more. A pass on the second run prints `FLAKY:`. |
 | `pwsh -NoProfile -File .agents/skills/verify-winland/drive.ps1 -Cleanup` | Stops what an interrupted run left and puts windows back. |
 
-The drivers are in `.agents/skills/verify-winland/driver/`, an xunit project in `Winland.slnx`. `FeatureMapTests` there runs with the unit tests in `scripts/test.ps1` and fails when the map and the code disagree. Its message says what to add or fix.
+The drivers are in `.agents/skills/verify-winland/driver/`, an MSTest project in `Winland.slnx`. `FeatureMapTests` there runs with the unit tests in `scripts/test.ps1` and fails when the map and the code disagree. Its message says what to add or fix.
 
 Claude Code reads a copy of this file at `.claude/skills/verify-winland/SKILL.md`, because Windows checkouts do not keep symlinks. Change this file, then copy it over that one. `FeatureMapTests` fails until they match.

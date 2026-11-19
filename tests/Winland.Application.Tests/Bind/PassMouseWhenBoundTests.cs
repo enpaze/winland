@@ -1,20 +1,21 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class PassMouseWhenBoundTests
 {
-    [Fact]
+    [TestMethod]
     public void ABoundButtonIsSwallowedByDefault()
     {
-        var core = Loaded("bind = SUPER, mouse:274, killactive\n");
+        var core = Loaded("bind = Win+mouse:middle, close\n");
         var session = new BindSession();
         core.Decide(new KeyPressed("Super_L"), session);
 
-        var pressed = core.Decide(new PointerButtonPressed("mouse:274"), session);
-        var released = core.Decide(new PointerButtonReleased("mouse:274"), session);
+        var pressed = core.Decide(new PointerButtonPressed("mouse:middle"), session);
+        var released = core.Decide(new PointerButtonReleased("mouse:middle"), session);
 
-        Assert.True(pressed.Consumed);
-        Assert.Equal("killactive", pressed.Dispatcher);
-        Assert.True(released.Consumed);
+        Assert.IsTrue(pressed.Consumed);
+        Assert.AreEqual("close", pressed.Dispatcher);
+        Assert.IsTrue(released.Consumed);
     }
 
     private static WindowManager Loaded(string text)

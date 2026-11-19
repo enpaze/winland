@@ -2,9 +2,10 @@ using System.Text;
 
 namespace Winland.Daemon.Tests;
 
+[TestClass]
 public class RollingLogWriterTests
 {
-    [Fact]
+    [TestMethod]
     public void TheWriterPassesEverythingOn()
     {
         var inner = new StringWriter();
@@ -15,24 +16,24 @@ public class RollingLogWriterTests
         writer.Write("yy");
         writer.Write(['-', 'a', 'b', '-'], 1, 2);
 
-        Assert.Equal("first" + Environment.NewLine + "xyyab", inner.ToString());
+        Assert.AreEqual("first" + Environment.NewLine + "xyyab", inner.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TheWriterUsesItsInnerEncoding()
     {
         using var writer = new RollingLogWriter(new StreamWriter(new MemoryStream(), Encoding.UTF8));
 
-        Assert.Equal(Encoding.UTF8.WebName, writer.Encoding.WebName);
+        Assert.AreEqual(Encoding.UTF8.WebName, writer.Encoding.WebName);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheLogIsCopiedToAFileWhenLogsAreEnabled()
     {
         var file = new StringWriter();
         using var writer = new RollingLogWriter(new StringWriter());
 
-        writer.Copy(new DebugOptions { DisableLogs = false }, () => file);
+        writer.Copy(new DebugOptions { LogFile = true }, () => file);
         writer.Write("one ");
         writer.WriteLine("line");
         writer.Write("two\n".ToCharArray(), 0, 4);
@@ -40,17 +41,17 @@ public class RollingLogWriterTests
         writer.Write('\n');
 
         var lines = file.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        Assert.Equal(3, lines.Length);
+        Assert.AreEqual(3, lines.Length);
         foreach (var line in lines)
-            Assert.True(DateTime.TryParseExact(line[..23], "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out _));
-        Assert.Equal(["one line", "two", "three"], lines.Select(line => line[24..].TrimEnd('\r')));
+            Assert.IsTrue(DateTime.TryParseExact(line[..23], "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out _));
+        Assert.AreSequenceEqual(["one line", "two", "three"], lines.Select(line => line[24..].TrimEnd('\r')));
 
         writer.Copy(DebugOptions.Documented, () => throw new InvalidOperationException("not wanted"));
         writer.WriteLine("quiet");
         Assert.DoesNotContain("quiet", file.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void OpeningTheFileDoesNotBlockAnotherWrite()
     {
         using var writer = new RollingLogWriter(TextWriter.Null);
@@ -58,7 +59,7 @@ public class RollingLogWriterTests
         Thread? write = null;
         var completed = false;
 
-        writer.Copy(new DebugOptions { DisableLogs = false }, () =>
+        writer.Copy(new DebugOptions { LogFile = true }, () =>
         {
             write = new Thread(() =>
             {
@@ -70,27 +71,27 @@ public class RollingLogWriterTests
             return new StringWriter();
         });
 
-        Assert.True(write!.Join(TimeSpan.FromSeconds(5)));
-        Assert.True(completed);
+        Assert.IsTrue(write!.Join(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(completed);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFullDiskDropsTheCopyAndKeepsWritingToTheConsole()
     {
         var inner = new StringWriter();
         var file = new FullDiskWriter();
         using var writer = new RollingLogWriter(inner);
-        writer.Copy(new DebugOptions { DisableLogs = false }, () => file);
+        writer.Copy(new DebugOptions { LogFile = true }, () => file);
 
         writer.WriteLine("first");
         writer.WriteLine("second");
         writer.Flush();
 
-        Assert.True(file.Disposed);
-        Assert.Equal("first" + Environment.NewLine + "second" + Environment.NewLine, inner.ToString());
+        Assert.IsTrue(file.Disposed);
+        Assert.AreEqual("first" + Environment.NewLine + "second" + Environment.NewLine, inner.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RestartingPreservesThePreviousLog()
     {
         var root = Directory.CreateTempSubdirectory("winland-log-");
@@ -102,8 +103,8 @@ public class RollingLogWriterTests
             using (var file = RollingLogWriter.OpenFile(path))
                 file.WriteLine("new session");
 
-            Assert.Equal("previous crash", File.ReadAllText(path + ".1"));
-            Assert.Equal("new session" + Environment.NewLine, File.ReadAllText(path));
+            Assert.AreEqual("previous crash", File.ReadAllText(path + ".1"));
+            Assert.AreEqual("new session" + Environment.NewLine, File.ReadAllText(path));
         }
         finally
         {
@@ -111,7 +112,7 @@ public class RollingLogWriterTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AFullLogRotatesInsteadOfErasingItsContents()
     {
         var root = Directory.CreateTempSubdirectory("winland-log-");
@@ -120,7 +121,7 @@ public class RollingLogWriterTests
         {
             using (var writer = new RollingLogWriter(TextWriter.Null))
             {
-                writer.Copy(new DebugOptions { DisableLogs = false }, () => RollingLogWriter.OpenFile(path));
+                writer.Copy(new DebugOptions { LogFile = true }, () => RollingLogWriter.OpenFile(path));
                 writer.WriteLine(new string('x', 10 * 1024 * 1024 - 2));
                 writer.WriteLine("after rotation");
             }
@@ -134,7 +135,7 @@ public class RollingLogWriterTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFilePathIsTheFileTheLogIsCopiedToNow()
     {
         var root = Directory.CreateTempSubdirectory("winland-log-");
@@ -142,16 +143,16 @@ public class RollingLogWriterTests
         try
         {
             using var writer = new RollingLogWriter(TextWriter.Null);
-            Assert.Null(writer.FilePath);
+            Assert.IsNull(writer.FilePath);
 
-            writer.Copy(new DebugOptions { DisableLogs = false }, () => null);
-            Assert.Null(writer.FilePath);
+            writer.Copy(new DebugOptions { LogFile = true }, () => null);
+            Assert.IsNull(writer.FilePath);
 
-            writer.Copy(new DebugOptions { DisableLogs = false }, () => RollingLogWriter.OpenFile(path));
-            Assert.Equal(path, writer.FilePath);
+            writer.Copy(new DebugOptions { LogFile = true }, () => RollingLogWriter.OpenFile(path));
+            Assert.AreEqual(path, writer.FilePath);
 
             writer.Copy(DebugOptions.Documented, () => throw new InvalidOperationException("not wanted"));
-            Assert.Null(writer.FilePath);
+            Assert.IsNull(writer.FilePath);
         }
         finally
         {

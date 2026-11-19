@@ -1,17 +1,18 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class DiscreteScrollTests
 {
-    [Theory]
-    [InlineData(12, true)]
-    [InlineData(-12, true)]
-    [InlineData(120, false)]
-    [InlineData(-240, false)]
-    [InlineData(0, false)]
+    [TestMethod]
+    [DataRow(12, true)]
+    [DataRow(-12, true)]
+    [DataRow(120, false)]
+    [DataRow(-240, false)]
+    [DataRow(0, false)]
     public void OnlyTurnsThatAreNotWholeNotchesAreEmulated(int delta, bool emulated) =>
-        Assert.Equal(emulated, DiscreteScroll.Emulates(delta));
+        Assert.AreEqual(emulated, DiscreteScroll.Emulates(delta));
 
-    [Fact]
+    [TestMethod]
     public void ASmallTurnsSendsANotchAtOnceThenOneForEveryNotchItAddsUpTo()
     {
         var scroll = new DiscreteScroll();
@@ -19,36 +20,36 @@ public class DiscreteScrollTests
         for (var i = 1; i <= 10; i++)
             sent.Add(scroll.Emulate(30, false, 1000 + (i * 10)));
 
-        Assert.Equal([120, 0, 0, 0, 120, 0, 0, 0, 120, 0, 0], sent);
+        TestSequence.Equal([120, 0, 0, 0, 120, 0, 0, 0, 120, 0, 0], sent);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWholeNotchIsOneNotch()
     {
         var scroll = new DiscreteScroll();
 
-        Assert.Equal(120, scroll.Emulate(120, false, 1000));
-        Assert.Equal(120, scroll.Emulate(120, false, 1010));
-        Assert.Equal(120, scroll.Emulate(120, false, 1020));
-        Assert.Equal(-120, scroll.Emulate(-120, false, 1030));
+        Assert.AreEqual(120, scroll.Emulate(120, false, 1000));
+        Assert.AreEqual(120, scroll.Emulate(120, false, 1010));
+        Assert.AreEqual(120, scroll.Emulate(120, false, 1020));
+        Assert.AreEqual(-120, scroll.Emulate(-120, false, 1030));
     }
 
-    [Fact]
+    [TestMethod]
     public void AReversalAnotherAxisOrAPauseStartsAgainWithANotchAtOnce()
     {
         var scroll = new DiscreteScroll();
         _ = scroll.Emulate(30, false, 1000);
 
-        Assert.Equal(-120, scroll.Emulate(-30, false, 1010));
-        Assert.Equal(-120, scroll.Emulate(-30, true, 1020));
-        Assert.Equal(120, scroll.Emulate(30, true, 1020 + DiscreteScroll.IdleMs + 1));
+        Assert.AreEqual(-120, scroll.Emulate(-30, false, 1010));
+        Assert.AreEqual(-120, scroll.Emulate(-30, true, 1020));
+        Assert.AreEqual(120, scroll.Emulate(30, true, 1020 + DiscreteScroll.IdleMs + 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnHorizontalTurnSendsNotchesOfItsOwnSign()
     {
         var scroll = new DiscreteScroll();
 
-        Assert.Equal(-120, scroll.Emulate(-12, true, 1000));
+        Assert.AreEqual(-120, scroll.Emulate(-12, true, 1000));
     }
 }

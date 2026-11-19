@@ -1,22 +1,25 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Winland.Application;
 
 public static class ControlInvocation
 {
     public static string Usage { get; } =
-        string.Concat(CommandProtocol.VerbForms.Select(form => "       winland " + (form == "events" ? "" : "[-j] ") + form + "\n"));
+        "       winland [-j] <action> [args]\n"
+        + string.Concat(CommandProtocol.VerbForms.Select(form => "       winland [-j] " + form + "\n"))
+        + "       winland [-j] version\n"
+        + "actions: " + string.Join(", ", WindowManager.DispatcherNames.Order(StringComparer.Ordinal)) + "\n";
 
-    public static bool TryListNames(string[] args, out string list)
+    public static bool TryAnswerLocally(string[] args, out string reply)
     {
         ArgumentNullException.ThrowIfNull(args);
-        list = "";
+        reply = "";
         var words = args.Where(arg => arg != "-j").ToArray();
-        if (words.Length != 1 || !words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase))
+        if (words.Length != 1 || !words[0].Equals("version", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        var sorted = WindowManager.DispatcherNames.Order(StringComparer.Ordinal).ToArray();
-        list = words.Length < args.Length ? JsonSerializer.Serialize(sorted) : string.Join('\n', sorted);
+        reply = words.Length < args.Length ? VersionJson() : VersionText();
         return true;
     }
 
@@ -25,7 +28,7 @@ public static class ControlInvocation
         ArgumentNullException.ThrowIfNull(args);
         line = "";
         events = false;
-        var flags = "";
+        var json = false;
         var rest = new List<string>();
 
         if (args.Any(arg => arg.Contains('\n', StringComparison.Ordinal) || arg.Contains('\r', StringComparison.Ordinal)))
@@ -35,26 +38,26 @@ public static class ControlInvocation
         {
             var arg = args[i];
 
+            if (arg == "-j")
+            {
+                json = true;
+                continue;
+            }
+
             if (IsCommandLine(rest) || !arg.StartsWith('-') || IsNumber(arg))
             {
                 rest.Add(arg);
                 continue;
             }
 
-            if (arg == "--")
-            {
-                rest.AddRange(args.Skip(i + 1));
-                break;
-            }
-
-            if (arg is not "-j")
+            if (arg != "--")
                 return false;
 
-            if (!flags.Contains(arg[1], StringComparison.Ordinal))
-                flags += arg[1];
+            rest.AddRange(args.Skip(i + 1));
+            break;
         }
 
-        var prefix = flags.Length == 0 ? "" : flags + "/";
+        var prefix = json ? "j/" : "";
         if (rest.Count == 0)
             return false;
 
@@ -63,25 +66,20 @@ public static class ControlInvocation
             return false;
 
         events = parsed.Request is EventsRequest;
-        if (events && prefix.Length > 0)
-            return false;
-
         line = prefix + request;
         return true;
     }
 
     private static bool IsCommandLine(List<string> words) =>
-        words.Count >= 2
-        && words[0].Equals("dispatch", StringComparison.OrdinalIgnoreCase)
-        && words[1].Equals("exec", StringComparison.OrdinalIgnoreCase);
+        words.Count >= 1 && words[0].Equals("exec", StringComparison.OrdinalIgnoreCase);
 
     private static IEnumerable<string> Quoted(List<string> words)
     {
-        var command = IsCommandLine(words) && words.Count > 3;
+        var command = IsCommandLine(words) && words.Count > 2;
         for (var i = 0; i < words.Count; i++)
         {
             var word = words[i];
-            yield return command && i >= 2 && word.Contains(' ', StringComparison.Ordinal)
+            yield return command && i >= 1 && word.Contains(' ', StringComparison.Ordinal)
                 && !word.Contains('"', StringComparison.Ordinal) && !word.StartsWith('[')
                 ? "\"" + word + "\""
                 : word;
@@ -112,4 +110,25 @@ public static class ControlInvocation
 
         return true;
     }
+
+    private static string VersionJson() =>
+        JsonSerializer.Serialize(new VersionView(BuildStamp.Version, BuildStamp.Commit, BuildStamp.Dirty));
+
+    private static string VersionText()
+    {
+        var details = new List<string>();
+        if (BuildStamp.Commit.Length > 0)
+            details.Add(BuildStamp.Commit.Length > 7 ? BuildStamp.Commit[..7] : BuildStamp.Commit);
+
+        if (BuildStamp.Dirty)
+            details.Add("dirty");
+
+        var version = "winland " + BuildStamp.Version;
+        return details.Count == 0 ? version : version + " (" + string.Join(", ", details) + ")";
+    }
+
+    private sealed record VersionView(
+        [property: JsonPropertyName("version")] string Version,
+        [property: JsonPropertyName("commit")] string Commit,
+        [property: JsonPropertyName("dirty")] bool Dirty);
 }

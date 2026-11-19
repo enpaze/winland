@@ -1,15 +1,16 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class RecoverySnapshotTests
 {
-    [Fact]
+    [TestMethod]
     public void AHeldWindowIsWrittenAndReadBack()
     {
         var snapshot = new RecoverySnapshot([]) { Held = [new HeldWindow(new WindowId(7), "Chrome_WidgetWin_1", 42)] };
 
-        Assert.True(RecoverySnapshot.TryParse(snapshot.ToJson(), out var read));
+        Assert.IsTrue(RecoverySnapshot.TryParse(snapshot.ToJson(), out var read));
 
-        Assert.Equal(new HeldWindow(new WindowId(7), "Chrome_WidgetWin_1", 42), Assert.Single(read.Held));
+        Assert.AreEqual(new HeldWindow(new WindowId(7), "Chrome_WidgetWin_1", 42), Assert.ContainsSingle(read.Held));
         Assert.DoesNotContain("held", new RecoverySnapshot([]).ToJson(), StringComparison.Ordinal);
     }
 }

@@ -7,7 +7,6 @@ public sealed record Bind(
     string Key,
     string Dispatcher,
     string Arguments,
-    BindFlag Flags,
     string? Description) : BindDirective;
 
 public sealed record Unbind(Modifier Modifiers, string Key) : BindDirective;

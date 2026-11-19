@@ -2,9 +2,10 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class WorkspaceSwipeTests
 {
-    [Fact]
+    [TestMethod]
     public void WorkspaceSwipePreexistingForce()
     {
         var swipe = Fixture.Run();
@@ -90,7 +91,7 @@ public class WorkspaceSwipeTests
                 """);
             desk.AddMonitor(OriginOutput, new Rectangle(20000, 0, 1920, 1080));
             desk.AddMonitor(PeerOutput, new Rectangle(21920, 0, 1920, 1080));
-            desk.Ok("focusmonitor", OriginOutput);
+            desk.Ok("focus-monitor", OriginOutput);
             foreach (var name in new[] { "9901", "9902", "9903" })
             {
                 desk.Ok("workspace", name);
@@ -117,21 +118,21 @@ public class WorkspaceSwipeTests
                 return new Shot(false, false, "");
 
             var monitor = workspace.GetProperty("monitor").GetString() ?? "";
-            using var monitors = JsonDocument.Parse(TestDesktop.Send("j/monitors"));
+            using var monitors = JsonDocument.Parse(TestDesktop.Send("j/get monitors"));
             var active = monitors.RootElement.EnumerateArray().Any(each =>
                 each.GetProperty("name").GetString() == monitor
                 && each.GetProperty("activeWorkspace").GetProperty("name").GetString() == name);
             return new Shot(true, active, monitor);
         }
 
-        internal void Neutral(string name) => Assert.Equal(new Shot(true, true, O.Monitor), Snapshot(name));
+        internal void Neutral(string name) => Assert.AreEqual(new Shot(true, true, O.Monitor), Snapshot(name));
 
-        internal void Baseline(string name, Shot expected) => Assert.Equal(expected, Snapshot(name));
+        internal void Baseline(string name, Shot expected) => Assert.AreEqual(expected, Snapshot(name));
 
         internal void Preview(string name)
         {
-            Assert.False(Snapshot(name).Active);
-            Assert.True(Snapshot(Origin).Active);
+            Assert.IsFalse(Snapshot(name).Active);
+            Assert.IsTrue(Snapshot(Origin).Active);
         }
 
         internal void Cleaned()
@@ -147,10 +148,10 @@ public class WorkspaceSwipeTests
             L = Snapshot(Left);
             O = Snapshot(Origin);
             R = Snapshot(Right);
-            Assert.True(L.Exists);
-            Assert.True(R.Exists);
-            Assert.False(L.Active);
-            Assert.False(R.Active);
+            Assert.IsTrue(L.Exists);
+            Assert.IsTrue(R.Exists);
+            Assert.IsFalse(L.Active);
+            Assert.IsFalse(R.Active);
             Neutral(Origin);
         }
     }

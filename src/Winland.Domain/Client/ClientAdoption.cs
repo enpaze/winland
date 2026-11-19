@@ -8,6 +8,7 @@ internal static class ClientAdoption
         WorkspaceId workspace,
         string windowClass,
         string title,
+        string exe,
         bool floating,
         long processId,
         string? initialClass,
@@ -19,6 +20,7 @@ internal static class ClientAdoption
             Workspace: workspace,
             Class: windowClass,
             Title: title,
+            Exe: exe,
             ProcessId: processId,
             InitialClass: initialClass ?? windowClass,
             InitialTitle: initialTitle ?? title);

@@ -8,7 +8,6 @@ using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.HiDpi;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests;
 
@@ -18,23 +17,23 @@ internal sealed class VerifyRun
 
     private const string BaseConfig =
         """
-        general:gaps_in = 0
-        general:gaps_out = 0
-        general:border_size = 0
-        animations:enabled = false
+        gaps_in = 0
+        gaps_out = 0
+        border_size = 0
+        animations = false
         windowrule = ignore, class:*
         windowrule = tile, class:WinlandVerifyWindow, title:WinlandVerify *
         windowrule = workspace 1, class:WinlandVerifyWindow, title:WinlandVerify *
 
         """;
 
-    private readonly ITestOutputHelper _output;
+    private readonly TestContext _output;
     private readonly List<VerifyDaemon> _daemons = [];
     private VerifyWindows? _windows;
     private EventLog? _events;
     private bool _taskbarsShown = true;
 
-    private VerifyRun(ITestOutputHelper output, VerifyPaths paths, string dotnetRoot, VerifyDaemon daemon)
+    private VerifyRun(TestContext output, VerifyPaths paths, string dotnetRoot, VerifyDaemon daemon)
     {
         _output = output;
         Paths = paths;
@@ -51,9 +50,9 @@ internal sealed class VerifyRun
 
     public VerifyWindows Windows => _windows ??= new VerifyWindows();
 
-    public static void Drive(ITestOutputHelper output, Action<VerifyRun> body) => Drive(output, "", body);
+    public static void Drive(TestContext output, Action<VerifyRun> body) => Drive(output, "", body);
 
-    public static void Drive(ITestOutputHelper output, string config, Action<VerifyRun> body)
+    public static void Drive(TestContext output, string config, Action<VerifyRun> body)
     {
         _ = PInvoke.SetProcessDpiAwarenessContext((DPI_AWARENESS_CONTEXT)(nint)(-4));
         AssertNoneRunning("before the driver started");
@@ -74,7 +73,7 @@ internal sealed class VerifyRun
             run.StopEvents();
             if (!run.Daemon.Exited)
             {
-                Assert.True(run.Daemon.TryStopClean(), "winland did not stop cleanly. " + run.Daemon.Logs());
+                Assert.IsTrue(run.Daemon.TryStopClean(), "winland did not stop cleanly. " + run.Daemon.Logs());
                 run.Say("winland stopped cleanly");
             }
 
@@ -82,7 +81,7 @@ internal sealed class VerifyRun
             if (taskbarsShown)
                 run.Until("the taskbars are visible again", () => Taskbars.AllVisible(out _), 5_000, () => Taskbars.AllVisible(out var taskbars) ? "" : taskbars);
             AssertNoneRunning("after the driver stopped winland");
-            Assert.Equal(userState, UserState.Stamp());
+            Assert.AreEqual(userState, UserState.Stamp());
             run.Say("every test window is visible again, the taskbars are visible, and no winland process remains");
         }
         catch (Exception exception)
@@ -113,21 +112,19 @@ internal sealed class VerifyRun
     public string Ask(params string[] arguments)
     {
         var result = Cli(arguments);
-        Assert.True(result.ExitCode == 0, $"winland {string.Join(' ', arguments)} failed: {result} {Daemon.Logs()}");
+        Assert.IsTrue(result.ExitCode == 0, $"winland {string.Join(' ', arguments)} failed: {result} {Daemon.Logs()}");
         return result.Output.Trim();
     }
 
     public void Dispatch(string arguments)
     {
-        var words = new List<string> { "dispatch" };
-        words.AddRange(arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-        Assert.Equal("ok", Ask([.. words]));
+        Assert.AreEqual("ok", Ask(arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries)));
     }
 
     public JsonElement Json(params string[] arguments)
     {
         var result = Daemon.Cli(["-j", .. arguments]);
-        Assert.True(result.ExitCode == 0, $"winland -j {string.Join(' ', arguments)} failed: {result} {Daemon.Logs()}");
+        Assert.IsTrue(result.ExitCode == 0, $"winland -j {string.Join(' ', arguments)} failed: {result} {Daemon.Logs()}");
         using var document = JsonDocument.Parse(result.Output);
         return document.RootElement.Clone();
     }
@@ -135,7 +132,7 @@ internal sealed class VerifyRun
     public JsonElement? Client(HWND hwnd)
     {
         var address = Address(hwnd);
-        foreach (var client in Json("clients").EnumerateArray())
+        foreach (var client in Json("get", "windows").EnumerateArray())
         {
             if (string.Equals(client.GetProperty("address").GetString(), address, StringComparison.OrdinalIgnoreCase))
                 return client;
@@ -145,7 +142,7 @@ internal sealed class VerifyRun
     }
 
     public JsonElement ClientOf(HWND hwnd) =>
-        Client(hwnd) ?? throw new InvalidOperationException($"{Address(hwnd)} is not a Client. {Json("clients")}");
+        Client(hwnd) ?? throw new InvalidOperationException($"{Address(hwnd)} is not a Client. {Json("get", "windows")}");
 
     public HWND Open(string name, int width = 200, int height = 150, HWND owner = default) =>
         OpenTitled(Title + " " + name, width, height, owner);
@@ -172,15 +169,15 @@ internal sealed class VerifyRun
         return Frame(first).Left <= Frame(second).Left ? (first, second) : (second, first);
     }
 
-    public string Active() => Json("activewindow").TryGetProperty("address", out var address) ? address.GetString() ?? "" : "";
+    public string Active() => Json("get", "window") is { ValueKind: JsonValueKind.Object } active && active.TryGetProperty("address", out var address) ? address.GetString() ?? "" : "";
 
     public void Focus(HWND hwnd)
     {
-        Dispatch($"focuswindow address:{Address(hwnd)}");
+        Dispatch($"focus address:{Address(hwnd)}");
         Until($"{Address(hwnd)} is the active window", () => Active() == Address(hwnd));
     }
 
-    public int ActiveWorkspace() => Json("activeworkspace").GetProperty("id").GetInt32();
+    public int ActiveWorkspace() => Json("get", "workspace").GetProperty("id").GetInt32();
 
     public void Until(string what, Func<bool> condition, int timeoutMs = 10_000, Func<string>? detail = null)
     {
@@ -210,7 +207,7 @@ internal sealed class VerifyRun
         var deadline = Environment.TickCount64 + durationMs;
         while (Environment.TickCount64 < deadline)
         {
-            Assert.True(condition(), $"This stopped holding: {what}. clients: {SafeClients()} {Daemon.Logs()}");
+            Assert.IsTrue(condition(), $"This stopped holding: {what}. clients: {SafeClients()} {Daemon.Logs()}");
             Thread.Sleep(50);
         }
 
@@ -219,10 +216,10 @@ internal sealed class VerifyRun
 
     public IReadOnlyList<string> Events => _events?.Lines ?? throw new InvalidOperationException("Call FollowEvents first.");
 
-    public void FollowEvents()
+    public void FollowEvents(string command = "events")
     {
-        _events ??= EventLog.Follow(Paths, Daemon.Pipe, DotnetRoot);
-        Say("following winland events");
+        _events ??= EventLog.Follow(Paths, Daemon.Pipe, DotnetRoot, command);
+        Say("following winland " + command);
     }
 
     public void UntilEvent(string prefix, string? contains = null) =>
@@ -231,15 +228,26 @@ internal sealed class VerifyRun
             () => Events.Any(line => line.StartsWith(prefix + ">>", StringComparison.Ordinal) && (contains is null || line.Contains(contains, StringComparison.Ordinal))),
             detail: () => "events: " + string.Join(" | ", Events));
 
+    public void UntilJsonEvent(string name, Func<JsonElement, bool> matches) =>
+        Until(
+            $"JSON event {name}",
+            () => Events.Any(line =>
+            {
+                using var parsed = JsonDocument.Parse(line);
+                var root = parsed.RootElement;
+                return root.GetProperty("event").GetString() == name && matches(root);
+            }),
+            detail: () => "events: " + string.Join(" | ", Events));
+
     public void StopEvents()
     {
         _events?.Dispose();
         _events = null;
     }
 
-    public void Restart()
+    public void Restart(string? config = null)
     {
-        Daemon = Daemon.Restart();
+        Daemon = Daemon.Restart(config);
         _daemons.Add(Daemon);
         Say("winland started again on " + Daemon.Pipe);
     }
@@ -330,7 +338,7 @@ internal sealed class VerifyRun
         foreach (var hwnd in _windows.Opened)
         {
             if (PInvoke.IsWindow(hwnd))
-                Assert.True(PInvoke.IsWindowVisible(hwnd), $"Test window {Address(hwnd)} stayed hidden after winland stopped.");
+                Assert.IsTrue(PInvoke.IsWindowVisible(hwnd), $"Test window {Address(hwnd)} stayed hidden after winland stopped.");
         }
     }
 
@@ -338,7 +346,7 @@ internal sealed class VerifyRun
     {
         try
         {
-            var result = Daemon.Cli("-j", "clients");
+            var result = Daemon.Cli("-j", "get", "windows");
             return Shorten(result.Output.Trim(), 1500);
         }
         catch (Exception exception) when (exception is InvalidOperationException or IOException)

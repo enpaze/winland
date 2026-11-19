@@ -1,5 +1,6 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class FloatingLayerTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
@@ -17,7 +18,7 @@ public class FloatingLayerTests
             Traits = WindowTraits.Normal with { Class = "app", Title = title },
         });
 
-    [Fact]
+    [TestMethod]
     public void FocusingATileKeepsTheFloatingClientsAboveItInTheirOrder()
     {
         var core = Desk();
@@ -27,10 +28,10 @@ public class FloatingLayerTests
 
         var focused = core.Handle(new WindowFocused(new WindowId(1)));
 
-        Assert.Equal([new ZOrderRequest(new WindowId(2), true), new ZOrderRequest(new WindowId(3), true)], focused.ZOrder);
+        Assert.AreSequenceEqual([new ZOrderRequest(new WindowId(2), true), new ZOrderRequest(new WindowId(3), true)], focused.ZOrder);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFocusedFloatingClientComesToTheTopOfTheFloatingOnes()
     {
         var core = Desk();
@@ -38,13 +39,13 @@ public class FloatingLayerTests
         Open(core, 2, "float a");
         Open(core, 3, "float b");
 
-        Assert.Empty(core.Handle(new WindowFocused(new WindowId(2))).ZOrder);
+        Assert.IsEmpty(core.Handle(new WindowFocused(new WindowId(2))).ZOrder);
         var focused = core.Handle(new WindowFocused(new WindowId(1)));
 
-        Assert.Equal([new ZOrderRequest(new WindowId(3), true), new ZOrderRequest(new WindowId(2), true)], focused.ZOrder);
+        Assert.AreSequenceEqual([new ZOrderRequest(new WindowId(3), true), new ZOrderRequest(new WindowId(2), true)], focused.ZOrder);
     }
 
-    [Fact]
+    [TestMethod]
     public void NothingIsRaisedWhileTheActiveWindowStaysTheSame()
     {
         var core = Desk();
@@ -52,11 +53,11 @@ public class FloatingLayerTests
         Open(core, 1, "tile");
         core.Handle(new WindowFocused(new WindowId(1)));
 
-        Assert.Empty(core.Handle(new WindowFocused(new WindowId(1))).ZOrder);
-        Assert.Empty(core.Execute("dispatch resizewindow").Effect.ZOrder);
+        Assert.IsEmpty(core.Handle(new WindowFocused(new WindowId(1))).ZOrder);
+        Assert.IsEmpty(core.Execute("resize").Effect.ZOrder);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFloatingClientsAboveATileAreTheShownOnesBottomFirst()
     {
         var core = Desk();
@@ -64,24 +65,24 @@ public class FloatingLayerTests
         Open(core, 2, "float a");
         Open(core, 3, "float b");
         Open(core, 4, "float c");
-        core.Execute("dispatch focuswindow address:0x4");
-        core.Execute("dispatch movetoworkspacesilent 2");
+        core.Execute("focus address:0x4");
+        core.Execute("move 2 stay");
 
-        Assert.Equal([new WindowId(2), new WindowId(3)], core.FloatingAbove(new WindowId(1)));
-        Assert.Empty(core.FloatingAbove(new WindowId(2)));
-        Assert.Empty(core.FloatingAbove(new WindowId(99)));
+        Assert.AreSequenceEqual([new WindowId(2), new WindowId(3)], core.FloatingAbove(new WindowId(1)));
+        Assert.IsEmpty(core.FloatingAbove(new WindowId(2)));
+        Assert.IsEmpty(core.FloatingAbove(new WindowId(99)));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFloatingClientOnAHiddenWorkspaceIsLeftAlone()
     {
         var core = Desk();
         Open(core, 2, "float a");
-        core.Execute("dispatch focuswindow address:0x2");
-        core.Execute("dispatch movetoworkspacesilent 2");
+        core.Execute("focus address:0x2");
+        core.Execute("move 2 stay");
         Open(core, 1, "tile");
         core.Handle(new WindowFocused(new WindowId(2)));
 
-        Assert.Empty(core.Handle(new WindowFocused(new WindowId(1))).ZOrder);
+        Assert.IsEmpty(core.Handle(new WindowFocused(new WindowId(1))).ZOrder);
     }
 }

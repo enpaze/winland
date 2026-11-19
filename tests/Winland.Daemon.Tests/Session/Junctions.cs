@@ -16,7 +16,7 @@ internal static class Junctions
         using var process = System.Diagnostics.Process.Start(start)!;
         process.StandardOutput.ReadToEnd();
         process.WaitForExit();
-        Assert.Equal(0, process.ExitCode);
+        Assert.AreEqual(0, process.ExitCode);
     }
 
     public static void Delete(string link)

@@ -1,54 +1,55 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class TaskbarPolicyTests
 {
-    [Fact]
+    [TestMethod]
     public void TheTaskbarStaysAsItIsWhenTheOptionIsOff()
     {
         var choice = TaskbarPolicy.Decide(hide: false, owns: false, marker: false, open: true);
 
-        Assert.Equal(new TaskbarChoice(false, false, false), choice);
+        Assert.AreEqual(new TaskbarChoice(false, false, false), choice);
     }
 
-    [Fact]
+    [TestMethod]
     public void TurningTheOptionOnHidesTheBars()
     {
-        Assert.Equal(
+        Assert.AreEqual(
             new TaskbarChoice(Hide: true, Restore: false, Relayout: false),
             TaskbarPolicy.Decide(hide: true, owns: false, marker: false, open: false));
     }
 
-    [Fact]
+    [TestMethod]
     public void TurningTheOptionOnLaysTheMonitorsOutOnceTheSessionIsOpen()
     {
-        Assert.Equal(
+        Assert.AreEqual(
             new TaskbarChoice(Hide: true, Restore: false, Relayout: true),
             TaskbarPolicy.Decide(hide: true, owns: false, marker: false, open: true));
     }
 
-    [Fact]
+    [TestMethod]
     public void HidingAgainDoesNothing()
     {
-        Assert.Equal(
+        Assert.AreEqual(
             new TaskbarChoice(false, false, false),
             TaskbarPolicy.Decide(hide: true, owns: true, marker: true, open: true));
     }
 
-    [Fact]
+    [TestMethod]
     public void TurningTheOptionOffRestoresTheBarsAndLaysTheMonitorsOut()
     {
-        Assert.Equal(
+        Assert.AreEqual(
             new TaskbarChoice(Hide: false, Restore: true, Relayout: true),
             TaskbarPolicy.Decide(hide: false, owns: true, marker: false, open: true));
     }
 
-    [Fact]
+    [TestMethod]
     public void ACrashMarkerIsRestoredWhenTheOptionIsOff()
     {
-        Assert.Equal(
+        Assert.AreEqual(
             new TaskbarChoice(Hide: false, Restore: true, Relayout: false),
             TaskbarPolicy.Decide(hide: false, owns: false, marker: true, open: false));
-        Assert.Equal(
+        Assert.AreEqual(
             new TaskbarChoice(Hide: false, Restore: true, Relayout: true),
             TaskbarPolicy.Decide(hide: false, owns: false, marker: true, open: true));
     }

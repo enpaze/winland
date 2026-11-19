@@ -1,13 +1,12 @@
 namespace Winland.Daemon.Tests;
-
-[Collection("Console")]
+[TestClass]
 public sealed class RecoveryStoreTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "winland-state-" + Guid.NewGuid().ToString("N"));
 
     public RecoveryStoreTests() => Directory.CreateDirectory(_root);
 
-    [Fact]
+    [TestMethod]
     public void ASavedSnapshotIsReadBackAndDeleted()
     {
         var path = Path.Combine(_root, "Winland", "state.json");
@@ -18,13 +17,13 @@ public sealed class RecoveryStoreTests : IDisposable
         var read = store.Read();
         store.Delete();
 
-        Assert.NotNull(read);
-        Assert.Equal(7, Assert.Single(read.Clients).Window.Value);
-        Assert.False(File.Exists(path));
-        Assert.False(File.Exists(path + ".tmp"));
+        Assert.IsNotNull(read);
+        Assert.AreEqual(7, Assert.ContainsSingle(read.Clients).Window.Value);
+        Assert.IsFalse(File.Exists(path));
+        Assert.IsFalse(File.Exists(path + ".tmp"));
     }
 
-    [Fact]
+    [TestMethod]
     public void ACleanExitKeepsItsLastSnapshotAndNothingAfter()
     {
         var path = Path.Combine(_root, "state.json");
@@ -35,10 +34,10 @@ public sealed class RecoveryStoreTests : IDisposable
         store.Keep(Snapshot(2));
         store.Save(Snapshot(3));
 
-        Assert.Equal(2, Assert.Single(new RecoveryStore(path).Read()!.Clients).Window.Value);
+        Assert.AreEqual(2, Assert.ContainsSingle(new RecoveryStore(path).Read()!.Clients).Window.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnExitBeforeArmingKeepsThePreviousFile()
     {
         var path = Path.Combine(_root, "state.json");
@@ -48,10 +47,10 @@ public sealed class RecoveryStoreTests : IDisposable
 
         new RecoveryStore(path).Keep(Snapshot(2));
 
-        Assert.Equal(1, Assert.Single(new RecoveryStore(path).Read()!.Clients).Window.Value);
+        Assert.AreEqual(1, Assert.ContainsSingle(new RecoveryStore(path).Read()!.Clients).Window.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASecondSaveReplacesTheFirst()
     {
         var path = Path.Combine(_root, "state.json");
@@ -61,11 +60,11 @@ public sealed class RecoveryStoreTests : IDisposable
         store.Save(Snapshot(1));
         store.Save(Snapshot(2));
 
-        Assert.Equal(2, Assert.Single(new RecoveryStore(path).Read()!.Clients).Window.Value);
-        Assert.Equal(["state.json"], Directory.GetFiles(_root).Select(Path.GetFileName));
+        Assert.AreEqual(2, Assert.ContainsSingle(new RecoveryStore(path).Read()!.Clients).Window.Value);
+        Assert.AreSequenceEqual(["state.json"], Directory.GetFiles(_root).Select(Path.GetFileName));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFolderTheCheckRefusesIsNeitherWrittenNorRead()
     {
         var path = Path.Combine(_root, "state.json");
@@ -77,11 +76,11 @@ public sealed class RecoveryStoreTests : IDisposable
         var read = store.Read();
         store.Delete();
 
-        Assert.Null(read);
-        Assert.Equal(3, Assert.Single(new RecoveryStore(path).Read()!.Clients).Window.Value);
+        Assert.IsNull(read);
+        Assert.AreEqual(3, Assert.ContainsSingle(new RecoveryStore(path).Read()!.Clients).Window.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void AJunctionedFolderIsCheckedWhereItLeads()
     {
         var target = Path.Combine(_root, "target");
@@ -98,11 +97,11 @@ public sealed class RecoveryStoreTests : IDisposable
 
         store.Save(Snapshot(5));
 
-        Assert.Equal(Path.GetFileName(target), Path.GetFileName(Assert.Single(checkedFolders)));
-        Assert.Empty(Directory.GetFiles(target));
+        Assert.AreEqual(Path.GetFileName(target), Path.GetFileName(Assert.ContainsSingle(checkedFolders)));
+        Assert.IsEmpty(Directory.GetFiles(target));
     }
 
-    [Fact]
+    [TestMethod]
     public void ALinkAtTheFilesNameIsNotFollowed()
     {
         var elsewhere = Path.Combine(_root, "elsewhere");
@@ -121,14 +120,14 @@ public sealed class RecoveryStoreTests : IDisposable
         var saved = new RecoveryStore(path).Read();
         store.Delete();
 
-        Assert.Null(read);
-        Assert.Equal(6, Assert.Single(saved!.Clients).Window.Value);
-        Assert.False(Directory.Exists(path));
-        Assert.False(File.Exists(path));
-        Assert.Equal("kept", File.ReadAllText(Path.Combine(elsewhere, "kept.txt")));
+        Assert.IsNull(read);
+        Assert.AreEqual(6, Assert.ContainsSingle(saved!.Clients).Window.Value);
+        Assert.IsFalse(Directory.Exists(path));
+        Assert.IsFalse(File.Exists(path));
+        Assert.AreEqual("kept", File.ReadAllText(Path.Combine(elsewhere, "kept.txt")));
     }
 
-    [Fact]
+    [TestMethod]
     public void OnlyAnArmedOpenStoreWrites()
     {
         var path = Path.Combine(_root, "state.json");
@@ -141,11 +140,11 @@ public sealed class RecoveryStoreTests : IDisposable
         store.Arm();
         store.Save(Snapshot(2));
 
-        Assert.False(beforeArm);
-        Assert.False(File.Exists(path));
+        Assert.IsFalse(beforeArm);
+        Assert.IsFalse(File.Exists(path));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUnchangedSnapshotIsNotWrittenAgain()
     {
         var path = Path.Combine(_root, "state.json");
@@ -156,10 +155,10 @@ public sealed class RecoveryStoreTests : IDisposable
         File.WriteAllText(path, Snapshot(9).ToJson());
         store.Save(Snapshot(1));
 
-        Assert.Equal(9, Assert.Single(store.Read()!.Clients).Window.Value);
+        Assert.AreEqual(9, Assert.ContainsSingle(store.Read()!.Clients).Window.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void AMissingOrDamagedFileReadsAsNothing()
     {
         var path = Path.Combine(_root, "state.json");
@@ -169,12 +168,12 @@ public sealed class RecoveryStoreTests : IDisposable
         Console.SetError(log);
         try
         {
-            Assert.Null(store.Read());
-            Assert.Empty(log.ToString());
+            Assert.IsNull(store.Read());
+            Assert.IsEmpty(log.ToString());
             File.WriteAllText(path, "{ not json");
 
-            Assert.Null(store.Read());
-            Assert.Equal($"Could not read '{path}': invalid recovery data.{Environment.NewLine}", log.ToString());
+            Assert.IsNull(store.Read());
+            Assert.AreEqual($"Could not read '{path}': invalid recovery data.{Environment.NewLine}", log.ToString());
         }
         finally
         {
@@ -182,7 +181,7 @@ public sealed class RecoveryStoreTests : IDisposable
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AFileInPlaceOfTheFolderIsNotUsed()
     {
         var blocker = Path.Combine(_root, "Winland");
@@ -194,15 +193,15 @@ public sealed class RecoveryStoreTests : IDisposable
         var read = store.Read();
         store.Delete();
 
-        Assert.Null(read);
-        Assert.Equal("not a folder", File.ReadAllText(blocker));
+        Assert.IsNull(read);
+        Assert.AreEqual("not a folder", File.ReadAllText(blocker));
     }
 
-    [Fact]
+    [TestMethod]
     public void APathWithoutAFolderIsRefused()
     {
-        Assert.Throws<ArgumentException>(() => new RecoveryStore(" "));
-        Assert.Throws<ArgumentException>(() => new RecoveryStore(@"C:\"));
+        Assert.ThrowsExactly<ArgumentException>(() => new RecoveryStore(" "));
+        Assert.ThrowsExactly<ArgumentException>(() => new RecoveryStore(@"C:\"));
     }
 
     public void Dispose()
@@ -233,6 +232,6 @@ public sealed class RecoveryStoreTests : IDisposable
         using var process = System.Diagnostics.Process.Start(start)!;
         process.StandardOutput.ReadToEnd();
         process.WaitForExit();
-        Assert.Equal(0, process.ExitCode);
+        Assert.AreEqual(0, process.ExitCode);
     }
 }

@@ -1,15 +1,17 @@
 using Windows.Win32.UI.Input.KeyboardAndMouse;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "mouse-drag")]
-public class MouseDrag(ITestOutputHelper output)
+[TestClass]
+public class MouseDrag
 {
-    private const string Config =
+
+    public TestContext TestContext { get; set; } = null!;
+        private const string Config =
         """
-        bindm = CTRL ALT SHIFT, mouse:272, movewindow
-        bindm = CTRL ALT SHIFT, mouse:273, resizewindow
+        bind = Ctrl+Alt+Shift+mouse:left, move
+        bind = Ctrl+Alt+Shift+mouse:right, resize
         windowrule = float, class:WinlandVerifyWindow, title:WinlandDrag
 
         """;
@@ -17,8 +19,13 @@ public class MouseDrag(ITestOutputHelper output)
     private static readonly VIRTUAL_KEY[] Modifiers = [VIRTUAL_KEY.VK_CONTROL, VIRTUAL_KEY.VK_MENU, VIRTUAL_KEY.VK_SHIFT];
 
     [VerifyFact]
-    public void MovesAndResizesAFloatingWindowWithTheMouse() => VerifyRun.Drive(output, Config, run =>
+    public void MovesAndResizesAFloatingWindowWithTheMouse() => VerifyRun.Drive(TestContext, Config, run =>
     {
+        var binds = run.Ask("get", "binds");
+        Assert.Contains("bind = Ctrl+Alt+Shift+mouse:left, move", binds, StringComparison.Ordinal);
+        Assert.Contains("bind = Ctrl+Alt+Shift+mouse:right, resize", binds, StringComparison.Ordinal);
+        run.Say("saw: binds echoes both drags with the plain bind keyword");
+
         var window = run.OpenTitled("WinlandDrag", 400, 300);
         run.Until("the window floats", () => run.Client(window)?.GetProperty("floating").GetBoolean() == true);
         run.Focus(window);
@@ -27,7 +34,7 @@ public class MouseDrag(ITestOutputHelper output)
 
         Drag(right: false, from, (from.Item1 + 160, from.Item2 + 90));
         run.Say("dragged with Ctrl+Alt+Shift and the left button by 160,90");
-        run.Until("movewindow moved the window with the pointer", () =>
+        run.Until("a move drag moved the window with the pointer", () =>
         {
             var moved = VerifyRun.Frame(window);
             return Math.Abs(moved.Left - start.Left - 160) <= 12 && Math.Abs(moved.Top - start.Top - 90) <= 12 && Math.Abs(moved.Width - start.Width) <= 4;
@@ -37,7 +44,7 @@ public class MouseDrag(ITestOutputHelper output)
         var corner = (placed.Right - 20, placed.Bottom - 20);
         Drag(right: true, corner, (corner.Item1 + 120, corner.Item2 + 70));
         run.Say("dragged with Ctrl+Alt+Shift and the right button from the bottom right corner by 120,70");
-        run.Until("resizewindow grew the window from the grabbed corner", () =>
+        run.Until("a resize drag grew the window from the grabbed corner", () =>
         {
             var resized = VerifyRun.Frame(window);
             return resized.Width >= placed.Width + 90 && resized.Height >= placed.Height + 50 && Math.Abs(resized.Left - placed.Left) <= 6;

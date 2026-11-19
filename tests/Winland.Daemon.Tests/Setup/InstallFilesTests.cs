@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace Winland.Daemon.Tests;
 
+[TestClass]
 public sealed class InstallFilesTests : IDisposable
 {
     private readonly string root = Path.Combine(Path.GetTempPath(), "winland-install-" + Guid.NewGuid().ToString("N"));
@@ -15,7 +16,7 @@ public sealed class InstallFilesTests : IDisposable
             files.DeleteTree(root);
     }
 
-    [Fact]
+    [TestMethod]
     public void ALinkIsListedAndNotFollowed()
     {
         var source = Path.Combine(root, "source");
@@ -29,12 +30,12 @@ public sealed class InstallFilesTests : IDisposable
 
         var listed = files.List(source);
 
-        Assert.Contains(listed, file => file.RelativePath == "winland.exe" && !file.ReparsePoint);
-        Assert.Contains(listed, file => file.RelativePath == "linked" && file.ReparsePoint);
-        Assert.DoesNotContain(listed, file => file.RelativePath.Contains("secret", StringComparison.Ordinal));
+        Assert.Contains(file => file.RelativePath == "winland.exe" && !file.ReparsePoint, listed);
+        Assert.Contains(file => file.RelativePath == "linked" && file.ReparsePoint, listed);
+        Assert.DoesNotContain(file => file.RelativePath.Contains("secret", StringComparison.Ordinal), listed);
     }
 
-    [Fact]
+    [TestMethod]
     public void CopyRefusesALink()
     {
         var source = Path.Combine(root, "source");
@@ -43,13 +44,13 @@ public sealed class InstallFilesTests : IDisposable
         File.WriteAllText(Path.Combine(target, "winland.exe"), "daemon");
         Junction(source, target);
 
-        var error = Assert.Throws<InvalidOperationException>(() => files.Copy(source, Path.Combine(root, "copied.exe")));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => files.Copy(source, Path.Combine(root, "copied.exe")));
 
         Assert.Contains("it is a link", error.Message, StringComparison.Ordinal);
-        Assert.False(File.Exists(Path.Combine(root, "copied.exe")));
+        Assert.IsFalse(File.Exists(Path.Combine(root, "copied.exe")));
     }
 
-    [Fact]
+    [TestMethod]
     public void DeleteRemovesALinkAndLeavesItsTarget()
     {
         var tree = Path.Combine(root, "tree");
@@ -62,11 +63,11 @@ public sealed class InstallFilesTests : IDisposable
 
         files.DeleteTree(tree);
 
-        Assert.False(Directory.Exists(tree));
-        Assert.Equal("secret", File.ReadAllText(Path.Combine(target, "secret.txt")));
+        Assert.IsFalse(Directory.Exists(tree));
+        Assert.AreEqual("secret", File.ReadAllText(Path.Combine(target, "secret.txt")));
     }
 
-    [Fact]
+    [TestMethod]
     public void CopyWritesTheFileItself()
     {
         var source = Path.Combine(root, "winland.exe");
@@ -75,10 +76,10 @@ public sealed class InstallFilesTests : IDisposable
 
         files.Copy(source, destination);
 
-        Assert.Equal("daemon", File.ReadAllText(destination));
+        Assert.AreEqual("daemon", File.ReadAllText(destination));
     }
 
-    [Fact]
+    [TestMethod]
     public void CopyReplacesAnExistingFile()
     {
         var source = Path.Combine(root, "new.exe");
@@ -88,11 +89,11 @@ public sealed class InstallFilesTests : IDisposable
 
         files.Copy(source, destination);
 
-        Assert.Equal("new", File.ReadAllText(destination));
-        Assert.False(File.Exists(destination + ".winland-old"));
+        Assert.AreEqual("new", File.ReadAllText(destination));
+        Assert.IsFalse(File.Exists(destination + ".winland-old"));
     }
 
-    [Fact]
+    [TestMethod]
     public void CopyRefusesALockedFileOutsideTheRunningFolder()
     {
         var source = Path.Combine(root, "new.exe");
@@ -101,15 +102,23 @@ public sealed class InstallFilesTests : IDisposable
         File.WriteAllText(destination, "old");
         using var locked = new FileStream(destination, FileMode.Open, FileAccess.Read, FileShare.None);
 
-        var error = Record.Exception(() => files.Copy(source, destination));
+        Exception? error = null;
+        try
+        {
+            files.Copy(source, destination);
+        }
+        catch (Exception caught)
+        {
+            error = caught;
+        }
 
-        Assert.True(error is IOException or UnauthorizedAccessException);
+        Assert.IsTrue(error is IOException or UnauthorizedAccessException);
         locked.Dispose();
-        Assert.Equal("old", File.ReadAllText(destination));
-        Assert.False(File.Exists(destination + ".winland-old"));
+        Assert.AreEqual("old", File.ReadAllText(destination));
+        Assert.IsFalse(File.Exists(destination + ".winland-old"));
     }
 
-    [Fact]
+    [TestMethod]
     public void RetirementStaysQuietWhileFilesAreLockedAndRemovesThemOnceUnlocked()
     {
         var directory = Path.Combine(root, "install");
@@ -142,12 +151,12 @@ public sealed class InstallFilesTests : IDisposable
                 UseShellExecute = false,
                 CreateNoWindow = true,
             });
-            Assert.NotNull(running);
-            Assert.False(running.WaitForExit(300));
+            Assert.IsNotNull(running);
+            Assert.IsFalse(running.WaitForExit(300));
             File.Move(holder, mapped);
             stream = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None);
-            Assert.IsType<IOException>(Record.Exception(() => File.Delete(held)));
-            Assert.IsType<UnauthorizedAccessException>(Record.Exception(() => File.Delete(mapped)));
+            Assert.ThrowsExactly<IOException>(() => File.Delete(held));
+            Assert.ThrowsExactly<UnauthorizedAccessException>(() => File.Delete(mapped));
 
             using var exited = Process.Start(new ProcessStartInfo
             {
@@ -156,19 +165,19 @@ public sealed class InstallFilesTests : IDisposable
                 UseShellExecute = false,
                 CreateNoWindow = true,
             });
-            Assert.NotNull(exited);
+            Assert.IsNotNull(exited);
             exited.WaitForExit();
 
             var output = RunRetirementScript(WindowsInstallFiles.RetirementScript(exited.Id, directory));
 
-            Assert.Equal("", output);
-            Assert.Equal("current", File.ReadAllText(kept));
-            Assert.Equal("keep", File.ReadAllText(decoy));
-            Assert.False(File.Exists(free));
-            Assert.False(File.Exists(nested));
-            Assert.False(File.Exists(stamped));
-            Assert.True(File.Exists(held));
-            Assert.True(File.Exists(mapped));
+            Assert.AreEqual("", output);
+            Assert.AreEqual("current", File.ReadAllText(kept));
+            Assert.AreEqual("keep", File.ReadAllText(decoy));
+            Assert.IsFalse(File.Exists(free));
+            Assert.IsFalse(File.Exists(nested));
+            Assert.IsFalse(File.Exists(stamped));
+            Assert.IsTrue(File.Exists(held));
+            Assert.IsTrue(File.Exists(mapped));
         }
         finally
         {
@@ -183,18 +192,18 @@ public sealed class InstallFilesTests : IDisposable
         }
 
         WindowsInstallFiles.DeleteRetired(directory);
-        Assert.False(File.Exists(held));
-        Assert.False(File.Exists(mapped));
-        Assert.Equal("current", File.ReadAllText(kept));
-        Assert.Equal("keep", File.ReadAllText(decoy));
+        Assert.IsFalse(File.Exists(held));
+        Assert.IsFalse(File.Exists(mapped));
+        Assert.AreEqual("current", File.ReadAllText(kept));
+        Assert.AreEqual("keep", File.ReadAllText(decoy));
         WindowsInstallFiles.DeleteRetired(directory);
-        Assert.False(File.Exists(held));
-        Assert.False(File.Exists(mapped));
-        Assert.Equal("current", File.ReadAllText(kept));
-        Assert.Equal("keep", File.ReadAllText(decoy));
+        Assert.IsFalse(File.Exists(held));
+        Assert.IsFalse(File.Exists(mapped));
+        Assert.AreEqual("current", File.ReadAllText(kept));
+        Assert.AreEqual("keep", File.ReadAllText(decoy));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheNextLaunchRemovesAnUnlockedRetiredFileAndLeavesALockedOne()
     {
         var host = Path.GetDirectoryName(typeof(WindowsInstallFiles).Assembly.Location)!;
@@ -214,17 +223,17 @@ public sealed class InstallFilesTests : IDisposable
         Assert.Contains("Could not read config", first, StringComparison.Ordinal);
         Assert.DoesNotContain("UnauthorizedAccessException", first, StringComparison.Ordinal);
         Assert.DoesNotContain("Exception calling \"Delete\"", first, StringComparison.Ordinal);
-        Assert.False(File.Exists(retired));
-        Assert.True(File.Exists(held));
-        Assert.Equal("keep", File.ReadAllText(decoy));
+        Assert.IsFalse(File.Exists(retired));
+        Assert.IsTrue(File.Exists(held));
+        Assert.AreEqual("keep", File.ReadAllText(decoy));
 
         stream.Dispose();
         var second = RunInstalled(install, Path.Combine(install, "absent.conf"));
 
         Assert.Contains("Could not read config", second, StringComparison.Ordinal);
         Assert.DoesNotContain("UnauthorizedAccessException", second, StringComparison.Ordinal);
-        Assert.False(File.Exists(held));
-        Assert.Equal("keep", File.ReadAllText(decoy));
+        Assert.IsFalse(File.Exists(held));
+        Assert.AreEqual("keep", File.ReadAllText(decoy));
     }
 
     private static string RunInstalled(string install, string config)
@@ -241,10 +250,10 @@ public sealed class InstallFilesTests : IDisposable
         start.ArgumentList.Add(config);
         start.Environment["WINLAND_NO_ELEVATE"] = "1";
         using var process = Process.Start(start);
-        Assert.NotNull(process);
+        Assert.IsNotNull(process);
         var stdout = process.StandardOutput.ReadToEnd();
         var stderr = process.StandardError.ReadToEnd();
-        Assert.True(process.WaitForExit(30_000));
+        Assert.IsTrue(process.WaitForExit(30_000));
         return stdout + stderr;
     }
 
@@ -267,7 +276,7 @@ public sealed class InstallFilesTests : IDisposable
         })
         {
             var from = Path.Combine(source, name);
-            Assert.True(File.Exists(from), from);
+            Assert.IsTrue(File.Exists(from), from);
             using var input = new FileStream(from, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             using var output = File.Create(Path.Combine(destination, name));
             input.CopyTo(output);
@@ -278,7 +287,7 @@ public sealed class InstallFilesTests : IDisposable
 
     private static void CopyTree(string source, string destination)
     {
-        Assert.True(Directory.Exists(source), source);
+        Assert.IsTrue(Directory.Exists(source), source);
         Directory.CreateDirectory(destination);
         foreach (var directory in Directory.EnumerateDirectories(source))
             CopyTree(directory, Path.Combine(destination, Path.GetFileName(directory)));
@@ -307,7 +316,7 @@ public sealed class InstallFilesTests : IDisposable
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         });
-        Assert.NotNull(process);
+        Assert.IsNotNull(process);
         var stdout = process.StandardOutput.ReadToEnd();
         var stderr = process.StandardError.ReadToEnd();
         process.WaitForExit();
@@ -328,6 +337,6 @@ public sealed class InstallFilesTests : IDisposable
         using var process = Process.Start(start)!;
         process.StandardOutput.ReadToEnd();
         process.WaitForExit();
-        Assert.Equal(0, process.ExitCode);
+        Assert.AreEqual(0, process.ExitCode);
     }
 }

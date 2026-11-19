@@ -1,51 +1,52 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class TrayBalloonTests
 {
     private static ConfigNotice Notice(int generation) =>
         new("Winland: 1 config error", @"C:\winland\winland.conf:1: Unsupported keyword 'blur'.", @"C:\winland\winland.conf", generation);
 
-    [Fact]
+    [TestMethod]
     public void AShownIconWithNoNoticeDrawsTheIconAndNoBalloon() =>
-        Assert.Equal(new TrayBalloon.Plan(true, false, false, false), TrayBalloon.For(true, null, 0, 0));
+        Assert.AreEqual(new TrayBalloon.Plan(true, false, false, false), TrayBalloon.For(true, null, 0, 0));
 
-    [Fact]
+    [TestMethod]
     public void ANewNoticeOnTheShownIconShowsTheBalloon() =>
-        Assert.Equal(new TrayBalloon.Plan(true, false, true, false), TrayBalloon.For(true, Notice(1), 0, 0));
+        Assert.AreEqual(new TrayBalloon.Plan(true, false, true, false), TrayBalloon.For(true, Notice(1), 0, 0));
 
-    [Fact]
+    [TestMethod]
     public void TheSameGenerationDoesNotShowTheBalloonAgain() =>
-        Assert.Equal(new TrayBalloon.Plan(true, false, false, false), TrayBalloon.For(true, Notice(3), 3, 0));
+        Assert.AreEqual(new TrayBalloon.Plan(true, false, false, false), TrayBalloon.For(true, Notice(3), 3, 0));
 
-    [Fact]
+    [TestMethod]
     public void ADismissedGenerationDoesNotShowTheBalloonAgain() =>
-        Assert.Equal(new TrayBalloon.Plan(true, false, false, false), TrayBalloon.For(true, Notice(3), 3, 3));
+        Assert.AreEqual(new TrayBalloon.Plan(true, false, false, false), TrayBalloon.For(true, Notice(3), 3, 3));
 
-    [Fact]
+    [TestMethod]
     public void ALaterGenerationReplacesTheBalloon() =>
-        Assert.Equal(new TrayBalloon.Plan(true, false, true, false), TrayBalloon.For(true, Notice(4), 3, 3));
+        Assert.AreEqual(new TrayBalloon.Plan(true, false, true, false), TrayBalloon.For(true, Notice(4), 3, 3));
 
-    [Fact]
+    [TestMethod]
     public void ACleanLoadClearsTheBalloonAndKeepsTheIcon() =>
-        Assert.Equal(new TrayBalloon.Plan(true, false, false, true), TrayBalloon.For(true, null, 3, 0));
+        Assert.AreEqual(new TrayBalloon.Plan(true, false, false, true), TrayBalloon.For(true, null, 3, 0));
 
-    [Fact]
+    [TestMethod]
     public void AHiddenIconAddsATemporaryIconForANewNotice() =>
-        Assert.Equal(new TrayBalloon.Plan(true, true, true, false), TrayBalloon.For(false, Notice(1), 0, 0));
+        Assert.AreEqual(new TrayBalloon.Plan(true, true, true, false), TrayBalloon.For(false, Notice(1), 0, 0));
 
-    [Fact]
+    [TestMethod]
     public void ATemporaryIconStaysUpWithoutShowingTheBalloonAgain() =>
-        Assert.Equal(new TrayBalloon.Plan(true, true, false, false), TrayBalloon.For(false, Notice(1), 1, 0));
+        Assert.AreEqual(new TrayBalloon.Plan(true, true, false, false), TrayBalloon.For(false, Notice(1), 1, 0));
 
-    [Fact]
+    [TestMethod]
     public void ADismissedNoticeOnAHiddenIconRemovesTheTemporaryIcon() =>
-        Assert.Equal(new TrayBalloon.Plan(false, false, false, false), TrayBalloon.For(false, Notice(1), 1, 1));
+        Assert.AreEqual(new TrayBalloon.Plan(false, false, false, false), TrayBalloon.For(false, Notice(1), 1, 1));
 
-    [Fact]
+    [TestMethod]
     public void ACleanLoadOnAHiddenIconRemovesTheTemporaryIcon() =>
-        Assert.Equal(new TrayBalloon.Plan(false, false, false, false), TrayBalloon.For(false, null, 1, 0));
+        Assert.AreEqual(new TrayBalloon.Plan(false, false, false, false), TrayBalloon.For(false, null, 1, 0));
 
-    [Fact]
+    [TestMethod]
     public void ALaterGenerationAfterDismissShowsATemporaryIconAgain() =>
-        Assert.Equal(new TrayBalloon.Plan(true, true, true, false), TrayBalloon.For(false, Notice(2), 1, 1));
+        Assert.AreEqual(new TrayBalloon.Plan(true, true, true, false), TrayBalloon.For(false, Notice(2), 1, 1));
 }

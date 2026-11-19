@@ -1,177 +1,178 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class LayoutOptionTests
 {
     private static readonly Rectangle Wide = new(0, 0, 1920, 1080);
     private static readonly Rectangle Tall = new(0, 0, 1080, 1920);
 
-    [Fact]
+    [TestMethod]
     public void InnerGapsShrinkClientsThatDoNotTouchThatEdge()
     {
         var core = Configured("""
-            general:gaps_in = 10
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 10
+            gaps_out = 0
+            border_size = 0
             """);
 
         core.Handle(Appeared(1, Wide));
         var outcome = core.Handle(Appeared(2, Wide));
 
-        Assert.Equal(new Rectangle(0, 0, 950, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(970, 0, 950, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 950, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(970, 0, 950, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void GapSidesFollowTheSameCountRulesAsAMargin()
     {
         var horizontal = Configured("""
-            general:gaps_in = 8 4
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 8 4
+            gaps_out = 0
+            border_size = 0
             """);
         horizontal.Handle(Appeared(1, Wide));
         var sideBySide = horizontal.Handle(Appeared(2, Wide));
 
-        Assert.Equal(new Rectangle(0, 0, 956, 1080), BoundsOf(sideBySide, 1));
-        Assert.Equal(new Rectangle(964, 0, 956, 1080), BoundsOf(sideBySide, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 956, 1080), BoundsOf(sideBySide, 1));
+        Assert.AreEqual(new Rectangle(964, 0, 956, 1080), BoundsOf(sideBySide, 2));
 
         var vertical = Configured("""
-            general:gaps_in = 10 0 30 0
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 10 0 30 0
+            gaps_out = 0
+            border_size = 0
             """);
         vertical.Handle(Appeared(1, Tall));
         var stacked = vertical.Handle(Appeared(2, Tall));
 
-        Assert.Equal(new Rectangle(0, 0, 1080, 930), BoundsOf(stacked, 1));
-        Assert.Equal(new Rectangle(0, 970, 1080, 950), BoundsOf(stacked, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 1080, 930), BoundsOf(stacked, 1));
+        Assert.AreEqual(new Rectangle(0, 970, 1080, 950), BoundsOf(stacked, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void OuterGapsInsetTheTilingArea()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 10 30 50 70
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10 30 50 70
+            border_size = 0
             """);
 
         var outcome = core.Handle(Appeared(1, Wide));
 
-        Assert.Equal(new Rectangle(70, 10, 1820, 1020), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(70, 10, 1820, 1020), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void BorderSizeReservesSpaceOnEverySide()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 2
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 2
             """);
 
         var outcome = core.Handle(Appeared(1, Wide));
 
-        Assert.Equal(new Rectangle(2, 2, 1916, 1076), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(2, 2, 1916, 1076), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void BorderSizeClampsToItsLimit()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 50
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 50
             """);
 
         var outcome = core.Handle(Appeared(1, Wide));
 
-        Assert.Equal(new Rectangle(20, 20, 1880, 1040), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(20, 20, 1880, 1040), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void OmittedOptionsUseTheDocumentedDefaults()
     {
         var core = Configured("");
 
         var outcome = core.Handle(Appeared(1, Wide));
 
-        Assert.Equal(new Rectangle(10, 10, 1900, 1060), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(10, 10, 1900, 1060), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void LatestOptionWinsAndALaterConfigStartsOver()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:gaps_out = 40
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            gaps_out = 40
+            border_size = 0
             """);
         var first = core.Handle(Appeared(1, Wide));
-        Assert.Equal(new Rectangle(40, 40, 1840, 1000), BoundsOf(first, 1));
+        Assert.AreEqual(new Rectangle(40, 40, 1840, 1000), BoundsOf(first, 1));
 
         var replaced = core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:border_size = 0
+            gaps_in = 0
+            border_size = 0
             """)));
 
-        Assert.Equal(new Rectangle(8, 8, 1904, 1064), BoundsOf(replaced, 1));
+        Assert.AreEqual(new Rectangle(8, 8, 1904, 1064), BoundsOf(replaced, 1));
     }
 
-    [Theory]
-    [InlineData("nan")]
-    [InlineData("NaN")]
-    [InlineData("Infinity")]
-    [InlineData("-infinity")]
+    [TestMethod]
+    [DataRow("nan")]
+    [DataRow("NaN")]
+    [DataRow("Infinity")]
+    [DataRow("-infinity")]
     public void ANumberThatIsNotFiniteWarnsAndIsSkipped(string value)
     {
         var document = ConfigParser.Parse($"""
-            scrolling:column_width = 0.7
-            scrolling:column_width = {value}
-            decoration:active_opacity = 0.5
-            decoration:active_opacity = {value}
+            column_width = 0.7
+            column_width = {value}
+            active_opacity = 0.5
+            active_opacity = {value}
             """);
 
         var scrolling = ScrollingOptions.From(document);
         var cursor = CursorOptions.From(document);
 
-        Assert.Equal([2, 4], document.Warnings.Select(warning => warning.Line));
+        TestSequence.Equal([2, 4], document.Warnings.Select(warning => warning.Line));
 
-        Assert.Equal(0.7, scrolling.ColumnWidth);
+        Assert.AreEqual(0.7, scrolling.ColumnWidth);
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidOptionValuesAreLeftOut()
     {
         var core = Configured("""
-            general:gaps_in = 0
-            general:gaps_out = 40
-            general:gaps_out = no
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 40
+            gaps_out = no
+            border_size = 0
             """);
 
         var outcome = core.Handle(Appeared(1, Wide));
 
-        Assert.Equal(new Rectangle(40, 40, 1840, 1000), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(40, 40, 1840, 1000), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ChangingGapsMovesClientsAlreadyPlaced()
     {
         var core = new WindowManager();
         core.Handle(Appeared(1, Wide));
 
         var outcome = core.Handle(new Configure(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 10
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 10
+            border_size = 0
             """)));
 
-        Assert.Equal(new Rectangle(10, 10, 1900, 1060), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(10, 10, 1900, 1060), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASplitKeepsItsDirectionWhenTheContainerChangesShape()
     {
         var core = Configured(FlatConfig(""));
@@ -181,11 +182,11 @@ public class LayoutOptionTests
 
         var outcome = core.Handle(new WindowClosed(new WindowId(1)));
 
-        Assert.Equal(new Rectangle(0, 0, 1920, 540), BoundsOf(outcome, 2));
-        Assert.Equal(new Rectangle(0, 540, 1920, 540), BoundsOf(outcome, 3));
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 540), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 540, 1920, 540), BoundsOf(outcome, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASplitsDirectionSurvivesMinimizeAndRestore()
     {
         var core = Configured(FlatConfig(""));
@@ -196,47 +197,47 @@ public class LayoutOptionTests
 
         var outcome = core.Handle(new WindowRestored(new WindowId(3)));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 540), BoundsOf(outcome, 2));
-        Assert.Equal(new Rectangle(960, 540, 960, 540), BoundsOf(outcome, 3));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 540), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(960, 540, 960, 540), BoundsOf(outcome, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnotherLayoutNameStillTilesWithDwindle()
     {
         var core = Configured(FlatConfig("""
-            general:layout = tabbed
+            layout = tabbed
             """));
         core.Handle(Appeared(1, Wide));
 
         var outcome = core.Handle(Appeared(2, Wide));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFloatingLayoutFloatsEveryNewClient()
     {
         var core = Configured(FlatConfig("""
-            general:layout = floating
+            layout = floating
             """));
         core.Handle(Appeared(1, Wide));
 
         var outcome = core.Handle(Appeared(2, Wide));
 
-        Assert.True(Client(outcome, 1).Floating);
-        Assert.True(Client(outcome, 2).Floating);
-        Assert.Equal("floating", Assert.Single(outcome.State.Workspaces).TiledLayout);
+        Assert.IsTrue(Client(outcome, 1).Floating);
+        Assert.IsTrue(Client(outcome, 2).Floating);
+        Assert.AreEqual("floating", Assert.ContainsSingle(outcome.State.Workspaces).TiledLayout);
     }
 
-    [Fact]
+    [TestMethod]
     public void FloatingClientOpensCenteredWhenGapsAndBorderAreSet()
     {
         var core = Configured("""
-            general:gaps_in = 12
-            general:gaps_out = 20
-            general:border_size = 4
+            gaps_in = 12
+            gaps_out = 20
+            border_size = 4
             """);
         var bounds = new Rectangle(400, 300, 320, 200);
         var tiled = core.Handle(Appeared(1, Wide));
@@ -247,8 +248,8 @@ public class LayoutOptionTests
             Bounds = bounds,
         });
 
-        Assert.Equal(new Rectangle(24, 24, 1872, 1032), BoundsOf(tiled, 1));
-        Assert.Equal(NewFloat.Centered(Wide, bounds), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(24, 24, 1872, 1032), BoundsOf(tiled, 1));
+        Assert.AreEqual(NewFloat.Centered(Wide, bounds), BoundsOf(outcome, 2));
     }
 
 }

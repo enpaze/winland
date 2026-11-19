@@ -1,6 +1,5 @@
 namespace Winland.Infrastructure.Tests;
-
-[Collection("Console")]
+[TestClass]
 public class MotionPlayerTests
 {
     private static readonly WindowId Window = new(7);
@@ -8,23 +7,23 @@ public class MotionPlayerTests
     private static readonly Rectangle Start = new(0, 0, 100, 100);
     private static readonly Rectangle Goal = new(100, 0, 100, 100);
 
-    [Fact]
+    [TestMethod]
     public void AMotionShowsItsFirstFrameAndEndsWithThePlacement()
     {
         var target = new RecordingTarget();
         var clock = new Clock();
         using var player = new MotionPlayer(target, () => clock.Now, threaded: false);
 
-        Assert.True(player.Begin(new Motion(Window, Goal) { From = Start, Move = Linear }));
+        Assert.IsTrue(player.Begin(new Motion(Window, Goal) { From = Start, Move = Linear }));
         clock.Now = 50;
-        Assert.True(player.Tick());
+        Assert.IsTrue(player.Tick());
         clock.Now = 100;
-        Assert.False(player.Tick());
+        Assert.IsFalse(player.Tick());
 
-        Assert.Equal(["move 0", "move 50", "place 100"], target.Calls);
+        Assert.AreSequenceEqual(["move 0", "move 50", "place 100"], target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void PaintingAWindowWithNoMotionReadsNoClock()
     {
         var reads = 0;
@@ -32,11 +31,11 @@ public class MotionPlayerTests
 
         var hold = player.Paint(Window, 128, new BorderColor(255, 1, 2, 3));
 
-        Assert.Equal(default, hold);
-        Assert.Equal(0, reads);
+        Assert.AreEqual(default, hold);
+        Assert.AreEqual(0, reads);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFrameLeftWhenTheMotionsLandIsNotShown()
     {
         var target = new RecordingTarget();
@@ -53,10 +52,10 @@ public class MotionPlayerTests
 
         player.Tick();
 
-        Assert.Equal(["move 0", "move 0", "move 50", "place 100", "place 100"], target.Calls.Where(call => call.StartsWith("move", StringComparison.Ordinal) || call.StartsWith("place", StringComparison.Ordinal)));
+        Assert.AreSequenceEqual(["move 0", "move 0", "move 50", "place 100", "place 100"], target.Calls.Where(call => call.StartsWith("move", StringComparison.Ordinal) || call.StartsWith("place", StringComparison.Ordinal)));
     }
 
-    [Fact]
+    [TestMethod]
     public void RepeatedFrameFailuresAreLoggedOnceAndOtherWindowsStillMove()
     {
         var target = new RecordingTarget();
@@ -78,7 +77,7 @@ public class MotionPlayerTests
 
             Assert.Contains("System.InvalidOperationException: frame failed", log.ToString(), StringComparison.Ordinal);
             Assert.Contains("   at ", log.ToString(), StringComparison.Ordinal);
-            Assert.Equal(2, log.ToString().Split("frame failed", StringSplitOptions.None).Length);
+            Assert.AreEqual(2, log.ToString().Split("frame failed", StringSplitOptions.None).Length);
             Assert.Contains("move 50", target.Calls);
         }
         finally
@@ -87,7 +86,7 @@ public class MotionPlayerTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void APlacementThatStopsAMotionIsTheLastOne()
     {
         var target = new RecordingTarget();
@@ -95,15 +94,15 @@ public class MotionPlayerTests
         using var player = new MotionPlayer(target, () => clock.Now, threaded: false);
         player.Begin(new Motion(Window, Goal) { From = Start, Move = Linear });
 
-        Assert.False(player.Settle(Window, new Rectangle(300, 0, 100, 100)));
+        Assert.IsFalse(player.Settle(Window, new Rectangle(300, 0, 100, 100)));
         target.Calls.Add("place 300");
         clock.Now = 100;
         player.Tick();
 
-        Assert.Equal("place 300", target.Calls[^1]);
+        Assert.AreEqual("place 300", target.Calls[^1]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFadeThatReplacesAMoveToAnotherRectangleReleasesTheWindow()
     {
         var target = new RecordingTarget();
@@ -112,17 +111,17 @@ public class MotionPlayerTests
         player.Begin(new Motion(Window, Goal) { From = Start, Move = Linear });
         clock.Now = 50;
         player.Tick();
-        Assert.Empty(target.Released);
+        Assert.IsEmpty(target.Released);
 
         player.Begin(new Motion(Window, new Rectangle(300, 0, 100, 100)) { AlphaTo = 200, Alpha = Linear });
 
-        Assert.Equal([Window], target.Released);
+        Assert.AreSequenceEqual([Window], target.Released);
         clock.Now = 150;
-        Assert.False(player.Tick());
-        Assert.Equal([Window, Window], target.Released);
+        Assert.IsFalse(player.Tick());
+        Assert.AreSequenceEqual([Window, Window], target.Released);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFadeOnTheSameRectangleKeepsTheMoveRunning()
     {
         var target = new RecordingTarget();
@@ -134,14 +133,14 @@ public class MotionPlayerTests
 
         player.Begin(new Motion(Window, Goal) { AlphaTo = 200, Alpha = Linear });
 
-        Assert.Empty(target.Released);
+        Assert.IsEmpty(target.Released);
         clock.Now = 150;
-        Assert.False(player.Tick());
+        Assert.IsFalse(player.Tick());
         Assert.Contains("place 100", target.Calls);
-        Assert.Empty(target.Released);
+        Assert.IsEmpty(target.Released);
     }
 
-    [Fact]
+    [TestMethod]
     public void ALeavingWindowIsHiddenAndPutBackOnItsLayoutRectangle()
     {
         var target = new RecordingTarget();
@@ -152,10 +151,10 @@ public class MotionPlayerTests
         clock.Now = 100;
         player.Tick();
 
-        Assert.Equal(["move 0", "hide", "place 0", "alpha 200"], target.Calls);
+        Assert.AreSequenceEqual(["move 0", "hide", "place 0", "alpha 200"], target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatRefusesToCloseReturnsToItsLayoutRectangle()
     {
         var target = new RecordingTarget { Open = true };
@@ -164,14 +163,14 @@ public class MotionPlayerTests
         player.Begin(new Motion(Window, new Rectangle(47, 47, 5, 5)) { From = Start, Move = Linear, FadeTo = 0, Fade = Linear, End = MotionEnd.Close, Rest = Start });
 
         clock.Now = 100;
-        Assert.True(player.Tick());
+        Assert.IsTrue(player.Tick());
         clock.Now = 100 + MotionPlayer.CloseGrace.TotalMilliseconds;
-        Assert.False(player.Tick());
+        Assert.IsFalse(player.Tick());
 
-        Assert.Equal(["move 0", "alpha 255", "alpha 0", "close", "place 0", "alpha 255"], target.Calls);
+        Assert.AreSequenceEqual(["move 0", "alpha 255", "alpha 0", "close", "place 0", "alpha 255"], target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void ACloseMotionWaitsItsOwnGraceBeforeTheWindowReturns()
     {
         var target = new RecordingTarget { Open = true };
@@ -187,17 +186,17 @@ public class MotionPlayerTests
         });
 
         clock.Now = 100;
-        Assert.True(player.Tick());
+        Assert.IsTrue(player.Tick());
         clock.Now = 299;
-        Assert.True(player.Tick());
+        Assert.IsTrue(player.Tick());
         Assert.DoesNotContain("place 0", target.Calls);
         clock.Now = 300;
-        Assert.False(player.Tick());
+        Assert.IsFalse(player.Tick());
 
-        Assert.Equal("place 0", target.Calls[^2]);
+        Assert.AreEqual("place 0", target.Calls[^2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AHungWindowSkipsTheFramesInBetween()
     {
         var target = new RecordingTarget { Frozen = Window };
@@ -211,10 +210,10 @@ public class MotionPlayerTests
         clock.Now = 100;
         player.Tick();
 
-        Assert.Equal(["place async 100"], target.Calls);
+        Assert.AreSequenceEqual(["place async 100"], target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void AHungWindowIsPlacedWithoutWaitingAndTheOthersStillFinish()
     {
         var other = new WindowId(8);
@@ -226,13 +225,13 @@ public class MotionPlayerTests
         target.Clear();
 
         clock.Now = 100;
-        Assert.False(player.Tick());
+        Assert.IsFalse(player.Tick());
 
         Assert.Contains("place async 100", target.Calls);
         Assert.Contains("place 100", target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void AHungWindowThatLeavesIsPlacedWithoutWaitingAfterItIsHidden()
     {
         var target = new RecordingTarget { Frozen = Window };
@@ -244,10 +243,10 @@ public class MotionPlayerTests
         clock.Now = 100;
         player.Tick();
 
-        Assert.Equal(["hide", "place async 0", "alpha 255"], target.Calls);
+        Assert.AreSequenceEqual(["hide", "place async 0", "alpha 255"], target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void LandingPlacesAHungWindowWithoutWaiting()
     {
         var target = new RecordingTarget { Frozen = Window };
@@ -262,7 +261,7 @@ public class MotionPlayerTests
         Assert.DoesNotContain("place 100", target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void LandingPutsARunningMotionOnItsLayoutRectangle()
     {
         var target = new RecordingTarget();
@@ -272,13 +271,13 @@ public class MotionPlayerTests
 
         player.Land();
 
-        Assert.Equal(["move 0", "place 100", "alpha 255"], target.Calls);
-        Assert.False(player.Running(Window));
-        Assert.True(player.Begin(new Motion(Window, Goal) { From = Start, Move = Linear }));
+        Assert.AreSequenceEqual(["move 0", "place 100", "alpha 255"], target.Calls);
+        Assert.IsFalse(player.Running(Window));
+        Assert.IsTrue(player.Begin(new Motion(Window, Goal) { From = Start, Move = Linear }));
         player.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void HaltingOrDroppingAWindowStopsItsMotion()
     {
         var target = new RecordingTarget();
@@ -292,13 +291,13 @@ public class MotionPlayerTests
         player.Drop(other);
         clock.Now = 50;
 
-        Assert.False(player.Tick());
-        Assert.False(player.Running(Window));
-        Assert.False(player.Running(other));
-        Assert.Equal(["move 0", "move 0"], target.Calls);
+        Assert.IsFalse(player.Tick());
+        Assert.IsFalse(player.Running(Window));
+        Assert.IsFalse(player.Running(other));
+        Assert.AreSequenceEqual(["move 0", "move 0"], target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void EachFrameNamesTheGoalItIsHeadingFor()
     {
         var target = new RecordingTarget();
@@ -310,10 +309,10 @@ public class MotionPlayerTests
         clock.Now = 50;
         player.Tick();
 
-        Assert.Equal([grown, grown], target.Goals);
+        Assert.AreSequenceEqual([grown, grown], target.Goals);
     }
 
-    [Fact]
+    [TestMethod]
     public void AMotionStoppedEarlyReleasesItsWindowAndOneThatLandsThereDoesNot()
     {
         var target = new RecordingTarget();
@@ -323,16 +322,16 @@ public class MotionPlayerTests
         player.Begin(new Motion(Window, Goal) { From = Start, Move = Linear });
         player.Begin(new Motion(other, Goal) { From = Start, Move = Linear });
 
-        Assert.True(player.Settle(Window, Goal));
-        Assert.Empty(target.Released);
+        Assert.IsTrue(player.Settle(Window, Goal));
+        Assert.IsEmpty(target.Released);
 
-        Assert.False(player.Settle(Window, new Rectangle(300, 0, 100, 100)));
+        Assert.IsFalse(player.Settle(Window, new Rectangle(300, 0, 100, 100)));
         player.Halt(other);
 
-        Assert.Equal([Window, other], target.Released);
+        Assert.AreSequenceEqual([Window, other], target.Released);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DroppingAWindowWaitsForTheFrameBeingApplied()
     {
         using var entered = new ManualResetEventSlim();
@@ -345,16 +344,16 @@ public class MotionPlayerTests
         clock.Now = 50;
 
         var tick = Task.Run(player.Tick);
-        Assert.True(entered.Wait(TimeSpan.FromSeconds(5)), "The frame never started.");
+        Assert.IsTrue(entered.Wait(TimeSpan.FromSeconds(5)), "The frame never started.");
         var drop = Task.Run(() => player.Drop(Window));
         var droppedEarly = SpinWait.SpinUntil(() => drop.IsCompleted, 100);
         gate.Set();
 
-        Assert.False(droppedEarly, "Drop returned while the frame was still being applied.");
+        Assert.IsFalse(droppedEarly, "Drop returned while the frame was still being applied.");
         await Task.WhenAll(tick, drop).WaitAsync(TimeSpan.FromSeconds(5));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowClosedWithoutAMotionGoesTransparentAtOnceAndReturnsIfItStaysOpen()
     {
         var target = new RecordingTarget { Open = true };
@@ -365,15 +364,15 @@ public class MotionPlayerTests
         var closing = target.Calls.ToArray();
         var held = player.Paint(Window, 255, new BorderColor(0xFF, 1, 2, 3));
         clock.Now = MotionPlayer.CloseGrace.TotalMilliseconds;
-        Assert.False(player.Tick());
+        Assert.IsFalse(player.Tick());
 
-        Assert.Equal(["alpha 0", "close"], closing);
-        Assert.True(held.Alpha);
-        Assert.Equal(["alpha 0", "close", "place 0", "alpha 200"], target.Calls);
-        Assert.False(player.Running(Window));
+        Assert.AreSequenceEqual(["alpha 0", "close"], closing);
+        Assert.IsTrue(held.Alpha);
+        Assert.AreSequenceEqual(["alpha 0", "close", "place 0", "alpha 200"], target.Calls);
+        Assert.IsFalse(player.Running(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowClosedWithoutAMotionThatGoesIsNotPutBack()
     {
         var target = new RecordingTarget();
@@ -384,10 +383,10 @@ public class MotionPlayerTests
         clock.Now = MotionPlayer.CloseGrace.TotalMilliseconds;
         player.Tick();
 
-        Assert.Equal(["alpha 0", "close"], target.Calls);
+        Assert.AreSequenceEqual(["alpha 0", "close"], target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void AClosingWindowRunsUntilItsGraceIsOver()
     {
         var target = new RecordingTarget { Open = true };
@@ -405,14 +404,14 @@ public class MotionPlayerTests
         clock.Now = 100 + MotionPlayer.CloseGrace.TotalMilliseconds;
         player.Tick();
 
-        Assert.True(halfway);
-        Assert.True(runningHalfway);
-        Assert.Equal(0, callsHalfway);
-        Assert.Equal(["place 0", "alpha 255"], target.Calls);
-        Assert.False(player.Running(Window));
+        Assert.IsTrue(halfway);
+        Assert.IsTrue(runningHalfway);
+        Assert.AreEqual(0, callsHalfway);
+        Assert.AreSequenceEqual(["place 0", "alpha 255"], target.Calls);
+        Assert.IsFalse(player.Running(Window));
     }
 
-    [Fact]
+    [TestMethod]
     public void ANewMotionCancelsAPendingClose()
     {
         var target = new RecordingTarget { Open = true };
@@ -430,7 +429,7 @@ public class MotionPlayerTests
         Assert.DoesNotContain("place 0", target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void LandingAClosingMotionClosesTheWindowAndPutsNothingBack()
     {
         var target = new RecordingTarget { Open = true };
@@ -443,13 +442,13 @@ public class MotionPlayerTests
         clock.Now = 100 + MotionPlayer.CloseGrace.TotalMilliseconds;
         player.Tick();
 
-        Assert.Equal(["alpha 0", "close"], target.Calls);
-        Assert.False(player.Running(Window));
+        Assert.AreSequenceEqual(["alpha 0", "close"], target.Calls);
+        Assert.IsFalse(player.Running(Window));
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
     public void LandingPutsBackAWindowThatDidNotClose(bool open)
     {
         var target = new RecordingTarget { Open = open };
@@ -465,11 +464,11 @@ public class MotionPlayerTests
         clock.Now = 100 + MotionPlayer.CloseGrace.TotalMilliseconds;
         player.Tick();
 
-        Assert.Equal(open ? ["place 0", "alpha 255"] : [], landed);
-        Assert.Equal(landed, target.Calls);
+        Assert.AreSequenceEqual(open ? ["place 0", "alpha 255"] : [], landed);
+        Assert.AreSequenceEqual(landed, target.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void BorderAndAlphaChannelsAreShownAndLanded()
     {
         var target = new RecordingTarget();
@@ -489,12 +488,12 @@ public class MotionPlayerTests
         player.Land();
 
         Assert.Contains("alpha 180", stepped);
-        Assert.True(stepped.Count(call => call == "border") >= 3);
-        Assert.Equal(["border", "alpha 105"], stepped.TakeLast(2));
-        Assert.Equal(["border", "place 100", "alpha 255"], target.Calls.TakeLast(3));
+        Assert.IsTrue(stepped.Count(call => call == "border") >= 3);
+        Assert.AreSequenceEqual(["border", "alpha 105"], stepped.TakeLast(2));
+        Assert.AreSequenceEqual(["border", "place 100", "alpha 255"], target.Calls.TakeLast(3));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheThreadStepsAMotionToItsEndAndStartsAgainAfterLanding()
     {
         var target = new RecordingTarget();
@@ -509,9 +508,9 @@ public class MotionPlayerTests
         var second = WaitUntil(() => target.Contains("place 0"));
         player.Dispose();
 
-        Assert.True(first, "The first motion never landed.");
-        Assert.True(second, "The motion after the landing never landed.");
-        Assert.True(target.Paced > 0);
+        Assert.IsTrue(first, "The first motion never landed.");
+        Assert.IsTrue(second, "The motion after the landing never landed.");
+        Assert.IsTrue(target.Paced > 0);
     }
 
     private static bool WaitUntil(Func<bool> condition) =>

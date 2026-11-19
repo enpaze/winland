@@ -45,19 +45,20 @@ public abstract class ConfigWatcherFacts
     }
 }
 
+[TestClass]
 public class ConfigWatcherTests : ConfigWatcherFacts
 {
-    [Fact]
+    [TestMethod]
     public void ADebounceThatIsNotPositiveIsRefused()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ConfigWatcher(() => { }, TimeSpan.Zero));
-        Assert.Throws<ArgumentNullException>(() => new ConfigWatcher(null!));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new ConfigWatcher(() => { }, TimeSpan.Zero));
+        Assert.ThrowsExactly<ArgumentNullException>(() => new ConfigWatcher(null!));
         using var watcher = new ConfigWatcher(() => { });
-        Assert.Throws<ArgumentNullException>(() => watcher.Watch(null!));
-        Assert.Equal(TimeSpan.FromMilliseconds(150), ConfigWatcher.DefaultDebounce);
+        Assert.ThrowsExactly<ArgumentNullException>(() => watcher.Watch(null!));
+        Assert.AreEqual(TimeSpan.FromMilliseconds(150), ConfigWatcher.DefaultDebounce);
     }
 
-    [Fact]
+    [TestMethod]
     public void HostReloadAppliesTheCoreReply()
     {
         var core = new WindowManager
@@ -68,13 +69,13 @@ public class ConfigWatcherTests : ConfigWatcherFacts
 
         var reply = host.Reload();
 
-        Assert.Equal("ok", reply.Text);
-        Assert.Equal(
+        Assert.AreEqual("ok", reply.Text);
+        Assert.AreSequenceEqual(
             ["warning>>1,,Unsupported keyword 'blur'.", "configreloaded>>"],
             CommandProtocol.FormatStream(reply.Effect.Events, reply.Effect.State));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASaveWithNoLoopRunningIsNotRead()
     {
         var reads = 0;
@@ -90,19 +91,20 @@ public class ConfigWatcherTests : ConfigWatcherFacts
 
         host.PostReload();
 
-        Assert.Equal(0, reads);
+        Assert.AreEqual(0, reads);
     }
 }
 
+[TestClass]
 public class ConfigWatcherRenameTests : ConfigWatcherFacts
 {
-    [Fact]
+    [TestMethod]
     public void RenamingOverAWatchedFileReloadsOnce()
     {
         using var dir = Temp();
         var config = Path.Combine(dir.Path, "winland.conf");
         var notes = Path.Combine(dir.Path, "notes.txt");
-        File.WriteAllText(config, "general:gaps_in = 0\n");
+        File.WriteAllText(config, "gaps_in = 0\n");
         File.WriteAllText(notes, "");
         var count = 0;
         using var watcher = new ConfigWatcher(() => Interlocked.Increment(ref count), Debounce);
@@ -113,72 +115,75 @@ public class ConfigWatcherRenameTests : ConfigWatcherFacts
         {
             probe.Watch([notes]);
             File.WriteAllText(notes, "leave this");
-            Assert.True(WaitUntil(() => Volatile.Read(ref seen) > 0), "The change to the unrelated file was never seen.");
+            Assert.IsTrue(WaitUntil(() => Volatile.Read(ref seen) > 0), "The change to the unrelated file was never seen.");
         }
 
-        Assert.Equal(0, Settled(ref count));
+        Assert.AreEqual(0, Settled(ref count));
 
         var replaced = Path.Combine(dir.Path, "winland.conf.new");
         File.WriteAllText(replaced, "blur = yes\n");
         File.Move(replaced, config, overwrite: true);
 
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) > 0), "The rename did not reload.");
-        Assert.Equal(1, Settled(ref count));
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) > 0), "The rename did not reload.");
+        Assert.AreEqual(1, Settled(ref count));
     }
 }
 
+[TestClass]
 public class ConfigWatcherSourceTests : ConfigWatcherFacts
 {
-    [Fact]
+    [TestMethod]
     public void ASourcedFileChangeReloads()
     {
         using var dir = Temp();
         var config = Path.Combine(dir.Path, "winland.conf");
         var source = Path.Combine(dir.Path, "extra.conf");
         File.WriteAllText(config, "source = extra.conf\n");
-        File.WriteAllText(source, "general:gaps_in = 0\n");
+        File.WriteAllText(source, "gaps_in = 0\n");
         var count = 0;
         using var watcher = new ConfigWatcher(() => Interlocked.Increment(ref count), Debounce);
         watcher.Watch([config, source]);
 
         var replaced = Path.Combine(dir.Path, "extra.conf.new");
-        File.WriteAllText(replaced, "general:gaps_in = 4\n");
+        File.WriteAllText(replaced, "gaps_in = 4\n");
         File.Move(replaced, source, overwrite: true);
 
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) > 0), "The sourced file change did not reload.");
-        Assert.Equal(1, Settled(ref count));
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) > 0), "The sourced file change did not reload.");
+        Assert.AreEqual(1, Settled(ref count));
     }
 }
 
+[TestClass]
 public class ConfigWatcherEditTests : ConfigWatcherFacts
 {
-    [Fact]
+    [TestMethod]
     public void AWriteADeleteAndANewFileEachReload()
     {
         using var dir = Temp();
         var config = Path.Combine(dir.Path, "winland.conf");
         var later = Path.Combine(dir.Path, "later.conf");
-        File.WriteAllText(config, "general:gaps_in = 0\n");
+        File.WriteAllText(config, "gaps_in = 0\n");
         var count = 0;
         using var watcher = new ConfigWatcher(() => Interlocked.Increment(ref count), Debounce);
         watcher.Watch([config, later]);
 
-        File.AppendAllText(config, "general:gaps_in = 1\n");
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) > 0), "Writing the file in place did not reload.");
+        File.AppendAllText(config, "gaps_in = 1\n");
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) > 0), "Writing the file in place did not reload.");
         var written = Settled(ref count);
 
         File.Delete(config);
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) > written), "Deleting the file did not reload.");
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) > written), "Deleting the file did not reload.");
         var deleted = Settled(ref count);
 
-        File.WriteAllText(later, "general:gaps_in = 2\n");
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) > deleted), "A new watched file did not reload.");
+        File.WriteAllText(later, "gaps_in = 2\n");
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) > deleted), "A new watched file did not reload.");
     }
 }
 
+[TestClass]
 public class ConfigWatcherRewatchTests : ConfigWatcherFacts
 {
-    [Fact]
+    [TestMethod]
     public void WatchingAgainReplacesTheWatchedFiles()
     {
         using var dir = Temp();
@@ -192,18 +197,19 @@ public class ConfigWatcherRewatchTests : ConfigWatcherFacts
         watcher.Watch([dropped]);
         watcher.Watch([config, " ", Path.Combine(dir.Path, "missing", "gone.conf")]);
 
-        File.AppendAllText(dropped, "general:gaps_in = 3\n");
+        File.AppendAllText(dropped, "gaps_in = 3\n");
         var afterDropped = Settled(ref count);
-        File.AppendAllText(config, "general:gaps_in = 3\n");
+        File.AppendAllText(config, "gaps_in = 3\n");
 
-        Assert.Equal(0, afterDropped);
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) > 0), "The newly watched file did not reload.");
+        Assert.AreEqual(0, afterDropped);
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) > 0), "The newly watched file did not reload.");
     }
 }
 
+[TestClass]
 public class ConfigWatcherDisposeTests : ConfigWatcherFacts
 {
-    [Fact]
+    [TestMethod]
     public void NothingReloadsAfterDispose()
     {
         using var dir = Temp();
@@ -215,16 +221,17 @@ public class ConfigWatcherDisposeTests : ConfigWatcherFacts
 
         watcher.Dispose();
         watcher.Watch([config]);
-        File.AppendAllText(config, "general:gaps_in = 1\n");
+        File.AppendAllText(config, "gaps_in = 1\n");
         watcher.Dispose();
 
-        Assert.Equal(0, Settled(ref count));
+        Assert.AreEqual(0, Settled(ref count));
     }
 }
 
+[TestClass]
 public class ConfigWatcherThrowTests : ConfigWatcherFacts
 {
-    [Fact]
+    [TestMethod]
     public void AReloadThatThrowsDoesNotStopTheWatch()
     {
         using var dir = Temp();
@@ -241,52 +248,54 @@ public class ConfigWatcherThrowTests : ConfigWatcherFacts
         watcher.Watch([config]);
 
         File.AppendAllText(config, "a\n");
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) > 0), "The first change did not reload.");
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) > 0), "The first change did not reload.");
         var first = Settled(ref count);
         File.AppendAllText(config, "b\n");
 
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) > first), "The watch stopped after a reload threw.");
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) > first), "The watch stopped after a reload threw.");
     }
 }
 
+[TestClass]
 public class ConfigWatcherUnchangedTests : ConfigWatcherFacts
 {
-    [Fact]
+    [TestMethod]
     public void TheFirstUnchangedSaveReloadsNothing()
     {
         using var dir = Temp();
         var config = Path.Combine(dir.Path, "winland.conf");
-        File.WriteAllText(config, "general:gaps_in = 0\n");
+        File.WriteAllText(config, "gaps_in = 0\n");
         var count = 0;
         using var watcher = new ConfigWatcher(() => Interlocked.Increment(ref count), Debounce);
         watcher.Watch([config]);
 
-        File.WriteAllText(config, "general:gaps_in = 0\n");
+        File.WriteAllText(config, "gaps_in = 0\n");
 
-        Assert.Equal(0, Settled(ref count));
+        Assert.AreEqual(0, Settled(ref count));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASaveThatChangedNothingReloadsNothing()
     {
         using var dir = Temp();
         var config = Path.Combine(dir.Path, "winland.conf");
-        File.WriteAllText(config, "general:gaps_in = 0\n");
+        File.WriteAllText(config, "gaps_in = 0\n");
         var count = 0;
         using var watcher = new ConfigWatcher(() => Interlocked.Increment(ref count), Debounce);
         watcher.Watch([config]);
 
-        File.WriteAllText(config, "general:gaps_in = 1\n");
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) == 1));
-        File.WriteAllText(config, "general:gaps_in = 1\n");
+        File.WriteAllText(config, "gaps_in = 1\n");
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) == 1));
+        File.WriteAllText(config, "gaps_in = 1\n");
 
-        Assert.Equal(1, Settled(ref count));
+        Assert.AreEqual(1, Settled(ref count));
     }
 }
 
+[TestClass]
 public class ConfigWatcherGlobTests : ConfigWatcherFacts
 {
-    [Fact]
+    [TestMethod]
     public void TheFirstMatchOfAnEmptySourceGlobReloads()
     {
         using var dir = Temp();
@@ -298,23 +307,23 @@ public class ConfigWatcherGlobTests : ConfigWatcherFacts
         using var watcher = new ConfigWatcher(() => Interlocked.Increment(ref count), Debounce);
         watcher.Watch([config, .. document.Sources]);
 
-        File.WriteAllText(Path.Combine(folder, "first.conf"), "general:gaps_in = 1\n");
+        File.WriteAllText(Path.Combine(folder, "first.conf"), "gaps_in = 1\n");
 
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) == 1));
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) == 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ANewFileBesideAWatchedOneReloads()
     {
         using var dir = Temp();
         var config = Path.Combine(dir.Path, "winland.conf");
-        File.WriteAllText(config, "general:gaps_in = 0\n");
+        File.WriteAllText(config, "gaps_in = 0\n");
         var count = 0;
         using var watcher = new ConfigWatcher(() => Interlocked.Increment(ref count), Debounce);
         watcher.Watch([config]);
 
-        File.WriteAllText(Path.Combine(dir.Path, "extra.conf"), "general:gaps_out = 0\n");
+        File.WriteAllText(Path.Combine(dir.Path, "extra.conf"), "gaps_out = 0\n");
 
-        Assert.True(WaitUntil(() => Volatile.Read(ref count) == 1));
+        Assert.IsTrue(WaitUntil(() => Volatile.Read(ref count) == 1));
     }
 }

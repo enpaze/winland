@@ -1,155 +1,162 @@
 namespace Winland.Daemon.Tests;
 
+[TestClass]
 public class DefaultConfigTests
 {
     private const string Binds = """
-        SUPER|W|killactive||
-        SUPER|Q|killactive||
-        SUPER|J|togglesplit||
-        SUPER|T|togglefloating||
-        SUPER|F|fullscreen||
-        SUPER ALT|F|fullscreen|1|
-        SUPER|O|togglefloating||
-        SUPER|O|pin||
-        SUPER|K|cyclelayout||
-        SUPER ALT|K|cyclelayout|back|
-        SUPER|Left|movefocus|l|
-        SUPER|Right|movefocus|r|
-        SUPER|Up|movefocus|u|
-        SUPER|Down|movefocus|d|
-        SUPER SHIFT|Left|swapwindow|l|
-        SUPER SHIFT|Right|swapwindow|r|
-        SUPER SHIFT|Up|swapwindow|u|
-        SUPER SHIFT|Down|swapwindow|d|
-        SUPER CTRL SHIFT|Left|movewindow|mon:l|
-        SUPER CTRL SHIFT|Right|movewindow|mon:r|
-        SUPER CTRL SHIFT|Up|movewindow|mon:u|
-        SUPER CTRL SHIFT|Down|movewindow|mon:d|
-        SUPER ALT SHIFT|Left|movecurrentworkspacetomonitor|l|
-        SUPER ALT SHIFT|Right|movecurrentworkspacetomonitor|r|
-        SUPER ALT SHIFT|Up|movecurrentworkspacetomonitor|u|
-        SUPER ALT SHIFT|Down|movecurrentworkspacetomonitor|d|
-        SUPER|1|workspace|1|
-        SUPER|2|workspace|2|
-        SUPER|3|workspace|3|
-        SUPER|4|workspace|4|
-        SUPER|5|workspace|5|
-        SUPER|6|workspace|6|
-        SUPER|7|workspace|7|
-        SUPER|8|workspace|8|
-        SUPER|9|workspace|9|
-        SUPER|0|workspace|10|
-        SUPER SHIFT|1|movetoworkspace|1|
-        SUPER SHIFT|2|movetoworkspace|2|
-        SUPER SHIFT|3|movetoworkspace|3|
-        SUPER SHIFT|4|movetoworkspace|4|
-        SUPER SHIFT|5|movetoworkspace|5|
-        SUPER SHIFT|6|movetoworkspace|6|
-        SUPER SHIFT|7|movetoworkspace|7|
-        SUPER SHIFT|8|movetoworkspace|8|
-        SUPER SHIFT|9|movetoworkspace|9|
-        SUPER SHIFT|0|movetoworkspace|10|
-        SUPER ALT SHIFT|1|movetoworkspacesilent|1|
-        SUPER ALT SHIFT|2|movetoworkspacesilent|2|
-        SUPER ALT SHIFT|3|movetoworkspacesilent|3|
-        SUPER ALT SHIFT|4|movetoworkspacesilent|4|
-        SUPER ALT SHIFT|5|movetoworkspacesilent|5|
-        SUPER ALT SHIFT|6|movetoworkspacesilent|6|
-        SUPER ALT SHIFT|7|movetoworkspacesilent|7|
-        SUPER ALT SHIFT|8|movetoworkspacesilent|8|
-        SUPER ALT SHIFT|9|movetoworkspacesilent|9|
-        SUPER ALT SHIFT|0|movetoworkspacesilent|10|
-        SUPER|S|togglespecialworkspace|scratchpad|
-        SUPER|grave|togglespecialworkspace|scratchpad|
-        SUPER ALT|S|movetoworkspacesilent|special:scratchpad|
-        SUPER SHIFT|grave|movetoworkspacesilent|special:scratchpad|
-        SUPER|Tab|workspace|m+1|
-        SUPER SHIFT|Tab|workspace|m-1|
-        SUPER CTRL|Tab|workspace|previous_per_monitor|
-        ALT CTRL SHIFT|Tab|focusmonitor|-1|
-        SUPER SHIFT|minus|resizeactive|0 -100|
-        SUPER SHIFT|equal|resizeactive|0 100|
-        SUPER ALT|minus|resizeactive|-25 0|
-        SUPER ALT|equal|resizeactive|25 0|
-        SUPER CTRL|minus|resizeactive|-300 0|
-        SUPER CTRL|equal|resizeactive|300 0|
-        SUPER ALT SHIFT|minus|resizeactive|0 -25|
-        SUPER ALT SHIFT|equal|resizeactive|0 25|
-        SUPER CTRL SHIFT|minus|resizeactive|0 -300|
-        SUPER CTRL SHIFT|equal|resizeactive|0 300|
-        SUPER|mouse_down|workspace|m+1|
-        SUPER|mouse_up|workspace|m-1|
-        SUPER|mouse:272|movewindow||Mouse
-        SUPER|mouse:273|resizewindow||Mouse
-        SUPER|G|togglegroup||
-        SUPER ALT|G|moveoutofgroup||
-        SUPER ALT|Left|moveintogroup|l|
-        SUPER ALT|Right|moveintogroup|r|
-        SUPER ALT|Up|moveintogroup|u|
-        SUPER ALT|Down|moveintogroup|d|
-        SUPER ALT|Tab|changegroupactive|f|
-        SUPER ALT SHIFT|Tab|changegroupactive|b|
-        SUPER CTRL|Left|changegroupactive|b|
-        SUPER CTRL|Right|changegroupactive|f|
-        SUPER ALT|mouse_down|changegroupactive|f|
-        SUPER ALT|mouse_up|changegroupactive|b|
-        SUPER ALT|1|changegroupactive|1|
-        SUPER ALT|2|changegroupactive|2|
-        SUPER ALT|3|changegroupactive|3|
-        SUPER ALT|4|changegroupactive|4|
-        SUPER ALT|5|changegroupactive|5|
-        SUPER|Return|exec|wt|
-        SUPER SHIFT|Return|exec|start https://|
-        SUPER SHIFT|B|exec|start https://|
-        SUPER SHIFT|F|exec|explorer|
-        SUPER SHIFT|N|exec|notepad|
+        Win|W|close|
+        Win|Q|close|
+        Win|J|split|
+        Win|T|float|
+        Win|F|fullscreen|
+        Win Alt|F|maximize|
+        Win|O|float|
+        Win|O|pin|
+        Win|K|layout|next
+        Win Alt|K|layout|prev
+        Win|Left|focus|left
+        Win|Right|focus|right
+        Win|Up|focus|up
+        Win|Down|focus|down
+        Win Shift|Left|swap|left
+        Win Shift|Right|swap|right
+        Win Shift|Up|swap|up
+        Win Shift|Down|swap|down
+        Win Ctrl Shift|Left|move|mon:left
+        Win Ctrl Shift|Right|move|mon:right
+        Win Ctrl Shift|Up|move|mon:up
+        Win Ctrl Shift|Down|move|mon:down
+        Win Alt Shift|Left|move-workspace|left
+        Win Alt Shift|Right|move-workspace|right
+        Win Alt Shift|Up|move-workspace|up
+        Win Alt Shift|Down|move-workspace|down
+        Win|1|workspace|1
+        Win|2|workspace|2
+        Win|3|workspace|3
+        Win|4|workspace|4
+        Win|5|workspace|5
+        Win|6|workspace|6
+        Win|7|workspace|7
+        Win|8|workspace|8
+        Win|9|workspace|9
+        Win|0|workspace|10
+        Win Shift|1|move|1
+        Win Shift|2|move|2
+        Win Shift|3|move|3
+        Win Shift|4|move|4
+        Win Shift|5|move|5
+        Win Shift|6|move|6
+        Win Shift|7|move|7
+        Win Shift|8|move|8
+        Win Shift|9|move|9
+        Win Shift|0|move|10
+        Win Alt Shift|1|move|1 stay
+        Win Alt Shift|2|move|2 stay
+        Win Alt Shift|3|move|3 stay
+        Win Alt Shift|4|move|4 stay
+        Win Alt Shift|5|move|5 stay
+        Win Alt Shift|6|move|6 stay
+        Win Alt Shift|7|move|7 stay
+        Win Alt Shift|8|move|8 stay
+        Win Alt Shift|9|move|9 stay
+        Win Alt Shift|0|move|10 stay
+        Win|S|scratchpad|
+        Win|grave|scratchpad|
+        Win Alt|S|move|special stay
+        Win Shift|grave|move|special stay
+        Win|Tab|workspace|next
+        Win Shift|Tab|workspace|prev
+        Win Ctrl|Tab|workspace|last
+        Alt Ctrl Shift|Tab|focus-monitor|prev
+        Win Shift|minus|resize|0 -100
+        Win Shift|equal|resize|0 100
+        Win Alt|minus|resize|-25 0
+        Win Alt|equal|resize|25 0
+        Win Ctrl|minus|resize|-300 0
+        Win Ctrl|equal|resize|300 0
+        Win Alt Shift|minus|resize|0 -25
+        Win Alt Shift|equal|resize|0 25
+        Win Ctrl Shift|minus|resize|0 -300
+        Win Ctrl Shift|equal|resize|0 300
+        Win|mouse_down|workspace|next
+        Win|mouse_up|workspace|prev
+        Win|mouse:left|move|
+        Win|mouse:right|resize|
+        Win|G|group|
+        Win Alt|G|leave-group|
+        Win Alt|Left|join|left
+        Win Alt|Right|join|right
+        Win Alt|Up|join|up
+        Win Alt|Down|join|down
+        Win Alt|Tab|tab|next
+        Win Alt Shift|Tab|tab|prev
+        Win Ctrl|Left|tab|prev
+        Win Ctrl|Right|tab|next
+        Win Alt|mouse_down|tab|next
+        Win Alt|mouse_up|tab|prev
+        Win Alt|1|tab|1
+        Win Alt|2|tab|2
+        Win Alt|3|tab|3
+        Win Alt|4|tab|4
+        Win Alt|5|tab|5
+        Win|Return|exec|wt
+        Win Shift|Return|exec|start https://
+        Win Shift|B|exec|start https://
+        Win Shift|F|exec|explorer
+        Win Shift|N|exec|notepad
         """;
 
-    [Fact]
+    [TestMethod]
     public void TheEmbeddedDefaultParsesWithNoWarnings()
     {
         var document = ConfigParser.Parse(DefaultConfig.Text, dispatchers: WindowManager.DispatcherNames);
 
-        Assert.True(
+        Assert.IsTrue(
             document.Warnings.Count == 0,
             string.Join('\n', document.Warnings.Select(warning => $"{warning.Line}: {warning.Message}")));
-        Assert.Equal(Lines(Binds), document.Binds.Select(Describe));
-        var gesture = Assert.Single(document.Gestures);
-        Assert.Equal(new TrackpadGesture(3, GestureAxis.Horizontal), gesture);
+        Assert.AreSequenceEqual(Lines(Binds), document.Binds.Select(Describe));
+        var gesture = Assert.ContainsSingle(document.Gestures);
+        Assert.AreEqual(new TrackpadGesture(3, GestureAxis.Horizontal), gesture);
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryDefaultBindReadsBackFromTheLineBindsPrints()
     {
         var binds = ConfigParser.Parse(DefaultConfig.Text).Binds.OfType<Bind>().ToArray();
 
         var again = ConfigParser.Parse(CommandProtocol.FormatBindsText(binds));
 
-        Assert.Empty(again.Warnings);
-        Assert.Equal(binds, again.Binds);
+        Assert.IsEmpty(again.Warnings);
+        Assert.AreSequenceEqual(binds, again.Binds);
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryDefaultBindSaysWhatItDoes()
     {
         var binds = ConfigParser.Parse(DefaultConfig.Text).Binds.OfType<Bind>();
 
-        Assert.All(binds, bind => Assert.False(string.IsNullOrWhiteSpace(bind.Description), BindText.Line(bind)));
+        foreach (var bind in binds)
+{
+    Assert.IsFalse(string.IsNullOrWhiteSpace(bind.Description), BindText.Line(bind));
+}
     }
 
-    [Fact]
+    [TestMethod]
     public void OneAssignmentChangesTheMainModifierOfEveryDefaultBind()
     {
-        const string assignment = "$mainMod = SUPER";
+        const string assignment = "$mod = Win";
         Assert.Contains(assignment, DefaultConfig.Text, StringComparison.Ordinal);
 
-        var binds = ConfigParser.Parse(DefaultConfig.Text.Replace(assignment, "$mainMod = CTRL", StringComparison.Ordinal))
+        var binds = ConfigParser.Parse(DefaultConfig.Text.Replace(assignment, "$mod = Ctrl", StringComparison.Ordinal))
             .Binds.OfType<Bind>();
 
-        Assert.All(binds, bind => Assert.False(bind.Modifiers.HasFlag(Modifier.Super), BindText.Line(bind)));
+        foreach (var bind in binds)
+{
+    Assert.IsFalse(bind.Modifiers.HasFlag(Modifier.Win), BindText.Line(bind));
+}
     }
 
-    [Fact]
+    [TestMethod]
     public void OnlyWinOHasTwoDefaultBinds()
     {
         var shared = ConfigParser.Parse(DefaultConfig.Text).Binds.OfType<Bind>()
@@ -157,10 +164,10 @@ public class DefaultConfigTests
             .Where(chord => chord.Count() > 1)
             .Select(chord => $"{chord.Key.Modifiers}|{chord.Key.Key}|{string.Join(' ', chord.Select(bind => bind.Dispatcher))}");
 
-        Assert.Equal(["Super|O|togglefloating pin"], shared);
+        Assert.AreSequenceEqual(["Win|O|float pin"], shared);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheDefaultParsesWithNoWarningsOnAGermanLayout()
     {
         var german = KeyLayout.From(
@@ -183,29 +190,29 @@ public class DefaultConfigTests
 
         var document = ConfigParser.Parse(DefaultConfig.Text, layout: german, dispatchers: WindowManager.DispatcherNames);
 
-        Assert.True(
+        Assert.IsTrue(
             document.Warnings.Count == 0,
             string.Join('\n', document.Warnings.Select(warning => $"{warning.Line}: {warning.Message}")));
-        Assert.Equal(Lines(Binds).Count(), document.Binds.Count);
+        Assert.AreEqual(Lines(Binds).Count(), document.Binds.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheDefaultIsWrittenOnlyWhenTheFileIsMissing()
     {
         var root = Path.Combine(Path.GetTempPath(), "winland-default-config-" + Guid.NewGuid().ToString("N"));
         var path = Path.Combine(root, "winland", "winland.conf");
         try
         {
-            Assert.True(DefaultConfig.WriteIfMissing(path));
-            Assert.Equal(DefaultConfig.Text, File.ReadAllText(path));
+            Assert.IsTrue(DefaultConfig.WriteIfMissing(path));
+            Assert.AreEqual(DefaultConfig.Text, File.ReadAllText(path));
 
             File.WriteAllText(path, "");
-            Assert.True(DefaultConfig.WriteIfMissing(path));
-            Assert.Equal(DefaultConfig.Text, File.ReadAllText(path));
+            Assert.IsTrue(DefaultConfig.WriteIfMissing(path));
+            Assert.AreEqual(DefaultConfig.Text, File.ReadAllText(path));
 
-            File.WriteAllText(path, "bind = SUPER, Q, killactive\n");
-            Assert.False(DefaultConfig.WriteIfMissing(path));
-            Assert.Equal("bind = SUPER, Q, killactive\n", File.ReadAllText(path));
+            File.WriteAllText(path, "bind = Win+Q, close\n");
+            Assert.IsFalse(DefaultConfig.WriteIfMissing(path));
+            Assert.AreEqual("bind = Win+Q, close\n", File.ReadAllText(path));
         }
         finally
         {
@@ -219,24 +226,22 @@ public class DefaultConfigTests
 
     private static string Describe(BindDirective directive)
     {
-        var bind = Assert.IsType<Bind>(directive);
+        var bind = Assert.IsExactInstanceOfType<Bind>(directive);
         Assert.Contains(bind.Dispatcher, WindowManager.DispatcherNames, StringComparer.OrdinalIgnoreCase);
-        return $"{Modifiers(bind.Modifiers)}|{bind.Key}|{bind.Dispatcher}|{bind.Arguments}|{Flags(bind.Flags)}";
+        return $"{Modifiers(bind.Modifiers)}|{bind.Key}|{bind.Dispatcher}|{bind.Arguments}";
     }
 
     private static string Modifiers(Modifier modifiers)
     {
         var names = new List<string>();
-        if (modifiers.HasFlag(Modifier.Super))
-            names.Add("SUPER");
+        if (modifiers.HasFlag(Modifier.Win))
+            names.Add("Win");
         if (modifiers.HasFlag(Modifier.Alt))
-            names.Add("ALT");
+            names.Add("Alt");
         if (modifiers.HasFlag(Modifier.Ctrl))
-            names.Add("CTRL");
+            names.Add("Ctrl");
         if (modifiers.HasFlag(Modifier.Shift))
-            names.Add("SHIFT");
+            names.Add("Shift");
         return string.Join(' ', names);
     }
-
-    private static string Flags(BindFlag flags) => flags == BindFlag.None ? "" : flags.ToString();
 }

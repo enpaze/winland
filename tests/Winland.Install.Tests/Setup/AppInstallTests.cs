@@ -1,5 +1,6 @@
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class AppInstallTests
 {
     private const string Source = @"C:\Users\me\Downloads\Winland\winland\winland.exe";
@@ -31,7 +32,7 @@ public class AppInstallTests
         files.Seed(Path.Combine(Config, "winland.conf"), [9]);
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineInstallCopiesTheFolderAndPointsTheTaskAtProgramFiles()
     {
         files.Seed(Path.Combine(User, "winland.exe"), [8]);
@@ -39,41 +40,41 @@ public class AppInstallTests
 
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
 
-        Assert.Equal([1], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([2], files.Read(Path.Combine(Machine, "winland.dll")));
-        Assert.Equal([5], files.Read(Path.Combine(Machine, "Winland.Domain.dll")));
-        Assert.Equal([1], files.Read(Source));
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(Machine, "winland.exe")));
+        TestSequence.Equal((byte[])[2], files.Read(Path.Combine(Machine, "winland.dll")));
+        TestSequence.Equal((byte[])[5], files.Read(Path.Combine(Machine, "Winland.Domain.dll")));
+        TestSequence.Equal((byte[])[1], files.Read(Source));
 
         var task = tasks.Only();
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), task.Executable);
-        Assert.Equal(@"DESKTOP\dante", task.User);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), task.Executable);
+        Assert.AreEqual(@"DESKTOP\dante", task.User);
         Assert.DoesNotContain(Source, task.Executable, StringComparison.OrdinalIgnoreCase);
 
-        var shortcut = Assert.Single(shortcuts.Shortcuts);
-        Assert.Equal(Path.Combine(CommonPrograms, "Winland.lnk"), shortcut.LinkPath);
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), shortcut.Target);
-        Assert.Equal("", shortcut.Arguments);
-        Assert.Equal(InstallLocations.AppUserModelId, shortcut.AppUserModelId);
+        var shortcut = Assert.ContainsSingle(shortcuts.Shortcuts);
+        Assert.AreEqual(Path.Combine(CommonPrograms, "Winland.lnk"), shortcut.LinkPath);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), shortcut.Target);
+        Assert.AreEqual("", shortcut.Arguments);
+        Assert.AreEqual(InstallLocations.AppUserModelId, shortcut.AppUserModelId);
 
-        Assert.Equal("Winland", Text(RegistryRoot.Machine, "DisplayName"));
-        Assert.Equal(
+        Assert.AreEqual("Winland", Text(RegistryRoot.Machine, "DisplayName"));
+        Assert.AreEqual(
             "\"" + Path.Combine(Machine, "winland.exe") + "\" uninstall",
             Text(RegistryRoot.Machine, "UninstallString"));
-        Assert.Equal(Machine, Text(RegistryRoot.Machine, "InstallLocation"));
-        Assert.Equal("0.1.0", Text(RegistryRoot.Machine, "DisplayVersion"));
-        Assert.Equal(1, Dword(RegistryRoot.Machine, "NoModify"));
-        Assert.Equal(Machine, Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
-        Assert.True(registry.Values[(RegistryRoot.Machine, InstallLocations.MachinePathKey, InstallLocations.PathValue)].Expandable);
+        Assert.AreEqual(Machine, Text(RegistryRoot.Machine, "InstallLocation"));
+        Assert.AreEqual("0.1.0", Text(RegistryRoot.Machine, "DisplayVersion"));
+        Assert.AreEqual(1, Dword(RegistryRoot.Machine, "NoModify"));
+        Assert.AreEqual(Machine, Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
+        Assert.IsTrue(registry.Values[(RegistryRoot.Machine, InstallLocations.MachinePathKey, InstallLocations.PathValue)].Expandable);
 
-        Assert.True(files.Exists(Path.Combine(User, "winland.exe")));
-        Assert.Equal("old", registry.GetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
-        Assert.Equal(["stop", "start"], session.Operations);
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), session.Started);
-        Assert.Empty(session.StartedArguments);
+        Assert.IsTrue(files.Exists(Path.Combine(User, "winland.exe")));
+        Assert.AreEqual("old", registry.GetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
+        Assert.AreSequenceEqual(["stop", "start"], session.Operations);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), session.Started);
+        Assert.IsEmpty(session.StartedArguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUpgradeRemovesFilesTheNewReleaseDoesNotShip()
     {
         files.Seed(Path.Combine(Machine, "Dropped.Dependency.dll"), [7]);
@@ -81,12 +82,12 @@ public class AppInstallTests
 
         install.InstallMachine(Source, @"DESKTOP\dante", "0.2.0");
 
-        Assert.False(files.Exists(Path.Combine(Machine, "Dropped.Dependency.dll")));
-        Assert.True(files.Exists(Path.Combine(Machine, "winland.exe.winland-old")));
-        Assert.Equal([1], files.Read(Path.Combine(Machine, "winland.exe")));
+        Assert.IsFalse(files.Exists(Path.Combine(Machine, "Dropped.Dependency.dll")));
+        Assert.IsTrue(files.Exists(Path.Combine(Machine, "winland.exe.winland-old")));
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(Machine, "winland.exe")));
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineInstallKeepsTheRestOfTheMachinePath()
     {
         registry.SetString(
@@ -98,70 +99,70 @@ public class AppInstallTests
 
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
 
-        Assert.Equal(@"%SystemRoot%\system32;C:\Tools;" + Machine, Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
+        Assert.AreEqual(@"%SystemRoot%\system32;C:\Tools;" + Machine, Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
     }
 
-    [Fact]
+    [TestMethod]
     public void UserInstallUsesTheRunKeyAndNeverTheTask()
     {
         install.InstallForUser(Source, "0.1.0");
 
-        Assert.Equal([1], files.Read(Path.Combine(User, "winland.exe")));
-        Assert.False(tasks.Contains("Winland"));
-        Assert.Empty(tasks.Operations);
-        Assert.Equal(
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(User, "winland.exe")));
+        Assert.IsFalse(tasks.Contains("Winland"));
+        Assert.IsEmpty(tasks.Operations);
+        Assert.AreEqual(
             "\"" + Path.Combine(User, "winland.exe") + "\" --no-elevate",
             registry.GetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue));
 
-        var shortcut = Assert.Single(shortcuts.Shortcuts);
-        Assert.Equal(Path.Combine(UserPrograms, "Winland.lnk"), shortcut.LinkPath);
-        Assert.Equal("--no-elevate", shortcut.Arguments);
-        Assert.Equal(InstallLocations.AppUserModelId, shortcut.AppUserModelId);
-        Assert.Equal(
+        var shortcut = Assert.ContainsSingle(shortcuts.Shortcuts);
+        Assert.AreEqual(Path.Combine(UserPrograms, "Winland.lnk"), shortcut.LinkPath);
+        Assert.AreEqual("--no-elevate", shortcut.Arguments);
+        Assert.AreEqual(InstallLocations.AppUserModelId, shortcut.AppUserModelId);
+        Assert.AreEqual(
             "\"" + Path.Combine(User, "winland.exe") + "\" uninstall",
             Text(RegistryRoot.User, "UninstallString"));
-        Assert.Equal(User, Text(RegistryRoot.User, InstallLocations.PathValue, InstallLocations.UserPathKey));
-        Assert.Null(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayName"));
-        Assert.Equal(["stop", "start"], session.Operations);
-        Assert.Equal(["--no-elevate"], session.StartedArguments);
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
+        Assert.AreEqual(User, Text(RegistryRoot.User, InstallLocations.PathValue, InstallLocations.UserPathKey));
+        Assert.IsNull(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayName"));
+        Assert.AreSequenceEqual(["stop", "start"], session.Operations);
+        Assert.AreSequenceEqual(["--no-elevate"], session.StartedArguments);
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineInstallWithoutLogonRemovesTheTaskAnEarlierInstallMade()
     {
         tasks.Seed(LogonTaskDefinition.Build(Path.Combine(Machine, "winland.exe"), @"DESKTOP\dante"));
 
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0", logon: false);
 
-        Assert.False(tasks.Contains(LogonTaskDefinition.TaskName));
-        Assert.Equal([1], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal(["stop", "start"], session.Operations);
+        Assert.IsFalse(tasks.Contains(LogonTaskDefinition.TaskName));
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(Machine, "winland.exe")));
+        Assert.AreSequenceEqual(["stop", "start"], session.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineInstallWithoutStartLeavesWinlandStopped()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0", start: false);
 
-        Assert.Equal(["stop"], session.Operations);
-        Assert.Null(session.Started);
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
+        Assert.AreSequenceEqual(["stop"], session.Operations);
+        Assert.IsNull(session.Started);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
     }
 
-    [Fact]
+    [TestMethod]
     public void UserInstallWithoutLogonOrStartLeavesNoRunKeyAndWinlandStopped()
     {
         registry.SetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue, "old", expandable: false);
 
         install.InstallForUser(Source, "0.1.0", logon: false, start: false);
 
-        Assert.Null(registry.GetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue));
-        Assert.Equal([1], files.Read(Path.Combine(User, "winland.exe")));
-        Assert.Equal(["stop"], session.Operations);
+        Assert.IsNull(registry.GetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue));
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(User, "winland.exe")));
+        Assert.AreSequenceEqual(["stop"], session.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFailedReplaceKeepsThePreviousBuildStampAndRestartsWinland()
     {
         files.Seed(Path.Combine(Machine, "winland.exe"), [8]);
@@ -172,53 +173,53 @@ public class AppInstallTests
                 throw new IOException("disk full");
         };
 
-        Assert.Throws<IOException>(() => install.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0"));
+        Assert.ThrowsExactly<IOException>(() => install.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0"));
 
-        Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Machine, "Winland.Domain.dll")));
-        Assert.Equal(["stop", "start"], session.Operations);
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), session.Started);
-        Assert.Null(Text(RegistryRoot.Machine, "DisplayVersion"));
+        TestSequence.Equal((byte[])[8], files.Read(Path.Combine(Machine, "winland.exe")));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Machine, "Winland.Domain.dll")));
+        Assert.AreSequenceEqual(["stop", "start"], session.Operations);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), session.Started);
+        Assert.IsNull(Text(RegistryRoot.Machine, "DisplayVersion"));
     }
 
-    [Fact]
+    [TestMethod]
     public void ReplaceInstalledLeavesWinlandStoppedWhenItWasNotRunning()
     {
         session.Running = false;
 
         install.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0");
 
-        Assert.Equal([1], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal(["stop"], session.Operations);
-        Assert.Null(session.Started);
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(Machine, "winland.exe")));
+        Assert.AreSequenceEqual(["stop"], session.Operations);
+        Assert.IsNull(session.Started);
     }
 
-    [Fact]
+    [TestMethod]
     public void ALinkInTheCopiedFolderIsRefusedBeforeWinlandIsStopped()
     {
         files.Seed(@"C:\Users\me\Downloads\Winland\winland\swapped.exe", [1], reparsePoint: true);
 
-        var error = Assert.Throws<InvalidOperationException>(() => install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0"));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0"));
 
         Assert.Contains("it is a link", error.Message, StringComparison.Ordinal);
-        Assert.Empty(session.Operations);
-        Assert.False(tasks.Contains("Winland"));
-        Assert.False(files.DirectoryExists(Machine));
+        Assert.IsEmpty(session.Operations);
+        Assert.IsFalse(tasks.Contains("Winland"));
+        Assert.IsFalse(files.DirectoryExists(Machine));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFolderWithoutWinlandIsRefused()
     {
         var session = new MemorySession();
         var install = new AppInstall(Layout(), new MemoryTaskCatalog(), new MemoryFileTree(), new MemoryRegistry(), new MemoryStartMenu(), session);
 
-        var error = Assert.Throws<InvalidOperationException>(() => install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0"));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0"));
 
         Assert.Contains("winland.exe", error.Message, StringComparison.Ordinal);
-        Assert.Empty(session.Operations);
+        Assert.IsEmpty(session.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReplaceInstalledCopiesIntoTheRunningFolderAndKeepsTheConfig()
     {
         files.Seed(Path.Combine(Machine, "winland.exe"), [8]);
@@ -229,45 +230,45 @@ public class AppInstallTests
 
         install.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0");
 
-        Assert.Equal([1], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([2], files.Read(Path.Combine(Machine, "winland.dll")));
-        Assert.Equal([7], files.Read(Path.Combine(User, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
-        Assert.Equal(["stop", "start"], session.Operations);
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), session.Started);
-        Assert.Empty(session.StartedArguments);
-        Assert.Equal("0.2.0", Text(RegistryRoot.Machine, "DisplayVersion"));
-        Assert.Empty(tasks.Operations);
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
-        Assert.Equal(Machine, Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(Machine, "winland.exe")));
+        TestSequence.Equal((byte[])[2], files.Read(Path.Combine(Machine, "winland.dll")));
+        TestSequence.Equal((byte[])[7], files.Read(Path.Combine(User, "winland.exe")));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
+        Assert.AreSequenceEqual(["stop", "start"], session.Operations);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), session.Started);
+        Assert.IsEmpty(session.StartedArguments);
+        Assert.AreEqual("0.2.0", Text(RegistryRoot.Machine, "DisplayVersion"));
+        Assert.IsEmpty(tasks.Operations);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
+        Assert.AreEqual(Machine, Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
     }
 
-    [Fact]
+    [TestMethod]
     public void ReplaceInstalledForTheUserStartsWithoutElevation()
     {
         install.ReplaceInstalled(Source, User, perUser: true, "0.2.0");
 
-        Assert.Equal([1], files.Read(Path.Combine(User, "winland.exe")));
-        Assert.Equal(["--no-elevate"], session.StartedArguments);
-        Assert.Equal("0.2.0", Text(RegistryRoot.User, "DisplayVersion"));
-        Assert.Null(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion"));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
-        Assert.Empty(tasks.Operations);
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(User, "winland.exe")));
+        Assert.AreSequenceEqual(["--no-elevate"], session.StartedArguments);
+        Assert.AreEqual("0.2.0", Text(RegistryRoot.User, "DisplayVersion"));
+        Assert.IsNull(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion"));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
+        Assert.IsEmpty(tasks.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReplaceInstalledRefusesAFolderWithoutWinlandBeforeStopping()
     {
         var waited = new MemorySession();
         var replacing = new AppInstall(Layout(), new MemoryTaskCatalog(), new MemoryFileTree(), new MemoryRegistry(), new MemoryStartMenu(), waited);
 
-        var error = Assert.Throws<InvalidOperationException>(() => replacing.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0"));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => replacing.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0"));
 
         Assert.Contains("winland.exe", error.Message, StringComparison.Ordinal);
-        Assert.Empty(waited.Operations);
+        Assert.IsEmpty(waited.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineUpdateWithoutTheLauncherLeavesTheRunningInstallAlone()
     {
         files.DeleteFile(InstallLocations.Launcher(Source));
@@ -275,17 +276,17 @@ public class AppInstallTests
         files.Seed(Path.Combine(Machine, InstallLocations.LauncherName), [9]);
         registry.SetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayVersion", "0.1.0", expandable: false);
 
-        var error = Assert.Throws<InvalidOperationException>(() =>
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() =>
             install.ReplaceInstalled(Source, Machine, perUser: false, "0.2.0"));
 
         Assert.Contains(InstallLocations.LauncherName, error.Message, StringComparison.Ordinal);
-        Assert.Empty(session.Operations);
-        Assert.Equal([8], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal([9], files.Read(Path.Combine(Machine, InstallLocations.LauncherName)));
-        Assert.Equal("0.1.0", Text(RegistryRoot.Machine, "DisplayVersion"));
+        Assert.IsEmpty(session.Operations);
+        TestSequence.Equal((byte[])[8], files.Read(Path.Combine(Machine, "winland.exe")));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Machine, InstallLocations.LauncherName)));
+        Assert.AreEqual("0.1.0", Text(RegistryRoot.Machine, "DisplayVersion"));
     }
 
-    [Fact]
+    [TestMethod]
     public void InstallingAgainFromTheInstalledCopyRefreshesTheTask()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
@@ -294,13 +295,13 @@ public class AppInstallTests
 
         refresh.InstallMachine(Path.Combine(Machine, "winland.exe"), @"DESKTOP\dante", "0.1.0");
 
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
-        Assert.Equal("replace", tasks.Operations[^1]);
-        Assert.Equal([1], files.Read(Path.Combine(Machine, "winland.exe")));
-        Assert.Equal(["stop", "start"], again.Operations);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
+        Assert.AreEqual("replace", tasks.Operations[^1]);
+        TestSequence.Equal((byte[])[1], files.Read(Path.Combine(Machine, "winland.exe")));
+        Assert.AreSequenceEqual(["stop", "start"], again.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineUninstallLeavesUserFilesAndSettingsForTheUnelevatedCaller()
     {
         var restored = false;
@@ -309,18 +310,18 @@ public class AppInstallTests
 
         watched.Uninstall(purge: true, machine: true);
 
-        Assert.False(restored);
-        Assert.True(files.Exists(Path.Combine(User, "winland.exe")));
-        Assert.True(files.Exists(Path.Combine(Config, "winland.conf")));
+        Assert.IsFalse(restored);
+        Assert.IsTrue(files.Exists(Path.Combine(User, "winland.exe")));
+        Assert.IsTrue(files.Exists(Path.Combine(Config, "winland.conf")));
 
         watched.Uninstall(purge: true, machine: false);
 
-        Assert.True(restored);
-        Assert.False(files.DirectoryExists(User));
-        Assert.False(files.DirectoryExists(Config));
+        Assert.IsTrue(restored);
+        Assert.IsFalse(files.DirectoryExists(User));
+        Assert.IsFalse(files.DirectoryExists(Config));
     }
 
-    [Fact]
+    [TestMethod]
     public void UninstallRemovesTheInstallAndKeepsTheConfig()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
@@ -329,17 +330,17 @@ public class AppInstallTests
 
         install.Uninstall(purge: false, machine: true);
 
-        Assert.False(files.DirectoryExists(Machine));
-        Assert.False(tasks.Contains("Winland"));
-        Assert.Empty(shortcuts.Shortcuts);
-        Assert.Null(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayName"));
-        Assert.Equal("", Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
-        Assert.Equal([9], files.Read(Path.Combine(Config, "winland.conf")));
-        Assert.Equal([7], files.Read(Path.Combine(Config, "state.json")));
-        Assert.Equal([8], files.Read(Path.Combine(Config, "winland.log")));
+        Assert.IsFalse(files.DirectoryExists(Machine));
+        Assert.IsFalse(tasks.Contains("Winland"));
+        Assert.IsEmpty(shortcuts.Shortcuts);
+        Assert.IsNull(registry.GetString(RegistryRoot.Machine, InstallLocations.UninstallKey, "DisplayName"));
+        Assert.AreEqual("", Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
+        TestSequence.Equal((byte[])[9], files.Read(Path.Combine(Config, "winland.conf")));
+        TestSequence.Equal((byte[])[7], files.Read(Path.Combine(Config, "state.json")));
+        TestSequence.Equal((byte[])[8], files.Read(Path.Combine(Config, "winland.log")));
     }
 
-    [Fact]
+    [TestMethod]
     public void PurgeRemovesTheConfigTheLogsAndTheState()
     {
         install.InstallForUser(Source, "0.1.0");
@@ -348,27 +349,27 @@ public class AppInstallTests
 
         install.Uninstall(purge: true, machine: false);
 
-        Assert.False(files.DirectoryExists(User));
-        Assert.False(files.DirectoryExists(Config));
-        Assert.False(files.Exists(Path.Combine(Config, "winland.conf")));
-        Assert.False(files.Exists(Path.Combine(Config, "state.json")));
-        Assert.False(files.Exists(Path.Combine(Config, "winland.log")));
-        Assert.Null(registry.GetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue));
+        Assert.IsFalse(files.DirectoryExists(User));
+        Assert.IsFalse(files.DirectoryExists(Config));
+        Assert.IsFalse(files.Exists(Path.Combine(Config, "winland.conf")));
+        Assert.IsFalse(files.Exists(Path.Combine(Config, "state.json")));
+        Assert.IsFalse(files.Exists(Path.Combine(Config, "winland.log")));
+        Assert.IsNull(registry.GetString(RegistryRoot.User, InstallLocations.RunKey, InstallLocations.RunValue));
     }
 
-    [Fact]
+    [TestMethod]
     public void APerUserUninstallLeavesTheMachineInstall()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
 
         install.Uninstall(purge: false, machine: false);
 
-        Assert.True(files.Exists(Path.Combine(Machine, "winland.exe")));
-        Assert.True(tasks.Contains("Winland"));
-        Assert.Equal(Machine, Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
+        Assert.IsTrue(files.Exists(Path.Combine(Machine, "winland.exe")));
+        Assert.IsTrue(tasks.Contains("Winland"));
+        Assert.AreEqual(Machine, Text(RegistryRoot.Machine, InstallLocations.PathValue, InstallLocations.MachinePathKey));
     }
 
-    [Fact]
+    [TestMethod]
     public void UninstallRestoresRecordedSettingsBeforePurgeDeletesTheFolder()
     {
         var folderStillThere = false;
@@ -377,11 +378,11 @@ public class AppInstallTests
 
         watched.Uninstall(purge: true, machine: false);
 
-        Assert.True(folderStillThere);
-        Assert.False(files.Exists(Path.Combine(Config, "winland.conf")));
+        Assert.IsTrue(folderStillThere);
+        Assert.IsFalse(files.Exists(Path.Combine(Config, "winland.conf")));
     }
 
-    [Fact]
+    [TestMethod]
     public void UninstallRemovesOnlyTheInstallFolderFromThePath()
     {
         registry.SetString(
@@ -394,98 +395,98 @@ public class AppInstallTests
 
         install.Uninstall(purge: false, machine: false);
 
-        Assert.Equal(@"C:\Tools", Text(RegistryRoot.User, InstallLocations.PathValue, InstallLocations.UserPathKey));
+        Assert.AreEqual(@"C:\Tools", Text(RegistryRoot.User, InstallLocations.PathValue, InstallLocations.UserPathKey));
     }
 
-    [Fact]
+    [TestMethod]
     public void AUserInstallIsRefusedWhileTheMachineInstallIsThere()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
 
-        Assert.Throws<InvalidOperationException>(() => install.InstallForUser(Source, "0.1.0"));
-        Assert.False(files.Exists(Path.Combine(User, "winland.exe")));
+        Assert.ThrowsExactly<InvalidOperationException>(() => install.InstallForUser(Source, "0.1.0"));
+        Assert.IsFalse(files.Exists(Path.Combine(User, "winland.exe")));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASettingsRecordThatFailsStillLetsUninstallFinish()
     {
         var failing = new AppInstall(Layout(), tasks, files, registry, shortcuts, session, new WatchingRestore(() => throw new IOException("bad record")));
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
 
         failing.Uninstall(purge: false, machine: true);
-        Assert.Throws<InvalidOperationException>(() => failing.Uninstall(purge: false, machine: false));
-        Assert.False(files.DirectoryExists(Machine));
-        Assert.False(tasks.Contains("Winland"));
+        Assert.ThrowsExactly<InvalidOperationException>(() => failing.Uninstall(purge: false, machine: false));
+        Assert.IsFalse(files.DirectoryExists(Machine));
+        Assert.IsFalse(tasks.Contains("Winland"));
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineInstallCreatesTheLogonTaskWhenNoneExists()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
 
         var task = tasks.Only();
-        Assert.Equal("Winland", task.Name);
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), task.Executable);
-        Assert.Equal(@"DESKTOP\dante", task.User);
-        Assert.Equal("create", Assert.Single(tasks.Operations));
+        Assert.AreEqual("Winland", task.Name);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), task.Executable);
+        Assert.AreEqual(@"DESKTOP\dante", task.User);
+        Assert.AreEqual("create", Assert.ContainsSingle(tasks.Operations));
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineInstallReplacesTheExistingTaskAndLeavesOne()
     {
         tasks.Seed(LogonTaskDefinition.Build(@"C:\old\winland.exe", @"DESKTOP\dante"));
 
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
 
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
-        Assert.Equal("replace", Assert.Single(tasks.Operations));
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
+        Assert.AreEqual("replace", Assert.ContainsSingle(tasks.Operations));
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineInstallTwiceLeavesOneTask()
     {
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
         install.InstallMachine(Source, @"DESKTOP\dante", "0.1.0");
 
-        Assert.Equal(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
-        Assert.Equal(["create", "replace"], tasks.Operations);
+        Assert.AreEqual(Path.Combine(Machine, "winland.exe"), tasks.Only().Executable);
+        Assert.AreSequenceEqual(["create", "replace"], tasks.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineInstallRejectsABlankExecutable()
     {
-        var error = Assert.Throws<ArgumentException>(() => install.InstallMachine(" ", @"DESKTOP\dante", "0.1.0"));
+        var error = Assert.ThrowsExactly<ArgumentException>(() => install.InstallMachine(" ", @"DESKTOP\dante", "0.1.0"));
 
-        Assert.Equal("executable", error.ParamName);
-        Assert.Empty(tasks.Operations);
+        Assert.AreEqual("executable", error.ParamName);
+        Assert.IsEmpty(tasks.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineInstallRejectsABlankAccount()
     {
-        var error = Assert.Throws<ArgumentException>(() => install.InstallMachine(Source, " ", "0.1.0"));
+        var error = Assert.ThrowsExactly<ArgumentException>(() => install.InstallMachine(Source, " ", "0.1.0"));
 
-        Assert.Equal("account", error.ParamName);
-        Assert.Empty(tasks.Operations);
+        Assert.AreEqual("account", error.ParamName);
+        Assert.IsEmpty(tasks.Operations);
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineUninstallRemovesTheLogonTask()
     {
         tasks.Seed(LogonTaskDefinition.Build(Path.Combine(Machine, "winland.exe"), @"DESKTOP\dante"));
 
         install.Uninstall(purge: false, machine: true);
 
-        Assert.False(tasks.Contains("Winland"));
-        Assert.Equal("delete", Assert.Single(tasks.Operations));
+        Assert.IsFalse(tasks.Contains("Winland"));
+        Assert.AreEqual("delete", Assert.ContainsSingle(tasks.Operations));
     }
 
-    [Fact]
+    [TestMethod]
     public void MachineUninstallWithoutTheTaskLeavesTheCatalogAlone()
     {
         install.Uninstall(purge: false, machine: true);
 
-        Assert.Empty(tasks.Operations);
+        Assert.IsEmpty(tasks.Operations);
     }
 
     private sealed class WatchingRestore(Action onRestore) : ITweakRestore

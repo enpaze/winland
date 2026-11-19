@@ -10,6 +10,7 @@ public sealed record Client(
     WorkspaceId Workspace = default,
     string Class = "",
     string Title = "",
+    string Exe = "",
     long ProcessId = 0,
     string InitialClass = "",
     string InitialTitle = "",

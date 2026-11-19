@@ -2,12 +2,13 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class FullscreenTests
 {
     private static readonly Rectangle MonitorBounds = new(0, 0, 1920, 1080);
     private static readonly Rectangle Work = new(0, 40, 1920, 1040);
 
-    [Fact]
+    [TestMethod]
     public void FullscreenZeroAndTwoToggleTheMonitorAndRestoreTheSlot()
     {
         var core = Desk();
@@ -15,73 +16,70 @@ public class FullscreenTests
         var left = BoundsOf(before, 1);
         var right = BoundsOf(before, 2);
 
-        var entered = core.Handle(new Dispatch("fullscreen", "0"));
+        var entered = core.Handle(new Dispatch("fullscreen"));
 
-        Assert.Equal(MonitorBounds, BoundsOf(entered, 2));
-        Assert.Equal(left, BoundsOf(entered, 1));
-        Assert.Equal(FullscreenMode.Fullscreen, Client(entered, 2).Fullscreen);
-        Assert.Equal(FullscreenMode.None, Client(entered, 1).Fullscreen);
-        Assert.Contains(entered.Events, static item => item is FullscreenChanged { Entered: true });
-        Assert.True(DecorationOf(entered, 2).Borderless);
-        Assert.False(DecorationOf(entered, 1).Borderless);
+        Assert.AreEqual(MonitorBounds, BoundsOf(entered, 2));
+        Assert.AreEqual(left, BoundsOf(entered, 1));
+        Assert.AreEqual(FullscreenMode.Fullscreen, Client(entered, 2).Fullscreen);
+        Assert.AreEqual(FullscreenMode.None, Client(entered, 1).Fullscreen);
+        Assert.Contains(static item => item is FullscreenChanged { Entered: true }, entered.Events);
+        Assert.IsTrue(DecorationOf(entered, 2).Borderless);
+        Assert.IsFalse(DecorationOf(entered, 1).Borderless);
 
-        var again = core.Handle(new Dispatch("fullscreen", "2"));
+        var again = core.Handle(new Dispatch("fullscreen"));
 
-        Assert.Equal(right, BoundsOf(again, 2));
-        Assert.Equal(left, BoundsOf(again, 1));
-        Assert.Equal(FullscreenMode.None, Client(again, 2).Fullscreen);
-        Assert.Contains(again.Events, static item => item is FullscreenChanged { Entered: false });
-        Assert.False(DecorationOf(again, 2).Borderless);
+        Assert.AreEqual(right, BoundsOf(again, 2));
+        Assert.AreEqual(left, BoundsOf(again, 1));
+        Assert.AreEqual(FullscreenMode.None, Client(again, 2).Fullscreen);
+        Assert.Contains(static item => item is FullscreenChanged { Entered: false }, again.Events);
+        Assert.IsFalse(DecorationOf(again, 2).Borderless);
     }
 
-    [Fact]
+    [TestMethod]
     public void MaximizeFillsTheWorkAreaAndKeepsTheBorder()
     {
         var core = Desk();
         OpenWindows(core, 2);
         var left = Bounds(core, 1);
 
-        var entered = core.Handle(new Dispatch("fullscreen", "1"));
+        var entered = core.Handle(new Dispatch("maximize"));
 
-        Assert.Equal(Work, BoundsOf(entered, 2));
-        Assert.Equal(left, BoundsOf(entered, 1));
-        Assert.Equal(FullscreenMode.Maximized, Client(entered, 2).Fullscreen);
-        Assert.False(DecorationOf(entered, 2).Borderless);
+        Assert.AreEqual(Work, BoundsOf(entered, 2));
+        Assert.AreEqual(left, BoundsOf(entered, 1));
+        Assert.AreEqual(FullscreenMode.Maximized, Client(entered, 2).Fullscreen);
+        Assert.IsFalse(DecorationOf(entered, 2).Borderless);
 
-        var named = core.Handle(new Dispatch("fullscreen", "maximized"));
+        var named = core.Handle(new Dispatch("maximize"));
 
-        Assert.Equal(left, BoundsOf(named, 1));
-        Assert.Equal(FullscreenMode.None, Client(named, 2).Fullscreen);
+        Assert.AreEqual(left, BoundsOf(named, 1));
+        Assert.AreEqual(FullscreenMode.None, Client(named, 2).Fullscreen);
         var restored = BoundsOf(named, 2);
-        core.Handle(new Dispatch("fullscreen", "1 set"));
-        Assert.Equal(Work, Bounds(core, 2));
-        core.Handle(new Dispatch("fullscreen", "1 unset"));
-        Assert.Equal(restored, Bounds(core, 2));
-        Assert.Equal(left, Bounds(core, 1));
+        core.Handle(new Dispatch("maximize", "on"));
+        Assert.AreEqual(Work, Bounds(core, 2));
+        core.Handle(new Dispatch("maximize", "off"));
+        Assert.AreEqual(restored, Bounds(core, 2));
+        Assert.AreEqual(left, Bounds(core, 1));
     }
 
-    [Fact]
-    public void MaximizeIsNotADispatcherAndABindToItIsSkipped()
+    [TestMethod]
+    public void MaximizeIsAnActionOfItsOwn()
     {
         var core = Desk();
         OpenWindows(core, 1);
 
         var dispatched = core.Handle(new Dispatch("maximize"));
 
-        Assert.StartsWith("error: unknown dispatcher 'maximize'", dispatched.Error, StringComparison.Ordinal);
-        Assert.Equal(FullscreenMode.None, Client(dispatched, 1).Fullscreen);
+        Assert.IsNull(dispatched.Error);
+        Assert.AreEqual(FullscreenMode.Maximized, Client(dispatched, 1).Fullscreen);
 
-        var document = ConfigParser.Parse("bind = SUPER, M, maximize\nbind = SUPER, F, fullscreen, 1\n", dispatchers: WindowManager.DispatcherNames);
+        var document = ConfigParser.Parse("bind = Win+M, maximize\nbind = Win+F, fullscreen\n", dispatchers: WindowManager.DispatcherNames);
 
-        var warning = Assert.Single(document.Warnings);
-        Assert.Equal(1, warning.Line);
-        Assert.StartsWith("Unknown dispatcher 'maximize'", warning.Message, StringComparison.Ordinal);
-        Assert.Equal("fullscreen", Assert.IsType<Bind>(Assert.Single(document.Binds)).Dispatcher);
-        Assert.True(ControlInvocation.TryListNames(["dispatch"], out var names));
-        Assert.DoesNotContain("maximize", names.Split('\n'));
+        Assert.IsEmpty(document.Warnings);
+        Assert.AreSequenceEqual(["maximize", "fullscreen"], document.Binds.OfType<Bind>().Select(bind => bind.Dispatcher));
+        Assert.Contains("maximize", ControlInvocation.Usage, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void TreeEditsOnACoveringClientAreRefusedAndTheSlotComesBack()
     {
         var core = Desk();
@@ -89,37 +87,37 @@ public class FullscreenTests
         Rectangle[] before = [Bounds(core, 1), Bounds(core, 2), Bounds(core, 3)];
         core.Handle(new Dispatch("fullscreen"));
 
-        Assert.Equal("error: can't togglesplit in the current workspace", core.Handle(new Dispatch("layoutmsg", "togglesplit")).Error);
-        Assert.Equal("error: can't move fullscreen window", core.Handle(new Dispatch("movewindow", "l")).Error);
-        Assert.Equal("error: Can't swap fullscreen window", core.Handle(new Dispatch("swapwindow", "l")).Error);
+        Assert.AreEqual("error: can't split in the current workspace", core.Handle(new Dispatch("split")).Error);
+        Assert.AreEqual("error: can't move fullscreen window", core.Handle(new Dispatch("move", "l")).Error);
+        Assert.AreEqual("error: Can't swap fullscreen window", core.Handle(new Dispatch("swap", "l")).Error);
         core.Handle(new Dispatch("fullscreen"));
 
         Rectangle[] after = [Bounds(core, 1), Bounds(core, 2), Bounds(core, 3)];
-        Assert.Equal(before, after);
+        Assert.AreSequenceEqual(before, after);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASecondCoveringClientReplacesTheFirst()
     {
         var core = Desk();
         OpenWindows(core, 2);
-        core.Handle(new Dispatch("fullscreen", "1 set"));
+        core.Handle(new Dispatch("maximize", "on"));
 
-        core.Handle(new Dispatch("focuswindow", "address:0x1"));
-        var outcome = core.Handle(new Dispatch("fullscreen", "0 set"));
+        core.Handle(new Dispatch("focus", "address:0x1"));
+        var outcome = core.Handle(new Dispatch("fullscreen", "on"));
 
-        Assert.Equal(MonitorBounds, BoundsOf(outcome, 1));
-        Assert.Equal(FullscreenMode.None, Client(outcome, 2).Fullscreen);
-        Assert.NotEqual(MonitorBounds, BoundsOf(outcome, 2));
+        Assert.AreEqual(MonitorBounds, BoundsOf(outcome, 1));
+        Assert.AreEqual(FullscreenMode.None, Client(outcome, 2).Fullscreen);
+        Assert.AreNotEqual(MonitorBounds, BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void RulesRequestFullscreenAndMaximize()
     {
         var core = new WindowManager(ConfigParser.Parse("""
-            general:gaps_in = 0
-            general:gaps_out = 0
-            general:border_size = 0
+            gaps_in = 0
+            gaps_out = 0
+            border_size = 0
             windowrule = fullscreen, class:game
             windowrule = maximize, class:edit
             """));
@@ -129,53 +127,52 @@ public class FullscreenTests
         {
             Traits = WindowTraits.Normal with { Class = "game" },
         });
-        Assert.Equal(MonitorBounds, BoundsOf(game, 1));
-        Assert.Contains(game.Events, static item => item is FullscreenChanged { Entered: true });
+        Assert.AreEqual(MonitorBounds, BoundsOf(game, 1));
+        Assert.Contains(static item => item is FullscreenChanged { Entered: true }, game.Events);
 
         var edit = core.Handle(new WindowAppeared(new WindowId(2), Work)
         {
             Traits = WindowTraits.Normal with { Class = "edit" },
         });
-        Assert.Equal(Work, BoundsOf(edit, 2));
-        Assert.Equal(FullscreenMode.Maximized, Client(edit, 2).Fullscreen);
+        Assert.AreEqual(Work, BoundsOf(edit, 2));
+        Assert.AreEqual(FullscreenMode.Maximized, Client(edit, 2).Fullscreen);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClientsReportTheModesAndTheWorkspace()
     {
         var core = Desk();
         OpenWindows(core, 1);
-        core.Handle(new Dispatch("fullscreen", "1"));
+        core.Handle(new Dispatch("maximize"));
 
-        using var clients = JsonDocument.Parse(core.Execute("j/clients").Text);
+        using var clients = JsonDocument.Parse(core.Execute("j/get windows").Text);
         var client = clients.RootElement[0];
-        Assert.Equal(1, client.GetProperty("fullscreen").GetInt32());
-        Assert.Equal(1, client.GetProperty("fullscreenClient").GetInt32());
-        Assert.Equal("default", client.GetProperty("fullscreenHandler").GetString());
+        Assert.AreEqual(1, client.GetProperty("fullscreen").GetInt32());
+        Assert.AreEqual("default", client.GetProperty("fullscreenHandler").GetString());
 
-        using var workspaces = JsonDocument.Parse(core.Execute("j/workspaces").Text);
-        Assert.True(workspaces.RootElement[0].GetProperty("hasfullscreen").GetBoolean());
+        using var workspaces = JsonDocument.Parse(core.Execute("j/get workspaces").Text);
+        Assert.IsTrue(workspaces.RootElement[0].GetProperty("hasFullscreen").GetBoolean());
     }
 
-    [Fact]
+    [TestMethod]
     public void FullscreenWithoutAClientIsAnErrorAndABadActionDoesNothing()
     {
         var core = Desk();
-        var missing = core.Execute("dispatch fullscreen");
-        Assert.Equal("error: window not found", missing.Text);
+        var missing = core.Execute("fullscreen");
+        Assert.AreEqual("error: window not found", missing.Text);
 
         OpenWindows(core, 1);
-        var ignored = core.Handle(new Dispatch("fullscreen", "1 sideways"));
-        Assert.Equal(FullscreenMode.None, Client(ignored, 1).Fullscreen);
-        Assert.DoesNotContain(ignored.Events, static item => item is FullscreenChanged);
+        var ignored = core.Handle(new Dispatch("maximize", "sideways"));
+        Assert.AreEqual(FullscreenMode.None, Client(ignored, 1).Fullscreen);
+        Assert.DoesNotContain(static item => item is FullscreenChanged, ignored.Events);
 
-        core.Handle(new Dispatch("fullscreen", "1 set"));
-        var repeat = core.Handle(new Dispatch("fullscreen", "1 set"));
-        Assert.Equal(FullscreenMode.Maximized, Client(repeat, 1).Fullscreen);
-        Assert.DoesNotContain(repeat.Events, static item => item is FullscreenChanged);
+        core.Handle(new Dispatch("maximize", "on"));
+        var repeat = core.Handle(new Dispatch("maximize", "on"));
+        Assert.AreEqual(FullscreenMode.Maximized, Client(repeat, 1).Fullscreen);
+        Assert.DoesNotContain(static item => item is FullscreenChanged, repeat.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnExclusiveFullscreenWindowIsNotAdopted()
     {
         var core = Desk();
@@ -185,50 +182,50 @@ public class FullscreenTests
             Traits = WindowTraits.Normal with { ExclusiveFullscreen = true },
         });
 
-        Assert.Empty(outcome.State.Clients);
+        Assert.IsEmpty(outcome.State.Clients);
     }
 
-    [Fact]
+    [TestMethod]
     public void APopupThatCoversTheMonitorIsExclusive()
     {
-        Assert.True(ExclusiveFullscreenWindow.Is(ExclusiveFullscreenWindow.Popup, MonitorBounds, MonitorBounds));
-        Assert.False(ExclusiveFullscreenWindow.Is(ExclusiveFullscreenWindow.Popup | ExclusiveFullscreenWindow.Caption, MonitorBounds, MonitorBounds));
-        Assert.False(ExclusiveFullscreenWindow.Is(ExclusiveFullscreenWindow.Popup, new Rectangle(10, 10, 100, 100), MonitorBounds));
+        Assert.IsTrue(ExclusiveFullscreenWindow.Is(ExclusiveFullscreenWindow.Popup, MonitorBounds, MonitorBounds));
+        Assert.IsFalse(ExclusiveFullscreenWindow.Is(ExclusiveFullscreenWindow.Popup | ExclusiveFullscreenWindow.Caption, MonitorBounds, MonitorBounds));
+        Assert.IsFalse(ExclusiveFullscreenWindow.Is(ExclusiveFullscreenWindow.Popup, new Rectangle(10, 10, 100, 100), MonitorBounds));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFloatingClientReturnsToItsFloatAfterFullscreen()
     {
         var core = Desk();
         OpenWindows(core, 1);
-        var floated = core.Handle(new Dispatch("togglefloating"));
+        var floated = core.Handle(new Dispatch("float"));
         var slot = BoundsOf(floated, 1);
         core.Handle(new Dispatch("fullscreen"));
 
         var back = core.Handle(new Dispatch("fullscreen"));
 
-        Assert.Equal(slot, BoundsOf(back, 1));
-        Assert.True(Client(back, 1).Floating);
+        Assert.AreEqual(slot, BoundsOf(back, 1));
+        Assert.IsTrue(Client(back, 1).Floating);
     }
 
-    [Theory]
-    [InlineData("movetoworkspace")]
-    [InlineData("movetoworkspacesilent")]
-    public void AFullscreenClientStaysFullscreenOnTheWorkspaceItMovesTo(string dispatcher)
+    [TestMethod]
+    [DataRow("2")]
+    [DataRow("2 stay")]
+    public void AFullscreenClientStaysFullscreenOnTheWorkspaceItMovesTo(string target)
     {
         var core = Desk();
         OpenWindows(core, 2);
-        core.Handle(new Dispatch("fullscreen", "1"));
+        core.Handle(new Dispatch("maximize"));
 
-        var moved = core.Handle(new Dispatch(dispatcher, "2"));
+        var moved = core.Handle(new Dispatch("move", target));
 
         var client = Client(moved, 2);
-        Assert.Equal(new WorkspaceId("2"), client.Workspace);
-        Assert.Equal(FullscreenMode.Maximized, client.Fullscreen);
-        Assert.Equal(Work, Bounds(core, 2));
+        Assert.AreEqual(new WorkspaceId("2"), client.Workspace);
+        Assert.AreEqual(FullscreenMode.Maximized, client.Fullscreen);
+        Assert.AreEqual(Work, Bounds(core, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFullscreenClientMovedOntoAnotherReplacesIt()
     {
         var core = Desk();
@@ -238,14 +235,14 @@ public class FullscreenTests
         core.Handle(new WindowAppeared(new WindowId(2), Work));
         core.Handle(new Dispatch("fullscreen"));
 
-        var moved = core.Handle(new Dispatch("movetoworkspace", "1"));
+        var moved = core.Handle(new Dispatch("move", "1"));
 
-        Assert.Equal(FullscreenMode.Fullscreen, Client(moved, 2).Fullscreen);
-        Assert.Equal(FullscreenMode.None, Client(moved, 1).Fullscreen);
-        Assert.Equal(MonitorBounds, BoundsOf(moved, 2));
+        Assert.AreEqual(FullscreenMode.Fullscreen, Client(moved, 2).Fullscreen);
+        Assert.AreEqual(FullscreenMode.None, Client(moved, 1).Fullscreen);
+        Assert.AreEqual(MonitorBounds, BoundsOf(moved, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFullscreenClientStaysFullscreenOnTheMonitorItMovesTo()
     {
         var core = new WindowManager();
@@ -254,140 +251,156 @@ public class FullscreenTests
         core.Handle(new WindowAppeared(new WindowId(1), Work));
         core.Handle(new Dispatch("fullscreen"));
 
-        var moved = core.Handle(new Dispatch("movewindow", "mon:" + right.Name));
+        var moved = core.Handle(new Dispatch("move", "mon:" + right.Name));
 
-        Assert.Equal(FullscreenMode.Fullscreen, Client(moved, 1).Fullscreen);
-        Assert.Equal(new Rectangle(1920, 0, 1280, 1024), Bounds(core, 1));
+        Assert.AreEqual(FullscreenMode.Fullscreen, Client(moved, 1).Fullscreen);
+        Assert.AreEqual(new Rectangle(1920, 0, 1280, 1024), Bounds(core, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ChangingTheLayoutOnReloadKeepsAFullscreenClient()
     {
         var core = Desk();
         OpenWindows(core, 2);
         core.Handle(new Dispatch("fullscreen"));
 
-        var reloaded = core.Handle(new Configure(ConfigParser.Parse("general:layout = master\n")));
+        var reloaded = core.Handle(new Configure(ConfigParser.Parse("layout = master\n")));
 
-        Assert.Equal(FullscreenMode.Fullscreen, Client(reloaded, 2).Fullscreen);
-        Assert.Equal(MonitorBounds, Bounds(core, 2));
+        Assert.AreEqual(FullscreenMode.Fullscreen, Client(reloaded, 2).Fullscreen);
+        Assert.AreEqual(MonitorBounds, Bounds(core, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void MaximizeLeavesGapsOutAndTheBorder()
     {
-        var core = Desk("general:gaps_out = 20\ngeneral:border_size = 2\n");
+        var core = Desk("gaps_out = 20\nborder_size = 2\n");
         OpenWindows(core, 2);
 
-        var maximized = core.Handle(new Dispatch("fullscreen", "1"));
+        var maximized = core.Handle(new Dispatch("maximize"));
 
-        Assert.Equal(new Rectangle(22, 62, 1876, 996), BoundsOf(maximized, 2));
+        Assert.AreEqual(new Rectangle(22, 62, 1876, 996), BoundsOf(maximized, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFloatingClientMaximizesInsideTheWorkAreaWithoutGapsOut()
     {
-        var core = Desk("general:gaps_out = 20\ngeneral:border_size = 2\n");
+        var core = Desk("gaps_out = 20\nborder_size = 2\n");
         OpenWindows(core, 1);
-        core.Handle(new Dispatch("togglefloating"));
+        core.Handle(new Dispatch("float"));
 
-        var maximized = core.Handle(new Dispatch("fullscreen", "1"));
+        var maximized = core.Handle(new Dispatch("maximize"));
 
-        Assert.Equal(new Rectangle(2, 42, 1916, 1036), BoundsOf(maximized, 1));
+        Assert.AreEqual(new Rectangle(2, 42, 1916, 1036), BoundsOf(maximized, 1));
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void AMaximizedGroupMemberLeavesRoomForTheBar(bool floating)
     {
-        var core = Desk("general:gaps_out = 0\ngeneral:border_size = 0\n");
+        var core = Desk("gaps_out = 0\nborder_size = 0\n");
         OpenWindows(core, 1);
-        core.Handle(new Dispatch("togglegroup"));
+        core.Handle(new Dispatch("group"));
         core.Handle(new WindowAppeared(new WindowId(2), Work));
         if (floating)
-            core.Handle(new Dispatch("togglefloating"));
+            core.Handle(new Dispatch("float"));
 
-        var maximized = core.Handle(new Dispatch("fullscreen", "1"));
+        var maximized = core.Handle(new Dispatch("maximize"));
 
-        Assert.Equal(new Rectangle(0, 61, 1920, 1019), BoundsOf(maximized, 2));
+        Assert.AreEqual(new Rectangle(0, 61, 1920, 1019), BoundsOf(maximized, 2));
     }
 
-    [Theory]
-    [InlineData("0", FullscreenMode.Fullscreen, "Toggle", true)]
-    [InlineData("1 default", FullscreenMode.Maximized, "Toggle", false)]
-    [InlineData("0 set default", FullscreenMode.Fullscreen, "Set", false)]
-    [InlineData("1 unset", FullscreenMode.Maximized, "Unset", true)]
-    public void ALastWordDefaultAsksForTheDefaultFullscreen(string arguments, FullscreenMode mode, string action, bool layoutAware)
+    [TestMethod]
+    [DataRow("", "Toggle", true)]
+    [DataRow("default", "Toggle", false)]
+    [DataRow("on default", "Set", false)]
+    [DataRow("off", "Unset", true)]
+    public void ALastWordDefaultAsksForTheDefaultFullscreen(string arguments, string action, bool layoutAware)
     {
         var parsed = FullscreenCommands.Parse(arguments);
 
-        Assert.False(parsed.Ignored);
-        Assert.Equal(mode, parsed.Mode);
-        Assert.Equal(action, parsed.Action.ToString());
-        Assert.Equal(layoutAware, parsed.LayoutAware);
+        Assert.IsNotNull(parsed);
+        Assert.AreEqual(action, parsed.Value.Action.ToString());
+        Assert.AreEqual(layoutAware, parsed.Value.LayoutAware);
     }
 
-    [Fact]
+    [TestMethod]
+    [DataRow("fullscreen 1")]
+    [DataRow("fullscreen set")]
+    [DataRow("maximize on off")]
+    public void AnUnknownFullscreenWordIsRefused(string line)
+    {
+        var core = Desk();
+        OpenWindows(core, 1);
+
+        var reply = core.Execute(line);
+
+        Assert.StartsWith("error: ", reply.Text, StringComparison.Ordinal);
+        Assert.AreEqual(FullscreenMode.None, Client(reply.Effect, 1).Fullscreen);
+    }
+
+    [TestMethod]
     public void TheScrollingLayoutKeepsAFullscreenTileOnItsTapeWhenFocusScrollsAway()
     {
-        var core = Desk("general:layout = scrolling\n");
+        var core = Desk("layout = scrolling\n");
         OpenWindows(core, 2);
 
-        var entered = core.Handle(new Dispatch("fullscreen", "0"));
-        Assert.Equal(MonitorBounds, BoundsOf(entered, 2));
-        Assert.True(Client(entered, 2).LayoutFullscreen);
+        var entered = core.Handle(new Dispatch("fullscreen"));
+        Assert.AreEqual(MonitorBounds, BoundsOf(entered, 2));
+        Assert.IsTrue(Client(entered, 2).LayoutFullscreen);
 
-        var away = core.Handle(new Dispatch("focuswindow", "address:0x1"));
+        var away = core.Handle(new Dispatch("focus", "address:0x1"));
         var held = Client(away, 2);
-        Assert.Equal(FullscreenMode.Fullscreen, held.Fullscreen);
-        Assert.Equal((MonitorBounds.Width, MonitorBounds.Height), (held.Bounds.Width, held.Bounds.Height));
-        Assert.NotEqual(MonitorBounds.X, held.Bounds.X);
+        Assert.AreEqual(FullscreenMode.Fullscreen, held.Fullscreen);
+        Assert.AreEqual((MonitorBounds.Width, MonitorBounds.Height), (held.Bounds.Width, held.Bounds.Height));
+        Assert.AreNotEqual(MonitorBounds.X, held.Bounds.X);
 
-        using var clients = JsonDocument.Parse(core.Execute("j/clients").Text);
-        Assert.All(clients.RootElement.EnumerateArray(), client => Assert.Equal("scrolling", client.GetProperty("fullscreenHandler").GetString()));
+        using var clients = JsonDocument.Parse(core.Execute("j/get windows").Text);
+        foreach (var client in clients.RootElement.EnumerateArray())
+{
+    Assert.AreEqual("scrolling", client.GetProperty("fullscreenHandler").GetString());
+}
     }
 
-    [Fact]
+    [TestMethod]
     public void DefaultFullscreenInTheScrollingLayoutCoversTheMonitorAsElsewhere()
     {
-        var core = Desk("general:layout = scrolling\n");
+        var core = Desk("layout = scrolling\n");
         OpenWindows(core, 2);
 
-        var entered = core.Handle(new Dispatch("fullscreen", "0 default"));
+        var entered = core.Handle(new Dispatch("fullscreen", "default"));
 
-        Assert.Equal(MonitorBounds, BoundsOf(entered, 2));
-        Assert.False(Client(entered, 2).LayoutFullscreen);
-        using var active = JsonDocument.Parse(core.Execute("j/activewindow").Text);
-        Assert.Equal("default", active.RootElement.GetProperty("fullscreenHandler").GetString());
+        Assert.AreEqual(MonitorBounds, BoundsOf(entered, 2));
+        Assert.IsFalse(Client(entered, 2).LayoutFullscreen);
+        using var active = JsonDocument.Parse(core.Execute("j/get window").Text);
+        Assert.AreEqual("default", active.RootElement.GetProperty("fullscreenHandler").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AFloatingWindowUnderAFullscreenTileIsLoweredAndRaisedWhenItEnds()
     {
         var core = Desk();
         OpenWindows(core, 2);
-        core.Handle(new Dispatch("focuswindow", "address:0x1"));
-        core.Handle(new Dispatch("togglefloating"));
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
+        core.Handle(new Dispatch("focus", "address:0x1"));
+        core.Handle(new Dispatch("float"));
+        core.Handle(new Dispatch("focus", "address:0x2"));
 
-        var covered = core.Handle(new Dispatch("fullscreen", "0"));
+        var covered = core.Handle(new Dispatch("fullscreen"));
 
         Assert.Contains(new ZOrderRequest(new WindowId(1), Top: false), covered.ZOrder);
-        Assert.False(Client(covered, 1).AllowedOverFullscreen);
-        Assert.True(Client(covered, 1).BelowFullscreen);
-        using (var clients = JsonDocument.Parse(core.Execute("j/clients").Text))
+        Assert.IsFalse(Client(covered, 1).AllowedOverFullscreen);
+        Assert.IsTrue(Client(covered, 1).BelowFullscreen);
+        using (var clients = JsonDocument.Parse(core.Execute("j/get windows").Text))
         {
             var floating = clients.RootElement.EnumerateArray().Single(client => client.GetProperty("address").GetString() == "0x1");
-            Assert.False(floating.GetProperty("acceptsInput").GetBoolean());
-            Assert.False(floating.GetProperty("visible").GetBoolean());
+            Assert.IsFalse(floating.GetProperty("visible").GetBoolean());
         }
 
-        var ended = core.Handle(new Dispatch("fullscreen", "0"));
+        var ended = core.Handle(new Dispatch("fullscreen"));
 
         Assert.Contains(new ZOrderRequest(new WindowId(1), Top: true), ended.ZOrder);
-        Assert.True(Client(ended, 1).AllowedOverFullscreen);
-        Assert.False(Client(ended, 1).BelowFullscreen);
+        Assert.IsTrue(Client(ended, 1).AllowedOverFullscreen);
+        Assert.IsFalse(Client(ended, 1).BelowFullscreen);
     }
 
     private static WindowManager Desk(string config)
@@ -417,11 +430,11 @@ public class FullscreenTests
     }
 
     private static Rectangle Bounds(WindowManager core, long window) =>
-        Client(core.Handle(new Dispatch("resizewindow")), window).Bounds;
+        Client(core.Handle(new Dispatch("resize")), window).Bounds;
 
     private static Decoration DecorationOf(Outcome outcome, long window)
     {
         var client = Client(outcome, window);
-        return Assert.Single(outcome.Decorations, candidate => candidate.Client == client.Id);
+        return Assert.ContainsSingle(candidate => candidate.Client == client.Id, outcome.Decorations);
     }
 }

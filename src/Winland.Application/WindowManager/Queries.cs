@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace Winland.Application;
 
 public sealed partial class WindowManager
@@ -16,25 +14,24 @@ public sealed partial class WindowManager
     private string? Read(CommandRequest request) =>
         request switch
         {
-            ClientsRequest clients => Describe(state => Json(clients)
+            WindowsRequest windows => Describe(state => Json(windows)
                 ? CommandProtocol.FormatClients(state)
                 : Text(CommandProtocol.FormatClientsText(state), "no open windows")),
             WorkspacesRequest workspaces => Describe(state => Json(workspaces) ? CommandProtocol.FormatWorkspaces(state) : CommandProtocol.FormatWorkspacesText(state)),
             MonitorsRequest monitors => Describe(state => Json(monitors)
                 ? CommandProtocol.FormatMonitors(state, monitors.All)
                 : CommandProtocol.FormatMonitorsText(state, monitors.All)),
-            ActiveWindowRequest active => Describe(state => Json(active)
+            WindowRequest active => Describe(state => Json(active)
                 ? CommandProtocol.FormatActiveWindow(state, ActiveWindow())
-                : Text(CommandProtocol.FormatActiveWindowText(state, ActiveWindow()), "Invalid")),
-            ActiveWorkspaceRequest activeWorkspace => Describe(state => Json(activeWorkspace)
+                : CommandProtocol.FormatActiveWindowText(state, ActiveWindow())),
+            WorkspaceRequest workspace => Describe(state => Json(workspace)
                 ? CommandProtocol.FormatActiveWorkspace(state)
                 : CommandProtocol.FormatActiveWorkspaceText(state)),
             BindsRequest binds => Json(binds)
                 ? CommandProtocol.FormatBinds(_config.Binds.Binds)
                 : Text(CommandProtocol.FormatBindsText(_config.Binds.Binds), "no binds"),
-            VersionRequest version => Json(version) ? CommandProtocol.FormatVersion() : CommandProtocol.FormatVersionText(),
-            ConfigErrorsRequest errors => Json(errors)
-                ? CommandProtocol.FormatErrors(_loaded?.Warnings ?? [])
+            ErrorsRequest errors => Json(errors)
+                ? CommandProtocol.FormatErrors(_loaded?.Warnings ?? [], _loaded?.Path)
                 : Text(CommandProtocol.FormatErrorsText(_loaded?.Warnings ?? [], _loaded?.Path), "no config errors"),
             FilesRequest files => Json(files)
                 ? CommandProtocol.FormatFiles(_loaded?.Path, LogFile?.Invoke())
@@ -52,7 +49,6 @@ public sealed partial class WindowManager
         {
             DispatchRequest dispatch => DispatchReply(dispatch),
             EventsRequest => Answer("") with { Stream = true },
-            ReloadRequest => ReloadCommand(),
             _ => throw new InvalidOperationException("No handler for this command."),
         };
     }
@@ -74,34 +70,10 @@ public sealed partial class WindowManager
     private bool TrySelect(string selector, out Client client)
     {
         client = null!;
-        WindowId? window;
-        if (TryAddress(selector, out var addressed))
-            window = addressed;
-        else
-            window = WindowSelector.Find(selector, ActiveWindow(), Snapshot().Clients);
-
-        if (window is not WindowId id || Find(id) is not Client found)
+        if (WindowSelector.Find(selector, ActiveWindow(), Snapshot().Clients) is not WindowId id || Find(id) is not Client found)
             return false;
 
         client = found;
-        return true;
-    }
-
-    private static bool TryAddress(string text, out WindowId window)
-    {
-        window = default;
-        var hex = text.Trim();
-        const string prefix = "address:";
-        if (hex.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            hex = hex[prefix.Length..];
-
-        if (!hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        if (!long.TryParse(hex[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var value))
-            return false;
-
-        window = new WindowId(value);
         return true;
     }
 }

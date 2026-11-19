@@ -1,16 +1,17 @@
 namespace Winland.Install.Tests;
 
+[TestClass]
 public class ManualStartElevationTests
 {
-    [Fact]
+    [TestMethod]
     public void AStandardUserContinuesWithoutAskingForAnotherAccountsCredentials()
     {
         var choice = ManualStartElevation.Decide(false, null, [], limitedToken: false);
 
-        Assert.IsType<ElevationChoice.Continue>(choice);
+        Assert.IsExactInstanceOfType<ElevationChoice.Continue>(choice);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnelevatedStartRelaunchesOnceWithTheSameArgumentsAndALoopGuard()
     {
         var choice = ManualStartElevation.Decide(
@@ -18,13 +19,13 @@ public class ManualStartElevationTests
             optOutVariable: null,
             arguments: ["--config", @"C:\temp\winland.conf"]);
 
-        var relaunch = Assert.IsType<ElevationChoice.Relaunch>(choice);
-        Assert.Equal(
+        var relaunch = Assert.IsExactInstanceOfType<ElevationChoice.Relaunch>(choice);
+        Assert.AreSequenceEqual(
             ["--winland-elevated", "--config", @"C:\temp\winland.conf"],
             relaunch.Arguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void ElevatedStartRunsAndDoesNotRelaunch()
     {
         var choice = ManualStartElevation.Decide(
@@ -32,11 +33,11 @@ public class ManualStartElevationTests
             optOutVariable: null,
             arguments: ["--config", @"C:\temp\winland.conf"]);
 
-        var run = Assert.IsType<ElevationChoice.Continue>(choice);
-        Assert.Equal(["--config", @"C:\temp\winland.conf"], run.Arguments);
+        var run = Assert.IsExactInstanceOfType<ElevationChoice.Continue>(choice);
+        Assert.AreSequenceEqual(["--config", @"C:\temp\winland.conf"], run.Arguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void LoopGuardStopsASecondRelaunchWhenElevationDidNotStick()
     {
         var choice = ManualStartElevation.Decide(
@@ -44,11 +45,11 @@ public class ManualStartElevationTests
             optOutVariable: null,
             arguments: ["--winland-elevated", "--config", @"C:\temp\winland.conf"]);
 
-        var refused = Assert.IsType<ElevationChoice.Refuse>(choice);
-        Assert.Equal("Winland could not restart with administrator rights.", refused.Message);
+        var refused = Assert.IsExactInstanceOfType<ElevationChoice.Refuse>(choice);
+        Assert.AreEqual("Winland could not restart with administrator rights.", refused.Message);
     }
 
-    [Fact]
+    [TestMethod]
     public void ElevatedRelaunchDropsTheLoopGuardAndRunsTheOriginalArguments()
     {
         var choice = ManualStartElevation.Decide(
@@ -56,11 +57,11 @@ public class ManualStartElevationTests
             optOutVariable: null,
             arguments: ["--WINLAND-ELEVATED", "--config", @"C:\temp\winland.conf"]);
 
-        var run = Assert.IsType<ElevationChoice.Continue>(choice);
-        Assert.Equal(["--config", @"C:\temp\winland.conf"], run.Arguments);
+        var run = Assert.IsExactInstanceOfType<ElevationChoice.Continue>(choice);
+        Assert.AreSequenceEqual(["--config", @"C:\temp\winland.conf"], run.Arguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void OptOutVariableStartsWithoutElevation()
     {
         var choice = ManualStartElevation.Decide(
@@ -68,11 +69,11 @@ public class ManualStartElevationTests
             optOutVariable: "1",
             arguments: ["--config", @"C:\temp\winland.conf"]);
 
-        var run = Assert.IsType<ElevationChoice.Continue>(choice);
-        Assert.Equal(["--config", @"C:\temp\winland.conf"], run.Arguments);
+        var run = Assert.IsExactInstanceOfType<ElevationChoice.Continue>(choice);
+        Assert.AreSequenceEqual(["--config", @"C:\temp\winland.conf"], run.Arguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void OptOutFlagStartsWithoutElevationAndIsNotPassedOn()
     {
         var choice = ManualStartElevation.Decide(
@@ -80,11 +81,11 @@ public class ManualStartElevationTests
             optOutVariable: null,
             arguments: ["--no-elevate", "--config", @"C:\temp\winland.conf"]);
 
-        var run = Assert.IsType<ElevationChoice.Continue>(choice);
-        Assert.Equal(["--config", @"C:\temp\winland.conf"], run.Arguments);
+        var run = Assert.IsExactInstanceOfType<ElevationChoice.Continue>(choice);
+        Assert.AreSequenceEqual(["--config", @"C:\temp\winland.conf"], run.Arguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void APerUserInstallNeverRelaunchesThroughUac()
     {
         var choice = ManualStartElevation.Decide(
@@ -93,11 +94,11 @@ public class ManualStartElevationTests
             arguments: [],
             userInstall: true);
 
-        var run = Assert.IsType<ElevationChoice.Continue>(choice);
-        Assert.Empty(run.Arguments);
+        var run = Assert.IsExactInstanceOfType<ElevationChoice.Continue>(choice);
+        Assert.IsEmpty(run.Arguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void ThePerUserFlagIsNotPassedOnToTheDaemon()
     {
         var choice = ManualStartElevation.Decide(
@@ -106,11 +107,11 @@ public class ManualStartElevationTests
             arguments: ["--no-elevate"],
             userInstall: true);
 
-        var run = Assert.IsType<ElevationChoice.Continue>(choice);
-        Assert.Empty(run.Arguments);
+        var run = Assert.IsExactInstanceOfType<ElevationChoice.Continue>(choice);
+        Assert.IsEmpty(run.Arguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void OtherOptOutValuesStillRelaunch()
     {
         var choice = ManualStartElevation.Decide(
@@ -118,7 +119,7 @@ public class ManualStartElevationTests
             optOutVariable: "true",
             arguments: []);
 
-        var relaunch = Assert.IsType<ElevationChoice.Relaunch>(choice);
-        Assert.Equal(["--winland-elevated"], relaunch.Arguments);
+        var relaunch = Assert.IsExactInstanceOfType<ElevationChoice.Relaunch>(choice);
+        Assert.AreSequenceEqual(["--winland-elevated"], relaunch.Arguments);
     }
 }

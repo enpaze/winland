@@ -2,6 +2,7 @@ using System.Reflection;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class EmptyStepTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
@@ -53,55 +54,55 @@ public class EmptyStepTests
         [nameof(Outcome.IsEmpty)] = (o => o with { IsEmpty = true }, true),
     };
 
-    [Fact]
+    [TestMethod]
     public void EveryPropertyHasARuleInIsEmptyAfter()
     {
         var properties = typeof(Outcome)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(property => property.Name);
 
-        Assert.Equal(Rules.Keys.Order(StringComparer.Ordinal), properties.Order(StringComparer.Ordinal));
+        Assert.AreSequenceEqual(Rules.Keys.Order(StringComparer.Ordinal), properties.Order(StringComparer.Ordinal));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOutcomeLikeTheLastAppliedOneIsEmpty()
     {
-        Assert.True((Applied with { }).IsEmptyAfter(Applied));
+        Assert.IsTrue((Applied with { }).IsEmptyAfter(Applied));
     }
 
-    [Fact]
+    [TestMethod]
     public void NothingIsEmptyBeforeAnythingWasApplied()
     {
-        Assert.False((Applied with { }).IsEmptyAfter(null));
+        Assert.IsFalse((Applied with { }).IsEmptyAfter(null));
     }
 
-    [Fact]
+    [TestMethod]
     public void EachPropertyIsSeenByTheRuleOrLeftOutOnPurpose()
     {
         foreach (var (name, rule) in Rules)
-            Assert.True(rule.Change(Applied with { }).IsEmptyAfter(Applied) == rule.StaysEmpty, name);
+            Assert.IsTrue(rule.Change(Applied with { }).IsEmptyAfter(Applied) == rule.StaysEmpty, name);
     }
 
-    [Fact]
+    [TestMethod]
     public void ThenIsEmptyOnlyWhenBothAre()
     {
         var empty = Outcome.Empty(new State([]));
         var busy = new Outcome([], new State([])) { Closes = [OneWindow] };
 
-        Assert.True(empty.Then(empty).IsEmpty);
-        Assert.False(empty.Then(busy).IsEmpty);
-        Assert.False(busy.Then(empty).IsEmpty);
+        Assert.IsTrue(empty.Then(empty).IsEmpty);
+        Assert.IsFalse(empty.Then(busy).IsEmpty);
+        Assert.IsFalse(busy.Then(empty).IsEmpty);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFirstStepIsNotEmpty()
     {
         var core = new WindowManager(ConfigParser.Parse(FlatConfig("")));
 
-        Assert.False(core.Handle(new PointerMoved(new Point(10, 10)) { TimeMs = 0 }).IsEmpty);
+        Assert.IsFalse(core.Handle(new PointerMoved(new Point(10, 10)) { TimeMs = 0 }).IsEmpty);
     }
 
-    [Fact]
+    [TestMethod]
     public void AMoveOverTheSameWindowChangesNothing()
     {
         var (core, laid) = Tiled();
@@ -109,12 +110,12 @@ public class EmptyStepTests
 
         var moved = Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_100);
 
-        Assert.True(moved.IsEmpty);
-        Assert.Empty(moved.Placements);
-        Assert.Equal(2, moved.State.Clients.Count);
+        Assert.IsTrue(moved.IsEmpty);
+        Assert.IsEmpty(moved.Placements);
+        Assert.AreEqual(2, moved.State.Clients.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void AMoveThatChangesNothingRunsNoStep()
     {
         var (core, laid) = Tiled();
@@ -124,26 +125,27 @@ public class EmptyStepTests
 
         var moved = Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_100);
 
-        Assert.True(moved.IsEmpty);
-        Assert.Same((decided ?? laid).State, moved.State);
+        Assert.IsTrue(moved.IsEmpty);
+        Assert.AreSame((decided ?? laid).State, moved.State);
     }
 
-    [Fact]
-    public void AMoveWithoutAStepStillMovesThePointerAKeyDragStartsFrom()
+    [TestMethod]
+    public void AMoveWithoutAStepStillMovesThePointerATileReturnsTo()
     {
-        var core = Configured("bind = SUPER, Z, mouse, movewindow");
+        var core = new WindowManager(ConfigParser.Parse(FlatConfig("focus_follows_mouse = 0\n")));
         core.Handle(new WindowAppeared(OneWindow, Area));
-        core.Handle(new Dispatch("togglefloating"));
-        core.Handle(new PointerMoved(new Point(700, 400)));
+        core.Handle(new WindowAppeared(new WindowId(2), Area));
+        core.Handle(new Dispatch("float"));
+        Move(core, new Point(1700, 1000), 1_000);
 
-        var moved = core.Handle(new PointerMoved(new Point(10, 10)));
-        core.Handle(new KeyPressed("Super_L"));
+        var moved = Move(core, new Point(200, 1000), 1_100);
+        var tiled = core.Handle(new Dispatch("float"));
 
-        Assert.True(moved.IsEmpty);
-        Assert.False(core.Handle(new KeyPressed("z")).Consumed);
+        Assert.IsTrue(moved.IsEmpty);
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), Client(tiled, 1).Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void AMoveThatChangesTheFocusIsNotEmpty()
     {
         var (core, laid) = Tiled();
@@ -152,91 +154,91 @@ public class EmptyStepTests
 
         var followed = Move(core, Center(laid, 1), 1_100);
 
-        Assert.False(followed.IsEmpty);
-        Assert.Equal(OneWindow, followed.Focus);
+        Assert.IsFalse(followed.IsEmpty);
+        Assert.AreEqual(OneWindow, followed.Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void AStepThatChangesTheDecorationsIsNotEmpty()
     {
         var (core, laid) = Tiled();
         Move(core, Center(laid, 2), 1_000);
-        Assert.True(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_050).IsEmpty);
+        Assert.IsTrue(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_050).IsEmpty);
 
         var focused = core.Handle(new WindowFocused(OneWindow, FocusCause.User));
 
-        Assert.False(focused.IsEmpty);
-        Assert.NotEmpty(focused.Decorations);
+        Assert.IsFalse(focused.IsEmpty);
+        Assert.IsNotEmpty(focused.Decorations);
     }
 
-    [Theory]
-    [InlineData("clients")]
-    [InlineData("j/clients")]
-    [InlineData("workspaces")]
-    [InlineData("monitors")]
-    [InlineData("monitors all")]
-    [InlineData("activewindow")]
-    [InlineData("activeworkspace")]
-    [InlineData("binds")]
-    [InlineData("version")]
-    [InlineData("configerrors")]
-    [InlineData("files")]
+    [TestMethod]
+    [DataRow("get windows")]
+    [DataRow("j/get windows")]
+    [DataRow("get workspaces")]
+    [DataRow("get monitors")]
+    [DataRow("get monitors all")]
+    [DataRow("get window")]
+    [DataRow("get workspace")]
+    [DataRow("get binds")]
+    [DataRow("version")]
+    [DataRow("get errors")]
+    [DataRow("get files")]
     public void AQueryAnswersAndChangesNothing(string query)
     {
         var (core, laid) = Tiled();
         Move(core, Center(laid, 2), 1_000);
-        var before = core.Execute("j/clients").Text;
+        var before = core.Execute("j/get windows").Text;
 
         var reply = core.Execute(query);
 
-        Assert.NotEmpty(reply.Text);
-        Assert.True(reply.Effect.IsEmpty);
-        Assert.Equal(2, reply.Effect.State.Clients.Count);
-        Assert.Equal(before, core.Execute("j/clients").Text);
-        Assert.True(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_100).IsEmpty);
+        Assert.IsNotEmpty(reply.Text);
+        Assert.IsTrue(reply.Effect.IsEmpty);
+        Assert.AreEqual(2, reply.Effect.State.Clients.Count);
+        Assert.AreEqual(before, core.Execute("j/get windows").Text);
+        Assert.IsTrue(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_100).IsEmpty);
     }
 
-    [Fact]
+    [TestMethod]
     public void ACommandThatChangesTheStateIsNotAQuery()
     {
         var (core, _) = Tiled();
 
-        var reply = core.Execute("dispatch togglefloating");
+        var reply = core.Execute("float");
 
-        Assert.False(reply.Effect.IsEmpty);
+        Assert.IsFalse(reply.Effect.IsEmpty);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFirstStepAfterAConfigReloadIsNotEmpty()
     {
         var (core, laid) = Tiled();
         var document = ConfigParser.Parse(FlatConfig(""));
         core.ReadConfig = () => new ConfigRead(document);
         Move(core, Center(laid, 2), 1_000);
-        Assert.True(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_050).IsEmpty);
+        Assert.IsTrue(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_050).IsEmpty);
 
         var reloaded = core.Execute("reload");
         var after = Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 20 }, 1_100);
         var then = Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 30 }, 1_150);
 
-        Assert.False(reloaded.Effect.IsEmpty);
-        Assert.False(after.IsEmpty);
-        Assert.NotEmpty(after.Decorations);
-        Assert.True(then.IsEmpty);
+        Assert.IsFalse(reloaded.Effect.IsEmpty);
+        Assert.IsFalse(after.IsEmpty);
+        Assert.IsNotEmpty(after.Decorations);
+        Assert.IsTrue(then.IsEmpty);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFirstStepAfterAConfigIsConfiguredIsNotEmpty()
     {
         var (core, laid) = Tiled();
         Move(core, Center(laid, 2), 1_000);
-        Assert.True(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_050).IsEmpty);
+        Assert.IsTrue(Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 10 }, 1_050).IsEmpty);
 
         var configured = core.Handle(new Configure(ConfigParser.Parse(FlatConfig(""))));
         var after = Move(core, Center(laid, 2) with { X = Center(laid, 2).X + 20 }, 1_100);
 
-        Assert.False(configured.IsEmpty);
-        Assert.False(after.IsEmpty);
+        Assert.IsFalse(configured.IsEmpty);
+        Assert.IsFalse(after.IsEmpty);
     }
 
     private static (WindowManager WindowManager, Outcome Laid) Tiled()

@@ -1,218 +1,219 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class SessionPhaseTests
 {
-    [Fact]
+    [TestMethod]
     public void TheFirstLayoutWaitsUntilTheShellIsReady()
     {
         var phase = new SessionPhase();
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
-        Assert.Equal(SessionEffect.LayOut, phase.Notice(SessionSignal.ShellReady));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.ShellReady));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.LayOut, phase.Notice(SessionSignal.ShellReady));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.ShellReady));
     }
 
-    [Theory]
-    [InlineData(SessionSignal.Locked, SessionSignal.Unlocked)]
-    [InlineData(SessionSignal.Suspended, SessionSignal.Resumed)]
-    [InlineData(SessionSignal.ConsoleDisconnected, SessionSignal.ConsoleConnected)]
-    [InlineData(SessionSignal.DisplayOff, SessionSignal.DisplayOn)]
+    [TestMethod]
+    [DataRow(SessionSignal.Locked, SessionSignal.Unlocked)]
+    [DataRow(SessionSignal.Suspended, SessionSignal.Resumed)]
+    [DataRow(SessionSignal.ConsoleDisconnected, SessionSignal.ConsoleConnected)]
+    [DataRow(SessionSignal.DisplayOff, SessionSignal.DisplayOn)]
     public void TheSessionIsLiveExceptWhileItIsAway(SessionSignal away, SessionSignal back)
     {
         var phase = new SessionPhase();
         phase.Notice(SessionSignal.ShellReady);
-        Assert.True(phase.Live);
+        Assert.IsTrue(phase.Live);
 
         phase.Notice(away);
-        Assert.False(phase.Live);
+        Assert.IsFalse(phase.Live);
 
         phase.Notice(back);
-        Assert.True(phase.Live);
+        Assert.IsTrue(phase.Live);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFirstLayoutRunsWhenTheShellWaitTimesOut()
     {
         var phase = new SessionPhase();
 
-        Assert.Equal(SessionEffect.LayOut, phase.Notice(SessionSignal.ShellTimedOut));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.ShellTimedOut));
+        Assert.AreEqual(SessionEffect.LayOut, phase.Notice(SessionSignal.ShellTimedOut));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.ShellTimedOut));
     }
 
-    [Fact]
+    [TestMethod]
     public void AShellThatAppearsAfterTheTimeoutLaysOutAgain()
     {
         var phase = new SessionPhase();
-        Assert.Equal(SessionEffect.LayOut, phase.Notice(SessionSignal.ShellTimedOut));
+        Assert.AreEqual(SessionEffect.LayOut, phase.Notice(SessionSignal.ShellTimedOut));
 
-        Assert.Equal(SessionEffect.Reflow, phase.Notice(SessionSignal.ShellReady));
+        Assert.AreEqual(SessionEffect.Reflow, phase.Notice(SessionSignal.ShellReady));
     }
 
-    [Fact]
+    [TestMethod]
     public void SuspendHoldsTheFirstLayoutUntilResume()
     {
         var phase = new SessionPhase();
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.Suspended));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.ShellReady));
-        Assert.Equal(SessionEffect.LayOut, phase.Notice(SessionSignal.Resumed));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.Suspended));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.ShellReady));
+        Assert.AreEqual(SessionEffect.LayOut, phase.Notice(SessionSignal.Resumed));
     }
 
-    [Fact]
+    [TestMethod]
     public void ResumeAfterALayoutRecoversTheSession()
     {
         var phase = LaidOut();
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.Suspended));
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.Resumed));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.Resumed));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.Suspended));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.Resumed));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.Resumed));
     }
 
-    [Fact]
+    [TestMethod]
     public void ResumeWhileLockedWaitsForUnlock()
     {
         var phase = LaidOut();
         phase.Notice(SessionSignal.Locked);
         phase.Notice(SessionSignal.Suspended);
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.Resumed));
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.Unlocked));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.Resumed));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.Unlocked));
     }
 
-    [Fact]
+    [TestMethod]
     public void LockHidesChangesUntilUnlock()
     {
         var phase = LaidOut();
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.Locked));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.Unlocked));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.Locked));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.Unlocked));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFirstLayoutWaitsForAnUnlock()
     {
         var phase = new SessionPhase();
         phase.Notice(SessionSignal.Locked);
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.ShellReady));
-        Assert.Equal(SessionEffect.LayOut, phase.Notice(SessionSignal.Unlocked));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.ShellReady));
+        Assert.AreEqual(SessionEffect.LayOut, phase.Notice(SessionSignal.Unlocked));
     }
 
-    [Fact]
+    [TestMethod]
     public void AShellTimeoutWhileLockedWaitsForUnlock()
     {
         var phase = new SessionPhase();
         phase.Notice(SessionSignal.Locked);
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.ShellTimedOut));
-        Assert.Equal(SessionEffect.LayOut, phase.Notice(SessionSignal.Unlocked));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.ShellTimedOut));
+        Assert.AreEqual(SessionEffect.LayOut, phase.Notice(SessionSignal.Unlocked));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUnlockWithoutALockDoesNotLayOutAgain()
     {
         var phase = LaidOut();
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.Unlocked));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.Unlocked));
     }
 
-    [Fact]
+    [TestMethod]
     public void AConsoleReconnectRecoversTheSession()
     {
         var phase = LaidOut();
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.ConsoleDisconnected));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.ConsoleConnected));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.ConsoleConnected));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.ConsoleDisconnected));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.ConsoleConnected));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.ConsoleConnected));
     }
 
-    [Fact]
+    [TestMethod]
     public void ARemoteConnectRecoversTheSession()
     {
         var phase = LaidOut();
 
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.RemoteConnected));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.RemoteDisconnected));
-        Assert.Equal(SessionEffect.Reflow, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.RemoteConnected));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.RemoteDisconnected));
+        Assert.AreEqual(SessionEffect.Reflow, phase.Notice(SessionSignal.DisplayChanged));
     }
 
-    [Fact]
+    [TestMethod]
     public void ARemoteDisconnectLeavesTheSessionUntilItReconnects()
     {
         var phase = LaidOut();
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.RemoteConnected));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.ConsoleDisconnected));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.RemoteConnected));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.ConsoleDisconnected));
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.RemoteDisconnected));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.RemoteConnected));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.RemoteDisconnected));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.RemoteConnected));
     }
 
-    [Fact]
+    [TestMethod]
     public void ADisplayChangeReflowsAfterTheFirstLayout()
     {
         var phase = new SessionPhase();
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
         phase.Notice(SessionSignal.ShellReady);
 
-        Assert.Equal(SessionEffect.Reflow, phase.Notice(SessionSignal.DisplayChanged));
-        Assert.Equal(SessionEffect.Reflow, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.Reflow, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.Reflow, phase.Notice(SessionSignal.DisplayChanged));
     }
 
-    [Fact]
+    [TestMethod]
     public void DisplayPowerOnRecoversTheSession()
     {
         var phase = LaidOut();
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.DisplayOff));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.DisplayOn));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.DisplayOn));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.DisplayOff));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.DisplayOn));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.DisplayOn));
     }
 
-    [Fact]
+    [TestMethod]
     public void ResumeRecoversEvenIfTheDisplayWasOff()
     {
         var phase = LaidOut();
         phase.Notice(SessionSignal.DisplayOff);
         phase.Notice(SessionSignal.Suspended);
 
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.Resumed));
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.DisplayOn));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.Resumed));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.DisplayOn));
     }
 
-    [Fact]
+    [TestMethod]
     public void ADisplayChangeWhileSuspendedWaitsForResume()
     {
         var phase = LaidOut();
         phase.Notice(SessionSignal.Suspended);
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.Resumed));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.DisplayChanged));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.Resumed));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASecondSuspendDoesNotChangeThePhase()
     {
         var phase = LaidOut();
 
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.Suspended));
-        Assert.Equal(SessionEffect.None, phase.Notice(SessionSignal.Suspended));
-        Assert.Equal(SessionEffect.Recover, phase.Notice(SessionSignal.Resumed));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.Suspended));
+        Assert.AreEqual(SessionEffect.None, phase.Notice(SessionSignal.Suspended));
+        Assert.AreEqual(SessionEffect.Recover, phase.Notice(SessionSignal.Resumed));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheShellWaitIsBounded()
     {
-        Assert.Equal(TimeSpan.FromSeconds(15), SessionPhase.ShellWait);
+        Assert.AreEqual(TimeSpan.FromSeconds(15), SessionPhase.ShellWait);
     }
 
     private static SessionPhase LaidOut()
     {
         var phase = new SessionPhase();
-        Assert.Equal(SessionEffect.LayOut, phase.Notice(SessionSignal.ShellReady));
+        Assert.AreEqual(SessionEffect.LayOut, phase.Notice(SessionSignal.ShellReady));
         return phase;
     }
 }

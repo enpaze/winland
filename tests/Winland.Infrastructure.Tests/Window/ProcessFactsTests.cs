@@ -1,8 +1,9 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class ProcessFactsTests
 {
-    [Fact]
+    [TestMethod]
     public void AProcessIsReadOnceWhileItKeepsItsStartTime()
     {
         var started = 100L;
@@ -13,16 +14,16 @@ public class ProcessFactsTests
             return "app.exe";
         }, _ => [1, 2]);
 
-        Assert.Equal("app.exe", facts.For(42).Exe);
-        Assert.Equal([1, 2], facts.For(42).Ancestors);
-        Assert.Equal(1, reads);
+        Assert.AreEqual("app.exe", facts.For(42).Exe);
+        TestSequence.Equal([1, 2], facts.For(42).Ancestors);
+        Assert.AreEqual(1, reads);
 
         started = 200;
         facts.For(42);
-        Assert.Equal(2, reads);
+        Assert.AreEqual(2, reads);
     }
 
-    [Fact]
+    [TestMethod]
     public void AProcessWithNoStartTimeIsReadEveryTime()
     {
         var reads = 0;
@@ -35,16 +36,16 @@ public class ProcessFactsTests
         facts.For(42);
         facts.For(42);
 
-        Assert.Equal(2, reads);
+        Assert.AreEqual(2, reads);
     }
 
-    [Fact]
+    [TestMethod]
     public void ThisProcessIsReadFromTheSystem()
     {
         var facts = ProcessFacts.Shared.For((uint)Environment.ProcessId);
 
-        Assert.NotEqual(0, facts.Started);
+        Assert.AreNotEqual(0, facts.Started);
         Assert.EndsWith(".exe", facts.Exe, StringComparison.OrdinalIgnoreCase);
-        Assert.NotEmpty(facts.Ancestors);
+        Assert.IsNotEmpty(facts.Ancestors);
     }
 }

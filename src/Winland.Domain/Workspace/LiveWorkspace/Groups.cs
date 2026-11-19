@@ -161,6 +161,7 @@ internal sealed partial class LiveWorkspace
                 Workspace: Id,
                 Class: taken.Class,
                 Title: taken.Title,
+                Exe: taken.Exe,
                 ProcessId: taken.ProcessId,
                 InitialClass: taken.InitialClass ?? taken.Class,
                 InitialTitle: taken.InitialTitle ?? taken.Title,

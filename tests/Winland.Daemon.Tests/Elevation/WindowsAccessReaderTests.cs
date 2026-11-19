@@ -5,6 +5,7 @@ using System.Security.Principal;
 namespace Winland.Daemon.Tests;
 
 [SupportedOSPlatform("windows")]
+[TestClass]
 public sealed class WindowsAccessReaderTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "winland-access-" + Guid.NewGuid().ToString("N"));
@@ -12,7 +13,7 @@ public sealed class WindowsAccessReaderTests : IDisposable
 
     public WindowsAccessReaderTests() => Directory.CreateDirectory(_root);
 
-    [Fact]
+    [TestMethod]
     public void TheTreeIsTheFolderAndEverythingInIt()
     {
         if (!OperatingSystem.IsWindows())
@@ -26,14 +27,17 @@ public sealed class WindowsAccessReaderTests : IDisposable
 
         var tree = WindowsAccessReader.Tree(_root);
 
-        Assert.Equal(_root, tree[0].Path);
-        Assert.Equal(
+        Assert.AreEqual(_root, tree[0].Path);
+        Assert.AreSequenceEqual(
             [_root, hidden, Path.Combine(_root, "sub"), Path.Combine(_root, "sub", "Plugin.dll")],
             tree.Select(entry => entry.Path).Order(StringComparer.OrdinalIgnoreCase));
-        Assert.All(tree, entry => Assert.NotNull(entry.Access));
+        foreach (var entry in tree)
+{
+    Assert.IsNotNull(entry.Access);
+}
     }
 
-    [Fact]
+    [TestMethod]
     public void AFolderThatCannotBeListedReadsAsUnknown()
     {
         if (!OperatingSystem.IsWindows())
@@ -49,10 +53,10 @@ public sealed class WindowsAccessReaderTests : IDisposable
 
         var tree = WindowsAccessReader.Tree(_root);
 
-        Assert.Contains(tree, entry => entry.Path == _root && entry.Access is null);
+        Assert.Contains(entry => entry.Path == _root && entry.Access is null, tree);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOpenFileAndAFolderCanBeRead()
     {
         if (!OperatingSystem.IsWindows())
@@ -62,17 +66,17 @@ public sealed class WindowsAccessReaderTests : IDisposable
         File.WriteAllText(path, "[]");
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 
-        Assert.True(WindowsAccessReader.TryRead(stream, out var opened));
-        Assert.True(WindowsAccessReader.TryRead(_root, out var folder, out var error));
-        Assert.True(WindowsAccessReader.TryRead(path, out var file, out _));
-        Assert.Null(error);
-        Assert.False(string.IsNullOrEmpty(opened.Owner));
-        Assert.Equal(file.Owner, opened.Owner);
-        Assert.False(string.IsNullOrEmpty(folder.Owner));
-        Assert.NotEmpty(opened.Grants);
+        Assert.IsTrue(WindowsAccessReader.TryRead(stream, out var opened));
+        Assert.IsTrue(WindowsAccessReader.TryRead(_root, out var folder, out var error));
+        Assert.IsTrue(WindowsAccessReader.TryRead(path, out var file, out _));
+        Assert.IsNull(error);
+        Assert.IsFalse(string.IsNullOrEmpty(opened.Owner));
+        Assert.AreEqual(file.Owner, opened.Owner);
+        Assert.IsFalse(string.IsNullOrEmpty(folder.Owner));
+        Assert.IsNotEmpty(opened.Grants);
     }
 
-    [Fact]
+    [TestMethod]
     public void APathThatIsNotThereCannotBeRead()
     {
         if (!OperatingSystem.IsWindows())
@@ -80,11 +84,11 @@ public sealed class WindowsAccessReaderTests : IDisposable
 
         var missing = Path.Combine(_root, "missing", "Plugin.dll");
 
-        Assert.False(WindowsAccessReader.TryRead(missing, out _, out var error));
-        Assert.Equal($"Could not verify that '{missing}' is protected from non-administrators.", error);
+        Assert.IsFalse(WindowsAccessReader.TryRead(missing, out _, out var error));
+        Assert.AreEqual($"Could not verify that '{missing}' is protected from non-administrators.", error);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheAncestorsAreNearestFirst()
     {
         if (!OperatingSystem.IsWindows())
@@ -94,24 +98,24 @@ public sealed class WindowsAccessReaderTests : IDisposable
 
         var ancestors = WindowsAccessReader.Ancestors(file).Select(entry => entry.Path).ToList();
 
-        Assert.Equal(Path.Combine(_root, "sub"), ancestors[0]);
-        Assert.Equal(_root, ancestors[1]);
-        Assert.Equal(Path.GetPathRoot(_root), ancestors[^1]);
+        Assert.AreEqual(Path.Combine(_root, "sub"), ancestors[0]);
+        Assert.AreEqual(_root, ancestors[1]);
+        Assert.AreEqual(Path.GetPathRoot(_root), ancestors[^1]);
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingArgumentsAreRefused()
     {
         if (!OperatingSystem.IsWindows())
             return;
 
-        Assert.Throws<ArgumentException>(() => WindowsAccessReader.TryRead(" ", out _, out _));
-        Assert.Throws<ArgumentNullException>(() => WindowsAccessReader.TryRead((FileStream)null!, out _));
-        Assert.Throws<ArgumentNullException>(() => WindowsAccessReader.TryRead((Microsoft.Win32.SafeHandles.SafeFileHandle)null!, out _));
-        Assert.Throws<ArgumentException>(() => WindowsAccessReader.FirstNonAdministrator(" "));
-        Assert.Throws<ArgumentException>(() => WindowsAccessReader.Tree(" "));
-        Assert.Throws<ArgumentException>(() => WindowsAccessReader.FirstNonAdministratorAbove(" "));
-        Assert.Throws<ArgumentException>(() => WindowsAccessReader.Ancestors(" "));
+        Assert.ThrowsExactly<ArgumentException>(() => WindowsAccessReader.TryRead(" ", out _, out _));
+        Assert.ThrowsExactly<ArgumentNullException>(() => WindowsAccessReader.TryRead((FileStream)null!, out _));
+        Assert.ThrowsExactly<ArgumentNullException>(() => WindowsAccessReader.TryRead((Microsoft.Win32.SafeHandles.SafeFileHandle)null!, out _));
+        Assert.ThrowsExactly<ArgumentException>(() => WindowsAccessReader.FirstNonAdministrator(" "));
+        Assert.ThrowsExactly<ArgumentException>(() => WindowsAccessReader.Tree(" "));
+        Assert.ThrowsExactly<ArgumentException>(() => WindowsAccessReader.FirstNonAdministratorAbove(" "));
+        Assert.ThrowsExactly<ArgumentException>(() => WindowsAccessReader.Ancestors(" "));
     }
 
     public void Dispose()

@@ -1,99 +1,98 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class CursorInputTests
 {
-    [Fact]
+    [TestMethod]
     public void DocumentedCursorFollowsFocusAndHidesOnTyping()
     {
         var options = CursorOptions.From(ConfigParser.Parse(""));
 
-        Assert.False(options.NoWarps);
-        Assert.True(options.HideOnKeyPress);
+        Assert.IsTrue(options.WarpCursor);
+        Assert.IsTrue(options.HideOnKeyPress);
     }
 
-    [Fact]
-    public void CursorBlockIsHonored()
+    [TestMethod]
+    public void CursorOptionsAreHonored()
     {
         var document = ConfigParser.Parse("""
-            cursor {
-                no_warps = true
-                hide_on_key_press = on
-            }
+            warp_cursor = false
+            hide_cursor_while_typing = off
             """);
 
-        Assert.Empty(document.Warnings);
+        Assert.IsEmpty(document.Warnings);
         var options = CursorOptions.From(document);
-        Assert.True(options.NoWarps);
-        Assert.True(options.HideOnKeyPress);
+        Assert.IsFalse(options.WarpCursor);
+        Assert.IsFalse(options.HideOnKeyPress);
     }
 
-    [Fact]
+    [TestMethod]
     public void ACutCursorKeyWarnsAndIsSkipped()
     {
         var document = ConfigParser.Parse("cursor:persistent_warps = true\n");
 
-        Assert.Empty(document.Settings);
-        Assert.Equal(new ConfigWarning(1, "Unsupported keyword 'cursor:persistent_warps'."), Assert.Single(document.Warnings));
+        Assert.IsEmpty(document.Settings);
+        Assert.AreEqual(new ConfigWarning(1, "Unsupported keyword 'cursor:persistent_warps'."), Assert.ContainsSingle(document.Warnings));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASystemInputKeyWarnsAndIsNotApplied()
     {
         var document = ConfigParser.Parse("""
-            input:follow_mouse = 1
+            focus_follows_mouse = 1
             input:repeat_rate = 25
             input:sensitivity = 0
             input:left_handed = true
             """);
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 new ConfigWarning(2, "Unsupported keyword 'input:repeat_rate'."),
                 new ConfigWarning(3, "Unsupported keyword 'input:sensitivity'."),
                 new ConfigWarning(4, "Unsupported keyword 'input:left_handed'."),
             ],
             document.Warnings);
-        Assert.Equal([new Setting("input:follow_mouse", "1")], document.Settings);
+        Assert.AreSequenceEqual([new Setting("focus_follows_mouse", "1")], document.Settings);
     }
 
-    [Fact]
+    [TestMethod]
     public void FollowMouseIsReadAndATabletKeyWarns()
     {
-        var document = ConfigParser.Parse("input:follow_mouse = true\ninput:tablet:enabled = true\n");
+        var document = ConfigParser.Parse("focus_follows_mouse = true\ninput:tablet:enabled = true\n");
 
-        Assert.Equal([new Setting("input:follow_mouse", "true")], document.Settings);
-        Assert.Equal(new ConfigWarning(2, "Unsupported keyword 'input:tablet:enabled'."), Assert.Single(document.Warnings));
-        Assert.True(InputOptions.From(document).FollowMouse);
+        Assert.AreSequenceEqual([new Setting("focus_follows_mouse", "true")], document.Settings);
+        Assert.AreEqual(new ConfigWarning(2, "Unsupported keyword 'input:tablet:enabled'."), Assert.ContainsSingle(document.Warnings));
+        Assert.IsTrue(InputOptions.From(document).FollowMouse);
     }
 
-    [Fact]
+    [TestMethod]
     public void WheelDirectionIsNotReversed()
     {
         var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = , mouse_down, workspace, 2\n")));
+        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = mouse_down, workspace 2\n")));
         core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 800, 600)));
 
         var outcome = core.Handle(new WheelTurned("mouse_up", 1_000));
 
-        Assert.Equal(WorkspaceId.Initial, outcome.State.ActiveWorkspace);
+        Assert.AreEqual(WorkspaceId.Initial, outcome.State.ActiveWorkspace);
     }
 
-    [Fact]
+    [TestMethod]
     public void ConfigurePublishesTheCursorAndSkipsASystemInputKey()
     {
         var document = ConfigParser.Parse("input:repeat_rate = 30\ninput:scroll_factor = 2\n");
         var outcome = new WindowManager().Handle(new Configure(document));
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 new ConfigWarning(1, "Unsupported keyword 'input:repeat_rate'."),
                 new ConfigWarning(2, "Unsupported keyword 'input:scroll_factor'."),
             ],
             document.Warnings);
-        Assert.Equal(new CursorBehavior(true), outcome.Cursor);
+        Assert.AreEqual(new CursorBehavior(true), outcome.Cursor);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClientsRoundTripAndAnOldInputObjectIsIgnored()
     {
         var snapshot = new RecoverySnapshot(
@@ -104,14 +103,14 @@ public class CursorInputTests
             },
         ]);
 
-        Assert.True(RecoverySnapshot.TryParse(snapshot.ToJson(), out var parsed));
-        Assert.Equal(snapshot.Clients, parsed.Clients);
+        Assert.IsTrue(RecoverySnapshot.TryParse(snapshot.ToJson(), out var parsed));
+        Assert.AreSequenceEqual(snapshot.Clients, parsed.Clients);
         Assert.DoesNotContain("input", snapshot.ToJson(), StringComparison.Ordinal);
 
         const string Older = """
             {"clients":[{"window":7,"workspace":"1","monitor":"\\\\.\\DISPLAY1","hidden":false,"class":"CabinetWClass","title":"Home","process":9}],"input":{"keyboardDelay":1},"mirrors":[],"vrr":{},"colors":[]}
             """;
-        Assert.True(RecoverySnapshot.TryParse(Older, out var legacy));
-        Assert.Equal(snapshot.Clients, legacy.Clients);
+        Assert.IsTrue(RecoverySnapshot.TryParse(Older, out var legacy));
+        Assert.AreSequenceEqual(snapshot.Clients, legacy.Clients);
     }
 }

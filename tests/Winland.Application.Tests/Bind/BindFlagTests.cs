@@ -1,11 +1,12 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class BindFlagTests
 {
-    [Fact]
+    [TestMethod]
     public void ABindRunsOnceOnThePressAndSwallowsTheHeldKeyAndItsRelease()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -13,68 +14,105 @@ public class BindFlagTests
         var held = Press(core, "Q");
         var release = Release(core, "Q");
 
-        Assert.Equal(new WindowId(1), press.Close);
-        Assert.True(press.Consumed);
-        Assert.Null(held.Close);
-        Assert.True(held.Consumed);
-        Assert.Null(release.Close);
-        Assert.True(release.Consumed);
+        Assert.AreEqual(new WindowId(1), press.Close);
+        Assert.IsTrue(press.Consumed);
+        Assert.IsNull(held.Close);
+        Assert.IsTrue(held.Consumed);
+        Assert.IsNull(release.Close);
+        Assert.IsTrue(release.Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void AmpersandIsASingleKeyWithoutTheSeparateFlag()
     {
-        var core = Load("bind = SUPER, A&B, killactive");
+        var core = Load("bind = Win+A&B, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
-        Assert.False(Press(core, "A").Consumed);
-        Assert.False(Press(core, "B").Consumed);
+        Assert.IsFalse(Press(core, "A").Consumed);
+        Assert.IsFalse(Press(core, "B").Consumed);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollBindFiresThenWaitsForTheDelay()
     {
-        var core = Load("bind = SUPER, mouse_down, killactive\n");
+        var core = Load("bind = Win+mouse_down, close\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
-        Assert.Equal(new WindowId(1), core.Handle(new WheelTurned("mouse_down", 1_000)).Close);
+        Assert.AreEqual(new WindowId(1), core.Handle(new WheelTurned("mouse_down", 1_000)).Close);
 
         var blocked = core.Handle(new WheelTurned("mouse_down", 1_200));
-        Assert.True(blocked.Consumed);
-        Assert.Null(blocked.Close);
+        Assert.IsTrue(blocked.Consumed);
+        Assert.IsNull(blocked.Close);
 
-        Assert.Equal(new WindowId(1), core.Handle(new WheelTurned("mouse_down", 1_300)).Close);
+        Assert.AreEqual(new WindowId(1), core.Handle(new WheelTurned("mouse_down", 1_300)).Close);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnUnknownKeyNameWarnsAndTheBindIsSkipped()
     {
-        var parsed = ConfigParser.Parse("bind = SUPER, Retrun, killactive\nbind = SUPER, a&b, killactive\nbind = SUPER, Return, killactive\n");
+        var parsed = ConfigParser.Parse("bind = Win+Retrun, close\nbind = Win+a&b, close\nbind = Win+Return, close\n");
 
-        Assert.Equal(["Unknown key 'Retrun'.", "Unknown key 'a&b'."], parsed.Warnings.Select(warning => warning.Message));
-        Assert.Single(parsed.Binds);
+        Assert.AreSequenceEqual(["Unknown key 'Retrun'.", "Unknown key 'a&b'."], parsed.Warnings.Select(warning => warning.Message));
+        Assert.ContainsSingle(parsed.Binds);
     }
 
-    [Fact]
-    public void AnUndefinedVariableInTheModifiersWarnsAndTheBindIsSkipped()
+    [TestMethod]
+    public void ADollarSignAloneIsTheDollarKey()
     {
-        var parsed = ConfigParser.Parse("bind = $mod SHIFT, Q, killactive" + Environment.NewLine);
+        var parsed = ConfigParser.Parse("bind = Win+$, close\n");
 
-        Assert.Equal("Undefined variable in modifiers '$mod SHIFT'.", Assert.Single(parsed.Warnings).Message);
-        Assert.Empty(parsed.Binds);
+        Assert.IsEmpty(parsed.Warnings);
+        var bind = Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(parsed.Binds));
+        Assert.AreEqual(ConfigParser.Parse("bind = Win+dollar, close\n").Binds[0], bind);
+        Assert.AreEqual(bind, ConfigParser.Parse(BindText.Line(bind)).Binds[0]);
     }
 
-    [Fact]
+    [TestMethod]
+    public void AKeyTheLayoutNamesWithADollarSignIsAKey()
+    {
+        var layout = KeyLayout.From(new Dictionary<int, string> { [0xBA] = "$$" }, hasAltGr: false, deadKeys: []);
+
+        var parsed = ConfigParser.Parse("bind = Win+$$, close\n", layout: layout);
+
+        Assert.IsEmpty(parsed.Warnings);
+        Assert.AreEqual(Modifier.Win, Assert.IsExactInstanceOfType<Bind>(Assert.ContainsSingle(parsed.Binds)).Modifiers);
+    }
+
+    [TestMethod]
+    public void AnUnknownModifierBeforeTheDollarKeyIsNamed()
+    {
+        var parsed = ConfigParser.Parse("bind = Bogus+$, close\n");
+
+        Assert.AreEqual(
+            "Unknown modifier 'Bogus' in chord 'Bogus+$'. The modifiers are Win, Shift, Ctrl and Alt.",
+            Assert.ContainsSingle(parsed.Warnings).Message);
+        Assert.IsEmpty(parsed.Binds);
+    }
+
+    [TestMethod]
+    [DataRow("$mod+Shift+Q")]
+    [DataRow("$1+Q")]
+    [DataRow("$+$mod+Q")]
+    [DataRow("Win+$q")]
+    public void AnUndefinedVariableInTheChordWarnsAndTheBindIsSkipped(string chord)
+    {
+        var parsed = ConfigParser.Parse($"bind = {chord}, close" + Environment.NewLine);
+
+        Assert.AreEqual($"Undefined variable in chord '{chord}'.", Assert.ContainsSingle(parsed.Warnings).Message);
+        Assert.IsEmpty(parsed.Binds);
+    }
+
+    [TestMethod]
     public void MouseButtonNameRunsANormalBind()
     {
-        var core = Load("bind = SUPER, mouse:272, killactive");
+        var core = Load("bind = Win+mouse:left, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
-        var outcome = core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(4, 5) });
+        var outcome = core.Handle(new PointerButtonPressed("mouse:left") { Position = new Point(4, 5) });
 
-        Assert.Equal(new WindowId(1), outcome.Close);
+        Assert.AreEqual(new WindowId(1), outcome.Close);
     }
 }

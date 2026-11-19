@@ -37,6 +37,7 @@ internal sealed class FloatingLayout : Layout
         WorkspaceId workspace,
         string windowClass = "",
         string title = "",
+        string exe = "",
         Rectangle monitor = default,
         long processId = 0,
         string? initialClass = null,
@@ -54,6 +55,7 @@ internal sealed class FloatingLayout : Layout
             workspace,
             windowClass,
             title,
+            exe,
             monitor,
             processId,
             initialClass,
@@ -127,7 +129,7 @@ internal sealed class FloatingLayout : Layout
     {
         _ = active;
         _ = arguments;
-        _messageError = "error: bad layoutmsg";
+        _messageError = "error: layoutmsg works in the scrolling layout";
         return [];
     }
 

@@ -13,42 +13,42 @@ internal static partial class WindowRuleParser
 
     private static readonly string[] MatchFields = ["class", "title", "exe"];
 
-    internal static bool TryParse(string value, out WindowRule? rule, out string error)
+    internal static WindowRuleParse Parse(string value)
     {
-        rule = null;
         if (value.Split(',').Any(field => field.TrimStart().StartsWith("match:", StringComparison.Ordinal)))
-        {
-            error = "The match: rule syntax is not supported. Use Winland's form, for example windowrule = float on, class:kitty.";
-            return false;
-        }
+            return WindowRuleParse.Skipped("The match: rule syntax is not supported. Use Winland's form, for example windowrule = float on, class:kitty.");
 
         var comma = value.IndexOf(',');
         if (comma <= 0 || comma == value.Length - 1)
-        {
-            error = "Malformed window rule.";
-            return false;
-        }
-
-        if (!TryParseEffect(value[..comma].Trim(), out var effect, out var workspace, out var enabled, out var opacity, out var fullscreen, out var placement, out error))
-            return false;
+            return WindowRuleParse.Skipped("Malformed window rule.");
 
         string? classPattern = null;
         string? titlePattern = null;
         string? exePattern = null;
         foreach (var part in SplitFields(value[(comma + 1)..]))
         {
-            if (!TryParseMatch(part, ref classPattern, ref titlePattern, ref exePattern, out error))
-                return false;
+            if (!TryParseMatch(part, ref classPattern, ref titlePattern, ref exePattern, out var error))
+                return WindowRuleParse.Skipped(error);
         }
 
         if (classPattern is null && titlePattern is null && exePattern is null)
+            return WindowRuleParse.Skipped("Malformed window rule.");
+
+        var effects = new List<RuleEffect>();
+        var warnings = new List<string>();
+        foreach (var text in value[..comma].Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
         {
-            error = "Malformed window rule.";
-            return false;
+            if (TryParseEffect(text, out var effect, out var workspace, out var enabled, out var opacity, out var fullscreen, out var placement, out var error))
+                effects.Add(new RuleEffect(effect, workspace, enabled, opacity, fullscreen, placement));
+            else
+                warnings.Add(error);
         }
 
-        rule = new WindowRule(effect, workspace, classPattern, titlePattern, exePattern, enabled, opacity, fullscreen, placement);
-        return true;
+        if (effects.Count == 0 && warnings.Count == 0)
+            warnings.Add("Malformed window rule.");
+
+        var rule = effects.Count == 0 ? null : new WindowRule(effects, classPattern, titlePattern, exePattern);
+        return new WindowRuleParse(rule, warnings);
     }
 
     internal static WindowDecision Decide(WindowTraits traits, IReadOnlyList<WindowRule> rules)
@@ -67,44 +67,47 @@ internal static partial class WindowRuleParser
             if (!Matches(rule, traits))
                 continue;
 
-            if (!rule.Enabled && rule.Effect is WindowRuleEffect.Float or WindowRuleEffect.Tile or WindowRuleEffect.Ignore)
-                continue;
-
-            switch (rule.Effect)
+            foreach (var effect in rule.Effects)
             {
-                case WindowRuleEffect.Ignore:
-                    adopt = false;
-                    break;
-                case WindowRuleEffect.Float:
-                    adopt = true;
-                    floating = true;
-                    break;
-                case WindowRuleEffect.Tile:
-                    adopt = true;
-                    floating = false;
-                    break;
-                case WindowRuleEffect.Workspace:
-                    adopt = true;
-                    workspace = rule.Workspace;
-                    break;
-                case WindowRuleEffect.NoFocus:
-                    noFocus = rule.Enabled;
-                    break;
-                case WindowRuleEffect.Opacity:
-                    opacity = rule.Opacity;
-                    break;
-                case WindowRuleEffect.Fullscreen:
-                    fullscreen = rule.Enabled;
-                    break;
-                case WindowRuleEffect.Maximize:
-                    maximize = rule.Enabled;
-                    break;
-                case WindowRuleEffect.Pin:
-                    pin = rule.Enabled;
-                    break;
-                default:
-                    placement = Place(placement, rule);
-                    break;
+                if (!effect.Enabled && effect.Kind is WindowRuleEffect.Float or WindowRuleEffect.Tile or WindowRuleEffect.Ignore)
+                    continue;
+
+                switch (effect.Kind)
+                {
+                    case WindowRuleEffect.Ignore:
+                        adopt = false;
+                        break;
+                    case WindowRuleEffect.Float:
+                        adopt = true;
+                        floating = true;
+                        break;
+                    case WindowRuleEffect.Tile:
+                        adopt = true;
+                        floating = false;
+                        break;
+                    case WindowRuleEffect.Workspace:
+                        adopt = true;
+                        workspace = effect.Workspace;
+                        break;
+                    case WindowRuleEffect.NoFocus:
+                        noFocus = effect.Enabled;
+                        break;
+                    case WindowRuleEffect.Opacity:
+                        opacity = effect.Opacity;
+                        break;
+                    case WindowRuleEffect.Fullscreen:
+                        fullscreen = effect.Enabled;
+                        break;
+                    case WindowRuleEffect.Maximize:
+                        maximize = effect.Enabled;
+                        break;
+                    case WindowRuleEffect.Pin:
+                        pin = effect.Enabled;
+                        break;
+                    default:
+                        placement = Place(placement, effect);
+                        break;
+                }
             }
         }
 
@@ -182,15 +185,9 @@ internal static partial class WindowRuleParser
                 effect = WindowRuleEffect.Pin;
                 break;
             case "workspace":
-                if (argument is null)
+                if (!WorkspaceAddress.TryParseRule(argument, out _, out _))
                 {
                     error = "Malformed window rule.";
-                    return false;
-                }
-
-                if (WorkspaceAddress.IsNamed(argument))
-                {
-                    error = "Named workspaces are not supported.";
                     return false;
                 }
 
@@ -462,4 +459,9 @@ internal static partial class WindowRuleParser
 
         return true;
     }
+}
+
+internal readonly record struct WindowRuleParse(WindowRule? Rule, IReadOnlyList<string> Warnings)
+{
+    internal static WindowRuleParse Skipped(string warning) => new(null, [warning]);
 }

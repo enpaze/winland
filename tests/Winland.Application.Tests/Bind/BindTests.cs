@@ -1,8 +1,9 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class BindTests
 {
-    [Fact]
+    [TestMethod]
     public void UnboundKeyPassesThrough()
     {
         var core = new WindowManager();
@@ -11,10 +12,10 @@ public class BindTests
         AssertPassed(Release(core, "Q"));
     }
 
-    [Fact]
-    public void SuperQRunsKillActiveAndAsksToCloseTheActiveClient()
+    [TestMethod]
+    public void SuperQRunsCloseAndAsksToCloseTheActiveClient()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -22,14 +23,14 @@ public class BindTests
         var outcome = Press(core, "Q");
 
         AssertRan(outcome, 2);
-        Assert.Equal(2, outcome.State.Clients.Count);
-        Assert.Contains(outcome.State.Clients, client => client.Window == new WindowId(2));
+        Assert.AreEqual(2, outcome.State.Clients.Count);
+        Assert.Contains(client => client.Window == new WindowId(2), outcome.State.Clients);
     }
 
-    [Fact]
-    public void KillActiveDoesNotRemoveTheClientUntilTheWindowCloses()
+    [TestMethod]
+    public void CloseDoesNotRemoveTheClientUntilTheWindowCloses()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Appear(core, 2);
         Press(core, "Super_L");
@@ -38,14 +39,14 @@ public class BindTests
 
         var closed = core.Handle(new WindowClosed(new WindowId(2)));
 
-        Assert.DoesNotContain(closed.State.Clients, client => client.Window == new WindowId(2));
+        Assert.DoesNotContain(client => client.Window == new WindowId(2), closed.State.Clients);
         AssertRan(Press(core, "Q"), 1);
     }
 
-    [Fact]
-    public void FocusedClientIsTheOneKillActiveCloses()
+    [TestMethod]
+    public void FocusedClientIsTheOneCloseCloses()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Appear(core, 2);
         core.Handle(new WindowFocused(new WindowId(1)));
@@ -54,43 +55,43 @@ public class BindTests
         AssertRan(Press(core, "Q"), 1);
     }
 
-    [Fact]
-    public void KillActiveWithNoClientRunsAndClosesNothing()
+    [TestMethod]
+    public void CloseWithNoClientRunsAndClosesNothing()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Press(core, "Super_L");
 
         var outcome = Press(core, "Q");
 
         AssertRan(outcome, null);
-        Assert.Empty(outcome.State.Clients);
+        Assert.IsEmpty(outcome.State.Clients);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnmanagedFocusIsNotAClientToClose()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         core.Handle(new WindowFocused(new WindowId(99)));
         Press(core, "Super_L");
 
         AssertRan(Press(core, "Q"), null);
-        Assert.Contains(core.Handle(new KeyReleased("Q")).State.Clients, client => client.Window == new WindowId(1));
+        Assert.Contains(client => client.Window == new WindowId(1), core.Handle(new KeyReleased("Q")).State.Clients);
     }
 
-    [Fact]
+    [TestMethod]
     public void KeyWithoutTheModifierDoesNotMatch()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
 
         AssertPassed(Press(core, "Q"));
     }
 
-    [Fact]
+    [TestMethod]
     public void ExtraModifierDoesNotMatch()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Press(core, "Super_L");
         Press(core, "Shift_L");
@@ -98,28 +99,28 @@ public class BindTests
         AssertPassed(Press(core, "Q"));
     }
 
-    [Theory]
-    [InlineData("Super_L", "SUPER")]
-    [InlineData("Super_R", "SUPER")]
-    [InlineData("Alt_L", "ALT")]
-    [InlineData("Alt_R", "ALT")]
-    [InlineData("Control_L", "CTRL")]
-    [InlineData("Control_R", "CTRL")]
-    [InlineData("Shift_L", "SHIFT")]
-    [InlineData("Shift_R", "SHIFT")]
+    [TestMethod]
+    [DataRow("Super_L", "Win")]
+    [DataRow("Super_R", "Win")]
+    [DataRow("Alt_L", "Alt")]
+    [DataRow("Alt_R", "Alt")]
+    [DataRow("Control_L", "Ctrl")]
+    [DataRow("Control_R", "Ctrl")]
+    [DataRow("Shift_L", "Shift")]
+    [DataRow("Shift_R", "Shift")]
     public void EachModifierKeyMatchesItsBind(string key, string modifier)
     {
-        var core = Load($"bind = {modifier}, Q, killactive");
+        var core = Load($"bind = {modifier}+Q, close");
         Appear(core, 1);
         Press(core, key);
 
         AssertRan(Press(core, "Q"), 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryModifierInTheChordIsRequired()
     {
-        var core = Load("bind = ALT CTRL SHIFT, Q, killactive");
+        var core = Load("bind = Ctrl+Alt+Shift+Q, close");
         Appear(core, 1);
         Press(core, "Alt_L");
         Press(core, "Control_L");
@@ -131,10 +132,10 @@ public class BindTests
         AssertRan(Press(core, "Q"), 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void BindWithNoModifiersDoesNotMatchWhileAModifierIsHeld()
     {
-        var core = Load("bind = , Q, killactive");
+        var core = Load("bind = Q, close");
         Appear(core, 1);
 
         AssertRan(Press(core, "Q"), 1);
@@ -144,10 +145,10 @@ public class BindTests
         AssertPassed(Press(core, "Q"));
     }
 
-    [Fact]
+    [TestMethod]
     public void BoundSuperComboConsumesTheKeyAndPassesTheSuperRelease()
     {
-        var core = Load("bind = SUPER, L, killactive");
+        var core = Load("bind = Win+L, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -156,10 +157,10 @@ public class BindTests
         AssertPassed(Release(core, "Super_L"));
     }
 
-    [Fact]
+    [TestMethod]
     public void UnboundSuperComboPassesTheKeyAndTheSuperKey()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Press(core, "Super_L");
 
         AssertPassed(Press(core, "E"));
@@ -167,19 +168,19 @@ public class BindTests
         AssertPassed(Release(core, "Super_L"));
     }
 
-    [Fact]
+    [TestMethod]
     public void SuperAlonePassesThrough()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
 
         AssertPassed(Press(core, "Super_L"));
         AssertPassed(Release(core, "Super_L"));
     }
 
-    [Fact]
+    [TestMethod]
     public void PressBindFiresOnceAndConsumesTheRestOfTheSequence()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -192,10 +193,10 @@ public class BindTests
         AssertRan(Press(core, "Q"), 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void ABindDoesNotRunWhileInputIsInhibitedAndRunsAgainAfter()
     {
-        var core = Load("bind = SUPER, Q, killactive\n");
+        var core = Load("bind = Win+Q, close\n");
         Appear(core, 1);
         core.KeyState.Inhibit(true);
         Press(core, "Super_L");
@@ -207,72 +208,72 @@ public class BindTests
         AssertRan(Press(core, "Q"), 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void MouseBindFiresOnTheButtonAndNotOnAKey()
     {
-        var core = Load("bindm = SUPER, mouse:272, movewindow\nbind = SUPER, Q, killactive\n");
+        var core = Load("bind = Win+mouse:left, move\nbind = Win+Q, close\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
-        var button = core.Handle(new PointerButtonPressed("mouse:272") { Position = new Point(500, 400) });
+        var button = core.Handle(new PointerButtonPressed("mouse:left") { Position = new Point(500, 400) });
         AssertRan(button, null);
-        Assert.Contains(button.State.Clients, client => client.Window == new WindowId(1));
+        Assert.Contains(client => client.Window == new WindowId(1), button.State.Clients);
 
-        AssertPassed(Press(core, "mouse:272"));
+        AssertPassed(Press(core, "mouse:left"));
         AssertRan(Press(core, "Q"), 1);
-        AssertCaught(core.Handle(new PointerButtonReleased("mouse:272")));
+        AssertCaught(core.Handle(new PointerButtonReleased("mouse:left")));
         AssertPassed(Release(core, "Super_L"));
     }
 
-    [Fact]
+    [TestMethod]
     public void KeyboardBindDoesNotFireOnAMouseButton()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
         AssertPassed(core.Handle(new PointerButtonPressed("Q")));
     }
 
-    [Fact]
+    [TestMethod]
     public void OtherDispatcherIsReportedAndDoesNotClose()
     {
-        var core = Load("bind = SUPER, E, exec, notepad");
+        var core = Load("bind = Win+E, exec notepad");
         Appear(core, 1);
         Press(core, "Super_L");
 
         var outcome = Press(core, "E");
 
         AssertRan(outcome, null);
-        Assert.NotNull(outcome.Launch);
-        Assert.Contains(outcome.State.Clients, client => client.Window == new WindowId(1));
+        Assert.IsNotNull(outcome.Launch);
+        Assert.Contains(client => client.Window == new WindowId(1), outcome.State.Clients);
     }
 
-    [Fact]
+    [TestMethod]
     public void TwoBindsOnOneKeyLaunchBothPrograms()
     {
-        var core = Load("bind = SUPER, E, exec, a\nbind = SUPER, E, exec, b");
+        var core = Load("bind = Win+E, exec a\nbind = Win+E, exec b");
         Press(core, "Super_L");
 
         var outcome = Press(core, "E");
 
-        Assert.Equal(["a", "b"], outcome.Launches.Select(launch => launch.CommandLine));
+        Assert.AreSequenceEqual(["a", "b"], outcome.Launches.Select(launch => launch.CommandLine));
     }
 
-    [Fact]
+    [TestMethod]
     public void KeyNameMatchIsCaseInsensitive()
     {
-        var core = Load("bind = super, q, killactive");
+        var core = Load("bind = Win+q, close");
         Appear(core, 1);
         Press(core, "Super_R");
 
         AssertRan(Press(core, "Q"), 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScanCodeMatchesACodeBind()
     {
-        var core = Load("bind = SUPER, code:28, killactive");
+        var core = Load("bind = Win+code:28, close");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -281,10 +282,10 @@ public class BindTests
         AssertRan(Press(core, "Return", 28), 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnbindRemovesOnlyTheMatchingBind()
     {
-        var core = Load("bind = SUPER, Q, killactive\nunbind = SUPER, Q\nbind = SUPER, R, killactive\n");
+        var core = Load("bind = Win+Q, close\nunbind = Win+Q\nbind = Win+R, close\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
@@ -292,56 +293,43 @@ public class BindTests
         AssertRan(Press(core, "R"), 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnbindAllClearsBinds()
     {
-        var core = Load("bind = SUPER, Q, killactive\nunbind = all\n");
+        var core = Load("bind = Win+Q, close\nunbind = all\n");
         Appear(core, 1);
         Press(core, "Super_L");
 
         AssertPassed(Press(core, "Q"));
     }
 
-    [Fact]
+    [TestMethod]
     public void EveryBindOnAChordRunsInConfigOrder()
     {
-        var core = Load("bind = , Q, killactive\nbind = , Q, workspace, 2\n");
+        var core = Load("bind = Q, close\nbind = Q, workspace 2\n");
         Appear(core, 1);
         Appear(core, 2);
 
         var outcome = Press(core, "Q");
 
-        Assert.True(outcome.Consumed);
-        Assert.Equal(new WindowId(2), outcome.Close);
-        Assert.Equal(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
+        Assert.IsTrue(outcome.Consumed);
+        Assert.AreEqual(new WindowId(2), outcome.Close);
+        Assert.AreEqual(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
     }
 
-    [Fact]
-    public void EmptyDispatcherConsumesTheKeyAndClosesNothing()
-    {
-        var core = Load("bind = , Q,\n");
-        Appear(core, 1);
-
-        var outcome = Press(core, "Q");
-
-        AssertCaught(outcome);
-        Assert.Contains(outcome.State.Clients, client => client.Window == new WindowId(1));
-        AssertCaught(Release(core, "Q"));
-    }
-
-    [Fact]
+    [TestMethod]
     public void ModifierKeyBindClosesTheActiveClient()
     {
-        var core = Load("bind = , Super_L, killactive");
+        var core = Load("bind = Super_L, close");
         Appear(core, 1);
 
         AssertRan(Press(core, "Super_L"), 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void LoadingConfigReplacesBinds()
     {
-        var core = Load("bind = SUPER, Q, killactive");
+        var core = Load("bind = Win+Q, close");
         Appear(core, 1);
         core.Handle(new ConfigLoaded(ConfigParser.Parse("")));
         Press(core, "Super_L");
@@ -351,25 +339,25 @@ public class BindTests
 
     private static void AssertPassed(Outcome outcome)
     {
-        Assert.False(outcome.Consumed);
-        Assert.Null(outcome.Close);
-        Assert.Empty(outcome.Placements);
+        Assert.IsFalse(outcome.Consumed);
+        Assert.IsNull(outcome.Close);
+        Assert.IsEmpty(outcome.Placements);
     }
 
     private static void AssertCaught(Outcome outcome)
     {
-        Assert.True(outcome.Consumed);
-        Assert.Null(outcome.Close);
-        Assert.Empty(outcome.Placements);
+        Assert.IsTrue(outcome.Consumed);
+        Assert.IsNull(outcome.Close);
+        Assert.IsEmpty(outcome.Placements);
     }
 
     private static void AssertRan(Outcome outcome, long? close)
     {
-        Assert.True(outcome.Consumed);
-        Assert.Empty(outcome.Placements);
+        Assert.IsTrue(outcome.Consumed);
+        Assert.IsEmpty(outcome.Placements);
         if (close is long id)
-            Assert.Equal(new WindowId(id), outcome.Close);
+            Assert.AreEqual(new WindowId(id), outcome.Close);
         else
-            Assert.Null(outcome.Close);
+            Assert.IsNull(outcome.Close);
     }
 }

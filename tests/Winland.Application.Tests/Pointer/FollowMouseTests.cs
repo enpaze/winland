@@ -1,18 +1,19 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class FollowMouseTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void FollowMouseDefaultsToTheManual()
     {
         var input = InputOptions.From(ConfigParser.Parse(""));
 
-        Assert.True(input.FollowMouse);
+        Assert.IsTrue(input.FollowMouse);
     }
 
-    [Fact]
+    [TestMethod]
     public void MovingOntoAnotherWindowFocusesIt()
     {
         var (core, laid) = Tiled();
@@ -20,12 +21,12 @@ public class FollowMouseTests
         var seeded = Move(core, Center(laid, 2), 1_000);
         var followed = Move(core, Center(laid, 1), 1_100);
 
-        Assert.Null(seeded.Focus);
-        Assert.Equal(new WindowId(1), followed.Focus);
-        Assert.Contains(followed.Events, item => item is FocusChanged changed && changed.Window == new WindowId(1));
+        Assert.IsNull(seeded.Focus);
+        Assert.AreEqual(new WindowId(1), followed.Focus);
+        Assert.Contains(item => item is FocusChanged changed && changed.Window == new WindowId(1), followed.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void CrossingTheClientAPanelOpenedOverLeavesThePanelTheFocus()
     {
         var (core, laid) = Tiled();
@@ -36,11 +37,11 @@ public class FollowMouseTests
         var crossed = Move(core, Center(laid, 1) with { X = Center(laid, 1).X + 40 }, 1_100);
         var left = Move(core, Center(laid, 2), 1_200);
 
-        Assert.Null(crossed.Focus);
-        Assert.Equal(new WindowId(2), left.Focus);
+        Assert.IsNull(crossed.Focus);
+        Assert.AreEqual(new WindowId(2), left.Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void AMenuOverAnotherTileKeepsTheFocusWhereItIs()
     {
         var (core, laid) = Tiled();
@@ -49,49 +50,49 @@ public class FollowMouseTests
         var overMenu = core.Handle(new PointerMoved(Center(laid, 1)) { TimeMs = 1_100, Under = new WindowId(99) });
         var offMenu = core.Handle(new PointerMoved(Center(laid, 1) with { X = Center(laid, 1).X + 40 }) { TimeMs = 1_200, Under = new WindowId(1) });
 
-        Assert.Null(overMenu.Focus);
-        Assert.Equal(new WindowId(1), offMenu.Focus);
+        Assert.IsNull(overMenu.Focus);
+        Assert.AreEqual(new WindowId(1), offMenu.Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void DisabledFollowLeavesTheFocusedClient()
     {
-        var (core, laid) = Tiled("input:follow_mouse = false\n");
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
+        var (core, laid) = Tiled("focus_follows_mouse = false\n");
+        core.Handle(new Dispatch("focus", "address:0x2"));
 
         Move(core, Center(laid, 2), 1_000);
         var followed = Move(core, Center(laid, 1), 1_100);
 
-        Assert.Null(followed.Focus);
-        Assert.DoesNotContain(followed.Events, item => item is FocusChanged);
+        Assert.IsNull(followed.Focus);
+        Assert.DoesNotContain(item => item is FocusChanged, followed.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void DisabledFollowLeavesANewBackgroundWindowUnfocusedUntilAClick()
     {
-        var core = new WindowManager(ConfigParser.Parse("input:follow_mouse = false\n"));
+        var core = new WindowManager(ConfigParser.Parse("focus_follows_mouse = false\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
         core.Handle(new WindowAppeared(new WindowId(2), Area));
 
-        Assert.Equal("\"address\":\"0x1\"", Address(core));
-        core.Handle(new PointerButtonPressed("mouse:272"));
+        Assert.AreEqual("\"address\":\"0x1\"", Address(core));
+        core.Handle(new PointerButtonPressed("mouse:left"));
         core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));
-        Assert.Equal("\"address\":\"0x2\"", Address(core));
+        Assert.AreEqual("\"address\":\"0x2\"", Address(core));
     }
 
-    [Fact]
+    [TestMethod]
     public void DisabledFollowKeepsTheForegroundWindowWhenItIsAdopted()
     {
-        var core = new WindowManager(ConfigParser.Parse("input:follow_mouse = false\n"));
+        var core = new WindowManager(ConfigParser.Parse("focus_follows_mouse = false\n"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
         core.Handle(new WindowAppeared(new WindowId(2), Area) { Foreground = true });
 
-        Assert.Equal("\"address\":\"0x2\"", Address(core));
+        Assert.AreEqual("\"address\":\"0x2\"", Address(core));
     }
 
-    [Fact]
+    [TestMethod]
     public void APauseBeforeCrossingLeavesTheFocus()
     {
         var core = Floats("");
@@ -101,26 +102,26 @@ public class FollowMouseTests
         Move(core, new Point(101, 50), 0);
         var paused = Move(core, new Point(40, 50), 700);
 
-        Assert.Null(paused.Focus);
-        Assert.Equal("\"address\":\"0x2\"", Address(core));
+        Assert.IsNull(paused.Focus);
+        Assert.AreEqual("\"address\":\"0x2\"", Address(core));
     }
 
-    [Fact]
+    [TestMethod]
     public void DisabledFollowLeavesFocusAcrossTiledAndFloating()
     {
-        var core = Floats("input:follow_mouse = 0\n");
+        var core = Floats("focus_follows_mouse = 0\n");
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(Box(2, 100, 100, 200, 200));
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
+        core.Handle(new Dispatch("focus", "address:0x2"));
         var switched = Move(core, new Point(700, 700), 1_000);
 
-        Assert.Null(switched.Focus);
+        Assert.IsNull(switched.Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void DisabledFollowLeavesTheFocusedMonitor()
     {
-        var core = new WindowManager(ConfigParser.Parse("input:follow_mouse = 0\n"));
+        var core = new WindowManager(ConfigParser.Parse("focus_follows_mouse = 0\n"));
         var left = Display(@"\\.\DISPLAY1", 0, 800, 600);
         var right = Display(@"\\.\DISPLAY2", 800, 800, 600);
         core.Handle(new MonitorsChanged([left, right]));
@@ -129,15 +130,15 @@ public class FollowMouseTests
 
         var moved = Move(core, new Point(1_000, 100), 1_000);
 
-        Assert.Equal(new MonitorId(0), moved.State.ActiveMonitor);
-        Assert.Null(moved.Focus);
-        Assert.DoesNotContain(moved.Events, item => item is FocusChanged);
+        Assert.AreEqual(new MonitorId(0), moved.State.ActiveMonitor);
+        Assert.IsNull(moved.Focus);
+        Assert.DoesNotContain(item => item is FocusChanged, moved.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void FollowMouseFocusesTheClientOnTheMonitorUnderThePointer()
     {
-        var core = new WindowManager(ConfigParser.Parse("general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n"));
+        var core = new WindowManager(ConfigParser.Parse("gaps_in = 0\ngaps_out = 0\nborder_size = 0\n"));
         var left = Display(@"\\.\DISPLAY1", 0, 800, 600);
         var right = Display(@"\\.\DISPLAY2", 800, 800, 600);
         core.Handle(new MonitorsChanged([left, right]));
@@ -147,52 +148,52 @@ public class FollowMouseTests
         Move(core, Center(first, 1), 1_000);
         var followed = Move(core, Center(second, 2), 1_100);
 
-        Assert.Equal(new WindowId(2), followed.Focus);
-        Assert.Equal(new MonitorId(1), followed.State.ActiveMonitor);
+        Assert.AreEqual(new WindowId(2), followed.Focus);
+        Assert.AreEqual(new MonitorId(1), followed.State.ActiveMonitor);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosingFocusesTheNearestClient()
     {
         var nearest = TiledThree("");
         var next = nearest.Handle(new WindowClosed(new WindowId(3)));
 
-        Assert.Equal(new WindowId(2), next.Focus);
+        Assert.AreEqual(new WindowId(2), next.Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosingPrefersATileOverAFloatOnTop()
     {
         var core = Floats("");
         core.Handle(Box(3, 1390, 490));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         core.Handle(new WindowAppeared(new WindowId(2), Area));
-        core.Handle(new Dispatch("focuswindow", "address:0x2"));
+        core.Handle(new Dispatch("focus", "address:0x2"));
 
         var closed = core.Handle(new WindowClosed(new WindowId(2)));
         var last = core.Handle(new WindowClosed(new WindowId(1)));
 
-        Assert.Equal(new WindowId(1), closed.Focus);
-        Assert.Equal(new WindowId(3), last.Focus);
+        Assert.AreEqual(new WindowId(1), closed.Focus);
+        Assert.AreEqual(new WindowId(3), last.Focus);
     }
 
-    [Fact]
+    [TestMethod]
     public void HoverReachesTheTilesOfAnOpenSpecialWorkspaceBeforeTheTilesUnderIt()
     {
         var (core, _) = Tiled();
-        core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        core.Handle(new Dispatch("scratchpad", "scratch"));
         core.Handle(new WindowAppeared(new WindowId(3), Area));
         var special = core.Handle(new WindowAppeared(new WindowId(4), Area));
-        Assert.Equal(new WorkspaceId("special:scratch"), Assert.Single(special.State.Clients, client => client.Window == new WindowId(3)).Workspace);
+        Assert.AreEqual(new WorkspaceId("special:scratch"), Assert.ContainsSingle(client => client.Window == new WindowId(3), special.State.Clients).Workspace);
 
         Move(core, Center(special, 4), 1_000);
         var hovered = Move(core, Center(special, 3), 1_100);
 
-        Assert.Equal(new WindowId(3), hovered.Focus);
-        Assert.Equal(new WorkspaceId("special:scratch"), hovered.State.SpecialWorkspace);
+        Assert.AreEqual(new WindowId(3), hovered.Focus);
+        Assert.AreEqual(new WorkspaceId("special:scratch"), hovered.State.SpecialWorkspace);
     }
 
-    [Fact]
+    [TestMethod]
     public void HoverOnAMonitorWithAnOpenSpecialWorkspaceReachesItsTiles()
     {
         var core = new WindowManager(ConfigParser.Parse(FlatConfig("")));
@@ -201,14 +202,14 @@ public class FollowMouseTests
         core.Handle(new MonitorsChanged([left, right]));
         core.Handle(new WindowAppeared(new WindowId(1), left.WorkArea));
         core.Handle(new WindowAppeared(new WindowId(2), left.WorkArea));
-        core.Handle(new Dispatch("togglespecialworkspace", "scratch"));
+        core.Handle(new Dispatch("scratchpad", "scratch"));
         core.Handle(new WindowAppeared(new WindowId(3), left.WorkArea));
         var special = core.Handle(new WindowAppeared(new WindowId(4), left.WorkArea));
 
         Move(core, Center(special, 4), 1_000);
         var hovered = Move(core, Center(special, 3), 1_100);
 
-        Assert.Equal(new WindowId(3), hovered.Focus);
+        Assert.AreEqual(new WindowId(3), hovered.Focus);
     }
 
     private static (WindowManager WindowManager, Outcome Laid) Tiled(string extra = "")
@@ -242,15 +243,15 @@ public class FollowMouseTests
 
     private static Point Center(Outcome outcome, long window)
     {
-        var bounds = Assert.Single(outcome.State.Clients, client => client.Window == new WindowId(window)).Bounds;
+        var bounds = Assert.ContainsSingle(client => client.Window == new WindowId(window), outcome.State.Clients).Bounds;
         return new Point(bounds.X + (bounds.Width / 2), bounds.Y + (bounds.Height / 2));
     }
 
     private static string Address(WindowManager core)
     {
-        var text = core.Execute("j/activewindow").Text;
+        var text = core.Execute("j/get window").Text;
         var at = text.IndexOf("\"address\":", StringComparison.Ordinal);
-        Assert.True(at >= 0, text);
+        Assert.IsTrue(at >= 0, text);
         return text[at..(at + "\"address\":\"0x0\"".Length)];
     }
 }

@@ -1,12 +1,14 @@
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "urgency")]
-public class Urgency(ITestOutputHelper output)
+[TestClass]
+public class Urgency
 {
+
+    public TestContext TestContext { get; set; } = null!;
     [VerifyFact]
-    public void MarksAWindowThatOpensOnAHiddenWorkspaceUrgent() => VerifyRun.Drive(output, "windowrule = float, class:WinlandVerifyWindow, title:WinlandDialog\n", run =>
+    public void MarksAWindowThatOpensOnAHiddenWorkspaceUrgent() => VerifyRun.Drive(TestContext, "windowrule = float, class:WinlandVerifyWindow, title:WinlandDialog\n", run =>
     {
         run.FollowEvents();
         var (left, _) = run.OpenPair();
@@ -19,7 +21,7 @@ public class Urgency(ITestOutputHelper output)
             () => run.Client(dialog)?.GetProperty("workspace").GetProperty("id").GetInt32() == 1 && !VerifyRun.Visible(dialog),
             detail: () => "active workspace " + run.ActiveWorkspace() + " events: " + string.Join(" | ", run.Events));
         run.UntilEvent("urgent", VerifyRun.EventAddress(dialog));
-        Assert.Equal(2, run.ActiveWorkspace());
+        Assert.AreEqual(2, run.ActiveWorkspace());
         run.Say("saw: the workspace did not change for the urgent window");
     });
 }

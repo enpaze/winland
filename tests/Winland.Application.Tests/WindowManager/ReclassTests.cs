@@ -2,12 +2,13 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class ReclassTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
-    public void ANewClassIsKeptAndTellsNoClassEvent()
+    [TestMethod]
+    public void ANewClassIsKeptAndTellsNoEvent()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(0x2a), Area) { Traits = WindowTraits.Normal with { Class = "kitty", Title = "old" } });
@@ -15,53 +16,48 @@ public class ReclassTests
 
         var outcome = core.Handle(new WindowClassChanged(new WindowId(0x2a), "new"));
 
-        Assert.Equal("new", Assert.Single(outcome.State.Clients, client => client.Window == new WindowId(0x2a)).Class);
-        var reclassed = Assert.Single(outcome.Events.OfType<ClientReclassed>());
-        Assert.Equal(new WindowId(0x2a), reclassed.Window);
-        Assert.Equal("new", reclassed.Class);
-        Assert.False(reclassed.Active);
-        Assert.Empty(CommandProtocol.FormatStream(outcome.Events, outcome.State));
+        Assert.AreEqual("new", Assert.ContainsSingle(client => client.Window == new WindowId(0x2a), outcome.State.Clients).Class);
+        Assert.IsEmpty(outcome.Events);
     }
 
-    [Fact]
-    public void TheFocusedWindowsNewClassIsToldAsTheActiveWindow()
+    [TestMethod]
+    public void TheFocusedWindowsNewClassTellsNoFocusEvent()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(0x2a), Area) { Traits = WindowTraits.Normal with { Class = "kitty", Title = "old" } });
 
         var outcome = core.Handle(new WindowClassChanged(new WindowId(0x2a), "new"));
 
-        Assert.Equal(
-            ["activewindow>>new,old", "activewindowv2>>2a"],
-            CommandProtocol.FormatStream(outcome.Events, outcome.State));
+        Assert.AreEqual("new", Assert.ContainsSingle(outcome.State.Clients).Class);
+        Assert.IsEmpty(outcome.Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheSameClassTellsNothing()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "same" } });
 
-        Assert.Empty(core.Handle(new WindowClassChanged(new WindowId(1), "same")).Events);
+        Assert.IsEmpty(core.Handle(new WindowClassChanged(new WindowId(1), "same")).Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void ARuleOnTheClassAppliesOnceTheClassMatches()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, class:*Video*\n"));
         var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "Browser" } });
-        Assert.Equal(255, Assert.Single(opened.Decorations).Alpha);
+        Assert.AreEqual(255, Assert.ContainsSingle(opened.Decorations).Alpha);
 
         var reclassed = core.Handle(new WindowClassChanged(new WindowId(1), "A Video - Browser"));
 
-        Assert.Equal(127, Assert.Single(reclassed.Decorations).Alpha, tolerance: 1);
+        Assert.AreEqual((double)127, (double)(Assert.ContainsSingle(reclassed.Decorations).Alpha), 1d);
 
         var restored = core.Handle(new WindowClassChanged(new WindowId(1), "Browser"));
 
-        Assert.Equal(255, Assert.Single(restored.Decorations).Alpha);
+        Assert.AreEqual(255, Assert.ContainsSingle(restored.Decorations).Alpha);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheInitialClassStaysWhileTheClassChanges()
     {
         var core = new WindowManager();
@@ -69,38 +65,38 @@ public class ReclassTests
 
         var outcome = core.Handle(new WindowClassChanged(new WindowId(0x2a), "new"));
 
-        var client = Assert.Single(outcome.State.Clients);
-        Assert.Equal("new", client.Class);
-        Assert.Equal("kitty", client.InitialClass);
-        using var listed = JsonDocument.Parse(core.Execute("j/clients").Text);
-        var json = Assert.Single(listed.RootElement.EnumerateArray());
-        Assert.Equal("new", json.GetProperty("class").GetString());
-        Assert.Equal("kitty", json.GetProperty("initialClass").GetString());
-        using var active = JsonDocument.Parse(core.Execute("j/activewindow").Text);
-        Assert.Equal("new", active.RootElement.GetProperty("class").GetString());
-        Assert.Equal("kitty", active.RootElement.GetProperty("initialClass").GetString());
+        var client = Assert.ContainsSingle(outcome.State.Clients);
+        Assert.AreEqual("new", client.Class);
+        Assert.AreEqual("kitty", client.InitialClass);
+        using var listed = JsonDocument.Parse(core.Execute("j/get windows").Text);
+        var json = Assert.ContainsSingle(listed.RootElement.EnumerateArray());
+        Assert.AreEqual("new", json.GetProperty("class").GetString());
+        Assert.AreEqual("kitty", json.GetProperty("initialClass").GetString());
+        using var active = JsonDocument.Parse(core.Execute("j/get window").Text);
+        Assert.AreEqual("new", active.RootElement.GetProperty("class").GetString());
+        Assert.AreEqual("kitty", active.RootElement.GetProperty("initialClass").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AGroupedWindowsClassFollowsTheWindow()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Class = "one" } });
-        core.Execute("dispatch togglegroup");
+        core.Execute("group");
         core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Class = "two" } });
 
         var reclassed = core.Handle(new WindowClassChanged(new WindowId(1), "renamed"));
 
-        var hidden = Assert.Single(reclassed.State.Clients, client => client.Window == new WindowId(1));
-        Assert.Equal("renamed", hidden.Class);
-        Assert.Equal("one", hidden.InitialClass);
+        var hidden = Assert.ContainsSingle(client => client.Window == new WindowId(1), reclassed.State.Clients);
+        Assert.AreEqual("renamed", hidden.Class);
+        Assert.AreEqual("one", hidden.InitialClass);
     }
 
-    [Fact]
+    [TestMethod]
     public void AClassForAWindowThatIsNotAClientTellsNothing()
     {
         var core = new WindowManager();
 
-        Assert.Empty(core.Handle(new WindowClassChanged(new WindowId(1), "class")).Events);
+        Assert.IsEmpty(core.Handle(new WindowClassChanged(new WindowId(1), "class")).Events);
     }
 }

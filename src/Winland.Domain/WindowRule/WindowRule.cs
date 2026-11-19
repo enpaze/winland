@@ -1,11 +1,14 @@
 namespace Winland.Domain;
 
 public sealed record WindowRule(
-    WindowRuleEffect Effect,
-    string? Workspace,
+    IReadOnlyList<RuleEffect> Effects,
     string? ClassPattern,
     string? TitlePattern,
-    string? ExePattern,
+    string? ExePattern);
+
+public sealed record RuleEffect(
+    WindowRuleEffect Kind,
+    string? Workspace = null,
     bool Enabled = true,
     OpacityRule? Opacity = null,
     FullscreenRule? Fullscreen = null,

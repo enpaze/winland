@@ -1,10 +1,11 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class AdoptTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void WindowsOpenBeforeStartupAreTakenInAsOneStepThatPlacesEachOnce()
     {
         var core = new WindowManager();
@@ -13,12 +14,12 @@ public class AdoptTests
 
         var outcome = core.Adopt([Appeared(1), Appeared(2), Appeared(3)]);
 
-        Assert.Equal([outcome], decided);
-        Assert.Equal(3, outcome.Placements.Count);
-        Assert.Equal(3, outcome.Placements.Select(placement => placement.Client).Distinct().Count());
+        Assert.AreSequenceEqual([outcome], decided);
+        Assert.AreEqual(3, outcome.Placements.Count);
+        Assert.AreEqual(3, outcome.Placements.Select(placement => placement.Client).Distinct().Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void AdoptingTogetherEndsWhereAdoptingOneAtATimeDoes()
     {
         var oneAtATime = new WindowManager();
@@ -28,11 +29,11 @@ public class AdoptTests
 
         var outcome = new WindowManager().Adopt([Appeared(1), Appeared(2), Appeared(3)]);
 
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             expected.Clients.Select(client => (client.Window, client.Bounds)),
             outcome.State.Clients.Select(client => (client.Window, client.Bounds)));
         foreach (var placement in outcome.Placements)
-            Assert.Equal(outcome.State.Clients.Single(client => client.Id == placement.Client).Bounds, placement.Bounds);
+            Assert.AreEqual(outcome.State.Clients.Single(client => client.Id == placement.Client).Bounds, placement.Bounds);
     }
 
     private static WindowAppeared Appeared(long window) => new(new WindowId(window), Area);

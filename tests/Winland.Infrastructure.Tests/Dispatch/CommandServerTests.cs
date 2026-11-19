@@ -6,21 +6,20 @@ using System.Text.Json;
 using System.Threading.Channels;
 
 namespace Winland.Infrastructure.Tests;
-
-[Collection(CommandServerCollection.Name)]
+[TestClass]
 public class CommandServerTests
 {
-    [Fact]
+    [TestMethod]
     public void MissingDaemonReportsThatWinlandIsNotRunning()
     {
         var missing = "winland-missing-" + Guid.NewGuid().ToString("N");
 
-        var error = Assert.Throws<InvalidOperationException>(() => CommandClient.Transact("clients", missing, 200));
+        var error = Assert.ThrowsExactly<InvalidOperationException>(() => CommandClient.Transact("get windows", missing, 200));
 
-        Assert.Equal("Winland is not running.", error.Message);
+        Assert.AreEqual("Winland is not running.", error.Message);
     }
 
-    [Fact]
+    [TestMethod]
     public void PipeNamesOnlyTheGivenUserAndAllowsMediumIntegrity()
     {
         var user = new SecurityIdentifier("S-1-5-21-1-2-3-1001");
@@ -28,27 +27,27 @@ public class CommandServerTests
         var security = CommandServer.SecurityFor(user);
 
         var rules = security.GetAccessRules(includeExplicit: true, includeInherited: false, typeof(SecurityIdentifier));
-        var rule = Assert.Single(rules.Cast<PipeAccessRule>());
-        Assert.Equal(AccessControlType.Allow, rule.AccessControlType);
-        Assert.Equal(user.Value, rule.IdentityReference.Value);
-        Assert.True(rule.PipeAccessRights.HasFlag(PipeAccessRights.ReadData));
-        Assert.True(rule.PipeAccessRights.HasFlag(PipeAccessRights.WriteData));
+        var rule = Assert.ContainsSingle(rules.Cast<PipeAccessRule>());
+        Assert.AreEqual(AccessControlType.Allow, rule.AccessControlType);
+        Assert.AreEqual(user.Value, rule.IdentityReference.Value);
+        Assert.IsTrue(rule.PipeAccessRights.HasFlag(PipeAccessRights.ReadData));
+        Assert.IsTrue(rule.PipeAccessRights.HasFlag(PipeAccessRights.WriteData));
 
         var descriptor = CommandServer.DescriptorFor(user);
         var aces = descriptor.DiscretionaryAcl!.Cast<CommonAce>().ToList();
-        var userAce = Assert.Single(aces, ace => ace.SecurityIdentifier == user);
-        Assert.Equal(0, userAce.AccessMask & (int)PipeAccessRights.CreateNewInstance);
-        var admins = Assert.Single(aces, ace => ace.SecurityIdentifier.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid));
-        Assert.NotEqual(0, admins.AccessMask & (int)PipeAccessRights.CreateNewInstance);
-        Assert.NotNull(descriptor.SystemAcl);
-        var label = Assert.IsType<CustomAce>(Assert.Single(descriptor.SystemAcl.Cast<GenericAce>()));
+        var userAce = Assert.ContainsSingle(ace => ace.SecurityIdentifier == user, aces);
+        Assert.AreEqual(0, userAce.AccessMask & (int)PipeAccessRights.CreateNewInstance);
+        var admins = Assert.ContainsSingle(ace => ace.SecurityIdentifier.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid), aces);
+        Assert.AreNotEqual(0, admins.AccessMask & (int)PipeAccessRights.CreateNewInstance);
+        Assert.IsNotNull(descriptor.SystemAcl);
+        var label = Assert.IsExactInstanceOfType<CustomAce>(Assert.ContainsSingle(descriptor.SystemAcl.Cast<GenericAce>()));
         var opaque = label.GetOpaque();
-        Assert.NotNull(opaque);
-        Assert.Equal(new byte[] { 1, 0, 0, 0 }, opaque[..4]);
-        Assert.Equal(new byte[] { 1, 1, 0, 0, 0, 0, 0, 0x10, 0, 0x20, 0, 0 }, opaque[^12..]);
+        Assert.IsNotNull(opaque);
+        Assert.AreSequenceEqual(new byte[] { 1, 0, 0, 0 }, opaque[..4]);
+        Assert.AreSequenceEqual(new byte[] { 1, 1, 0, 0, 0, 0, 0, 0x10, 0, 0x20, 0, 0 }, opaque[^12..]);
     }
 
-    [Fact]
+    [TestMethod]
     public void StartFailsWhenAnotherProcessHoldsThePipeName()
     {
         var name = PipeName();
@@ -60,12 +59,12 @@ public class CommandServerTests
             PipeOptions.Asynchronous);
         using var server = new CommandServer(new WindowManager(), _ => { }, name);
 
-        var error = Assert.Throws<InvalidOperationException>(server.Start);
+        var error = Assert.ThrowsExactly<InvalidOperationException>(server.Start);
 
         Assert.Contains("already in use", error.InnerException?.Message ?? error.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASecondServerCannotTakeAPipeNameInUse()
     {
         var name = PipeName();
@@ -73,11 +72,11 @@ public class CommandServerTests
         first.Start();
         using var second = new CommandServer(new WindowManager(), _ => { }, name);
 
-        Assert.Throws<InvalidOperationException>(second.Start);
-        Assert.Equal("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.ThrowsExactly<InvalidOperationException>(second.Start);
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
-    [Fact]
+    [TestMethod]
     public void ClientRoundTripsClientsAndDispatch()
     {
         var core = new WindowManager();
@@ -86,14 +85,25 @@ public class CommandServerTests
         using var server = new CommandServer(core, _ => { }, name);
         server.Start();
 
-        var clients = JsonElement.Parse(CommandClient.Transact("j/clients", name));
-        var client = Assert.Single(clients.EnumerateArray());
-        Assert.Equal("0x2a", client.GetProperty("address").GetString());
-        Assert.Equal("ok", CommandClient.Transact("dispatch exec", name));
-        Assert.Equal("error: unknown request", CommandClient.Transact("nope", name));
+        var clients = JsonElement.Parse(CommandClient.Transact("j/get windows", name)!);
+        var client = Assert.ContainsSingle(clients.EnumerateArray());
+        Assert.AreEqual("0x2a", client.GetProperty("address").GetString());
+        Assert.AreEqual("ok", CommandClient.Transact("exec", name));
+        Assert.AreEqual("error: unknown command 'nonsense'", CommandClient.Transact("nonsense", name));
     }
 
-    [Fact]
+    [TestMethod]
+    public void AnEmptyReplyArrivesEmpty()
+    {
+        var name = PipeName();
+        using var server = new CommandServer(new WindowManager(), _ => { }, name);
+        server.Start();
+
+        Assert.AreEqual("", CommandClient.Transact("get window", name));
+        Assert.AreEqual("null", CommandClient.Transact("j/get window", name));
+    }
+
+    [TestMethod]
     public void SubscribersReceiveEachEventInOrder()
     {
         var core = new WindowManager();
@@ -101,7 +111,7 @@ public class CommandServerTests
         using var server = new CommandServer(core, _ => { }, name);
         server.Start();
         using var first = new Listener(name);
-        using var second = new Listener(name);
+        using var second = new Listener(name, "j/events");
         WaitUntilSubscribed(core, first);
         WaitUntilSubscribed(core, second);
         Sync(core, first, second);
@@ -111,40 +121,37 @@ public class CommandServerTests
         {
             Traits = WindowTraits.Normal with { Class = "app", Title = "title" },
         });
-        Assert.Equal(
-            ["openwindow>>7,1,,app,title", "activewindow>>app,title", "activewindowv2>>7"],
+        Assert.AreSequenceEqual(
+            ["openwindow>>7,1,1,,app,title", "focus>>,1,1,7,title"],
+            Take(first, 2));
+        Assert.AreSequenceEqual(
+            [
+                """{"event":"openwindow","address":"0x7","workspace":{"id":1,"name":"1"},"monitor":"","class":"app","title":"title"}""",
+                """{"event":"focus","monitor":"","workspace":{"id":1,"name":"1"},"window":{"address":"0x7","title":"title","class":"app","exe":""}}""",
+            ],
+            Take(second, 2));
+
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 2", name));
+        Assert.AreSequenceEqual(
+            [
+                "createworkspace>>2,2,",
+                "workspace>>2,2,",
+                "focus>>,2,2,,",
+            ],
             Take(first, 3));
-        Assert.Equal(
-            ["openwindow>>7,1,,app,title", "activewindow>>app,title", "activewindowv2>>7"],
+        Assert.AreSequenceEqual(
+            [
+                """{"event":"createworkspace","workspace":{"id":2,"name":"2"},"monitor":""}""",
+                """{"event":"workspace","workspace":{"id":2,"name":"2"},"monitor":""}""",
+                """{"event":"focus","monitor":"","workspace":{"id":2,"name":"2"},"window":null}""",
+            ],
             Take(second, 3));
 
-        Assert.Equal("ok", CommandClient.Transact("dispatch workspace 2", name));
-        Assert.Equal(
-            [
-                "createworkspace>>2,",
-                "createworkspacev2>>2,2,",
-                "workspace>>2,",
-                "workspacev2>>2,2,",
-                "activewindow>>,",
-                "activewindowv2>>",
-            ],
-            Take(first, 6));
-        Assert.Equal(
-            [
-                "createworkspace>>2,",
-                "createworkspacev2>>2,2,",
-                "workspace>>2,",
-                "workspacev2>>2,2,",
-                "activewindow>>,",
-                "activewindowv2>>",
-            ],
-            Take(second, 6));
-
         core.Handle(new WindowClosed(new WindowId(7)));
-        Assert.Equal(["closewindow>>7"], Take(first, 1));
+        Assert.AreSequenceEqual(["closewindow>>7"], Take(first, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ASubscriberReceivesALargeOutcomeWithoutBeingDropped()
     {
         var core = new WindowManager();
@@ -159,12 +166,12 @@ public class CommandServerTests
         core.Handle(new ConfigLoaded(new ConfigDocument([], [], warnings)));
 
         var expected = warnings.Select(warning => $"warning>>{warning.Line},,bad config").Append("configreloaded>>").ToArray();
-        Assert.Equal(expected, Take(listener, expected.Length));
-        Assert.Equal("ok", CommandClient.Transact("dispatch workspace 2", name));
-        Assert.Contains("workspacev2>>2,2,", Take(listener, 6));
+        Assert.AreSequenceEqual(expected, Take(listener, expected.Length));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 2", name));
+        Assert.Contains("workspace>>2,2,", Take(listener, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ASlowSubscriberDoesNotBlockTheCore()
     {
         var core = new WindowManager();
@@ -173,19 +180,19 @@ public class CommandServerTests
         server.Start();
         using var idle = Connect(name);
         Send(idle, "events");
-        Assert.Equal("[]", CommandClient.Transact("j/clients", name));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name));
 
         var finished = Task.Run(() =>
         {
             for (var i = 0; i < 600; i++)
-                core.Execute(i % 2 == 0 ? "dispatch workspace 2" : "dispatch workspace 1");
+                core.Execute(i % 2 == 0 ? "workspace 2" : "workspace 1");
         });
 
         await finished.WaitAsync(TimeSpan.FromSeconds(5));
-        Assert.Equal("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
-    [Fact]
+    [TestMethod]
     public void ADeadSubscriberIsDroppedAndThePipeKeepsServing()
     {
         var core = new WindowManager();
@@ -194,18 +201,18 @@ public class CommandServerTests
         server.Start();
         var idle = Connect(name);
         Send(idle, "events");
-        Assert.Equal("[]", CommandClient.Transact("j/clients", name));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name));
         idle.Dispose();
 
         using var listener = new Listener(name);
         WaitUntilSubscribed(core, listener);
         Sync(core, listener);
         core.Handle(new WindowAppeared(new WindowId(3), new Rectangle(0, 0, 10, 10)));
-        Assert.Equal(["openwindow>>3,1,,,", "activewindow>>,", "activewindowv2>>3"], Take(listener, 3));
-        Assert.Equal("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreSequenceEqual(["openwindow>>3,1,1,,,", "focus>>,1,1,3,"], Take(listener, 2));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
-    [Fact]
+    [TestMethod]
     public void ThePipeServesAgainAfterEveryInstanceWasTaken()
     {
         var core = new WindowManager();
@@ -218,10 +225,10 @@ public class CommandServerTests
             Thread.Sleep(100);
         }
 
-        Assert.Equal("[]", CommandClient.Transact("j/clients", name, timeoutMs: 5000));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name, timeoutMs: 5000));
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientThatSendsNothingDoesNotStallTheNext()
     {
         var core = new WindowManager();
@@ -230,11 +237,11 @@ public class CommandServerTests
         server.Start();
         using var silent = Connect(name);
 
-        Assert.Equal("[]", CommandClient.Transact("j/clients", name));
-        Assert.Equal("ok", CommandClient.Transact("dispatch workspace 1", name));
+        Assert.AreEqual("[]", CommandClient.Transact("j/get windows", name));
+        Assert.AreEqual("ok", CommandClient.Transact("workspace 1", name));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AClientThatSendsNothingIsDroppedAfterTheRequestTimeout()
     {
         var core = new WindowManager();
@@ -245,10 +252,10 @@ public class CommandServerTests
 
         var one = new byte[1];
         var read = silent.ReadAsync(one).AsTask();
-        Assert.Equal(0, await read.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.AreEqual(0, await read.WaitAsync(TimeSpan.FromSeconds(10)));
     }
 
-    [Fact]
+    [TestMethod]
     public void IdleSubscribersHoldNoPoolThreads()
     {
         var core = new WindowManager();
@@ -271,7 +278,7 @@ public class CommandServerTests
             using var listener = new Listener(name);
             WaitUntilSubscribed(core, listener);
             var grown = ThreadPool.ThreadCount - before;
-            Assert.True(grown < count / 2, $"The pool grew by {grown} threads for {count} idle subscribers.");
+            Assert.IsTrue(grown < count / 2, $"The pool grew by {grown} threads for {count} idle subscribers.");
         }
         finally
         {
@@ -317,10 +324,22 @@ public class CommandServerTests
             var seen = false;
             while (!seen)
             {
-                Assert.True(listener.TryTake(TimeSpan.FromSeconds(10), out var line), "The marker window was never reported.");
-                seen = line == "activewindowv2>>270f";
+                Assert.IsTrue(listener.TryTake(TimeSpan.FromSeconds(10), out var line), "The marker window was never reported.");
+                seen = line == "focus>>,1,1,270f," || IsJsonFocusOn(line, "0x270f");
             }
         }
+    }
+
+    private static bool IsJsonFocusOn(string line, string address)
+    {
+        if (!line.StartsWith('{'))
+            return false;
+
+        using var parsed = JsonDocument.Parse(line);
+        var root = parsed.RootElement;
+        return root.GetProperty("event").GetString() == "focus"
+            && root.GetProperty("window") is { ValueKind: JsonValueKind.Object } window
+            && window.GetProperty("address").GetString() == address;
     }
 
     private static List<string> Take(Listener listener, int count)
@@ -328,7 +347,7 @@ public class CommandServerTests
         var lines = new List<string>();
         while (lines.Count < count)
         {
-            Assert.True(listener.TryTake(TimeSpan.FromSeconds(10), out var line), $"Only {lines.Count} of {count} events arrived: {string.Join(", ", lines)}");
+            Assert.IsTrue(listener.TryTake(TimeSpan.FromSeconds(10), out var line), $"Only {lines.Count} of {count} events arrived: {string.Join(", ", lines)}");
             lines.Add(line);
         }
 
@@ -344,8 +363,8 @@ public class CommandServerTests
         private readonly CancellationTokenSource _cancel = new();
         private readonly Task _task;
 
-        public Listener(string pipe) =>
-            _task = Task.Run(() => CommandClient.Follow("events", line => _lines.Writer.TryWrite(line), pipe, cancel: _cancel.Token));
+        public Listener(string pipe, string command = "events") =>
+            _task = Task.Run(() => CommandClient.Follow(command, line => _lines.Writer.TryWrite(line), pipe, cancel: _cancel.Token));
 
         public bool TryTake(TimeSpan timeout, out string line)
         {
@@ -376,10 +395,4 @@ public class CommandServerTests
             _cancel.Dispose();
         }
     }
-}
-
-[CollectionDefinition(Name, DisableParallelization = true)]
-public sealed class CommandServerCollection
-{
-    public const string Name = "Command server";
 }

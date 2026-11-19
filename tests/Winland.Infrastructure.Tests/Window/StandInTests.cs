@@ -1,5 +1,6 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class StandInTests
 {
     private const string Config = "";
@@ -21,26 +22,26 @@ public class StandInTests
     private static int Posted(TestWindows windows) =>
         windows.Desktop.Calls.Count(call => call.StartsWith("bounds 1 ", StringComparison.Ordinal) && call.EndsWith(" Post", StringComparison.Ordinal));
 
-    [Fact]
+    [TestMethod]
     public void AGrowingWindowShowsOnlyWhatItPaintedUntilItHasPaintedTheRest()
     {
         using var windows = Grow(out var before);
         var standIn = windows.Desktop.StandInOf(1);
 
         windows.Advance(16);
-        Assert.True(standIn.Picture!.Value.Source.Width <= before.Width);
-        Assert.NotNull(standIn.Right);
+        Assert.IsTrue(standIn.Picture!.Value.Source.Width <= before.Width);
+        Assert.IsNotNull(standIn.Right);
 
         windows.Advance(32);
-        Assert.True(standIn.Picture!.Value.Source.Width <= before.Width);
-        Assert.NotNull(standIn.Right);
+        Assert.IsTrue(standIn.Picture!.Value.Source.Width <= before.Width);
+        Assert.IsNotNull(standIn.Right);
 
         windows.Advance(16);
-        Assert.True(standIn.Picture!.Value.Source.Width > before.Width);
-        Assert.Null(standIn.Right);
+        Assert.IsTrue(standIn.Picture!.Value.Source.Width > before.Width);
+        Assert.IsNull(standIn.Right);
     }
 
-    [Fact]
+    [TestMethod]
     public void AGrowingWindowThatSaysItIsStillPaintingStaysCutOffPast50Milliseconds()
     {
         using var windows = Grow(out var before, desktop => desktop.PaintTime = 1000);
@@ -49,11 +50,11 @@ public class StandInTests
         windows.Advance(32);
         windows.Advance(32);
 
-        Assert.True(standIn.Picture!.Value.Source.Width <= before.Width);
-        Assert.NotNull(standIn.Right);
+        Assert.IsTrue(standIn.Picture!.Value.Source.Width <= before.Width);
+        Assert.IsNotNull(standIn.Right);
     }
 
-    [Fact]
+    [TestMethod]
     public void AStandInIsPlacedBeforeItsPictureIsFitted()
     {
         using var windows = Grow(out _);
@@ -70,10 +71,10 @@ public class StandInTests
             fits++;
         }
 
-        Assert.True(fits > 3, $"{fits} frames were fitted.");
+        Assert.IsTrue(fits > 3, $"{fits} frames were fitted.");
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatShrinksKeepsItsLargerSizeUntilTheMotionEnds()
     {
         using var windows = new TestWindows(Config);
@@ -85,13 +86,13 @@ public class StandInTests
         windows.Open(2);
         windows.Advance(32);
         windows.Advance(32);
-        Assert.Equal(wide, shrinking.Visible.Width);
+        Assert.AreEqual(wide, shrinking.Visible.Width);
 
         windows.Settle();
-        Assert.True(shrinking.Visible.Width < wide);
+        Assert.IsTrue(shrinking.Visible.Width < wide);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatChangesSizeIsGivenItsSizeOnceAndNotOnEveryFrame()
     {
         using var windows = new TestWindows(Config);
@@ -103,28 +104,28 @@ public class StandInTests
         windows.Settle();
 
         var calls = windows.Desktop.Calls;
-        Assert.Equal(1, Posted(windows));
+        Assert.AreEqual(1, Posted(windows));
         var placed = calls.FindIndex(call => call.StartsWith("bounds 1 ", StringComparison.Ordinal) && call.EndsWith(" Wait", StringComparison.Ordinal));
-        Assert.True(placed > 0, "The window was not placed.");
-        Assert.True(calls.IndexOf("standin close 1") > placed);
+        Assert.IsTrue(placed > 0, "The window was not placed.");
+        Assert.IsTrue(calls.IndexOf("standin close 1") > placed);
     }
 
-    [Fact]
+    [TestMethod]
     public void AStandInGivesTheWindowItsAlphaBackAndNoBorderWhenTheMotionEnds()
     {
         using var windows = Grow(out _);
         var window = windows.Desktop[1];
-        Assert.Equal(0, window.Alpha);
-        Assert.Equal(0xFFFFFFFEu, window.Attributes[34]);
+        Assert.AreEqual(0, window.Alpha);
+        Assert.AreEqual(0xFFFFFFFEu, window.Attributes[34]);
 
         windows.Settle();
 
-        Assert.True(windows.Desktop.StandInOf(1).Closed);
-        Assert.Equal(0u, window.ExStyle & Layered);
-        Assert.Equal(0xFFFFFFFEu, window.Attributes[34]);
+        Assert.IsTrue(windows.Desktop.StandInOf(1).Closed);
+        Assert.AreEqual(0u, window.ExStyle & Layered);
+        Assert.AreEqual(0xFFFFFFFEu, window.Attributes[34]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowThatOpensKeepsTheBorderWinlandTookOffWhenItsStandInEnds()
     {
         using var windows = new TestWindows(Config);
@@ -133,25 +134,25 @@ public class StandInTests
 
         windows.Settle();
 
-        Assert.True(windows.Desktop.StandInOf(1).Closed);
-        Assert.Equal(0xFFFFFFFEu, windows.Desktop[1].Attributes[34]);
+        Assert.IsTrue(windows.Desktop.StandInOf(1).Closed);
+        Assert.AreEqual(0xFFFFFFFEu, windows.Desktop[1].Attributes[34]);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowItsProgramMadeLayeredIsResizedOnEveryFrameInsteadOfStoodInFor()
     {
         using var windows = Grow(out _, desktop => desktop[1].ExStyle = Layered);
-        Assert.True(windows.Desktop.StandInOf(1).Closed);
+        Assert.IsTrue(windows.Desktop.StandInOf(1).Closed);
         windows.Desktop.Calls.Clear();
 
         windows.Advance(16);
         windows.Advance(16);
         windows.Advance(16);
 
-        Assert.True(Posted(windows) >= 3, $"{Posted(windows)} frames were sent.");
+        Assert.IsTrue(Posted(windows) >= 3, $"{Posted(windows)} frames were sent.");
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowWithNoPictureToShowIsResizedOnEveryFrame()
     {
         using var windows = Grow(out _, desktop => desktop.CanStandIn = false);
@@ -162,7 +163,7 @@ public class StandInTests
         windows.Advance(16);
         windows.Advance(16);
 
-        Assert.True(Posted(windows) >= 3, $"{Posted(windows)} frames were sent.");
+        Assert.IsTrue(Posted(windows) >= 3, $"{Posted(windows)} frames were sent.");
     }
 
 }

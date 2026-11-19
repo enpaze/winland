@@ -1,20 +1,26 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Winland.Infrastructure.Tests;
 
-[CollectionDefinition(Name, DisableParallelization = true)]
-public sealed class DesktopCollection
+public class DesktopFactAttribute : TestMethodAttribute
 {
-    public const string Name = "Desktop";
-}
-
-public class DesktopFactAttribute : FactAttribute
-{
-    public DesktopFactAttribute()
+    public DesktopFactAttribute([CallerFilePath] string callerFilePath = "", [CallerLineNumber] int callerLineNumber = -1)
+        : base(callerFilePath, callerLineNumber)
     {
-        if (DaemonRunning())
-            Skip = "A Winland process is running. It adopts and restores the windows this test opens. Stop it to run the test.";
     }
+
+    public override Task<TestResult[]> ExecuteAsync(ITestMethod testMethod) =>
+        DaemonRunning() ? Task.FromResult(Skipped()) : base.ExecuteAsync(testMethod);
+
+    private static TestResult[] Skipped() =>
+    [
+        new TestResult
+        {
+            Outcome = UnitTestOutcome.Ignored,
+            TestFailureException = new AssertInconclusiveException("A Winland process is running. It adopts and restores the windows this test opens. Stop it to run the test."),
+        },
+    ];
 
     private static bool DaemonRunning()
     {

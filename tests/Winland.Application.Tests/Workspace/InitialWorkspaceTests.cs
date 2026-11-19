@@ -1,68 +1,69 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class InitialWorkspaceTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void AStartedProgramOpensOnTheWorkspaceItWasStartedOn()
     {
         var core = Loaded("");
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
         var opened = Open(core, window: 1, pid: 500);
 
-        Assert.Equal(new WorkspaceId("1"), WorkspaceOf(opened, 1));
-        Assert.Equal(new WorkspaceId("2"), opened.State.ActiveWorkspace);
+        Assert.AreEqual(new WorkspaceId("1"), WorkspaceOf(opened, 1));
+        Assert.AreEqual(new WorkspaceId("2"), opened.State.ActiveWorkspace);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFirstWindowUsesTheTokenUp()
     {
         var core = Loaded("");
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         Open(core, window: 1, pid: 500);
 
         var second = Open(core, window: 2, pid: 500);
 
-        Assert.Equal(new WorkspaceId("2"), WorkspaceOf(second, 2));
+        Assert.AreEqual(new WorkspaceId("2"), WorkspaceOf(second, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void ATokenExpiresAfterTenSeconds()
     {
         var now = 0L;
         var core = Loaded("");
         core.Clock = () => now;
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         now = 10_001;
 
         var opened = Open(core, window: 1, pid: 500);
 
-        Assert.Equal(new WorkspaceId("2"), WorkspaceOf(opened, 1));
+        Assert.AreEqual(new WorkspaceId("2"), WorkspaceOf(opened, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void AChildOfTheStartedProgramHoldsTheTokenToo()
     {
         var core = Loaded("");
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
         var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { ProcessId = 600, AncestorProcessIds = [500] });
 
-        Assert.Equal(new WorkspaceId("1"), WorkspaceOf(opened, 1));
+        Assert.AreEqual(new WorkspaceId("1"), WorkspaceOf(opened, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWorkspaceRuleWinsOverTheToken()
     {
-        var core = Loaded("windowrule = workspace 4 silent, class:ruled\n");
+        var core = Loaded("windowrule = workspace 4 stay, class:ruled\n");
         Start(core, pid: 500);
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
 
         var opened = core.Handle(new WindowAppeared(new WindowId(1), Area)
         {
@@ -70,7 +71,21 @@ public class InitialWorkspaceTests
             Traits = WindowTraits.Normal with { Class = "ruled" },
         });
 
-        Assert.Equal(new WorkspaceId("4"), WorkspaceOf(opened, 1));
+        Assert.AreEqual(new WorkspaceId("4"), WorkspaceOf(opened, 1));
+    }
+
+    [TestMethod]
+    public void AnExecOnceWorkspaceBlockOpensTheFirstWindowThereWithoutSwitching()
+    {
+        var core = Loaded("");
+        core.NoteLaunched(500, Assert.ContainsSingle(core.StartupLaunches(ConfigParser.Parse("exec-once = [workspace 3] app\n"))));
+
+        var first = Open(core, window: 1, pid: 500);
+        var second = Open(core, window: 2, pid: 500);
+
+        Assert.AreEqual(new WorkspaceId("3"), WorkspaceOf(first, 1));
+        Assert.AreEqual(new WorkspaceId("1"), WorkspaceOf(second, 2));
+        Assert.AreEqual(new WorkspaceId("1"), second.State.ActiveWorkspace);
     }
 
     private static WindowManager Loaded(string config)
@@ -82,7 +97,7 @@ public class InitialWorkspaceTests
 
     private static void Start(WindowManager core, int pid)
     {
-        var launch = Assert.Single(core.Execute("dispatch exec app").Effect.Launches);
+        var launch = Assert.ContainsSingle(core.Execute("exec app").Effect.Launches);
         core.NoteLaunched(pid, launch);
     }
 

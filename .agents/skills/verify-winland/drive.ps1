@@ -81,11 +81,13 @@ if ($Cleanup) {
             $deadline = [DateTime]::UtcNow.AddSeconds(20)
             do {
                 Start-Sleep -Milliseconds 200
-                & $daemon clients *> $null
+                & $daemon get windows *> $null
             } until ($LASTEXITCODE -eq 0 -or $recovery.HasExited -or [DateTime]::UtcNow -gt $deadline)
-            & $daemon dispatch exit *> $null
-            if (-not $recovery.WaitForExit(20000)) { Stop-Process -Id $recovery.Id -Force }
-            Write-Output "put back the windows and taskbar that $($folder.Name) hid"
+            & $daemon exit *> $null
+            $exited = $LASTEXITCODE -eq 0 -and $recovery.WaitForExit(20000)
+            if (-not $recovery.HasExited) { Stop-Process -Id $recovery.Id -Force }
+            if ($exited) { Write-Output "put back the windows and taskbar that $($folder.Name) hid" }
+            else { Write-Warning "the recovery winland for $($folder.Name) did not exit when asked, so its windows and taskbar may still be hidden" }
         }
         Remove-Item -LiteralPath $folder.FullName -Recurse -Force -ErrorAction SilentlyContinue
         Write-Output "removed $($folder.FullName)"
@@ -116,7 +118,7 @@ function Invoke-Driver([string]$id) {
     $name = "feature-$id.trx"
     $report = Join-Path $results $name
     if (Test-Path -LiteralPath $report) { Remove-Item -LiteralPath $report -Force }
-    dotnet test $project --configuration Release --nologo --no-build --filter "Feature=$id" --logger 'console;verbosity=detailed' --logger "trx;LogFileName=$name" --results-directory $results | Out-Host
+    dotnet test $project --configuration Release --nologo --no-build --results-directory $results -- --filter "Feature=$id" --report-trx --report-trx-filename $name | Out-Host
     $code = $LASTEXITCODE
     if (-not (Test-Path -LiteralPath $report)) {
         Write-Host "The driver for '$id' wrote no test report, so no test has [Trait(""Feature"", ""$id"")]."

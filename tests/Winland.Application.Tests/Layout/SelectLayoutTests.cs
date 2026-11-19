@@ -1,51 +1,52 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class SelectLayoutTests
 {
-    [Theory]
-    [InlineData("dwindle", "scrolling")]
-    [InlineData("dwindle", "floating")]
-    [InlineData("scrolling", "dwindle")]
-    [InlineData("floating", "scrolling")]
+    [TestMethod]
+    [DataRow("dwindle", "scrolling")]
+    [DataRow("dwindle", "floating")]
+    [DataRow("scrolling", "dwindle")]
+    [DataRow("floating", "scrolling")]
     public void LayoutSelectsTheNamedLayout(string from, string to)
     {
-        var core = Configured($"general:layout = {from}\n");
+        var core = Configured($"layout = {from}\n");
         core.Handle(Appeared(1));
 
         var selected = core.Handle(new Dispatch("layout", to));
 
-        Assert.Null(selected.Error);
-        Assert.Equal(to, Layout(selected));
-        Assert.Single(selected.State.Clients);
+        Assert.IsNull(selected.Error);
+        Assert.AreEqual(to, Layout(selected));
+        Assert.ContainsSingle(selected.State.Clients);
     }
 
-    [Theory]
-    [InlineData("master")]
-    [InlineData("")]
-    [InlineData("scrolling dwindle")]
+    [TestMethod]
+    [DataRow("master")]
+    [DataRow("")]
+    [DataRow("scrolling dwindle")]
     public void ANameThatIsNoLayoutErrorsAndChangesNothing(string name)
     {
-        var core = Configured("general:layout = scrolling\n");
+        var core = Configured("layout = scrolling\n");
         core.Handle(Appeared(1));
 
         var refused = core.Handle(new Dispatch("layout", name));
 
-        Assert.Equal($"error: unknown layout '{name}'", refused.Error);
-        Assert.Empty(refused.Placements);
-        Assert.Equal("scrolling", Layout(refused));
+        Assert.AreEqual($"error: unknown layout '{name}'", refused.Error);
+        Assert.IsEmpty(refused.Placements);
+        Assert.AreEqual("scrolling", Layout(refused));
     }
 
-    [Fact]
+    [TestMethod]
     public void ATypoSuggestsTheLayout()
     {
         var core = new WindowManager();
 
         var refused = core.Handle(new Dispatch("layout", "scroling"));
 
-        Assert.Equal("error: unknown layout 'scroling'. Did you mean 'scrolling'?", refused.Error);
+        Assert.AreEqual("error: unknown layout 'scroling'. Did you mean 'scrolling'?", refused.Error);
     }
 
-    [Fact]
+    [TestMethod]
     public void SelectingTheRunningScrollingLayoutKeepsItsColumnWidths()
     {
         var kept = ScrollingWithANarrowColumn();
@@ -55,13 +56,13 @@ public class SelectLayoutTests
         var after = kept.Handle(Appeared(3));
         var expected = untouched.Handle(Appeared(3));
 
-        Assert.Null(selected.Error);
-        Assert.Empty(selected.Placements);
-        Assert.Equal(BoundsOf(expected, 1), BoundsOf(after, 1));
-        Assert.Equal(BoundsOf(expected, 2), BoundsOf(after, 2));
+        Assert.IsNull(selected.Error);
+        Assert.IsEmpty(selected.Placements);
+        Assert.AreEqual(BoundsOf(expected, 1), BoundsOf(after, 1));
+        Assert.AreEqual(BoundsOf(expected, 2), BoundsOf(after, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void SelectingTheRunningDwindleLayoutKeepsItsSplits()
     {
         var kept = DwindleWithAToggledSplit();
@@ -71,14 +72,14 @@ public class SelectLayoutTests
         var after = kept.Handle(Appeared(3));
         var expected = untouched.Handle(Appeared(3));
 
-        Assert.Null(selected.Error);
-        Assert.Empty(selected.Placements);
-        Assert.Equal(BoundsOf(expected, 1), BoundsOf(after, 1));
-        Assert.Equal(BoundsOf(expected, 2), BoundsOf(after, 2));
-        Assert.Equal(BoundsOf(expected, 3), BoundsOf(after, 3));
+        Assert.IsNull(selected.Error);
+        Assert.IsEmpty(selected.Placements);
+        Assert.AreEqual(BoundsOf(expected, 1), BoundsOf(after, 1));
+        Assert.AreEqual(BoundsOf(expected, 2), BoundsOf(after, 2));
+        Assert.AreEqual(BoundsOf(expected, 3), BoundsOf(after, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void OnlyTheShownWorkspaceChanges()
     {
         var core = new WindowManager();
@@ -88,55 +89,55 @@ public class SelectLayoutTests
 
         var selected = core.Handle(new Dispatch("layout", "scrolling"));
 
-        Assert.Equal("scrolling", LayoutOf(selected, "2"));
-        Assert.Equal("dwindle", LayoutOf(selected, "1"));
+        Assert.AreEqual("scrolling", LayoutOf(selected, "2"));
+        Assert.AreEqual("dwindle", LayoutOf(selected, "1"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOpenSpecialWorkspaceIsTheOneThatChanges()
     {
         var core = new WindowManager();
         core.Handle(Appeared(1));
-        core.Handle(new Dispatch("movetoworkspace", "special:scratch"));
+        core.Handle(new Dispatch("move", "special:scratch"));
 
         var selected = core.Handle(new Dispatch("layout", "floating"));
 
-        Assert.Equal("floating", LayoutOf(selected, "special:scratch"));
-        Assert.Equal("dwindle", LayoutOf(selected, "1"));
+        Assert.AreEqual("floating", LayoutOf(selected, "special:scratch"));
+        Assert.AreEqual("dwindle", LayoutOf(selected, "1"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AGroupKeepsEveryMemberThroughEachLayout()
     {
         var desk = new TestDesktop();
         desk.Spawn("c");
         desk.Spawn("a");
-        desk.Ok("togglegroup");
+        desk.Ok("group");
         desk.Spawn("b");
 
         foreach (var layout in new[] { "scrolling", "floating", "dwindle" })
         {
             desk.Ok("layout", layout);
 
-            Assert.Equal(3, desk.Clients().Length);
-            Assert.Equal(2, Grouped(desk.Client("a")));
-            Assert.Equal(2, Grouped(desk.Client("b")));
-            Assert.Equal(0, Grouped(desk.Client("c")));
-            desk.Ok("changegroupactive", "f");
+            Assert.AreEqual(3, desk.Clients().Length);
+            Assert.AreEqual(2, Grouped(desk.Client("a")));
+            Assert.AreEqual(2, Grouped(desk.Client("b")));
+            Assert.AreEqual(0, Grouped(desk.Client("c")));
+            desk.Ok("tab", "next");
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void EachWindowKeepsItsStateThroughEachLayout()
     {
         var desk = new TestDesktop();
         desk.Spawn("tiled", "Tiled title");
         desk.Spawn("pinned");
-        desk.Ok("togglefloating");
+        desk.Ok("float");
         desk.Ok("pin");
         desk.Spawn("small");
         desk.Handle(new WindowMinimized(desk.Window("small")));
-        desk.Ok("focuswindow", "class:tiled");
+        desk.Ok("focus", "class:tiled");
 
         foreach (var layout in new[] { "scrolling", "floating", "dwindle" })
         {
@@ -144,41 +145,41 @@ public class SelectLayoutTests
             var tiled = Client(selected, desk.Window("tiled").Value);
             var pinned = Client(selected, desk.Window("pinned").Value);
 
-            Assert.Null(selected.Error);
-            Assert.Equal(3, selected.State.Clients.Count);
-            Assert.Equal("tiled", desk.ActiveClass());
-            Assert.Equal(("tiled", "Tiled title"), (tiled.Class, tiled.Title));
-            Assert.Equal(layout == "floating", tiled.Floating);
-            Assert.True(pinned.Floating);
-            Assert.True(pinned.Pinned);
-            Assert.True(Client(selected, desk.Window("small").Value).Minimized);
+            Assert.IsNull(selected.Error);
+            Assert.AreEqual(3, selected.State.Clients.Count);
+            Assert.AreEqual("tiled", desk.ActiveClass());
+            Assert.AreEqual(("tiled", "Tiled title"), (tiled.Class, tiled.Title));
+            Assert.AreEqual(layout == "floating", tiled.Floating);
+            Assert.IsTrue(pinned.Floating);
+            Assert.IsTrue(pinned.Pinned);
+            Assert.IsTrue(Client(selected, desk.Window("small").Value).Minimized);
         }
     }
 
-    [Theory]
-    [InlineData("scrolling")]
-    [InlineData("floating")]
+    [TestMethod]
+    [DataRow("scrolling")]
+    [DataRow("floating")]
     public void AFullscreenWindowStaysFullscreen(string layout)
     {
         var desk = new TestDesktop();
         desk.Spawn("a");
         desk.Spawn("b");
-        desk.Ok("fullscreen", "0");
+        desk.Ok("fullscreen");
 
         desk.Ok("layout", layout);
 
-        Assert.Equal("b", desk.ActiveClass());
-        Assert.Equal(2, TestDesktop.Fullscreen(desk.ActiveWindow()));
+        Assert.AreEqual("b", desk.ActiveClass());
+        Assert.AreEqual(2, TestDesktop.Fullscreen(desk.ActiveWindow()));
     }
 
     private static int Grouped(System.Text.Json.JsonElement client) => client.GetProperty("grouped").GetArrayLength();
 
     private static string LayoutOf(Outcome outcome, string name) =>
-        Assert.Single(outcome.State.Workspaces, workspace => workspace.Id == new WorkspaceId(name)).TiledLayout;
+        Assert.ContainsSingle(workspace => workspace.Id == new WorkspaceId(name), outcome.State.Workspaces).TiledLayout;
 
     private static WindowManager ScrollingWithANarrowColumn()
     {
-        var core = Flat("general:layout = scrolling\n");
+        var core = Flat("layout = scrolling\n");
         core.Handle(Appeared(1));
         core.Handle(Appeared(2));
         core.Handle(new Dispatch("layoutmsg", "colresize 0.3"));
@@ -190,11 +191,11 @@ public class SelectLayoutTests
         var core = Flat();
         core.Handle(Appeared(1));
         core.Handle(Appeared(2));
-        core.Handle(new Dispatch("layoutmsg", "togglesplit"));
-        core.Handle(new Dispatch("resizeactive", "0 100"));
+        core.Handle(new Dispatch("split"));
+        core.Handle(new Dispatch("resize", "0 100"));
         return core;
     }
 
     private static string Layout(Outcome outcome) =>
-        Assert.Single(outcome.State.Workspaces, workspace => workspace.Id == outcome.State.ActiveWorkspace).TiledLayout;
+        Assert.ContainsSingle(workspace => workspace.Id == outcome.State.ActiveWorkspace, outcome.State.Workspaces).TiledLayout;
 }

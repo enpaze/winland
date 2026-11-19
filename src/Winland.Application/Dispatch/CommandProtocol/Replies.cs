@@ -28,41 +28,12 @@ public static partial class CommandProtocol
         return string.Join('\n', lines);
     }
 
-    public static string FormatVersion() =>
-        JsonSerializer.Serialize(new VersionJson(
-            "",
-            BuildStamp.Commit,
-            BuildStamp.Version,
-            BuildStamp.Dirty,
-            "",
-            "",
-            "",
-            "",
-            []));
-
-    public static string FormatVersionText()
-    {
-        var details = new List<string>();
-        if (BuildStamp.Commit.Length > 0)
-            details.Add(BuildStamp.Commit.Length > 7 ? BuildStamp.Commit[..7] : BuildStamp.Commit);
-
-        if (BuildStamp.Dirty)
-            details.Add("dirty");
-
-        var version = "winland " + BuildStamp.Version;
-        return details.Count == 0 ? version : version + " (" + string.Join(", ", details) + ")";
-    }
-
-    public static string FormatErrors(IReadOnlyList<ConfigWarning> warnings)
+    public static string FormatErrors(IReadOnlyList<ConfigWarning> warnings, string? configPath)
     {
         ArgumentNullException.ThrowIfNull(warnings);
-        var errors = new string[warnings.Count];
+        var errors = new ErrorJson[warnings.Count];
         for (var i = 0; i < warnings.Count; i++)
-        {
-            errors[i] = warnings[i].Line > 0
-                ? string.Create(CultureInfo.InvariantCulture, $"line {warnings[i].Line}: {warnings[i].Message}")
-                : warnings[i].Message;
-        }
+            errors[i] = new ErrorJson(ConfigNotice.FileOf(warnings[i], configPath), warnings[i].Line, warnings[i].Message);
 
         return JsonSerializer.Serialize(errors, Relaxed);
     }
@@ -92,16 +63,8 @@ public static partial class CommandProtocol
             mask |= 1 << 2;
         if (modifiers.HasFlag(Modifier.Alt))
             mask |= 1 << 3;
-        if (modifiers.HasFlag(Modifier.Caps))
-            mask |= 1 << 1;
-        if (modifiers.HasFlag(Modifier.Mod2))
-            mask |= 1 << 4;
-        if (modifiers.HasFlag(Modifier.Mod3))
-            mask |= 1 << 5;
-        if (modifiers.HasFlag(Modifier.Super))
+        if (modifiers.HasFlag(Modifier.Win))
             mask |= 1 << 6;
-        if (modifiers.HasFlag(Modifier.Mod5))
-            mask |= 1 << 7;
 
         return mask;
     }
@@ -118,7 +81,7 @@ public static partial class CommandProtocol
             keycode = code;
         }
 
-        var mouse = bind.Flags.HasFlag(BindFlag.Mouse) || bind.Key.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase);
+        var mouse = bind.Key.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase);
         return new BindJson(
             mouse,
             bind.Description is not null,
@@ -137,26 +100,20 @@ public static partial class CommandProtocol
 
     private sealed record BindJson(
         [property: JsonPropertyName("mouse")] bool Mouse,
-        [property: JsonPropertyName("has_description")] bool HasDescription,
-        [property: JsonPropertyName("modmask")] int Modmask,
+        [property: JsonPropertyName("hasDescription")] bool HasDescription,
+        [property: JsonPropertyName("modMask")] int ModMask,
         [property: JsonPropertyName("key")] string Key,
-        [property: JsonPropertyName("keycode")] int Keycode,
+        [property: JsonPropertyName("keyCode")] int KeyCode,
         [property: JsonPropertyName("description")] string Description,
         [property: JsonPropertyName("dispatcher")] string Dispatcher,
         [property: JsonPropertyName("arg")] string Arg);
 
+    private sealed record ErrorJson(
+        [property: JsonPropertyName("file")] string? File,
+        [property: JsonPropertyName("line")] int Line,
+        [property: JsonPropertyName("message")] string Message);
+
     private sealed record FilesJson(
         [property: JsonPropertyName("config")] string? Config,
         [property: JsonPropertyName("log")] string? Log);
-
-    private sealed record VersionJson(
-        [property: JsonPropertyName("branch")] string Branch,
-        [property: JsonPropertyName("commit")] string Commit,
-        [property: JsonPropertyName("version")] string Version,
-        [property: JsonPropertyName("dirty")] bool Dirty,
-        [property: JsonPropertyName("commit_message")] string CommitMessage,
-        [property: JsonPropertyName("commit_date")] string CommitDate,
-        [property: JsonPropertyName("tag")] string Tag,
-        [property: JsonPropertyName("commits")] string Commits,
-        [property: JsonPropertyName("flags")] string[] Flags);
 }

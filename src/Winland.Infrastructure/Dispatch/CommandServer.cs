@@ -280,9 +280,9 @@ public sealed class CommandServer : IDisposable
         }
 
         Subscriber? subscriber = null;
-        if (CommandProtocol.Parse(command) is CommandParsed { Request: EventsRequest })
+        if (CommandProtocol.Parse(command) is CommandParsed { Request: EventsRequest events })
         {
-            subscriber = new Subscriber(server);
+            subscriber = new Subscriber(server, events.Flags);
             lock (_subscribersGate)
                 _subscribers.Add(subscriber);
         }
@@ -303,15 +303,8 @@ public sealed class CommandServer : IDisposable
             return;
         }
 
-        if (reply.Stream)
+        if (reply.Stream && subscriber is not null)
         {
-            if (subscriber is null)
-            {
-                subscriber = new Subscriber(server);
-                lock (_subscribersGate)
-                    _subscribers.Add(subscriber);
-            }
-
             await Follow(server, subscriber, stopping).ConfigureAwait(false);
             return;
         }
@@ -396,9 +389,14 @@ public sealed class CommandServer : IDisposable
             subscribers = _subscribers.ToArray();
         }
 
-        var lines = CommandProtocol.FormatStream(outcome.Events, outcome.State);
+        var formatted = new Dictionary<CommandFlags, IReadOnlyList<string>>();
         foreach (var subscriber in subscribers)
+        {
+            if (!formatted.TryGetValue(subscriber.Flags, out var lines))
+                formatted[subscriber.Flags] = lines = CommandProtocol.FormatStream(outcome.Events, outcome.State, subscriber.Flags);
+
             subscriber.Enqueue(lines);
+        }
     }
 
     private void Drop(Subscriber subscriber)
@@ -510,9 +508,15 @@ public sealed class CommandServer : IDisposable
 
         private int _closed;
 
-        public Subscriber(NamedPipeServerStream pipe) => Pipe = pipe;
+        public Subscriber(NamedPipeServerStream pipe, CommandFlags flags)
+        {
+            Pipe = pipe;
+            Flags = flags;
+        }
 
         public NamedPipeServerStream Pipe { get; }
+
+        public CommandFlags Flags { get; }
 
         public ChannelReader<string> Reader => _channel.Reader;
 

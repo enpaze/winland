@@ -153,12 +153,12 @@ public sealed partial class WindowManager
         LiveWorkspace source,
         LiveWorkspace destination,
         WindowId window,
-        bool silent,
+        bool stay,
         bool consumed,
         HashSet<WindowId> sourceCovered,
         HashSet<WindowId> destinationCovered)
     {
-        if (!silent)
+        if (!stay)
         {
             var opened = OpenSpecial(destination.Id, window);
             if (source.Id.IsSpecial && source.Layout.Clients.Count == 0)

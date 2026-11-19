@@ -18,6 +18,8 @@ public static class KeyNames
         "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24",
     ];
 
+    private static readonly string[] MouseButtons = ["left", "right", "middle", "x1", "x2"];
+
     private static readonly string[] Keypad =
     [
         "KP_0", "KP_1", "KP_2", "KP_3", "KP_4", "KP_5", "KP_6", "KP_7", "KP_8", "KP_9",
@@ -111,7 +113,7 @@ public static class KeyNames
             return false;
 
         if (configName.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase))
-            return KeyStrokes.TryMouse(configName, out _);
+            return TryMouse(configName, out _);
 
         return configName is "mouse_up" or "mouse_down" or "mouse_left" or "mouse_right"
             || TryCode(configName, out _)
@@ -125,7 +127,7 @@ public static class KeyNames
         ArgumentNullException.ThrowIfNull(configName);
         ArgumentNullException.ThrowIfNull(layout);
         if (configName.StartsWith("mouse:", StringComparison.OrdinalIgnoreCase))
-            return KeyStrokes.TryMouse(configName, out var button) ? $"mouse:{button.ToString(CultureInfo.InvariantCulture)}" : configName;
+            return TryMouse(configName, out var button) ? button : configName;
 
         if (configName.Length == 0 || configName.Equals("catchall", StringComparison.Ordinal))
             return configName;
@@ -195,6 +197,22 @@ public static class KeyNames
 
         virtualKey = 0;
         extended = false;
+        return false;
+    }
+
+    private static bool TryMouse(string configName, out string button)
+    {
+        var name = configName.AsSpan("mouse:".Length);
+        foreach (var known in MouseButtons)
+        {
+            if (name.Equals(known, StringComparison.OrdinalIgnoreCase))
+            {
+                button = "mouse:" + known;
+                return true;
+            }
+        }
+
+        button = "";
         return false;
     }
 

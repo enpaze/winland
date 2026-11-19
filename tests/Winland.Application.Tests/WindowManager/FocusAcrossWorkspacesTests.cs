@@ -1,10 +1,11 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class FocusAcrossWorkspacesTests
 {
-    private const string NoWindow = "{}";
+    private const string NoWindow = "null";
 
-    [Fact]
+    [TestMethod]
     public void CrossMonitorFullscreenFocus()
     {
         var desk = new TestDesktop();
@@ -12,71 +13,71 @@ public class FocusAcrossWorkspacesTests
 
         desk.Ok("workspace", "1");
         desk.Spawn("1A");
-        desk.Ok("focuswindow", "class:1A");
-        var source = desk.ActiveWindow().GetProperty("monitor").GetInt32();
+        desk.Ok("focus", "class:1A");
+        var source = desk.ActiveWindow().GetProperty("monitor").GetString();
 
-        desk.Ok("focusmonitor", "HYPRTEST-2");
+        desk.Ok("focus-monitor", "HYPRTEST-2");
         desk.Ok("workspace", "2");
         desk.Spawn("2A");
         desk.Spawn("2B");
-        desk.Ok("focuswindow", "class:2B");
-        var destination = desk.ActiveWindow().GetProperty("monitor").GetInt32();
+        desk.Ok("focus", "class:2B");
+        var destination = desk.ActiveWindow().GetProperty("monitor").GetString();
 
-        Assert.NotEqual(source, destination);
+        Assert.AreNotEqual(source, destination);
 
-        desk.Ok("focuswindow", "class:2B");
-        desk.Ok("togglefloating");
-        desk.Ok("fullscreen", "0 toggle");
+        desk.Ok("focus", "class:2B");
+        desk.Ok("float");
+        desk.Ok("fullscreen");
 
-        desk.Ok("focuswindow", "class:1A");
-        desk.Ok("movefocus", "r");
+        desk.Ok("focus", "class:1A");
+        desk.Ok("focus", "r");
 
-        Assert.Equal("2B", desk.ActiveClass());
+        Assert.AreEqual("2B", desk.ActiveClass());
     }
 
-    [Fact]
-    public void SilentMoveLastTiledWindowUnfocusesWindow()
+    [TestMethod]
+    public void AMoveThatStaysUnfocusesTheLastTiledWindow()
     {
         var desk = new TestDesktop();
         desk.Ok("workspace", "1");
-        Assert.Empty(desk.Clients());
+        Assert.IsEmpty(desk.Clients());
 
         desk.Spawn("silent_move_last_tiled");
-        Assert.Single(desk.Clients());
+        Assert.ContainsSingle(desk.Clients());
 
         var active = desk.ActiveWindow();
-        Assert.Equal("silent_move_last_tiled", TestDesktop.ClassOf(active));
-        Assert.Equal(1, TestDesktop.WorkspaceId(active));
-        Assert.False(TestDesktop.Floating(active));
+        Assert.AreEqual("silent_move_last_tiled", TestDesktop.ClassOf(active));
+        Assert.AreEqual(1, TestDesktop.WorkspaceId(active));
+        Assert.IsFalse(TestDesktop.Floating(active));
 
-        desk.Ok("movetoworkspacesilent", "2");
+        desk.Ok("move", "2 stay");
 
-        Assert.Equal(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
-        Assert.Equal(NoWindow, desk.Send("j/activewindow"));
-        Assert.Single(desk.Clients());
+        Assert.AreEqual(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
+        Assert.AreEqual(NoWindow, desk.Send("j/get window"));
+        Assert.ContainsSingle(desk.Clients());
 
         var client = desk.Client("silent_move_last_tiled");
-        Assert.Equal(2, TestDesktop.WorkspaceId(client));
+        Assert.AreEqual(2, TestDesktop.WorkspaceId(client));
     }
 
-    [Fact]
+    [TestMethod]
     public void CrossMonitorEmptyWorkspaceUnfocusesWindow()
     {
         const string TestOutput = "HYPRTEST-UNFOCUS";
         var desk = new TestDesktop();
         desk.AddMonitor(TestOutput, TestDesktop.Second);
 
-        desk.Ok("focusmonitor", "HEADLESS-2");
+        desk.Ok("focus-monitor", "HEADLESS-2");
         desk.Ok("workspace", "1");
-        Assert.Empty(desk.Clients());
+        Assert.IsEmpty(desk.Clients());
 
-        desk.Ok("focusmonitor", TestOutput);
+        desk.Ok("focus-monitor", TestOutput);
         desk.Ok("workspace", "2");
         desk.Spawn("cross_monitor_ws2");
-        Assert.Equal("cross_monitor_ws2", desk.ActiveClass());
+        Assert.AreEqual("cross_monitor_ws2", desk.ActiveClass());
 
         desk.Ok("workspace", "1");
-        Assert.Equal(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
-        Assert.Equal(NoWindow, desk.Send("j/activewindow"));
+        Assert.AreEqual(1, desk.ActiveWorkspace().GetProperty("id").GetInt32());
+        Assert.AreEqual(NoWindow, desk.Send("j/get window"));
     }
 }

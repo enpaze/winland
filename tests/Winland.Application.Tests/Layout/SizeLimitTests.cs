@@ -1,11 +1,12 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class SizeLimitTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
     private static readonly Size SmallMax = new(400, 300);
 
-    [Fact]
+    [TestMethod]
     public void SmallMaximumFloatsInsteadOfLeavingAnEmptyTile()
     {
         var core = new WindowManager();
@@ -17,12 +18,12 @@ public class SizeLimitTests
             Bounds = bounds,
         });
 
-        var client = Assert.Single(outcome.State.Clients);
-        Assert.True(client.Floating);
-        Assert.Equal(new Rectangle(760, 390, 400, 300), Assert.Single(outcome.Placements).Bounds);
+        var client = Assert.ContainsSingle(outcome.State.Clients);
+        Assert.IsTrue(client.Floating);
+        Assert.AreEqual(new Rectangle(760, 390, 400, 300), Assert.ContainsSingle(outcome.Placements).Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void SmallMaximumFloatsAndLeavesTheExistingTileFull()
     {
         var core = new WindowManager();
@@ -35,19 +36,19 @@ public class SizeLimitTests
             Bounds = bounds,
         });
 
-        var client = Assert.Single(floated.State.Clients, candidate => candidate.Window == new WindowId(2));
-        Assert.True(client.Floating);
-        Assert.Equal(new Rectangle(760, 390, 400, 300), Assert.Single(floated.Placements, placement => placement.Client == client.Id).Bounds);
-        Assert.Contains(floated.State.Clients, candidate => candidate.Window == new WindowId(1) && !candidate.Floating);
+        var client = Assert.ContainsSingle(candidate => candidate.Window == new WindowId(2), floated.State.Clients);
+        Assert.IsTrue(client.Floating);
+        Assert.AreEqual(new Rectangle(760, 390, 400, 300), Assert.ContainsSingle(placement => placement.Client == client.Id, floated.Placements).Bounds);
+        Assert.Contains(candidate => candidate.Window == new WindowId(1) && !candidate.Floating, floated.State.Clients);
 
         var split = core.Handle(new WindowAppeared(new WindowId(3), Area));
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(split, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(split, 3));
-        Assert.True(Assert.Single(split.State.Clients, candidate => candidate.Window == new WindowId(2)).Floating);
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(split, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(split, 3));
+        Assert.IsTrue(Assert.ContainsSingle(candidate => candidate.Window == new WindowId(2), split.State.Clients).Floating);
     }
 
-    [Fact]
+    [TestMethod]
     public void MaximumBelowEitherSideOfTheTargetTileFloats()
     {
         var core = new WindowManager();
@@ -60,11 +61,11 @@ public class SizeLimitTests
             Bounds = bounds,
         });
 
-        Assert.True(Assert.Single(floated.State.Clients, candidate => candidate.Window == new WindowId(2)).Floating);
-        Assert.Equal(new Rectangle(480, 0, 960, 1080), BoundsOf(floated, 2));
+        Assert.IsTrue(Assert.ContainsSingle(candidate => candidate.Window == new WindowId(2), floated.State.Clients).Floating);
+        Assert.AreEqual(new Rectangle(480, 0, 960, 1080), BoundsOf(floated, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void MaximumThatCoversTheTargetTileStaysTiled()
     {
         var core = new WindowManager();
@@ -75,12 +76,12 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MaxSize = new Size(1920, 1080) },
         });
 
-        Assert.False(Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(2)).Floating);
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
+        Assert.IsFalse(Assert.ContainsSingle(candidate => candidate.Window == new WindowId(2), outcome.State.Clients).Floating);
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void LargeMinimumIsNotSquashedAndTheNeighbourTakesTheRest()
     {
         var core = new WindowManager();
@@ -91,11 +92,11 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MinSize = new Size(1400, 100) },
         });
 
-        Assert.Equal(new Rectangle(0, 0, 520, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(520, 0, 1400, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 520, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(520, 0, 1400, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void LargeMinimumOnTheCrossAxisLeavesTheNeighbourOnTheMonitor()
     {
         var core = new WindowManager();
@@ -106,11 +107,11 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MinSize = new Size(100, 2000) },
         });
 
-        Assert.Equal(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(960, 0, 960, 2000), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 960, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(960, 0, 960, 2000), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedMinimumWidensItsColumnAndShrinksTheNeighbour()
     {
         var core = new WindowManager();
@@ -122,12 +123,12 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MinSize = new Size(1500, 100) },
         });
 
-        Assert.Equal(new Rectangle(0, 0, 420, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(420, 0, 1500, 540), BoundsOf(outcome, 2));
-        Assert.Equal(new Rectangle(420, 540, 1500, 540), BoundsOf(outcome, 3));
+        Assert.AreEqual(new Rectangle(0, 0, 420, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(420, 0, 1500, 540), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(420, 540, 1500, 540), BoundsOf(outcome, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void MinimumsThatExceedTheMonitorStayOnIt()
     {
         var core = new WindowManager();
@@ -141,11 +142,11 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MinSize = new Size(1200, 100) },
         });
 
-        Assert.Equal(new Rectangle(0, 0, 1200, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(720, 0, 1200, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 1200, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(720, 0, 1200, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void AMinimumAlmostAsWideAsTheMonitorLeavesTheNeighbourTheSmallestShare()
     {
         var core = new WindowManager();
@@ -156,11 +157,11 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MinSize = new Size(1900, 100) },
         });
 
-        Assert.Equal(new Rectangle(0, 0, 96, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(20, 0, 1900, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 96, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(20, 0, 1900, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOversizedMinimumLeavesEveryOtherTileOnTheMonitor()
     {
         var core = new WindowManager();
@@ -173,18 +174,18 @@ public class SizeLimitTests
 
         var outcome = core.Handle(new WindowAppeared(new WindowId(4), Area));
 
-        Assert.Equal(Area, BoundsOf(outcome, 1));
+        Assert.AreEqual(Area, BoundsOf(outcome, 1));
         foreach (var window in new long[] { 2, 3, 4 })
         {
             var bounds = BoundsOf(outcome, window);
-            Assert.True(bounds.Width > 0 && bounds.Height > 0, $"window {window} is {bounds}");
-            Assert.True(
+            Assert.IsTrue(bounds.Width > 0 && bounds.Height > 0, $"window {window} is {bounds}");
+            Assert.IsTrue(
                 bounds.X >= Area.X && bounds.Y >= Area.Y && bounds.X + bounds.Width <= Area.X + Area.Width && bounds.Y + bounds.Height <= Area.Y + Area.Height,
                 $"window {window} is {bounds}");
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void SoleWindowMinimumLargerThanTheMonitorExtendsPastIt()
     {
         var core = new WindowManager();
@@ -194,17 +195,17 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MinSize = new Size(3000, 2000) },
         });
 
-        Assert.Equal(new Rectangle(0, 0, 3000, 2000), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(0, 0, 3000, 2000), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void BorderIsOutsideTheMinimum()
     {
         var core = new WindowManager();
         core.Handle(new Configure(ConfigParser.Parse("""
-            general:border_size = 10
-            general:gaps_in = 0
-            general:gaps_out = 0
+            border_size = 10
+            gaps_in = 0
+            gaps_out = 0
             """)));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
 
@@ -213,11 +214,11 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MinSize = new Size(1400, 100) },
         });
 
-        Assert.Equal(new Rectangle(10, 10, 480, 1060), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(510, 10, 1400, 1060), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(10, 10, 480, 1060), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(510, 10, 1400, 1060), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void ReportedMaximumShrinksIntoAFloatAndTheNeighbourTakesTheTile()
     {
         var core = new WindowManager();
@@ -226,12 +227,12 @@ public class SizeLimitTests
 
         var outcome = core.Handle(new WindowLimitsChanged(new WindowId(2), null, SmallMax));
 
-        Assert.True(Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(2)).Floating);
-        Assert.Equal(new Rectangle(960, 0, 400, 300), BoundsOf(outcome, 2));
-        Assert.Equal(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
+        Assert.IsTrue(Assert.ContainsSingle(candidate => candidate.Window == new WindowId(2), outcome.State.Clients).Floating);
+        Assert.AreEqual(new Rectangle(960, 0, 400, 300), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 1920, 1080), BoundsOf(outcome, 1));
     }
 
-    [Fact]
+    [TestMethod]
     public void ReportedMinimumGrowsTheTile()
     {
         var core = new WindowManager();
@@ -240,11 +241,11 @@ public class SizeLimitTests
 
         var outcome = core.Handle(new WindowLimitsChanged(new WindowId(2), new Size(1400, 100), null));
 
-        Assert.Equal(new Rectangle(0, 0, 520, 1080), BoundsOf(outcome, 1));
-        Assert.Equal(new Rectangle(520, 0, 1400, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(0, 0, 520, 1080), BoundsOf(outcome, 1));
+        Assert.AreEqual(new Rectangle(520, 0, 1400, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowsOwnMinimumStillHoldsATile()
     {
         var core = new WindowManager();
@@ -255,53 +256,53 @@ public class SizeLimitTests
             Traits = WindowTraits.Normal with { MinSize = new Size(1400, 100) },
         });
 
-        Assert.Equal(new Rectangle(520, 0, 1400, 1080), BoundsOf(outcome, 2));
+        Assert.AreEqual(new Rectangle(520, 0, 1400, 1080), BoundsOf(outcome, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void VisibleMinimumShrinksByTheFrameInsets()
     {
         var insets = new FrameInsets(7, 0, 7, 7);
 
         var (min, max) = TrackLimits.Visible(new Size(200, 120), new Size(414, 314), insets);
 
-        Assert.Equal(new Size(186, 113), min);
-        Assert.Equal(new Size(400, 307), max);
+        Assert.AreEqual(new Size(186, 113), min);
+        Assert.AreEqual(new Size(400, 307), max);
     }
 
-    [Fact]
+    [TestMethod]
     public void OuterMaximumBelowFiveIsNoMaximum()
     {
         var (min, max) = TrackLimits.Visible(new Size(80, 40), new Size(4, 3), FrameInsets.None);
 
-        Assert.Equal(new Size(80, 40), min);
-        Assert.Null(max);
+        Assert.AreEqual(new Size(80, 40), min);
+        Assert.IsNull(max);
     }
 
-    [Fact]
+    [TestMethod]
     public void OneUnlimitedMaximumAxisLeavesTheOther()
     {
         var (_, max) = TrackLimits.Visible(null, new Size(4, 300), FrameInsets.None);
 
-        Assert.Equal(new Size(int.MaxValue, 300), max);
+        Assert.AreEqual(new Size(int.MaxValue, 300), max);
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingOuterTrackSizesAreNoLimits()
     {
         var (min, max) = TrackLimits.Visible(null, null, new FrameInsets(7, 0, 7, 7));
 
-        Assert.Null(min);
-        Assert.Null(max);
+        Assert.IsNull(min);
+        Assert.IsNull(max);
     }
 
-    [Fact]
+    [TestMethod]
     public void AMinimumUsesTheVisibleFrameAndPlacementAddsTheInsetsOnce()
     {
         var insets = new FrameInsets(7, 0, 7, 7);
         var outerMin = new Size(1414, 107);
         var (visible, _) = TrackLimits.Visible(outerMin, null, insets);
-        Assert.Equal(new Size(1400, 100), visible);
+        Assert.AreEqual(new Size(1400, 100), visible);
 
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area));
@@ -311,11 +312,11 @@ public class SizeLimitTests
         });
 
         var tile = BoundsOf(outcome, 2);
-        Assert.Equal(1400, tile.Width);
-        Assert.Equal(Area.Height, tile.Height);
+        Assert.AreEqual(1400, tile.Width);
+        Assert.AreEqual(Area.Height, tile.Height);
 
         var placed = insets.OuterFor(tile);
-        Assert.Equal(outerMin.Width, placed.Width);
-        Assert.Equal(tile.Height + insets.Top + insets.Bottom, placed.Height);
+        Assert.AreEqual(outerMin.Width, placed.Width);
+        Assert.AreEqual(tile.Height + insets.Top + insets.Bottom, placed.Height);
     }
 }

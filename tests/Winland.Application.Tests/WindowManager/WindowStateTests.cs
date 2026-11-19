@@ -3,11 +3,12 @@ using System.Reflection;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class WindowStateTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void ClosingAWindowLeavesNoPerWindowStateBehind()
     {
         var core = new WindowManager(ConfigParser.Parse("""
@@ -40,25 +41,25 @@ public class WindowStateTests
         core.Handle(new WindowAppeared(new WindowId(8), Area));
         core.Handle(new WindowAppeared(new WindowId(10), Area));
         core.Handle(new WindowAppeared(new WindowId(11), Area));
-        core.Handle(new Dispatch("focuswindow", "address:0xa"));
-        core.Handle(new Dispatch("togglegroup"));
-        core.Handle(new Dispatch("focuswindow", "address:0xb"));
-        core.Handle(new Dispatch("moveintogroup", "u"));
+        core.Handle(new Dispatch("focus", "address:0xa"));
+        core.Handle(new Dispatch("group"));
+        core.Handle(new Dispatch("focus", "address:0xb"));
+        core.Handle(new Dispatch("join", "u"));
         core.Handle(new WindowAppeared(new WindowId(12), Area));
         core.Handle(new WindowAppeared(new WindowId(13), Area) { ShownMaximized = true });
         core.Handle(new WindowTitleChanged(new WindowId(13), "renamed"));
-        core.Handle(new Dispatch("focuswindow", "address:0xc"));
-        core.Handle(new Dispatch("movetoworkspace", "special:magic"));
+        core.Handle(new Dispatch("focus", "address:0xc"));
+        core.Handle(new Dispatch("move", "special:magic"));
         core.Handle(new WindowFlashed(new WindowId(3)));
         core.Handle(new Dispatch("workspace", "2"));
         core.Handle(new Dispatch("workspace", "1"));
-        core.Handle(new Dispatch("focuswindow", "address:0x8"));
-        core.Handle(new Dispatch("fullscreen", "0"));
-        core.Handle(new Configure(ConfigParser.Parse("general:layout = scrolling\nwindowrule = float, class:stick")));
+        core.Handle(new Dispatch("focus", "address:0x8"));
+        core.Handle(new Dispatch("fullscreen"));
+        core.Handle(new Configure(ConfigParser.Parse("layout = scrolling\nwindowrule = float, class:stick")));
         core.Handle(new WindowAppeared(new WindowId(14), Area) { Traits = WindowTraits.Normal with { Dialog = true } });
-        core.Handle(new Dispatch("focuswindow", "address:0x8"));
-        core.Handle(new Dispatch("fullscreen", "0"));
-        core.Handle(new Dispatch("fullscreen", "0 set"));
+        core.Handle(new Dispatch("focus", "address:0x8"));
+        core.Handle(new Dispatch("fullscreen"));
+        core.Handle(new Dispatch("fullscreen", "on"));
         core.Handle(new PointerMoved(new Point(100, 100)) { TimeMs = 1_000 });
         core.Handle(new PointerMoved(new Point(1800, 900)) { TimeMs = 1_100 });
         core.Handle(new WindowMoveStarted(new WindowId(1), new Point(100, 100)));
@@ -71,11 +72,11 @@ public class WindowStateTests
             core.Handle(new WindowClosed(window));
             forgotten.Add(window);
             var left = Leftovers(core, [.. forgotten]);
-            Assert.True(left.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", left));
+            Assert.IsTrue(left.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", left));
         }
 
         var kept = Leftovers(core, closed);
-        Assert.True(kept.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", kept));
+        Assert.IsTrue(kept.Count == 0, "Per-window state kept a closed window: " + string.Join(", ", kept));
     }
 
     private static List<string> Leftovers(WindowManager core, WindowId[] closed)

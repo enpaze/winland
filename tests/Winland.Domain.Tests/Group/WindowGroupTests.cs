@@ -1,13 +1,14 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class WindowGroupTests
 {
-    [Theory]
-    [InlineData(0, 0, 0, 2)]
-    [InlineData(1, 1, 0, 1)]
-    [InlineData(2, 2, 1, 2)]
-    [InlineData(2, 0, 1, 3)]
-    [InlineData(0, 2, 0, 1)]
+    [TestMethod]
+    [DataRow(0, 0, 0, 2)]
+    [DataRow(1, 1, 0, 1)]
+    [DataRow(2, 2, 1, 2)]
+    [DataRow(2, 0, 1, 3)]
+    [DataRow(0, 2, 0, 1)]
     public void RemovingAMemberKeepsTheShownMemberOrChoosesItsPredecessor(int current, int removed, int expected, int shown)
     {
         var group = new WindowGroup(new WindowId(1));
@@ -17,7 +18,7 @@ public class WindowGroupTests
 
         group.RemoveAt(removed);
 
-        Assert.Equal(new WindowId(shown), group.Shown);
-        Assert.Equal(expected, group.Current);
+        Assert.AreEqual(new WindowId(shown), group.Shown);
+        Assert.AreEqual(expected, group.Current);
     }
 }

@@ -2,8 +2,7 @@ using System.Runtime.InteropServices;
 using static Winland.Infrastructure.Tests.ProbeNative;
 
 namespace Winland.Infrastructure.Tests;
-
-[Collection(DesktopCollection.Name)]
+[TestClass]
 public class SwitcherListingTests
 {
     [DesktopFact]
@@ -11,35 +10,35 @@ public class SwitcherListingTests
     {
         using var window = ProbeWindow.Open();
 
-        Assert.True(Listed(window.Handle));
+        Assert.IsTrue(Listed(window.Handle));
 
         window.Hide();
-        Assert.False(window.Visible);
-        Assert.False(Listed(window.Handle));
+        Assert.IsFalse(window.Visible);
+        Assert.IsFalse(Listed(window.Handle));
 
         window.Show();
-        Assert.True(Listed(window.Handle));
+        Assert.IsTrue(Listed(window.Handle));
 
         window.Minimize();
-        Assert.True(window.Iconic);
-        Assert.True(Listed(window.Handle));
+        Assert.IsTrue(window.Iconic);
+        Assert.IsTrue(Listed(window.Handle));
 
         window.Hide();
-        Assert.True(window.Iconic);
-        Assert.False(Listed(window.Handle));
+        Assert.IsTrue(window.Iconic);
+        Assert.IsFalse(Listed(window.Handle));
 
         window.ShowMinimized();
-        Assert.True(window.Iconic);
-        Assert.True(window.Visible);
-        Assert.True(Listed(window.Handle));
+        Assert.IsTrue(window.Iconic);
+        Assert.IsTrue(window.Visible);
+        Assert.IsTrue(Listed(window.Handle));
 
         window.Restore();
         window.MoveOffScreen();
-        Assert.True(window.Visible);
-        Assert.True(Listed(window.Handle));
+        Assert.IsTrue(window.Visible);
+        Assert.IsTrue(Listed(window.Handle));
 
         window.Hide();
-        Assert.False(Listed(window.Handle));
+        Assert.IsFalse(Listed(window.Handle));
     }
 
     private static bool Listed(IntPtr window)

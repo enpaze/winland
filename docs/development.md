@@ -29,17 +29,18 @@ $env:WINLAND_PIPE = "winland-dev-$devId"
 $env:WINLAND_STATE = Join-Path $env:TEMP "winland-dev-$devId.json"
 $devConfig = Join-Path $env:TEMP "winland-dev-$devId.conf"
 @'
-animations:enabled = false
+animations = false
 windowrule = ignore, class:*
-windowrule = tile, class:WinlandDevWindow, title:WinlandDev *
-windowrule = workspace 1, class:WinlandDevWindow, title:WinlandDev *
+windowrule = tile; workspace 1, class:WinlandDevWindow, title:WinlandDev *
 '@ | Set-Content -LiteralPath $devConfig
 pwsh -NoProfile -File scripts/run.ps1 -Config $devConfig
 ```
 
+The script returns once `winland get windows` answers on that pipe. `winland version` is no readiness check, because it answers without a running Winland.
+
 With `WINLAND_PIPE` set, the script replaces only dev builds recorded for that pipe. It leaves older dev builds without a pipe record alone. For placement tests, exit your installed Winland from its tray first so it does not manage the test windows too.
 
-`-Config <file>` reads that `.conf` file instead of `%USERPROFILE%\.winland\winland.conf`. The build starts without administrator rights and cannot place elevated programs' windows. `-Elevated` asks for UAC approval.
+`-Config <file>` reads that file instead of `%USERPROFILE%\.winland\winland.conf`. The build starts without administrator rights and cannot place elevated programs' windows. `-Elevated` asks for UAC approval.
 
 Each build has its own folder under `%LOCALAPPDATA%\winland-dev`, with `winland.out.log` and `winland.err.log`. Piping the script's output is safe. Stop the build from the same shell, keeping the same `WINLAND_PIPE`:
 
@@ -48,7 +49,7 @@ pwsh -NoProfile -File scripts/run.ps1 -Stop
 Remove-Item Env:WINLAND_PIPE, Env:WINLAND_STATE
 ```
 
-A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forced stop left it hidden, run the script with the same pipe, state and config, then use `-Stop`. After stopping the dev build, start your installed Winland again from the Start menu.
+A clean stop shows the taskbar again if `hide_taskbar` hid it. If a forced stop left it hidden, run the script with the same pipe, state and config, then use `-Stop`. After stopping the dev build, start your installed Winland again from the Start menu.
 
 ## Environment
 
@@ -79,9 +80,9 @@ A clean stop shows the taskbar again if `general:hide_taskbar` hid it. If a forc
 
 `winland check [file]` checks a draft, or the default config with no file argument, without starting a Daemon, applying settings or launching programs. It reads sources with the real config reader and leaves missing, empty and nonempty files unchanged. Exit 0 means clean, 1 means diagnostics or a read failure, and 2 means invalid usage. Diagnostics go to standard error, with file and line where available.
 
-`winland dispatch` with no name lists the Dispatcher names of the invoked binary locally; `-j` gives a JSON array. A named request still requires the running Daemon. `winland [-j] inspect [selector]` reads a Window without changing it; omission targets the pointer, while a selector targets a Client. Not found succeeds, and a malformed selector fails. See [Window inspection](behavior.md#window-inspection) for fields, reason codes and draft-rule limits.
+`winland help` lists the Dispatcher names of the invoked binary without a Daemon. An action, `get`, `inspect` and `events` require the running Daemon. `winland [-j] inspect [selector]` reads a Window without changing it; omission targets the pointer, while a selector targets a Client. Not found succeeds, and a malformed selector fails. See [Window inspection](behavior.md#window-inspection) for fields, reason codes and draft-rule limits.
 
-`winland tweaks --restore` restores the invoking user's recorded Windows controls without uninstalling or stopping the Daemon. Run it in a normal terminal. It refuses elevation, retains the record after a failure and needs no elevation when retried. It cannot be combined with `--off` or `--touchpad`.
+`winland tweaks restore` restores the invoking user's recorded Windows controls without uninstalling or stopping the Daemon. Run it in a normal terminal. It refuses elevation, retains the record after a failure and needs no elevation when retried.
 
 Warnings fail the build. `Directory.Build.props` enables `TreatWarningsAsErrors`, recommended analyzers with `AnalysisMode`, and the configured code style warnings with `EnforceCodeStyleInBuild`.
 
@@ -100,7 +101,7 @@ Every lane is a step in one Windows job, because each job pays its own setup.
 | Drive | `.agents/skills/verify-winland/drive.ps1 -NoBuild` with `WINLAND_VERIFY_SYSTEM=1`: every driver in [the feature map](../.agents/skills/verify-winland/features/README.md), on the runner's desktop. A failure uploads `TestResults/`. | Whenever Test runs. |
 
 - A test project that fails runs once more on the same build. If it passes the second time, `scripts/test.ps1` names the flaky tests in a `FLAKY:` line, and CI adds a warning and a job summary line. Fix flaky tests by waiting for a condition instead of a fixed time.
-- The unit tests that open real windows are in one xunit collection (`DesktopCollection` in `tests/Winland.Infrastructure.Tests`) that runs alone. The ones a running Winland would disturb skip while any `winland` process runs, including builds on custom pipes. Run them with the daemon stopped.
+- The unit tests that open real windows skip while any `winland` process runs, including builds on custom pipes. Run them with the daemon stopped. Test methods in one project run one at a time.
 - A feature driver that fails runs once more, and a pass the second time is named in a `FLAKY:` line and a warning, as for unit tests. A driver whose every test skipped fails, because it verified nothing.
 - The Workflows workflow runs zizmor when `.github/` changes. CI also runs actionlint.
 

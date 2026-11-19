@@ -1,15 +1,16 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class AppWindowTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Theory]
-    [InlineData("dwindle")]
-    [InlineData("scrolling")]
+    [TestMethod]
+    [DataRow("dwindle")]
+    [DataRow("scrolling")]
     public void AWindowAdoptedUnderADragKeepsItsFrameUntilTheButtonIsReleased(string layout)
     {
-        var core = new WindowManager(ConfigParser.Parse($"general:layout = {layout}"));
+        var core = new WindowManager(ConfigParser.Parse($"layout = {layout}"));
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         var bounds = new Rectangle(200, 250, 500, 350);
         var opened = core.Handle(new WindowAppeared(new WindowId(2), Area)
@@ -20,17 +21,17 @@ public class AppWindowTests
             Bounds = bounds,
         });
 
-        var dragged = Assert.Single(opened.State.Clients, client => client.Window == new WindowId(2));
-        Assert.True(dragged.Floating);
-        Assert.Equal(bounds, dragged.Bounds);
-        Assert.DoesNotContain(opened.Placements, placement => placement.Client == dragged.Id);
-        Assert.DoesNotContain(opened.Motions, motion => motion.Window == dragged.Window);
+        var dragged = Assert.ContainsSingle(client => client.Window == new WindowId(2), opened.State.Clients);
+        Assert.IsTrue(dragged.Floating);
+        Assert.AreEqual(bounds, dragged.Bounds);
+        Assert.DoesNotContain(placement => placement.Client == dragged.Id, opened.Placements);
+        Assert.DoesNotContain(motion => motion.Window == dragged.Window, opened.Motions);
 
-        var dropped = core.Handle(new PointerButtonReleased("mouse:272") { Position = new Point(1500, 500) });
-        Assert.False(Assert.Single(dropped.State.Clients, client => client.Window == dragged.Window).Floating);
+        var dropped = core.Handle(new PointerButtonReleased("mouse:left") { Position = new Point(1500, 500) });
+        Assert.IsFalse(Assert.ContainsSingle(client => client.Window == dragged.Window, dropped.State.Clients).Floating);
     }
 
-    [Fact]
+    [TestMethod]
     public void AGridSnappingTileIsPutBackThreeTimesThenCenteredWithoutResizing()
     {
         long now = 0;
@@ -38,17 +39,17 @@ public class AppWindowTests
         core.Handle(new WindowAppeared(new WindowId(1), Area));
         var smaller = new Rectangle(10, 20, 1900, 1000);
         for (var i = 0; i < 3; i++)
-            Assert.Equal(Area, Assert.Single(core.Handle(new WindowDrifted(new WindowId(1), smaller)).Placements).Bounds);
+            Assert.AreEqual(Area, Assert.ContainsSingle(core.Handle(new WindowDrifted(new WindowId(1), smaller)).Placements).Bounds);
 
         var centered = core.Handle(new WindowDrifted(new WindowId(1), smaller));
-        var box = Assert.Single(centered.Placements).Bounds;
-        Assert.Equal(new Rectangle(10, 40, 1900, 1000), box);
-        Assert.Empty(core.Handle(new WindowDrifted(new WindowId(1), box)).Placements);
+        var box = Assert.ContainsSingle(centered.Placements).Bounds;
+        Assert.AreEqual(new Rectangle(10, 40, 1900, 1000), box);
+        Assert.IsEmpty(core.Handle(new WindowDrifted(new WindowId(1), box)).Placements);
         now = 1000;
-        Assert.Equal(Area, Assert.Single(core.Handle(new WindowDrifted(new WindowId(1), box)).Placements).Bounds);
+        Assert.AreEqual(Area, Assert.ContainsSingle(core.Handle(new WindowDrifted(new WindowId(1), box)).Placements).Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowWithoutASizingFrameFloatsUnlessARuleTilesIt()
     {
         var core = new WindowManager();
@@ -57,13 +58,13 @@ public class AppWindowTests
             Traits = WindowTraits.Normal with { Resizable = false },
             Bounds = new Rectangle(10, 20, 400, 300),
         };
-        Assert.True(Assert.Single(core.Handle(appeared).State.Clients).Floating);
+        Assert.IsTrue(Assert.ContainsSingle(core.Handle(appeared).State.Clients).Floating);
 
         var ruled = new WindowManager(ConfigParser.Parse("windowrule = tile, class:*"));
-        Assert.False(Assert.Single(ruled.Handle(appeared).State.Clients).Floating);
+        Assert.IsFalse(Assert.ContainsSingle(ruled.Handle(appeared).State.Clients).Floating);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOwnedWindowOpensSilentlyOnItsHiddenOwnersWorkspaceAndIsUrgent()
     {
         var core = new WindowManager();
@@ -78,16 +79,16 @@ public class AppWindowTests
             Traits = WindowTraits.Normal with { Dialog = true },
         });
 
-        Assert.Equal(new WorkspaceId("2"), opened.State.ActiveWorkspace);
-        Assert.Equal(new WorkspaceId("1"), Assert.Single(opened.State.Clients, client => client.Window == new WindowId(3)).Workspace);
+        Assert.AreEqual(new WorkspaceId("2"), opened.State.ActiveWorkspace);
+        Assert.AreEqual(new WorkspaceId("1"), Assert.ContainsSingle(client => client.Window == new WindowId(3), opened.State.Clients).Workspace);
         Assert.Contains(new WindowId(3), opened.Hide);
-        Assert.Contains(opened.Events, item => item is ClientUrgent);
-        Assert.Equal(new WindowId(2), core.Handle(new Dispatch("killactive")).Close);
+        Assert.Contains(item => item is ClientUrgent, opened.Events);
+        Assert.AreEqual(new WindowId(2), core.Handle(new Dispatch("close")).Close);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void ATopmostWindowKeepsItsBoundsAndPinAndOnlyTakesFocusItAlreadyHas(bool foreground)
     {
         var core = new WindowManager();
@@ -101,15 +102,15 @@ public class AppWindowTests
             Foreground = foreground,
         });
 
-        var client = Assert.Single(opened.State.Clients, client => client.Window == new WindowId(2));
-        Assert.True(client.Floating);
-        Assert.True(client.Pinned);
-        Assert.Equal(bounds, client.Bounds);
-        Assert.Equal(new WindowId(foreground ? 2 : 1), core.Handle(new Dispatch("killactive")).Close);
+        var client = Assert.ContainsSingle(client => client.Window == new WindowId(2), opened.State.Clients);
+        Assert.IsTrue(client.Floating);
+        Assert.IsTrue(client.Pinned);
+        Assert.AreEqual(bounds, client.Bounds);
+        Assert.AreEqual(new WindowId(foreground ? 2 : 1), core.Handle(new Dispatch("close")).Close);
         var switched = core.Handle(new Dispatch("workspace", "2"));
         Assert.DoesNotContain(new WindowId(2), switched.Hide);
         var focused = core.Handle(new WindowFocused(new WindowId(2), FocusCause.User));
-        Assert.NotEqual(new WindowId(1), focused.Focus);
+        Assert.AreNotEqual(new WindowId(1), focused.Focus);
     }
 }
 

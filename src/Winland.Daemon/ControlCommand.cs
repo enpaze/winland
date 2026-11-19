@@ -9,7 +9,7 @@ static class ControlCommand
     {
         WriteUtf8WhenRedirected();
         if (events)
-            return FollowEvents(pipeName);
+            return FollowEvents(line, pipeName);
 
         try
         {
@@ -23,20 +23,21 @@ static class ControlCommand
         }
     }
 
-    internal static int WriteReply(string line, string reply)
+    internal static int WriteReply(string line, string? reply)
     {
-        if (reply.Length == 0 || reply.StartsWith("error:", StringComparison.Ordinal))
+        if (reply is null || reply.StartsWith("error:", StringComparison.Ordinal))
         {
-            Console.Error.WriteLine(reply.Length == 0 ? "error: no reply" : reply);
+            Console.Error.WriteLine(reply ?? "error: no reply");
             return 1;
         }
 
-        Console.WriteLine(reply);
+        if (reply.Length > 0)
+            Console.WriteLine(reply);
 
         return 0;
     }
 
-    private static int FollowEvents(string? pipeName)
+    private static int FollowEvents(string line, string? pipeName)
     {
         using var cancel = new CancellationTokenSource();
         ConsoleCancelEventHandler onCancel = (_, args) =>
@@ -47,9 +48,9 @@ static class ControlCommand
         Console.CancelKeyPress += onCancel;
         try
         {
-            CommandClient.Follow("events", static line =>
+            CommandClient.Follow(line, static streamed =>
             {
-                Console.WriteLine(line);
+                Console.WriteLine(streamed);
                 Console.Out.Flush();
             }, pipeName, cancel: cancel.Token);
             if (cancel.IsCancellationRequested)

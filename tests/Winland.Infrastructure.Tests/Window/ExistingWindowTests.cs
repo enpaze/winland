@@ -1,6 +1,5 @@
 namespace Winland.Infrastructure.Tests;
-
-[Collection(DesktopCollection.Name)]
+[TestClass]
 public class ExistingWindowTests
 {
     private const int Minimize = 6;

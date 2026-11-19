@@ -1,10 +1,11 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class FullscreenCoverTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void AFloatingWindowIsLoweredUnderAFullscreenTileAndRaisedWhenItEnds()
     {
         var cover = new FullscreenCover(_ => false);
@@ -16,18 +17,18 @@ public class FullscreenCoverTests
         desk.Layout.SetFullscreen(Window(1), FullscreenMode.Fullscreen);
         var lowered = cover.Sync([desk], [Window(2)], _ => true);
 
-        Assert.Equal([(Window(2), false)], lowered);
-        Assert.True(cover.IsBelow(Window(2)));
-        Assert.False(cover.AllowedOver(desk, desk.ClientOf(Window(2))!));
+        Assert.AreSequenceEqual([(Window(2), false)], lowered);
+        Assert.IsTrue(cover.IsBelow(Window(2)));
+        Assert.IsFalse(cover.AllowedOver(desk, desk.ClientOf(Window(2))!));
 
         desk.Layout.SetFullscreen(Window(1), FullscreenMode.None);
         var raised = cover.Sync([desk], [Window(2)], _ => true);
 
-        Assert.Equal([(Window(2), true)], raised);
-        Assert.False(cover.IsBelow(Window(2)));
+        Assert.AreSequenceEqual([(Window(2), true)], raised);
+        Assert.IsFalse(cover.IsBelow(Window(2)));
     }
 
-    [Fact]
+    [TestMethod]
     public void APinnedWindowStaysOverAFullscreenTile()
     {
         var cover = new FullscreenCover(window => window == Window(2));
@@ -38,11 +39,11 @@ public class FullscreenCoverTests
 
         var requests = cover.Sync([desk], [Window(2)], _ => true);
 
-        Assert.Empty(requests);
-        Assert.True(cover.AllowedOver(desk, desk.ClientOf(Window(2))!));
+        Assert.IsEmpty(requests);
+        Assert.IsTrue(cover.AllowedOver(desk, desk.ClientOf(Window(2))!));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFlagLetsAWindowOverAndOnlyARestackableWindowIsMoved()
     {
         var cover = new FullscreenCover(_ => false);
@@ -56,12 +57,12 @@ public class FullscreenCoverTests
 
         var requests = cover.Sync([desk], [Window(2), Window(3)], window => window != Window(3));
 
-        Assert.True(cover.Flag(Window(2)));
-        Assert.False(cover.Flag(Window(3)));
-        Assert.DoesNotContain(requests, request => request.Window == Window(3));
+        Assert.IsTrue(cover.Flag(Window(2)));
+        Assert.IsFalse(cover.Flag(Window(3)));
+        Assert.DoesNotContain(request => request.Window == Window(3), requests);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheCoveringClientIsAFloatingFullscreenOneFirst()
     {
         var desk = Desk();
@@ -70,10 +71,10 @@ public class FullscreenCoverTests
         desk.Layout.SetFullscreen(Window(1), FullscreenMode.Fullscreen);
         desk.Layout.SetFullscreen(Window(2), FullscreenMode.Fullscreen);
 
-        Assert.Equal(Window(2), FullscreenCover.Covering(desk)?.Window);
+        Assert.AreEqual(Window(2), FullscreenCover.Covering(desk)?.Window);
     }
 
-    [Fact]
+    [TestMethod]
     public void AClosedWindowIsForgotten()
     {
         var cover = new FullscreenCover(_ => false);
@@ -81,10 +82,10 @@ public class FullscreenCoverTests
 
         cover.Forget(Window(1));
 
-        Assert.True(cover.Flag(Window(1)));
+        Assert.IsTrue(cover.Flag(Window(1)));
     }
 
-    [Fact]
+    [TestMethod]
     public void AClosedWindowIsNoLongerBelow()
     {
         var cover = new FullscreenCover(_ => false);
@@ -94,14 +95,14 @@ public class FullscreenCoverTests
         cover.Sync([desk], [], _ => true);
         desk.Layout.SetFullscreen(Window(1), FullscreenMode.Fullscreen);
         cover.Sync([desk], [], _ => true);
-        Assert.True(cover.IsBelow(Window(2)));
+        Assert.IsTrue(cover.IsBelow(Window(2)));
 
         cover.Forget(Window(2));
 
-        Assert.False(cover.IsBelow(Window(2)));
+        Assert.IsFalse(cover.IsBelow(Window(2)));
     }
 
-    [Fact]
+    [TestMethod]
     public void AFloatingFullscreenThereAtFirstSightKeepsEveryOtherWindowUnder()
     {
         var cover = new FullscreenCover(_ => false);
@@ -113,13 +114,13 @@ public class FullscreenCoverTests
 
         var lowered = cover.Sync([desk], [], window => window == Window(3));
 
-        Assert.False(cover.Flag(Window(2)));
-        Assert.False(cover.Flag(Window(3)));
-        Assert.True(cover.AllowedOver(desk, desk.ClientOf(Window(1))!));
-        Assert.Equal([(Window(3), false)], lowered);
+        Assert.IsFalse(cover.Flag(Window(2)));
+        Assert.IsFalse(cover.Flag(Window(3)));
+        Assert.IsTrue(cover.AllowedOver(desk, desk.ClientOf(Window(1))!));
+        Assert.AreSequenceEqual([(Window(3), false)], lowered);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollingHidesTheFloatsOpenWhenATileWentFullscreenAndLetsLaterOnesOver()
     {
         var cover = new FullscreenCover(_ => false);
@@ -132,17 +133,17 @@ public class FullscreenCoverTests
 
         layout.SetFullscreen(Window(1), FullscreenMode.Fullscreen, layoutAware: true);
         cover.Sync([desk], [], _ => true);
-        Assert.False(cover.Flag(Window(2)));
+        Assert.IsFalse(cover.Flag(Window(2)));
 
         Float(desk, 3);
         cover.Sync([desk], [], _ => true);
-        Assert.True(cover.Flag(Window(3)));
-        Assert.False(cover.Flag(Window(2)));
+        Assert.IsTrue(cover.Flag(Window(3)));
+        Assert.IsFalse(cover.Flag(Window(2)));
 
         layout.SetFullscreen(Window(1), FullscreenMode.None, layoutAware: true);
         cover.Sync([desk], [], _ => true);
-        Assert.True(cover.Flag(Window(2)));
-        Assert.True(cover.Flag(Window(3)));
+        Assert.IsTrue(cover.Flag(Window(2)));
+        Assert.IsTrue(cover.Flag(Window(3)));
     }
 
     private static LiveWorkspace Desk()

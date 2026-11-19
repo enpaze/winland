@@ -1,28 +1,34 @@
 using Windows.Win32.UI.Input.KeyboardAndMouse;
-using Xunit.Abstractions;
 
 namespace Winland.Verify.Tests.Features;
 
 [Trait("Feature", "binds")]
-public class Binds(ITestOutputHelper output)
+[TestClass]
+public class Binds
 {
-    private const string Config =
+
+    public TestContext TestContext { get; set; } = null!;
+        private const string Config =
         """
-        $hyper = CTRL ALT SHIFT
-        bind = $hyper, F9, workspace, 4
-        bind = $hyper, F10, workspace, 1
-        input:follow_mouse = true
+        $hyper = Ctrl+Alt+Shift
+        bind = $hyper+F9, workspace 4
+        bind = $hyper+F10, "Back to workspace 1", workspace 1
+        bind = $hyper+MOUSE:X2, workspace 1
+        focus_follows_mouse = true
 
         """;
 
     [VerifyFact]
-    public void RunsKeyBindsAndFollowsTheMouse() => VerifyRun.Drive(output, Config, run =>
+    public void RunsKeyBindsAndFollowsTheMouse() => VerifyRun.Drive(TestContext, Config, run =>
     {
-        var binds = run.Ask("binds");
-        Assert.Contains("bind = SHIFT CTRL ALT, F9, workspace, 4", binds, StringComparison.Ordinal);
-        var json = run.Json("binds").EnumerateArray().ToList();
-        Assert.Contains(json, bind => bind.GetProperty("key").GetString() == "F9" && bind.GetProperty("modmask").GetInt32() == 13 && bind.GetProperty("dispatcher").GetString() == "workspace");
-        run.Say("saw: binds lists the config's binds, with CTRL ALT SHIFT as modmask 13");
+        var binds = run.Ask("get", "binds");
+        Assert.Contains("bind = Ctrl+Alt+Shift+F9, workspace 4", binds, StringComparison.Ordinal);
+        Assert.Contains("bind = Ctrl+Alt+Shift+F10, \"Back to workspace 1\", workspace 1", binds, StringComparison.Ordinal);
+        Assert.Contains("bind = Ctrl+Alt+Shift+mouse:x2, workspace 1", binds, StringComparison.Ordinal);
+        var json = run.Json("get", "binds").EnumerateArray().ToList();
+        Assert.Contains(bind => bind.GetProperty("key").GetString() == "F9" && bind.GetProperty("modMask").GetInt32() == 13 && bind.GetProperty("dispatcher").GetString() == "workspace", json);
+        Assert.Contains(bind => bind.GetProperty("key").GetString() == "mouse:x2" && bind.GetProperty("mouse").GetBoolean(), json);
+        run.Say("saw: binds lists the config's binds as chords with the description quoted, Ctrl+Alt+Shift as modMask 13 and the mouse button by name");
 
         var (left, right) = run.OpenPair();
 
@@ -41,6 +47,6 @@ public class Binds(ITestOutputHelper output)
             Desktop.MoveMouse(x + (step % 3) - 1, y + (step % 2));
 
         run.Say($"moved the pointer onto the right window at {x},{y}");
-        run.Until("follow_mouse focused the window under the pointer", () => run.Active() == VerifyRun.Address(right));
+        run.Until("focus_follows_mouse focused the window under the pointer", () => run.Active() == VerifyRun.Address(right));
     });
 }

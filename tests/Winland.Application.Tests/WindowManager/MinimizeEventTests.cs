@@ -1,8 +1,9 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class MinimizeEventTests
 {
-    [Fact]
+    [TestMethod]
     public void MinimizeAndRestoreAreMinimizedEvents()
     {
         var desk = new TestDesktop();
@@ -11,10 +12,10 @@ public class MinimizeEventTests
         var pid = desk.Client("hyprtester-wlr-minimize").GetProperty("pid").GetInt64();
 
         Record(events, desk.Handle(new WindowMinimized(kitty)));
-        Assert.Equal($"{pid}:true", string.Join(',', events));
+        Assert.AreEqual($"{pid}:true", string.Join(',', events));
 
         Record(events, desk.Handle(new WindowRestored(kitty)));
-        Assert.Equal($"{pid}:true,{pid}:false", string.Join(',', events));
+        Assert.AreEqual($"{pid}:true,{pid}:false", string.Join(',', events));
     }
 
     private static void Record(List<string> events, Outcome outcome)

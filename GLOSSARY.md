@@ -70,7 +70,7 @@ The named pipe that connects the Daemon to commands and scripts in the current u
 _Avoid_: Plugin API
 
 **Event stream**:
-The lines the Daemon writes to a program that subscribes on the IPC pipe, one event per line. Window, Workspace and Monitor events and config warnings are reported in it.
+The lines the Daemon writes to a program that subscribes on the IPC pipe, one line per event, as text or JSON. Window, Workspace, Monitor and focus changes and config warnings are reported in it.
 
 **Motion**:
 One Window's animation toward its Layout rectangle, or out of sight before it is hidden or closed. A Motion always ends on the newest Layout rectangle.

@@ -1,6 +1,3 @@
-using System.Globalization;
-using static Winland.Domain.OrdinalText;
-
 namespace Winland.Application;
 
 public sealed partial class WindowManager
@@ -32,12 +29,11 @@ public sealed partial class WindowManager
     {
         var desk = LayoutWorkspace(window);
         Give(window, desk);
-        var gesture = new Gesture(window, button, IsResize(drag.Dispatcher), pointer)
+        var gesture = new Gesture(window, button, drag.IsResizeDrag)
         {
             Pointer = pointer,
-            Cursor = DragCursor(desk, window, IsResize(drag.Dispatcher), pointer),
+            Cursor = DragCursor(desk, window, drag.IsResizeDrag, pointer),
             WasTiled = LayoutWorkspace(window).ClientOf(window) is { Floating: false },
-            KeepRatio = IsResize(drag.Dispatcher) && KeepsRatio(drag.Arguments),
         };
 
         _interaction = gesture;
@@ -105,7 +101,7 @@ public sealed partial class WindowManager
 
     private WindowId? TabUnder(BindDispatch drag, Point pointer)
     {
-        if (IsResize(drag.Dispatcher))
+        if (drag.IsResizeDrag)
             return null;
 
         foreach (var bar in GroupBars(Snapshot()))
@@ -310,7 +306,7 @@ public sealed partial class WindowManager
         }
     }
 
-    private static bool OnlyDrag(BindDecision match) => DispatchesOf(match).All(dispatch => dispatch.Dispatcher.Length == 0 || IsDragDispatcher(dispatch));
+    private static bool OnlyDrag(BindDecision match) => DispatchesOf(match).All(dispatch => dispatch.Dispatcher.Length == 0 || dispatch.IsDrag);
 
     private void ForgetDrag(WindowId window)
     {
@@ -322,9 +318,6 @@ public sealed partial class WindowManager
         if (_released?.Window == window)
             _released = null;
     }
-
-    private static bool KeepsRatio(string arguments) =>
-        int.TryParse(arguments.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var mode) && mode == 1;
 
     private WindowId? DragTarget(Point? point)
     {
@@ -355,7 +348,7 @@ public sealed partial class WindowManager
     {
         foreach (var dispatch in DispatchesOf(match))
         {
-            if (IsDragDispatcher(dispatch))
+            if (dispatch.IsDrag)
             {
                 drag = dispatch;
                 return true;
@@ -366,22 +359,12 @@ public sealed partial class WindowManager
         return false;
     }
 
-    private static bool IsDragDispatcher(BindDispatch dispatch) =>
-        (Is(dispatch.Dispatcher, "movewindow") && dispatch.Arguments.Length == 0) || IsResize(dispatch.Dispatcher);
-
-    private static bool IsResize(string dispatcher) =>
-        Is(dispatcher, "resizewindow");
-
-    private sealed class Gesture(WindowId window, string button, bool resize, Point origin)
+    private sealed class Gesture(WindowId window, string button, bool resize)
         : PointerInteraction(window)
     {
         public string Button { get; } = button;
 
         public bool Resize { get; } = resize;
-
-        public Point Origin { get; } = origin;
-
-        public bool KeepRatio { get; init; }
 
         public bool WasTiled { get; init; }
 
@@ -391,6 +374,6 @@ public sealed partial class WindowManager
 
         public string Cursor { get; set; } = "grabbing";
 
-        public PointerDrag Step(PointerDragPhase phase, Point pointer) => new(Resize, phase, pointer, KeepRatio);
+        public PointerDrag Step(PointerDragPhase phase, Point pointer) => new(Resize, phase, pointer);
     }
 }

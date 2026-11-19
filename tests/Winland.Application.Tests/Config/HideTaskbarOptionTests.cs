@@ -1,42 +1,43 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class HideTaskbarOptionTests
 {
-    [Fact]
+    [TestMethod]
     public void TheTaskbarStaysVisibleUnlessTheConfigHidesIt()
     {
         var core = new WindowManager();
 
-        Assert.False(core.HideTaskbar);
+        Assert.IsFalse(core.HideTaskbar);
     }
 
-    [Theory]
-    [InlineData("true")]
-    [InlineData("yes")]
-    [InlineData("on")]
-    [InlineData("1")]
+    [TestMethod]
+    [DataRow("true")]
+    [DataRow("yes")]
+    [DataRow("on")]
+    [DataRow("1")]
     public void HideTaskbarIsHonored(string value)
     {
-        var text = $"general:hide_taskbar = {value}\n";
+        var text = $"hide_taskbar = {value}\n";
         var document = ConfigParser.Parse(text);
         var core = new WindowManager(document);
 
-        Assert.Empty(document.Warnings);
-        Assert.True(core.HideTaskbar);
+        Assert.IsEmpty(document.Warnings);
+        Assert.IsTrue(core.HideTaskbar);
     }
 
-    [Fact]
+    [TestMethod]
     public void AReloadAppliesTheOption()
     {
-        var text = "general:hide_taskbar = false\n";
-        var core = new WindowManager(ConfigParser.Parse("general:hide_taskbar = true\n"))
+        var text = "hide_taskbar = false\n";
+        var core = new WindowManager(ConfigParser.Parse("hide_taskbar = true\n"))
         {
             ReadConfig = () => new ConfigRead(ConfigParser.Parse(text)),
         };
 
-        Assert.True(core.HideTaskbar);
+        Assert.IsTrue(core.HideTaskbar);
 
-        Assert.Equal("ok", core.Execute("reload").Text);
-        Assert.False(core.HideTaskbar);
+        Assert.AreEqual("ok", core.Execute("reload").Text);
+        Assert.IsFalse(core.HideTaskbar);
     }
 }

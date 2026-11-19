@@ -2,11 +2,12 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class RetitleTests
 {
     private static readonly Rectangle Area = new(0, 0, 1920, 1080);
 
-    [Fact]
+    [TestMethod]
     public void ANewTitleIsKeptAndToldAsAWindowTitleEvent()
     {
         var core = new WindowManager();
@@ -15,49 +16,49 @@ public class RetitleTests
 
         var outcome = core.Handle(new WindowTitleChanged(new WindowId(0x2a), "new"));
 
-        Assert.Equal("new", Assert.Single(outcome.State.Clients, client => client.Window == new WindowId(0x2a)).Title);
-        Assert.Equal(["windowtitle>>2a", "windowtitlev2>>2a,new"], CommandProtocol.FormatStream(outcome.Events, outcome.State));
+        Assert.AreEqual("new", Assert.ContainsSingle(client => client.Window == new WindowId(0x2a), outcome.State.Clients).Title);
+        Assert.AreSequenceEqual(["windowtitle>>2a,new"], CommandProtocol.FormatStream(outcome.Events, outcome.State));
     }
 
-    [Fact]
-    public void TheFocusedWindowsNewTitleIsToldAsTheActiveWindowToo()
+    [TestMethod]
+    public void TheFocusedWindowsNewTitleIsToldOnceAndLeavesFocusAlone()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(0x2a), Area) { Traits = WindowTraits.Normal with { Class = "kitty", Title = "old" } });
 
         var outcome = core.Handle(new WindowTitleChanged(new WindowId(0x2a), "new"));
 
-        Assert.Equal(
-            ["windowtitle>>2a", "windowtitlev2>>2a,new", "activewindow>>kitty,new", "activewindowv2>>2a"],
+        Assert.AreSequenceEqual(
+            ["windowtitle>>2a,new"],
             CommandProtocol.FormatStream(outcome.Events, outcome.State));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheSameTitleTellsNothing()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "same" } });
 
-        Assert.Empty(core.Handle(new WindowTitleChanged(new WindowId(1), "same")).Events);
+        Assert.IsEmpty(core.Handle(new WindowTitleChanged(new WindowId(1), "same")).Events);
     }
 
-    [Fact]
+    [TestMethod]
     public void ARuleOnTheTitleAppliesOnceTheTitleMatches()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = opacity 0.5, title:*Video*\n"));
         var opened = core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "Browser" } });
-        Assert.Equal(255, Assert.Single(opened.Decorations).Alpha);
+        Assert.AreEqual(255, Assert.ContainsSingle(opened.Decorations).Alpha);
 
         var retitled = core.Handle(new WindowTitleChanged(new WindowId(1), "A Video - Browser"));
 
-        Assert.Equal(127, Assert.Single(retitled.Decorations).Alpha, tolerance: 1);
+        Assert.AreEqual((double)127, (double)(Assert.ContainsSingle(retitled.Decorations).Alpha), 1d);
 
         var restored = core.Handle(new WindowTitleChanged(new WindowId(1), "Browser"));
 
-        Assert.Equal(255, Assert.Single(restored.Decorations).Alpha);
+        Assert.AreEqual(255, Assert.ContainsSingle(restored.Decorations).Alpha);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheInitialTitleStaysWhileTheTitleChanges()
     {
         var core = new WindowManager();
@@ -65,39 +66,39 @@ public class RetitleTests
 
         var outcome = core.Handle(new WindowTitleChanged(new WindowId(0x2a), "new"));
 
-        var client = Assert.Single(outcome.State.Clients);
-        Assert.Equal("new", client.Title);
-        Assert.Equal("old", client.InitialTitle);
-        using var listed = JsonDocument.Parse(core.Execute("j/clients").Text);
-        var json = Assert.Single(listed.RootElement.EnumerateArray());
-        Assert.Equal("new", json.GetProperty("title").GetString());
-        Assert.Equal("old", json.GetProperty("initialTitle").GetString());
-        using var active = JsonDocument.Parse(core.Execute("j/activewindow").Text);
-        Assert.Equal("new", active.RootElement.GetProperty("title").GetString());
-        Assert.Equal("old", active.RootElement.GetProperty("initialTitle").GetString());
+        var client = Assert.ContainsSingle(outcome.State.Clients);
+        Assert.AreEqual("new", client.Title);
+        Assert.AreEqual("old", client.InitialTitle);
+        using var listed = JsonDocument.Parse(core.Execute("j/get windows").Text);
+        var json = Assert.ContainsSingle(listed.RootElement.EnumerateArray());
+        Assert.AreEqual("new", json.GetProperty("title").GetString());
+        Assert.AreEqual("old", json.GetProperty("initialTitle").GetString());
+        using var active = JsonDocument.Parse(core.Execute("j/get window").Text);
+        Assert.AreEqual("new", active.RootElement.GetProperty("title").GetString());
+        Assert.AreEqual("old", active.RootElement.GetProperty("initialTitle").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AGroupTabsTitleFollowsTheWindow()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), Area) { Traits = WindowTraits.Normal with { Title = "one" } });
-        core.Execute("dispatch togglegroup");
+        core.Execute("group");
         core.Handle(new WindowAppeared(new WindowId(2), Area) { Traits = WindowTraits.Normal with { Title = "two" } });
 
         var retitled = core.Handle(new WindowTitleChanged(new WindowId(1), "renamed"));
 
-        Assert.Equal(["renamed", "two"], Assert.Single(retitled.GroupBars).Tabs.Select(tab => tab.Title));
-        var hidden = Assert.Single(retitled.State.Clients, client => client.Window == new WindowId(1));
-        Assert.Equal("renamed", hidden.Title);
-        Assert.Equal("one", hidden.InitialTitle);
+        Assert.AreSequenceEqual(["renamed", "two"], Assert.ContainsSingle(retitled.GroupBars).Tabs.Select(tab => tab.Title));
+        var hidden = Assert.ContainsSingle(client => client.Window == new WindowId(1), retitled.State.Clients);
+        Assert.AreEqual("renamed", hidden.Title);
+        Assert.AreEqual("one", hidden.InitialTitle);
     }
 
-    [Fact]
+    [TestMethod]
     public void ATitleForAWindowThatIsNotAClientTellsNothing()
     {
         var core = new WindowManager();
 
-        Assert.Empty(core.Handle(new WindowTitleChanged(new WindowId(1), "title")).Events);
+        Assert.IsEmpty(core.Handle(new WindowTitleChanged(new WindowId(1), "title")).Events);
     }
 }

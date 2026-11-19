@@ -1,36 +1,37 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class TitleRuleTests
 {
-    [Theory]
-    [InlineData("windowrule = float, title:Settings", true)]
-    [InlineData("windowrule = float, class:kitty, title:negative:Settings", true)]
-    [InlineData("windowrule = float, initial_title:Settings", false)]
-    [InlineData("windowrule = float, class:kitty", false)]
-    [InlineData("general:gaps_in = 0", false)]
+    [TestMethod]
+    [DataRow("windowrule = float, title:Settings", true)]
+    [DataRow("windowrule = float, class:kitty, title:negative:Settings", true)]
+    [DataRow("windowrule = float, initial_title:Settings", false)]
+    [DataRow("windowrule = float, class:kitty", false)]
+    [DataRow("gaps_in = 0", false)]
     public void OnlyARuleOnTitleReadsTitles(string line, bool expected)
     {
         var core = new WindowManager(ConfigParser.Parse(line + "\n"));
 
-        Assert.Equal(expected, core.RulesMatchTitles);
+        Assert.AreEqual(expected, core.RulesMatchTitles);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReloadingTheConfigChangesWhatTheRulesReadAndTheirRevision()
     {
         var core = new WindowManager();
-        Assert.False(core.RulesMatchTitles);
+        Assert.IsFalse(core.RulesMatchTitles);
         var before = core.RuleRevision;
 
         core.Handle(new Configure(ConfigParser.Parse("windowrule = ignore, title:Player\n")));
         var reloaded = core.RuleRevision;
 
-        Assert.True(core.RulesMatchTitles);
-        Assert.NotEqual(before, reloaded);
+        Assert.IsTrue(core.RulesMatchTitles);
+        Assert.AreNotEqual(before, reloaded);
 
         core.Handle(new Configure(ConfigParser.Parse("windowrule = ignore, class:kitty\n")));
 
-        Assert.False(core.RulesMatchTitles);
-        Assert.NotEqual(reloaded, core.RuleRevision);
+        Assert.IsFalse(core.RulesMatchTitles);
+        Assert.AreNotEqual(reloaded, core.RuleRevision);
     }
 }

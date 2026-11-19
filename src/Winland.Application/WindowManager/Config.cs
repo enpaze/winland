@@ -15,10 +15,10 @@ public sealed partial class WindowManager
 
     public bool FirstStart { get; set; }
 
-    private CommandReply ReloadCommand()
+    private Outcome Reload()
     {
         if (ReadConfig is null)
-            return new CommandReply("error: config is not available", View([]));
+            return Rejected("error: config is not available");
 
         ConfigRead read;
         try
@@ -33,15 +33,15 @@ public sealed partial class WindowManager
         if (read.Document is not ConfigDocument document)
         {
             var warning = read.Failure ?? new ConfigWarning(0, "Could not read config.", null);
-            var message = warning.Message.StartsWith("error:", StringComparison.Ordinal)
-                ? warning.Message
-                : "error: " + warning.Message;
             _configEvents = [new ConfigWarned(warning.Line, warning.Message, warning.Source)];
-            return new CommandReply(message, View([]));
+            return Rejected(warning.Message.StartsWith("error:", StringComparison.Ordinal)
+                ? warning.Message
+                : "error: " + warning.Message);
         }
 
+        var applied = Apply(document);
         _reloaded = document;
-        return new CommandReply("ok", Apply(document));
+        return applied;
     }
 
     private Outcome NoteAccent(AccentChanged changed)

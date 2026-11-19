@@ -1,13 +1,12 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class LayoutEngineTests
 {
     private static readonly Rectangle Area = new(0, 0, 1000, 800);
 
-    public static TheoryData<string> DraggingLayouts => new() { "dwindle", "scrolling" };
-
-    [Theory]
-    [MemberData(nameof(DraggingLayouts))]
+    [TestMethod]
+    [DataRow("dwindle"), DataRow("scrolling")]
     public void ClosingALiftedTileLeavesNoHoleAndNoGhost(string name)
     {
         var layout = Open(name);
@@ -21,14 +20,14 @@ public class LayoutEngineTests
         var removed = layout.Placed();
         var dropped = layout.Drag(Window(1), new PointerDrag(false, PointerDragPhase.End, new Point(160, 140)));
 
-        Assert.DoesNotContain(layout.Clients, client => client.Window == Window(1));
-        Assert.DoesNotContain(dropped, placement => placement.Client == new ClientId(1));
-        Assert.Equal(removed, layout.Placed());
-        Assert.Equal(2, layout.Clients.Count);
+        Assert.DoesNotContain(client => client.Window == Window(1), layout.Clients);
+        Assert.DoesNotContain(placement => placement.Client == new ClientId(1), dropped);
+        Assert.AreSequenceEqual(removed, layout.Placed());
+        Assert.AreEqual(2, layout.Clients.Count);
     }
 
-    [Theory]
-    [MemberData(nameof(DraggingLayouts))]
+    [TestMethod]
+    [DataRow("dwindle"), DataRow("scrolling")]
     public void ClosingAGrabbedTileBeforeItLiftsEndsTheDrag(string name)
     {
         var layout = Open(name);
@@ -40,17 +39,15 @@ public class LayoutEngineTests
         var moved = layout.Drag(Window(1), new PointerDrag(false, PointerDragPhase.Move, new Point(160, 140)));
         var dropped = layout.Drag(Window(1), new PointerDrag(false, PointerDragPhase.End, new Point(160, 140)));
 
-        Assert.Empty(moved);
-        Assert.DoesNotContain(dropped, placement => placement.Client == new ClientId(1));
-        Assert.Equal(Area, Bounds(layout.Placed(), 2));
-        Assert.Equal(Area, Bounds(removed, 2));
-        Assert.Single(layout.Clients);
+        Assert.IsEmpty(moved);
+        Assert.DoesNotContain(placement => placement.Client == new ClientId(1), dropped);
+        Assert.AreEqual(Area, Bounds(layout.Placed(), 2));
+        Assert.AreEqual(Area, Bounds(removed, 2));
+        Assert.ContainsSingle(layout.Clients);
     }
 
-    public static TheoryData<string> AllLayouts => new() { "dwindle", "scrolling" };
-
-    [Theory]
-    [MemberData(nameof(AllLayouts))]
+    [TestMethod]
+    [DataRow("dwindle"), DataRow("scrolling")]
     public void SubstituteHandsNaturalSizeAndLimitsToTheNewWindow(string name)
     {
         var layout = Open(name);
@@ -59,23 +56,23 @@ public class LayoutEngineTests
             minSize: new Size(100, 50), maxSize: new Size(2000, 2000));
 
         var incoming = new Taken(false, false, new Rectangle(0, 0, 200, 100), "new", "new", MinSize: new Size(10, 20), MaxSize: new Size(1500, 1600));
-        Assert.True(layout.Substitute(Window(2), Window(3), incoming, out _));
+        Assert.IsTrue(layout.Substitute(Window(2), Window(3), incoming, out _));
 
-        Assert.True(layout.TryTake(Window(3), out var taken));
-        Assert.Equal(incoming.Bounds, taken.Bounds);
-        Assert.Equal(incoming.MinSize, taken.MinSize);
-        Assert.Equal(incoming.MaxSize, taken.MaxSize);
+        Assert.IsTrue(layout.TryTake(Window(3), out var taken));
+        Assert.AreEqual(incoming.Bounds, taken.Bounds);
+        Assert.AreEqual(incoming.MinSize, taken.MinSize);
+        Assert.AreEqual(incoming.MaxSize, taken.MaxSize);
 
-        Assert.False(layout.TryTake(Window(2), out _));
+        Assert.IsFalse(layout.TryTake(Window(2), out _));
         Tiled(layout, 2);
-        Assert.True(layout.TryTake(Window(2), out var fresh));
-        Assert.Equal(new Rectangle(0, 0, 400, 300), fresh.Bounds);
-        Assert.Null(fresh.MinSize);
-        Assert.Null(fresh.MaxSize);
+        Assert.IsTrue(layout.TryTake(Window(2), out var fresh));
+        Assert.AreEqual(new Rectangle(0, 0, 400, 300), fresh.Bounds);
+        Assert.IsNull(fresh.MinSize);
+        Assert.IsNull(fresh.MaxSize);
     }
 
-    [Theory]
-    [MemberData(nameof(AllLayouts))]
+    [TestMethod]
+    [DataRow("dwindle"), DataRow("scrolling")]
     public void SubstituteHandsAFloatingSlotToTheNewWindow(string name)
     {
         var layout = Open(name);
@@ -83,17 +80,17 @@ public class LayoutEngineTests
         var box = new Rectangle(100, 100, 300, 200);
         layout.Add(Window(2), Area, null, true, box, WorkspaceId.Initial, "app", "title", monitor: Area);
 
-        Assert.True(layout.Substitute(Window(2), Window(3), new Taken(false, false, new Rectangle(0, 0, 50, 50), "new", "new"), out _));
+        Assert.IsTrue(layout.Substitute(Window(2), Window(3), new Taken(false, false, new Rectangle(0, 0, 50, 50), "new", "new"), out _));
 
-        Assert.Equal(box, Bounds(layout.Visible(), 3));
-        Assert.DoesNotContain(layout.Visible(), placement => placement.Client == new ClientId(2));
-        Assert.True(layout.TryTake(Window(3), out var taken));
-        Assert.True(taken.Floating);
-        Assert.Equal(box, taken.Bounds);
-        Assert.False(layout.TryTake(Window(2), out _));
+        Assert.AreEqual(box, Bounds(layout.Visible(), 3));
+        Assert.DoesNotContain(placement => placement.Client == new ClientId(2), layout.Visible());
+        Assert.IsTrue(layout.TryTake(Window(3), out var taken));
+        Assert.IsTrue(taken.Floating);
+        Assert.AreEqual(box, taken.Bounds);
+        Assert.IsFalse(layout.TryTake(Window(2), out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollingMovesTheCameraAgainAfterTheResizedTileIsHandedOver()
     {
         var layout = Open("scrolling");
@@ -102,16 +99,16 @@ public class LayoutEngineTests
 
         layout.Drag(Window(2), new PointerDrag(true, PointerDragPhase.Begin, new Point(700, 400)));
         layout.Drag(Window(2), new PointerDrag(true, PointerDragPhase.Move, new Point(720, 400)));
-        Assert.True(layout.Substitute(Window(2), Window(9), new Taken(false, false, default, "nine", "nine"), out _));
+        Assert.IsTrue(layout.Substitute(Window(2), Window(9), new Taken(false, false, default, "nine", "nine"), out _));
         layout.Remove(Window(1));
 
         var lone = Bounds(layout.Placed(), 9);
-        Assert.Equal((Area.Width - lone.Width) / 2, lone.X);
+        Assert.AreEqual((Area.Width - lone.Width) / 2, lone.X);
     }
 
-    [Theory]
-    [InlineData("scrolling", "colresize nan")]
-    [InlineData("scrolling", "colresize +nan")]
+    [TestMethod]
+    [DataRow("scrolling", "colresize nan")]
+    [DataRow("scrolling", "colresize +nan")]
     public void ALayoutMessageWithANumberThatIsNotFiniteChangesNothing(string name, string message)
     {
         var layout = Open(name);
@@ -121,10 +118,10 @@ public class LayoutEngineTests
 
         layout.LayoutMessage(Window(2), message);
 
-        Assert.Equal(before, layout.Placed());
+        Assert.AreSequenceEqual(before, layout.Placed());
     }
 
-    [Fact]
+    [TestMethod]
     public void DwindleHonorsAMinimumInsideASplitWhoseParentDoesNotChange()
     {
         var layout = Open("dwindle");
@@ -133,12 +130,12 @@ public class LayoutEngineTests
 
         var placements = layout.Add(Window(3), Area, null, false, new Rectangle(0, 0, 400, 300), WorkspaceId.Initial, monitor: Area, minSize: new Size(100, 600));
 
-        Assert.Equal(new Rectangle(0, 0, 500, 800), Bounds(placements, 1));
-        Assert.Equal(new Rectangle(500, 0, 500, 200), Bounds(placements, 2));
-        Assert.Equal(new Rectangle(500, 200, 500, 600), Bounds(placements, 3));
+        Assert.AreEqual(new Rectangle(0, 0, 500, 800), Bounds(placements, 1));
+        Assert.AreEqual(new Rectangle(500, 0, 500, 200), Bounds(placements, 2));
+        Assert.AreEqual(new Rectangle(500, 200, 500, 600), Bounds(placements, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void DwindleHonorsANestedMinimumThatArrivesLater()
     {
         var layout = Open("dwindle");
@@ -148,14 +145,14 @@ public class LayoutEngineTests
 
         var placements = layout.UpdateLimits(Window(2), new Size(100, 700), null);
 
-        Assert.Equal(new Rectangle(0, 0, 500, 800), Bounds(placements, 1));
-        Assert.Equal(new Rectangle(500, 0, 500, 700), Bounds(placements, 2));
-        Assert.Equal(new Rectangle(500, 700, 500, 100), Bounds(placements, 3));
+        Assert.AreEqual(new Rectangle(0, 0, 500, 800), Bounds(placements, 1));
+        Assert.AreEqual(new Rectangle(500, 0, 500, 700), Bounds(placements, 2));
+        Assert.AreEqual(new Rectangle(500, 700, 500, 100), Bounds(placements, 3));
     }
 
-    [Theory]
-    [InlineData("0 50")]
-    [InlineData("0 -50")]
+    [TestMethod]
+    [DataRow("0 50")]
+    [DataRow("0 -50")]
     public void ScrollingResizesARowInAColumnOfElevenWithoutThrowing(string delta)
     {
         var layout = Open("scrolling");
@@ -167,12 +164,12 @@ public class LayoutEngineTests
 
         var placements = layout.ResizeActive(Window(1), delta);
 
-        Assert.Equal(before.Height, Bounds(placements, 1).Height);
-        Assert.Equal(11, layout.Placed().Count);
+        Assert.AreEqual(before.Height, Bounds(placements, 1).Height);
+        Assert.AreEqual(11, layout.Placed().Count);
     }
 
-    [Theory]
-    [MemberData(nameof(DraggingLayouts))]
+    [TestMethod]
+    [DataRow("dwindle"), DataRow("scrolling")]
     public void ExactResizeSizesTheWindowNotItsTile(string name)
     {
         var layout = Open(name, LayoutOptions.Unconfigured with { GapsIn = EdgeInsets.Uniform(5), BorderSize = 1 });
@@ -181,31 +178,31 @@ public class LayoutEngineTests
 
         var placements = layout.ResizeActive(Window(1), "exact 800 600");
 
-        Assert.Equal(800, Bounds(placements, 1).Width);
+        Assert.AreEqual(800, Bounds(placements, 1).Width);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollingKeyboardResizeKeepsTheCamera()
     {
         var layout = ThreeColumns();
 
         var placements = layout.ResizeActive(Window(1), "100 0");
 
-        Assert.Equal(new Rectangle(-500, 0, 600, 800), Bounds(placements, 1));
-        Assert.Equal(new Rectangle(100, 0, 500, 800), Bounds(placements, 2));
+        Assert.AreEqual(new Rectangle(-500, 0, 600, 800), Bounds(placements, 1));
+        Assert.AreEqual(new Rectangle(100, 0, 500, 800), Bounds(placements, 2));
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollingKeyboardResizeKeepsTheColumnInsideTheViewport()
     {
         var layout = ThreeColumns();
 
         var placements = layout.ResizeActive(Window(3), "200 0");
 
-        Assert.Equal(new Rectangle(500, 0, 500, 800), Bounds(placements, 3));
+        Assert.AreEqual(new Rectangle(500, 0, 500, 800), Bounds(placements, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollingLeftEdgeDragKeepsTheRightEdge()
     {
         var layout = ThreeColumns();
@@ -214,11 +211,11 @@ public class LayoutEngineTests
         var placements = layout.Drag(Window(3), new PointerDrag(true, PointerDragPhase.Move, new Point(420, 100)));
         layout.Drag(Window(3), new PointerDrag(true, PointerDragPhase.End, new Point(420, 100)));
 
-        Assert.Equal(new Rectangle(400, 0, 600, 800), Bounds(placements, 3));
-        Assert.Equal(new Rectangle(400, 0, 600, 800), Bounds(layout.Placed(), 3));
+        Assert.AreEqual(new Rectangle(400, 0, 600, 800), Bounds(placements, 3));
+        Assert.AreEqual(new Rectangle(400, 0, 600, 800), Bounds(layout.Placed(), 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollingKeyboardRowResizeTakesFromThePreviousRow()
     {
         var layout = OneColumnOfThree();
@@ -226,12 +223,12 @@ public class LayoutEngineTests
 
         var placements = layout.ResizeActive(Window(2), "0 90");
 
-        Assert.Equal(Bounds(before, 1).Height - 90, Bounds(placements, 1).Height);
-        Assert.Equal(Bounds(before, 2).Y - 90, Bounds(placements, 2).Y);
-        Assert.Equal(Bounds(before, 3), Bounds(placements, 3));
+        Assert.AreEqual(Bounds(before, 1).Height - 90, Bounds(placements, 1).Height);
+        Assert.AreEqual(Bounds(before, 2).Y - 90, Bounds(placements, 2).Y);
+        Assert.AreEqual(Bounds(before, 3), Bounds(placements, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollingMouseRowResizeMovesTheGrabbedEdge()
     {
         var layout = OneColumnOfThree();
@@ -241,29 +238,29 @@ public class LayoutEngineTests
         layout.Drag(Window(2), new PointerDrag(true, PointerDragPhase.Begin, new Point(middle.X + 10, middle.Y + 10)));
         var placements = layout.Drag(Window(2), new PointerDrag(true, PointerDragPhase.Move, new Point(middle.X + 10, middle.Y + 60)));
 
-        Assert.Equal(middle.Y + 50, Bounds(placements, 2).Y);
-        Assert.Equal(Bounds(before, 3), Bounds(placements, 3));
+        Assert.AreEqual(middle.Y + 50, Bounds(placements, 2).Y);
+        Assert.AreEqual(Bounds(before, 3), Bounds(placements, 3));
     }
 
-    [Theory]
-    [InlineData("dwindle", false)]
-    [InlineData("scrolling", false)]
-    [InlineData("dwindle", true)]
-    [InlineData("scrolling", true)]
+    [TestMethod]
+    [DataRow("dwindle", false)]
+    [DataRow("scrolling", false)]
+    [DataRow("dwindle", true)]
+    [DataRow("scrolling", true)]
     public void AnAddedClientStartsWithItsClassAndTitleAsTheInitialOnes(string name, bool floating)
     {
         var layout = Open(name);
 
         layout.Add(Window(1), Area, null, floating, new Rectangle(0, 0, 400, 300), WorkspaceId.Initial, "app", "title", monitor: Area);
 
-        var client = Assert.Single(layout.Clients);
-        Assert.Equal("app", client.InitialClass);
-        Assert.Equal("title", client.InitialTitle);
+        var client = Assert.ContainsSingle(layout.Clients);
+        Assert.AreEqual("app", client.InitialClass);
+        Assert.AreEqual("title", client.InitialTitle);
     }
 
-    [Theory]
-    [InlineData("dwindle")]
-    [InlineData("scrolling")]
+    [TestMethod]
+    [DataRow("dwindle")]
+    [DataRow("scrolling")]
     public void FloatingAgainRestoresTheLastFloatingSize(string name)
     {
         var layout = Open(name);
@@ -275,13 +272,13 @@ public class LayoutEngineTests
         layout.ToggleFloating(Window(1));
         var again = Bounds(layout.ToggleFloating(Window(1)), 1);
 
-        Assert.Equal((400, 300), (first.Width, first.Height));
-        Assert.Equal((500, 350), (again.Width, again.Height));
+        Assert.AreEqual((400, 300), (first.Width, first.Height));
+        Assert.AreEqual((500, 350), (again.Width, again.Height));
     }
 
-    [Theory]
-    [InlineData("dwindle")]
-    [InlineData("scrolling")]
+    [TestMethod]
+    [DataRow("dwindle")]
+    [DataRow("scrolling")]
     public void FloatingClientsKeepToTheirSizeLimits(string name)
     {
         var layout = Open(name);
@@ -289,15 +286,15 @@ public class LayoutEngineTests
         var opened = layout.Add(Window(1), Area, null, true, new Rectangle(10, 20, 400, 300), WorkspaceId.Initial, monitor: Area, minSize: new Size(500, 350));
         var limited = layout.UpdateLimits(Window(1), null, new Size(300, 200));
 
-        Assert.Equal(new Rectangle(10, 20, 500, 350), Bounds(opened, 1));
-        Assert.Equal(new Rectangle(10, 20, 300, 200), Bounds(limited, 1));
+        Assert.AreEqual(new Rectangle(10, 20, 500, 350), Bounds(opened, 1));
+        Assert.AreEqual(new Rectangle(10, 20, 300, 200), Bounds(limited, 1));
     }
 
-    [Theory]
-    [InlineData("dwindle", false)]
-    [InlineData("scrolling", false)]
-    [InlineData("dwindle", true)]
-    [InlineData("scrolling", true)]
+    [TestMethod]
+    [DataRow("dwindle", false)]
+    [DataRow("scrolling", false)]
+    [DataRow("dwindle", true)]
+    [DataRow("scrolling", true)]
     public void AFloatingDragIgnoresAClientTiledMidDrag(string name, bool resize)
     {
         var layout = Open(name);
@@ -312,14 +309,14 @@ public class LayoutEngineTests
         var moved = layout.Drag(Window(1), new PointerDrag(resize, PointerDragPhase.Move, new Point(inside.X + 40, inside.Y + 30)));
         layout.Drag(Window(1), new PointerDrag(resize, PointerDragPhase.End, new Point(inside.X + 40, inside.Y + 30)));
 
-        Assert.Empty(moved);
-        Assert.Equal(tiled, layout.Placed());
-        Assert.False(Assert.Single(layout.Clients, client => client.Window == Window(1)).Floating);
-        Assert.True(layout.TryBounds(Window(1), out var bounds));
-        Assert.Equal(Bounds(tiled, 1), bounds);
+        Assert.IsEmpty(moved);
+        Assert.AreSequenceEqual(tiled, layout.Placed());
+        Assert.IsFalse(Assert.ContainsSingle(client => client.Window == Window(1), layout.Clients).Floating);
+        Assert.IsTrue(layout.TryBounds(Window(1), out var bounds));
+        Assert.AreEqual(Bounds(tiled, 1), bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollingDropsAMinimizedTileThatCloses()
     {
         var layout = Open("scrolling");
@@ -329,17 +326,17 @@ public class LayoutEngineTests
 
         layout.Remove(Window(1));
 
-        Assert.DoesNotContain(layout.Clients, client => client.Window == Window(1));
-        Assert.False(layout.TryTake(Window(1), out _));
+        Assert.DoesNotContain(client => client.Window == Window(1), layout.Clients);
+        Assert.IsFalse(layout.TryTake(Window(1), out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void ANeighborTwoPixelsAwayDoesNotTouch()
     {
         var origin = new Rectangle(0, 0, 100, 100);
 
-        Assert.Null(NeighborAt(origin, new Rectangle(102, 0, 100, 100)));
-        Assert.Equal(Window(2), NeighborAt(origin, new Rectangle(101, 0, 100, 100)));
+        Assert.IsNull(NeighborAt(origin, new Rectangle(102, 0, 100, 100)));
+        Assert.AreEqual(Window(2), NeighborAt(origin, new Rectangle(101, 0, 100, 100)));
     }
 
     private static WindowId? NeighborAt(Rectangle origin, Rectangle other)
@@ -358,7 +355,7 @@ public class LayoutEngineTests
         Tiled(layout, 1);
         Tiled(layout, 2);
         var placements = Tiled(layout, 3);
-        Assert.Equal(new Rectangle(500, 0, 500, 800), Bounds(placements, 3));
+        Assert.AreEqual(new Rectangle(500, 0, 500, 800), Bounds(placements, 3));
         return layout;
     }
 
@@ -370,7 +367,7 @@ public class LayoutEngineTests
         Tiled(layout, 3);
         layout.LayoutMessage(Window(1), "consume");
         layout.LayoutMessage(Window(1), "consume");
-        Assert.Equal(3, layout.Placed().Count);
+        Assert.AreEqual(3, layout.Placed().Count);
         return layout;
     }
 
@@ -384,7 +381,7 @@ public class LayoutEngineTests
             .ToList();
     }
 
-    [Fact]
+    [TestMethod]
     public void DwindleArrangesItsTilesOnTheRectanglesTheyHad()
     {
         var layout = Open("dwindle");
@@ -399,12 +396,12 @@ public class LayoutEngineTests
             [Window(3)] = new(300, 200, 700, 600),
         });
 
-        Assert.Equal(new Rectangle(0, 0, 300, 800), Bounds(arranged, 1));
-        Assert.Equal(new Rectangle(300, 0, 700, 200), Bounds(arranged, 2));
-        Assert.Equal(new Rectangle(300, 200, 700, 600), Bounds(arranged, 3));
+        Assert.AreEqual(new Rectangle(0, 0, 300, 800), Bounds(arranged, 1));
+        Assert.AreEqual(new Rectangle(300, 0, 700, 200), Bounds(arranged, 2));
+        Assert.AreEqual(new Rectangle(300, 200, 700, 600), Bounds(arranged, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void DwindleArrangedFromItsOwnPlacementsStaysAsItIs()
     {
         var layout = Open("dwindle", LayoutOptions.Unconfigured with { GapsIn = EdgeInsets.Uniform(5), GapsOut = EdgeInsets.Uniform(10) });
@@ -414,10 +411,10 @@ public class LayoutEngineTests
         var before = layout.Placed();
         layout.Arrange(before.ToDictionary(placement => new WindowId(placement.Client.Value), placement => placement.Bounds));
 
-        Assert.Equal(before.OrderBy(placement => placement.Client.Value), layout.Placed().OrderBy(placement => placement.Client.Value));
+        Assert.AreSequenceEqual(before.OrderBy(placement => placement.Client.Value), layout.Placed().OrderBy(placement => placement.Client.Value));
     }
 
-    [Fact]
+    [TestMethod]
     public void DwindleKeepsItsTreeWhenATileHasNoRectangle()
     {
         var layout = Open("dwindle");
@@ -427,8 +424,8 @@ public class LayoutEngineTests
 
         var arranged = layout.Arrange(new Dictionary<WindowId, Rectangle> { [Window(1)] = new(0, 0, 300, 800) });
 
-        Assert.Empty(arranged);
-        Assert.Equal(before, layout.Placed());
+        Assert.IsEmpty(arranged);
+        Assert.AreSequenceEqual(before, layout.Placed());
     }
 
     private static Layout Open(string name) => Open(name, LayoutOptions.Unconfigured);
@@ -453,5 +450,5 @@ public class LayoutEngineTests
     private static (int Width, int Height) SizeOf(Rectangle bounds) => (bounds.Width, bounds.Height);
 
     private static Rectangle Bounds(IReadOnlyList<Placement> placements, long window) =>
-        Assert.Single(placements, placement => placement.Client == new ClientId(window)).Bounds;
+        Assert.ContainsSingle(placement => placement.Client == new ClientId(window), placements).Bounds;
 }

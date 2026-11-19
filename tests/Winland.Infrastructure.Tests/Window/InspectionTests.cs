@@ -1,8 +1,7 @@
 using System.Text.Json;
 
 namespace Winland.Infrastructure.Tests;
-
-[Collection(DesktopCollection.Name)]
+[TestClass]
 public class InspectionTests
 {
     [DesktopFact]
@@ -20,11 +19,11 @@ public class InspectionTests
 
             var inspected = JsonElement.Parse(core.Execute("j/inspect address:" + new WindowId(probe.Anchor.ToInt64()).Address).Text);
 
-            Assert.Equal("found", inspected.GetProperty("status").GetString());
-            Assert.True(inspected.GetProperty("managed").GetBoolean());
-            Assert.Equal("WinlandLimitProbe", inspected.GetProperty("class").GetString());
-            Assert.Equal(Environment.ProcessId, inspected.GetProperty("pid").GetInt64());
-            Assert.Equal(Path.GetFileName(Environment.ProcessPath), inspected.GetProperty("exe").GetString(), ignoreCase: true);
+            Assert.AreEqual("found", inspected.GetProperty("status").GetString());
+            Assert.IsTrue(inspected.GetProperty("managed").GetBoolean());
+            Assert.AreEqual("WinlandLimitProbe", inspected.GetProperty("class").GetString());
+            Assert.AreEqual(Environment.ProcessId, inspected.GetProperty("pid").GetInt64());
+            Assert.AreEqual(Path.GetFileName(Environment.ProcessPath), inspected.GetProperty("exe").GetString(), StringComparer.OrdinalIgnoreCase);
         }
         finally
         {

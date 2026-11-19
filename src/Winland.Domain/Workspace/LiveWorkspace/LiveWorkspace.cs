@@ -179,6 +179,7 @@ internal sealed partial class LiveWorkspace(WorkspaceId id, MonitorId monitor, L
             Id,
             taken.Class,
             taken.Title,
+            taken.Exe,
             monitor: monitor,
             processId: taken.ProcessId,
             initialClass: taken.InitialClass,

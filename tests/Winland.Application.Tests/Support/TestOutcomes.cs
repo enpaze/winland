@@ -5,12 +5,12 @@ namespace Winland.Application.Tests;
 internal static class TestOutcomes
 {
     public static Client Client(Outcome outcome, long window) =>
-        Assert.Single(outcome.State.Clients, candidate => candidate.Window == new WindowId(window));
+        Assert.ContainsSingle(candidate => candidate.Window == new WindowId(window), outcome.State.Clients);
 
     public static Rectangle BoundsOf(Outcome outcome, long window)
     {
         var client = Client(outcome, window);
-        return Assert.Single(outcome.Placements, placement => placement.Client == client.Id).Bounds;
+        return Assert.ContainsSingle(placement => placement.Client == client.Id, outcome.Placements).Bounds;
     }
 
     public static Outcome Place(WindowManager core, long window, Rectangle bounds)
@@ -44,7 +44,7 @@ internal static class TestOutcomes
     private static readonly Rectangle FullHd = new(0, 0, 1920, 1080);
 
     public static string FlatConfig(string extra = "") =>
-        "general:gaps_in = 0\ngeneral:gaps_out = 0\ngeneral:border_size = 0\n" + extra;
+        "gaps_in = 0\ngaps_out = 0\nborder_size = 0\n" + extra;
 
     public static WindowManager Flat(string extra = "") => Configured(FlatConfig(extra));
 

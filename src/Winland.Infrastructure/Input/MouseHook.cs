@@ -152,7 +152,7 @@ public sealed class MouseHook : IDisposable
     {
         if (up)
         {
-            if (button == "mouse:272" && _core.AwaitsDragRelease)
+            if (button == "mouse:left" && _core.AwaitsDragRelease)
                 _keys.PostInput(new PointerButtonReleased(button) { Position = position });
 
             var passed = _passed.Remove(button);
@@ -280,8 +280,7 @@ public sealed class MouseHook : IDisposable
     }
 
     internal static bool IsDrag(string dispatcher, string arguments) =>
-        (dispatcher.Equals("movewindow", StringComparison.OrdinalIgnoreCase) && arguments.Length == 0)
-        || dispatcher.Equals("resizewindow", StringComparison.OrdinalIgnoreCase);
+        new BindDispatch(dispatcher, arguments).IsDrag;
 
     internal static bool TryButton(uint message, uint mouseData, out string button, out bool up)
     {
@@ -289,29 +288,29 @@ public sealed class MouseHook : IDisposable
         switch (message)
         {
             case LeftDown:
-                button = "mouse:272";
+                button = "mouse:left";
                 return true;
             case LeftUp:
-                button = "mouse:272";
+                button = "mouse:left";
                 up = true;
                 return true;
             case RightDown:
-                button = "mouse:273";
+                button = "mouse:right";
                 return true;
             case RightUp:
-                button = "mouse:273";
+                button = "mouse:right";
                 up = true;
                 return true;
             case MiddleDown:
-                button = "mouse:274";
+                button = "mouse:middle";
                 return true;
             case MiddleUp:
-                button = "mouse:274";
+                button = "mouse:middle";
                 up = true;
                 return true;
             case ExtraDown:
             case ExtraUp:
-                button = (mouseData >> 16) == 1 ? "mouse:275" : "mouse:276";
+                button = (mouseData >> 16) == 1 ? "mouse:x1" : "mouse:x2";
                 up = message == ExtraUp;
                 return true;
             default:

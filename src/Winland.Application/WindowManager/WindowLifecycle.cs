@@ -94,11 +94,11 @@ public sealed partial class WindowManager
         if (restored is null && processId > 0)
         {
             if (_initialWorkspaces.TryTake(processId, Clock(), out var origin) && rule.Id is null && origin != current)
-                rule = new WorkspaceAddress.Rule(origin, Silent: true);
+                rule = new WorkspaceAddress.Rule(origin, Stay: true);
         }
         var owned = appeared.Owner is WindowId ownerWindow ? WorkspaceContaining(ownerWindow) : null;
         if (restored is null && rule.Id is null && owned is not null)
-            rule = new WorkspaceAddress.Rule(owned.Id, Silent: true);
+            rule = new WorkspaceAddress.Rule(owned.Id, Stay: true);
 
         var target = restored?.Workspace ?? rule.Id ?? current;
         ForgetRestored(appeared.Window);
@@ -122,6 +122,7 @@ public sealed partial class WindowManager
             target,
             appeared.Traits.Class,
             appeared.Traits.Title,
+            appeared.Traits.Exe,
             MonitorById(desk.Monitor)?.Bounds ?? default,
             appeared.ProcessId,
             minSize: decision.MinSize,
@@ -157,7 +158,7 @@ public sealed partial class WindowManager
         if (restore == appeared.Window)
             restore = null;
 
-        if (restored is null && rule.Id is not null && !rule.Silent && !_workspaces.Shown.IsShown(target) && !_awaitingMapFocus.Contains(appeared.Window))
+        if (restored is null && rule.Id is not null && !rule.Stay && !_workspaces.Shown.IsShown(target) && !_awaitingMapFocus.Contains(appeared.Window))
         {
             if (MonitorById(desk.Monitor) is { } owner)
                 Focus(owner.Id);

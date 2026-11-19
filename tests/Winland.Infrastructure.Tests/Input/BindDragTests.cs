@@ -1,41 +1,42 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class BindDragTests
 {
-    [Fact]
+    [TestMethod]
     public void TheDragEndsOnlyWhenItsOwnButtonComesUp()
     {
         var drag = new BindDrag();
-        drag.Begin("mouse:272", "movewindow", "");
+        drag.Begin("mouse:left", "move", "");
 
-        Assert.Null(drag.Release("mouse:273"));
-        Assert.Equal(new BindDrag.Active("mouse:272", "movewindow", ""), drag.Release("mouse:272"));
-        Assert.Null(drag.Current);
+        Assert.IsNull(drag.Release("mouse:right"));
+        Assert.AreEqual(new BindDrag.Active("mouse:left", "move", ""), drag.Release("mouse:left"));
+        Assert.IsNull(drag.Current);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASecondDragWhileOneIsHeldIsIgnored()
     {
         var drag = new BindDrag();
-        drag.Begin("mouse:272", "movewindow", "");
+        drag.Begin("mouse:left", "move", "");
 
-        Assert.False(drag.Begin("mouse:273", "resizewindow", ""));
-        Assert.Null(drag.Release("mouse:273"));
-        Assert.Equal(new BindDrag.Active("mouse:272", "movewindow", ""), drag.Release("mouse:272"));
+        Assert.IsFalse(drag.Begin("mouse:right", "resize", ""));
+        Assert.IsNull(drag.Release("mouse:right"));
+        Assert.AreEqual(new BindDrag.Active("mouse:left", "move", ""), drag.Release("mouse:left"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnAbandonedDragIsHandedBackOnceSoItsEndCanBePosted()
     {
         var drag = new BindDrag();
-        drag.Begin("mouse:273", "resizewindow", "1");
+        drag.Begin("mouse:right", "resize", "");
 
-        Assert.Equal(new BindDrag.Active("mouse:273", "resizewindow", "1"), drag.Abandon());
-        Assert.Null(drag.Current);
-        Assert.Null(drag.Abandon());
-        Assert.Null(drag.Release("mouse:273"));
+        Assert.AreEqual(new BindDrag.Active("mouse:right", "resize", ""), drag.Abandon());
+        Assert.IsNull(drag.Current);
+        Assert.IsNull(drag.Abandon());
+        Assert.IsNull(drag.Release("mouse:right"));
     }
 
-    [Fact]
-    public void NoDragHasNothingToAbandon() => Assert.Null(new BindDrag().Abandon());
+    [TestMethod]
+    public void NoDragHasNothingToAbandon() => Assert.IsNull(new BindDrag().Abandon());
 }

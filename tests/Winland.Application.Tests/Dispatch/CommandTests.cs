@@ -3,124 +3,147 @@ using System.Text.Json;
 
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class CommandTests
 {
-    [Fact]
+    [TestMethod]
     public void PipeDispatchParsesTheNameAndArguments()
     {
-        var parsed = Assert.IsType<CommandParsed>(CommandProtocol.Parse("dispatch exec notepad --title hi"));
-        var dispatch = Assert.IsType<DispatchRequest>(parsed.Request);
+        var parsed = Assert.IsExactInstanceOfType<CommandParsed>(CommandProtocol.Parse("exec notepad --title hi"));
+        var dispatch = Assert.IsExactInstanceOfType<DispatchRequest>(parsed.Request);
 
-        Assert.Equal("exec", dispatch.Name);
-        Assert.Equal("notepad --title hi", dispatch.Arguments);
+        Assert.AreEqual("exec", dispatch.Name);
+        Assert.AreEqual("notepad --title hi", dispatch.Arguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void PipeDispatchKeepsInternalSpacing()
     {
-        var parsed = Assert.IsType<CommandParsed>(CommandProtocol.Parse("dispatch   exec   foo  bar"));
-        var dispatch = Assert.IsType<DispatchRequest>(parsed.Request);
+        var parsed = Assert.IsExactInstanceOfType<CommandParsed>(CommandProtocol.Parse("  exec   foo  bar"));
+        var dispatch = Assert.IsExactInstanceOfType<DispatchRequest>(parsed.Request);
 
-        Assert.Equal("exec", dispatch.Name);
-        Assert.Equal("foo  bar", dispatch.Arguments);
+        Assert.AreEqual("exec", dispatch.Name);
+        Assert.AreEqual("foo  bar", dispatch.Arguments);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExecOverThePipeRunsTheCommand()
     {
         var core = new WindowManager();
 
-        var reply = core.Execute("dispatch exec elevated notepad");
+        var reply = core.Execute("exec elevated notepad");
 
-        Assert.Equal("ok", reply.Text);
-        Assert.Null(reply.Effect.Close);
-        Assert.Empty(reply.Effect.Placements);
+        Assert.AreEqual("ok", reply.Text);
+        Assert.IsNull(reply.Effect.Close);
+        Assert.IsEmpty(reply.Effect.Placements);
     }
 
-    [Fact]
+    [TestMethod]
     public void BoundExecRuns()
     {
         var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = SUPER, E, exec, notepad")));
+        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = Win+E, exec notepad")));
         core.Handle(new KeyPressed("Super_L"));
 
         var outcome = core.Handle(new KeyPressed("E"));
 
-        Assert.Null(outcome.Close);
+        Assert.IsNull(outcome.Close);
     }
 
-    [Fact]
-    public void DispatchKillactiveAsksToCloseTheActiveClientAndLeavesItInPlace()
+    [TestMethod]
+    public void CloseAsksTheActiveClientToCloseAndLeavesItInPlace()
     {
         var core = new WindowManager();
         var area = new Rectangle(0, 0, 1920, 1080);
         core.Handle(new WindowAppeared(new WindowId(1), area));
         core.Handle(new WindowAppeared(new WindowId(2), area));
 
-        var reply = core.Execute("dispatch killactive");
+        var reply = core.Execute("close");
 
-        Assert.Equal("ok", reply.Text);
-        Assert.Equal(new WindowId(2), reply.Effect.Close);
-        Assert.Equal(2, reply.Effect.State.Clients.Count);
-        Assert.Contains(reply.Effect.State.Clients, client => client.Window == new WindowId(2));
+        Assert.AreEqual("ok", reply.Text);
+        Assert.AreEqual(new WindowId(2), reply.Effect.Close);
+        Assert.AreEqual(2, reply.Effect.State.Clients.Count);
+        Assert.Contains(client => client.Window == new WindowId(2), reply.Effect.State.Clients);
     }
 
-    [Theory]
-    [InlineData("dispatch killactiv", "error: unknown dispatcher 'killactiv'. Did you mean 'killactive'?")]
-    [InlineData("dispatch notadispatcher", "error: unknown dispatcher 'notadispatcher'")]
+    [TestMethod]
+    [DataRow("closs", "error: unknown command 'closs'. Did you mean 'close'?")]
+    [DataRow("gte windows", "error: unknown command 'gte'. Did you mean 'get'?")]
+    [DataRow("notadispatcher", "error: unknown command 'notadispatcher'")]
     public void AnUnknownNameSuggestsTheOneNameItIsCloseTo(string line, string error)
     {
         var reply = new WindowManager().Execute(line);
 
-        Assert.Equal(error, reply.Text);
+        Assert.AreEqual(error, reply.Text);
     }
 
-    [Fact]
-    public void DispatchWithoutANameIsRejected()
+    [TestMethod]
+    public void TheDispatchWordIsNotACommand()
     {
         var core = new WindowManager();
         core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 100, 100)));
 
-        var reply = core.Execute("dispatch");
+        var reply = core.Execute("dispatch close");
 
-        Assert.Equal("error: missing dispatcher", reply.Text);
-        Assert.Null(reply.Effect.Close);
+        Assert.AreEqual("error: unknown command 'dispatch'", reply.Text);
+        Assert.IsNull(reply.Effect.Close);
     }
 
-    [Fact]
+    [TestMethod]
+    [DataRow("get")]
+    [DataRow("get clients")]
+    [DataRow("get monitors some")]
+    public void GetNeedsAThingItKnows(string line)
+    {
+        var reply = new WindowManager().Execute(line);
+
+        Assert.AreEqual("error: unknown request", reply.Text);
+    }
+
+    [TestMethod]
+    public void AnActionTakesTheJsonFlagAndAnyCase()
+    {
+        var parsed = Assert.IsExactInstanceOfType<CommandParsed>(CommandProtocol.Parse("j/Workspace 2"));
+        var dispatch = Assert.IsExactInstanceOfType<DispatchRequest>(parsed.Request);
+
+        Assert.AreEqual(("Workspace", "2", CommandFlags.Json), (dispatch.Name, dispatch.Arguments, dispatch.Flags));
+        Assert.IsExactInstanceOfType<WindowsRequest>(Assert.IsExactInstanceOfType<CommandParsed>(CommandProtocol.Parse("GET Windows")).Request);
+    }
+
+    [TestMethod]
     public void UnknownRequestIsPlainText()
     {
         var reply = new WindowManager().Execute("not-a-command");
 
-        Assert.Equal("error: unknown request", reply.Text);
+        Assert.AreEqual("error: unknown command 'not-a-command'", reply.Text);
     }
 
-    [Theory]
-    [InlineData("clients")]
-    [InlineData("workspaces")]
-    [InlineData("monitors")]
-    [InlineData("activewindow")]
-    [InlineData("activeworkspace")]
-    [InlineData("events")]
+    [TestMethod]
+    [DataRow("get windows")]
+    [DataRow("get workspaces")]
+    [DataRow("get monitors")]
+    [DataRow("get window")]
+    [DataRow("get workspace")]
+    [DataRow("events")]
     public void ReadCommandsRejectTrailingArguments(string command)
     {
         var reply = new WindowManager().Execute(command + " extra");
 
-        Assert.Equal("error: unknown request", reply.Text);
+        Assert.AreEqual("error: unknown request", reply.Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClientsReplyIsEmptyUntilAWindowIsAdopted()
     {
         var core = new WindowManager();
-        var clients = Json(core.Execute("j/clients").Text);
+        var clients = Json(core.Execute("j/get windows").Text);
 
-        Assert.Equal(JsonValueKind.Array, clients.ValueKind);
-        Assert.Equal(0, clients.GetArrayLength());
-        Assert.Equal("no open windows", core.Execute("clients").Text);
+        Assert.AreEqual(JsonValueKind.Array, clients.ValueKind);
+        Assert.AreEqual(0, clients.GetArrayLength());
+        Assert.AreEqual("no open windows", core.Execute("get windows").Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClientsReplyUsesTheAddressFloatingAndWorkspaceShape()
     {
         var core = new WindowManager();
@@ -132,40 +155,40 @@ public class CommandTests
             Bounds = new Rectangle(4, 5, 6, 7),
         });
 
-        var clients = Json(core.Execute("j/Clients").Text);
+        var clients = Json(core.Execute("j/GET Windows").Text);
 
-        Assert.Equal(2, clients.GetArrayLength());
+        Assert.AreEqual(2, clients.GetArrayLength());
         AssertClient(clients[0], "0x2a", floating: false, hidden: false, workspaceId: 1, workspaceName: "1");
         AssertClient(clients[1], "0xff", floating: true, hidden: false, workspaceId: 1, workspaceName: "1");
     }
 
-    [Fact]
+    [TestMethod]
     public void ClientWorkspaceFollowsTheStoredWorkspace()
     {
-        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 silent, class:kitty\n"));
+        var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2 stay, class:kitty\n"));
         core.Handle(new WindowAppeared(new WindowId(9), new Rectangle(0, 0, 100, 100))
         {
             Traits = WindowTraits.Normal with { Class = "kitty" },
         });
 
-        var client = Assert.Single(Json(core.Execute("j/clients").Text).EnumerateArray());
+        var client = Assert.ContainsSingle(Json(core.Execute("j/get windows").Text).EnumerateArray());
         var workspace = client.GetProperty("workspace");
 
-        Assert.Equal(2, workspace.GetProperty("id").GetInt32());
-        Assert.Equal("2", workspace.GetProperty("name").GetString());
+        Assert.AreEqual(2, workspace.GetProperty("id").GetInt32());
+        Assert.AreEqual("2", workspace.GetProperty("name").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspacesReplyStartsWithTheDefaultWorkspace()
     {
-        var workspace = Assert.Single(Json(new WindowManager().Execute("j/workspaces").Text).EnumerateArray());
+        var workspace = Assert.ContainsSingle(Json(new WindowManager().Execute("j/get workspaces").Text).EnumerateArray());
 
-        Assert.Equal(1, workspace.GetProperty("id").GetInt32());
-        Assert.Equal("1", workspace.GetProperty("name").GetString());
-        Assert.Equal(0, workspace.GetProperty("windows").GetInt32());
+        Assert.AreEqual(1, workspace.GetProperty("id").GetInt32());
+        Assert.AreEqual("1", workspace.GetProperty("name").GetString());
+        Assert.AreEqual(0, workspace.GetProperty("windows").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspacesReplyCountsClientsAndKeepsTheDefault()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 2, class:kitty\n"));
@@ -176,16 +199,16 @@ public class CommandTests
             Traits = WindowTraits.Normal with { Class = "kitty" },
         });
 
-        var workspaces = Json(core.Execute("j/workspaces").Text);
+        var workspaces = Json(core.Execute("j/get workspaces").Text);
         var byName = workspaces.EnumerateArray().ToDictionary(item => item.GetProperty("name").GetString()!);
 
-        Assert.Equal(1, byName["1"].GetProperty("id").GetInt32());
-        Assert.Equal(1, byName["1"].GetProperty("windows").GetInt32());
-        Assert.Equal(2, byName["2"].GetProperty("id").GetInt32());
-        Assert.Equal(1, byName["2"].GetProperty("windows").GetInt32());
+        Assert.AreEqual(1, byName["1"].GetProperty("id").GetInt32());
+        Assert.AreEqual(1, byName["1"].GetProperty("windows").GetInt32());
+        Assert.AreEqual(2, byName["2"].GetProperty("id").GetInt32());
+        Assert.AreEqual(1, byName["2"].GetProperty("windows").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void MonitorsReplyIsTheDefaultMonitorOnTheActiveWorkspace()
     {
         var core = new WindowManager(ConfigParser.Parse("windowrule = workspace 4, class:kitty\n"));
@@ -194,28 +217,27 @@ public class CommandTests
             Traits = WindowTraits.Normal with { Class = "kitty" },
         });
 
-        var monitor = Assert.Single(Json(core.Execute("j/monitors").Text).EnumerateArray());
+        var monitor = Assert.ContainsSingle(Json(core.Execute("j/get monitors").Text).EnumerateArray());
         var active = monitor.GetProperty("activeWorkspace");
 
-        Assert.Equal(0, monitor.GetProperty("id").GetInt32());
-        Assert.Equal("", monitor.GetProperty("name").GetString());
-        Assert.True(monitor.GetProperty("focused").GetBoolean());
-        Assert.Equal(4, active.GetProperty("id").GetInt32());
-        Assert.Equal("4", active.GetProperty("name").GetString());
+        Assert.AreEqual(0, monitor.GetProperty("id").GetInt32());
+        Assert.AreEqual("", monitor.GetProperty("name").GetString());
+        Assert.IsTrue(monitor.GetProperty("focused").GetBoolean());
+        Assert.AreEqual(4, active.GetProperty("id").GetInt32());
+        Assert.AreEqual("4", active.GetProperty("name").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void ActiveWindowIsEmptyUntilAClientExists()
     {
         var core = new WindowManager();
-        var active = Json(core.Execute("j/activewindow").Text);
+        var active = Json(core.Execute("j/get window").Text);
 
-        Assert.Equal(JsonValueKind.Object, active.ValueKind);
-        Assert.Empty(active.EnumerateObject());
-        Assert.Equal("Invalid", core.Execute("activewindow").Text);
+        Assert.AreEqual(JsonValueKind.Null, active.ValueKind);
+        Assert.AreEqual("", core.Execute("get window").Text);
     }
 
-    [Fact]
+    [TestMethod]
     public void ActiveWindowFollowsTheLatestAdoptedClient()
     {
         var core = new WindowManager();
@@ -223,17 +245,17 @@ public class CommandTests
         core.Handle(new WindowAppeared(new WindowId(1), area));
         core.Handle(new WindowAppeared(new WindowId(2), area));
 
-        var active = Json(core.Execute("j/activewindow").Text);
+        var active = Json(core.Execute("j/get window").Text);
 
-        Assert.Equal("0x2", active.GetProperty("address").GetString());
+        Assert.AreEqual("0x2", active.GetProperty("address").GetString());
 
         core.Handle(new WindowClosed(new WindowId(2)));
 
-        active = Json(core.Execute("j/activewindow").Text);
-        Assert.Equal("0x1", active.GetProperty("address").GetString());
+        active = Json(core.Execute("j/get window").Text);
+        Assert.AreEqual("0x1", active.GetProperty("address").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void DispatchWorkspaceOverThePipeSwitches()
     {
         var core = new WindowManager();
@@ -242,52 +264,52 @@ public class CommandTests
         core.Handle(new WindowAppeared(new WindowId(2), area));
 
         CommandReply reply = default;
-        var thread = new Thread(() => reply = core.Execute("dispatch workspace 2"));
+        var thread = new Thread(() => reply = core.Execute("workspace 2"));
         thread.Start();
         thread.Join();
 
-        Assert.Equal("ok", reply.Text);
-        Assert.Equal(new WorkspaceId("2"), reply.Effect.State.ActiveWorkspace);
-        Assert.Equal([new WindowId(1), new WindowId(2)], reply.Effect.Hide);
-        Assert.Empty(reply.Effect.Show);
+        Assert.AreEqual("ok", reply.Text);
+        Assert.AreEqual(new WorkspaceId("2"), reply.Effect.State.ActiveWorkspace);
+        Assert.AreSequenceEqual([new WindowId(1), new WindowId(2)], reply.Effect.Hide);
+        Assert.IsEmpty(reply.Effect.Show);
     }
 
-    [Fact]
+    [TestMethod]
     public void WorkspacesReplyAfterASwitchReportsEachDesk()
     {
         var core = new WindowManager();
         var area = new Rectangle(0, 0, 800, 600);
         core.Handle(new WindowAppeared(new WindowId(1), area));
         core.Handle(new WindowAppeared(new WindowId(2), area));
-        core.Execute("dispatch workspace 2");
+        core.Execute("workspace 2");
         core.Handle(new WindowAppeared(new WindowId(3), area));
 
-        var byName = Json(core.Execute("j/workspaces").Text)
+        var byName = Json(core.Execute("j/get workspaces").Text)
             .EnumerateArray()
             .ToDictionary(item => item.GetProperty("name").GetString()!);
 
-        Assert.Equal(1, byName["1"].GetProperty("id").GetInt32());
-        Assert.Equal(2, byName["1"].GetProperty("windows").GetInt32());
-        Assert.Equal(2, byName["2"].GetProperty("id").GetInt32());
-        Assert.Equal(1, byName["2"].GetProperty("windows").GetInt32());
+        Assert.AreEqual(1, byName["1"].GetProperty("id").GetInt32());
+        Assert.AreEqual(2, byName["1"].GetProperty("windows").GetInt32());
+        Assert.AreEqual(2, byName["2"].GetProperty("id").GetInt32());
+        Assert.AreEqual(1, byName["2"].GetProperty("windows").GetInt32());
 
-        var clients = Json(core.Execute("j/clients").Text).EnumerateArray().ToArray();
+        var clients = Json(core.Execute("j/get windows").Text).EnumerateArray().ToArray();
         AssertClient(clients[0], "0x1", floating: false, hidden: true, workspaceId: 1, workspaceName: "1");
         AssertClient(clients[1], "0x2", floating: false, hidden: true, workspaceId: 1, workspaceName: "1");
         AssertClient(clients[2], "0x3", floating: false, hidden: false, workspaceId: 2, workspaceName: "2");
 
-        var monitor = Assert.Single(Json(core.Execute("j/monitors").Text).EnumerateArray());
+        var monitor = Assert.ContainsSingle(Json(core.Execute("j/get monitors").Text).EnumerateArray());
         var activeWorkspace = monitor.GetProperty("activeWorkspace");
-        Assert.Equal(2, activeWorkspace.GetProperty("id").GetInt32());
-        Assert.Equal("2", activeWorkspace.GetProperty("name").GetString());
+        Assert.AreEqual(2, activeWorkspace.GetProperty("id").GetInt32());
+        Assert.AreEqual("2", activeWorkspace.GetProperty("name").GetString());
 
-        var active = Json(core.Execute("j/activewindow").Text);
-        Assert.Equal("0x3", active.GetProperty("address").GetString());
-        Assert.False(active.GetProperty("hidden").GetBoolean());
-        Assert.Equal(2, active.GetProperty("workspace").GetProperty("id").GetInt32());
+        var active = Json(core.Execute("j/get window").Text);
+        Assert.AreEqual("0x3", active.GetProperty("address").GetString());
+        Assert.IsFalse(active.GetProperty("hidden").GetBoolean());
+        Assert.AreEqual(2, active.GetProperty("workspace").GetProperty("id").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void PipeRunsFocusFloatAndMoveOnTheActiveWorkspace()
     {
         var core = new WindowManager();
@@ -295,40 +317,40 @@ public class CommandTests
         core.Handle(new WindowAppeared(new WindowId(1), area));
         core.Handle(new WindowAppeared(new WindowId(2), area));
 
-        var focus = core.Execute("dispatch movefocus l");
+        var focus = core.Execute("focus l");
 
-        Assert.Equal("ok", focus.Text);
-        Assert.Equal(new WindowId(1), focus.Effect.Focus);
+        Assert.AreEqual("ok", focus.Text);
+        Assert.AreEqual(new WindowId(1), focus.Effect.Focus);
 
-        var floating = core.Execute("dispatch togglefloating");
+        var floating = core.Execute("float");
 
-        Assert.True(Client(floating.Effect, 1).Floating);
-        Assert.False(Client(floating.Effect, 2).Floating);
+        Assert.IsTrue(Client(floating.Effect, 1).Floating);
+        Assert.IsFalse(Client(floating.Effect, 2).Floating);
 
-        var moved = core.Execute("dispatch movetoworkspace 3");
+        var moved = core.Execute("move 3");
 
-        Assert.Equal(new WorkspaceId("3"), moved.Effect.State.ActiveWorkspace);
-        Assert.Equal(new WorkspaceId("3"), Client(moved.Effect, 1).Workspace);
-        Assert.Equal(new WorkspaceId("1"), Client(moved.Effect, 2).Workspace);
-        Assert.Contains(moved.Effect.State.Hidden, client => client.Window == new WindowId(2));
+        Assert.AreEqual(new WorkspaceId("3"), moved.Effect.State.ActiveWorkspace);
+        Assert.AreEqual(new WorkspaceId("3"), Client(moved.Effect, 1).Workspace);
+        Assert.AreEqual(new WorkspaceId("1"), Client(moved.Effect, 2).Workspace);
+        Assert.Contains(client => client.Window == new WindowId(2), moved.Effect.State.Hidden);
     }
 
-    [Fact]
+    [TestMethod]
     public void BoundWorkspaceSwitches()
     {
         var core = new WindowManager();
-        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = SUPER, 2, workspace, 2")));
+        core.Handle(new ConfigLoaded(ConfigParser.Parse("bind = Win+2, workspace 2")));
         core.Handle(new WindowAppeared(new WindowId(1), new Rectangle(0, 0, 100, 100)));
         core.Handle(new KeyPressed("Super_L"));
 
         var outcome = core.Handle(new KeyPressed("2"));
 
-        Assert.True(outcome.Consumed);
-        Assert.Equal(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
-        Assert.Equal([new WindowId(1)], outcome.Hide);
+        Assert.IsTrue(outcome.Consumed);
+        Assert.AreEqual(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
+        Assert.AreSequenceEqual([new WindowId(1)], outcome.Hide);
     }
 
-    [Fact]
+    [TestMethod]
     public void ConcurrentPipeRequestsLeaveTheDesksConsistent()
     {
         var core = new WindowManager();
@@ -346,12 +368,12 @@ public class CommandTests
                     {
                         var workspace = ((step + n) % 3) + 1;
                         if (n % 2 == 0)
-                            core.Execute("dispatch workspace " + workspace.ToString(CultureInfo.InvariantCulture));
+                            core.Execute("workspace " + workspace.ToString(CultureInfo.InvariantCulture));
                         else
                             core.Handle(new Dispatch("workspace", workspace.ToString(CultureInfo.InvariantCulture)));
 
-                        _ = core.Execute("j/workspaces");
-                        _ = core.Execute("j/clients");
+                        _ = core.Execute("j/get workspaces");
+                        _ = core.Execute("j/get windows");
                     }
                     catch (Exception exception) when (exception is not OutOfMemoryException)
                     {
@@ -366,15 +388,15 @@ public class CommandTests
         foreach (var thread in threads)
             thread.Join();
 
-        Assert.Equal(0, failures);
-        var active = Assert.Single(Json(core.Execute("j/monitors").Text).EnumerateArray())
+        Assert.AreEqual(0, failures);
+        var active = Assert.ContainsSingle(Json(core.Execute("j/get monitors").Text).EnumerateArray())
             .GetProperty("activeWorkspace")
             .GetProperty("id")
             .GetInt32();
-        Assert.InRange(active, 1, 3);
+        Assert.IsInRange(1, 3, active);
         Assert.Contains(
-            Json(core.Execute("j/workspaces").Text).EnumerateArray(),
-            workspace => workspace.GetProperty("id").GetInt32() == active);
+            workspace => workspace.GetProperty("id").GetInt32() == active,
+            Json(core.Execute("j/get workspaces").Text).EnumerateArray());
     }
 
     private static void AssertClient(
@@ -385,11 +407,10 @@ public class CommandTests
         int workspaceId,
         string workspaceName)
     {
-        Assert.Equal(address, client.GetProperty("address").GetString());
-        Assert.Equal(floating, client.GetProperty("floating").GetBoolean());
-        Assert.Equal(hidden, client.GetProperty("hidden").GetBoolean());
-        Assert.Equal(!hidden, client.GetProperty("mapped").GetBoolean());
-        Assert.Equal(workspaceId, client.GetProperty("workspace").GetProperty("id").GetInt32());
-        Assert.Equal(workspaceName, client.GetProperty("workspace").GetProperty("name").GetString());
+        Assert.AreEqual(address, client.GetProperty("address").GetString());
+        Assert.AreEqual(floating, client.GetProperty("floating").GetBoolean());
+        Assert.AreEqual(hidden, client.GetProperty("hidden").GetBoolean());
+        Assert.AreEqual(workspaceId, client.GetProperty("workspace").GetProperty("id").GetInt32());
+        Assert.AreEqual(workspaceName, client.GetProperty("workspace").GetProperty("name").GetString());
     }
 }

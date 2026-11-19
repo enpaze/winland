@@ -5,9 +5,10 @@ using System.Security.Principal;
 namespace Winland.Daemon.Tests;
 
 [SupportedOSPlatform("windows")]
+[TestClass]
 public class WindowsFileHandlesTests
 {
-    [Fact]
+    [TestMethod]
     public void SecurityIsReadFromTheOpenFolder()
     {
         if (!OperatingSystem.IsWindows())
@@ -27,9 +28,9 @@ public class WindowsFileHandlesTests
 
             using (var handle = WindowsFileHandles.Open(directory, WindowsFileHandles.ReadControl, FileShare.Read, followReparse: false))
             {
-                Assert.True(WindowsAccessReader.TryRead(handle, out var access));
-                Assert.Equal(user.Value, access.Owner);
-                Assert.Equal(user.Value, Assert.Single(access.Grants).Sid);
+                Assert.IsTrue(WindowsAccessReader.TryRead(handle, out var access));
+                Assert.AreEqual(user.Value, access.Owner);
+                Assert.AreEqual(user.Value, Assert.ContainsSingle(access.Grants).Sid);
             }
         }
         finally
@@ -38,7 +39,7 @@ public class WindowsFileHandlesTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFinalPathOfAFileIsItsPlainPath()
     {
         if (!OperatingSystem.IsWindows())
@@ -50,8 +51,8 @@ public class WindowsFileHandlesTests
         {
             using var handle = WindowsFileHandles.Open(path, WindowsFileHandles.ReadAttributes, FileShare.ReadWrite, followReparse: false);
 
-            Assert.Equal(path, WindowsFileHandles.FinalPath(handle), ignoreCase: true);
-            Assert.False(WindowsFileHandles.Attributes(handle).HasFlag(FileAttributes.Directory));
+            Assert.AreEqual(path, WindowsFileHandles.FinalPath(handle), StringComparer.OrdinalIgnoreCase);
+            Assert.IsFalse(WindowsFileHandles.Attributes(handle).HasFlag(FileAttributes.Directory));
         }
         finally
         {
@@ -59,7 +60,7 @@ public class WindowsFileHandlesTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void ANewFileCanBeWrittenReadAndDeletedButNotMadeTwice()
     {
         if (!OperatingSystem.IsWindows())
@@ -72,18 +73,18 @@ public class WindowsFileHandlesTests
             RandomAccess.Write(handle, "state"u8, 0);
             read = new byte[5];
             RandomAccess.Read(handle, read, 0);
-            Assert.Throws<IOException>(() => WindowsFileHandles.CreateNewFile(path, FileShare.ReadWrite));
+            Assert.ThrowsExactly<IOException>(() => WindowsFileHandles.CreateNewFile(path, FileShare.ReadWrite));
             WindowsFileHandles.MarkForDeletion(handle);
         }
 
-        Assert.Equal("state"u8.ToArray(), read);
-        Assert.False(File.Exists(path));
+        Assert.AreSequenceEqual("state"u8.ToArray(), read);
+        Assert.IsFalse(File.Exists(path));
     }
 
-    [Theory]
-    [InlineData(@"sub\state.json")]
-    [InlineData("sub/state.json")]
-    [InlineData("C:state.json")]
+    [TestMethod]
+    [DataRow(@"sub\state.json")]
+    [DataRow("sub/state.json")]
+    [DataRow("C:state.json")]
     public void ARenameToAnythingButOneNameIsRefused(string name)
     {
         if (!OperatingSystem.IsWindows())
@@ -96,9 +97,9 @@ public class WindowsFileHandlesTests
             using var folder = WindowsFileHandles.Open(directory, WindowsFileHandles.ReadAttributes, FileShare.ReadWrite | FileShare.Delete, followReparse: true);
             using var file = WindowsFileHandles.CreateNewFile(Path.Combine(directory, "state.tmp"), FileShare.None);
 
-            Assert.Throws<ArgumentException>(() => WindowsFileHandles.Rename(file, folder, name));
+            Assert.ThrowsExactly<ArgumentException>(() => WindowsFileHandles.Rename(file, folder, name));
             WindowsFileHandles.Rename(file, folder, "state.json");
-            Assert.Equal(Path.Combine(directory, "state.json"), WindowsFileHandles.FinalPath(file), ignoreCase: true);
+            Assert.AreEqual(Path.Combine(directory, "state.json"), WindowsFileHandles.FinalPath(file), StringComparer.OrdinalIgnoreCase);
         }
         finally
         {
@@ -106,23 +107,23 @@ public class WindowsFileHandlesTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingArgumentsAreRefused()
     {
         if (!OperatingSystem.IsWindows())
             return;
 
-        Assert.Throws<ArgumentException>(() => WindowsFileHandles.Open(" ", WindowsFileHandles.ReadAttributes, FileShare.Read, followReparse: false));
-        Assert.Throws<ArgumentException>(() => WindowsFileHandles.CreateNewFile(" ", FileShare.Read));
-        Assert.Throws<ArgumentNullException>(() => WindowsFileHandles.Attributes(null!));
-        Assert.Throws<ArgumentNullException>(() => WindowsFileHandles.FinalPath(null!));
-        Assert.Throws<ArgumentNullException>(() => WindowsFileHandles.ReadSecurity(null!));
-        Assert.Throws<ArgumentNullException>(() => WindowsFileHandles.MarkForDeletion(null!));
-        Assert.Throws<ArgumentNullException>(() => WindowsFileHandles.Rename(null!, null!, "a"));
-        Assert.Throws<FileNotFoundException>(() => WindowsFileHandles.Open(Path.Combine(Path.GetTempPath(), "winland-missing-" + Guid.NewGuid().ToString("N")), WindowsFileHandles.ReadAttributes, FileShare.Read, followReparse: false));
+        Assert.ThrowsExactly<ArgumentException>(() => WindowsFileHandles.Open(" ", WindowsFileHandles.ReadAttributes, FileShare.Read, followReparse: false));
+        Assert.ThrowsExactly<ArgumentException>(() => WindowsFileHandles.CreateNewFile(" ", FileShare.Read));
+        Assert.ThrowsExactly<ArgumentNullException>(() => WindowsFileHandles.Attributes(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => WindowsFileHandles.FinalPath(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => WindowsFileHandles.ReadSecurity(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => WindowsFileHandles.MarkForDeletion(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => WindowsFileHandles.Rename(null!, null!, "a"));
+        Assert.ThrowsExactly<FileNotFoundException>(() => WindowsFileHandles.Open(Path.Combine(Path.GetTempPath(), "winland-missing-" + Guid.NewGuid().ToString("N")), WindowsFileHandles.ReadAttributes, FileShare.Read, followReparse: false));
     }
 
-    [Fact]
+    [TestMethod]
     public void AJunctionOpenedWithoutFollowingShowsItselfAndItsOwnPath()
     {
         if (!OperatingSystem.IsWindows())
@@ -139,9 +140,9 @@ public class WindowsFileHandlesTests
             using (var itself = WindowsFileHandles.Open(link, WindowsFileHandles.ReadAttributes, FileShare.ReadWrite, followReparse: false))
             using (var followed = WindowsFileHandles.Open(link, WindowsFileHandles.ReadAttributes, FileShare.ReadWrite, followReparse: true))
             {
-                Assert.True(WindowsFileHandles.Attributes(itself).HasFlag(FileAttributes.ReparsePoint));
-                Assert.False(WindowsFileHandles.Attributes(followed).HasFlag(FileAttributes.ReparsePoint));
-                Assert.Equal(
+                Assert.IsTrue(WindowsFileHandles.Attributes(itself).HasFlag(FileAttributes.ReparsePoint));
+                Assert.IsFalse(WindowsFileHandles.Attributes(followed).HasFlag(FileAttributes.ReparsePoint));
+                Assert.AreEqual(
                     Path.GetFileName(target),
                     Path.GetFileName(WindowsFileHandles.FinalPath(followed)));
             }

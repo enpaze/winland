@@ -1,69 +1,70 @@
 namespace Winland.Application.Tests;
 
+[TestClass]
 public class TrayIconTests
 {
-    [Fact]
+    [TestMethod]
     public void TheIconStartsOnWorkspaceOne()
     {
-        var outcome = new WindowManager().Execute("dispatch workspace 1").Effect;
+        var outcome = new WindowManager().Execute("workspace 1").Effect;
 
-        Assert.NotNull(outcome.Tray);
-        Assert.Equal("1", outcome.Tray.Number);
-        Assert.Equal("Winland, Workspace 1", outcome.Tray.Tip);
+        Assert.IsNotNull(outcome.Tray);
+        Assert.AreEqual("1", outcome.Tray.Number);
+        Assert.AreEqual("Winland, Workspace 1", outcome.Tray.Tip);
     }
 
-    [Fact]
+    [TestMethod]
     public void SwitchingWorkspaceChangesTheNumber()
     {
         var core = new WindowManager();
 
-        var outcome = core.Execute("dispatch workspace 2").Effect;
+        var outcome = core.Execute("workspace 2").Effect;
 
-        Assert.Equal(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
-        Assert.Equal("2", outcome.Tray!.Number);
+        Assert.AreEqual(new WorkspaceId("2"), outcome.State.ActiveWorkspace);
+        Assert.AreEqual("2", outcome.Tray!.Number);
     }
 
-    [Fact]
+    [TestMethod]
     public void ANamedWorkspaceIsNotCreated()
     {
-        var reply = new WindowManager().Execute("dispatch workspace name:dev");
+        var reply = new WindowManager().Execute("workspace name:dev");
 
-        Assert.Equal("error: no such workspace", reply.Text);
-        Assert.Equal(WorkspaceId.Initial, reply.Effect.State.ActiveWorkspace);
-        Assert.Equal("1", reply.Effect.Tray!.Number);
-        Assert.DoesNotContain(reply.Effect.State.Workspaces, workspace => workspace.Id.Name == "dev");
+        Assert.AreEqual("error: no such workspace", reply.Text);
+        Assert.AreEqual(WorkspaceId.Initial, reply.Effect.State.ActiveWorkspace);
+        Assert.AreEqual("1", reply.Effect.Tray!.Number);
+        Assert.DoesNotContain(workspace => workspace.Id.Name == "dev", reply.Effect.State.Workspaces);
     }
 
-    [Fact]
+    [TestMethod]
     public void ASpecialWorkspaceKeepsTheNumberUnderneath()
     {
         var core = new WindowManager();
-        core.Execute("dispatch workspace 4");
+        core.Execute("workspace 4");
 
-        var opened = core.Execute("dispatch togglespecialworkspace scratch").Effect;
+        var opened = core.Execute("scratchpad scratch").Effect;
 
-        Assert.Equal(new WorkspaceId("4"), opened.State.ActiveWorkspace);
-        Assert.NotNull(opened.State.SpecialWorkspace);
-        Assert.Equal("4", opened.Tray!.Number);
+        Assert.AreEqual(new WorkspaceId("4"), opened.State.ActiveWorkspace);
+        Assert.IsNotNull(opened.State.SpecialWorkspace);
+        Assert.AreEqual("4", opened.Tray!.Number);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheFocusedMonitorsWorkspaceIsTheNumber()
     {
         var core = TwoMonitors();
-        Assert.Equal(new WorkspaceId("1"), core.Execute("dispatch workspace 1").Effect.State.ActiveWorkspace);
-        Assert.Equal("1", core.Execute("dispatch focusmonitor LEFT").Effect.Tray!.Number);
+        Assert.AreEqual(new WorkspaceId("1"), core.Execute("workspace 1").Effect.State.ActiveWorkspace);
+        Assert.AreEqual("1", core.Execute("focus-monitor LEFT").Effect.Tray!.Number);
 
-        var right = core.Execute("dispatch focusmonitor RIGHT").Effect;
+        var right = core.Execute("focus-monitor RIGHT").Effect;
 
-        Assert.Equal(WorkspaceId.FromNumber(1, new MonitorId(1)), right.State.ActiveWorkspace);
-        Assert.Equal("1", right.Tray!.Number);
+        Assert.AreEqual(WorkspaceId.FromNumber(1, new MonitorId(1)), right.State.ActiveWorkspace);
+        Assert.AreEqual("1", right.Tray!.Number);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheMenuIsReloadEditConfigOpenLogAndQuitWhenTheLogExists()
     {
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 new TrayMenuItem(TrayCommand.Reload, "&Reload"),
                 new TrayMenuItem(TrayCommand.EditConfig, "&Edit config"),
@@ -73,10 +74,10 @@ public class TrayIconTests
             TrayIcon.MenuFor(logExists: true));
     }
 
-    [Fact]
+    [TestMethod]
     public void TheMenuLeavesOutOpenLogWhenThereIsNoLogFile()
     {
-        Assert.Equal(
+        Assert.AreSequenceEqual(
             [
                 new TrayMenuItem(TrayCommand.Reload, "&Reload"),
                 new TrayMenuItem(TrayCommand.EditConfig, "&Edit config"),
@@ -85,13 +86,13 @@ public class TrayIconTests
             TrayIcon.MenuFor(logExists: false));
     }
 
-    [Theory]
-    [InlineData("special:", "special")]
-    [InlineData("special:scratch", "scratch")]
-    [InlineData("12", "12")]
+    [TestMethod]
+    [DataRow("special:", "special")]
+    [DataRow("special:scratch", "scratch")]
+    [DataRow("12", "12")]
     public void TextUsesTheNumberOrTheName(string name, string text)
     {
-        Assert.Equal(text, TrayIcon.Text(new WorkspaceId(name)));
+        Assert.AreEqual(text, TrayIcon.Text(new WorkspaceId(name)));
     }
 
     private static WindowManager TwoMonitors()
@@ -102,7 +103,7 @@ public class TrayIconTests
             new Monitor("LEFT", "Left", 0, 0, 1920, 1080, 1, true, new Rectangle(0, 0, 1920, 1080)),
             new Monitor("RIGHT", "Right", 1920, 0, 1920, 1080, 1, true, new Rectangle(1920, 0, 1920, 1080)),
         ]));
-        core.Execute("dispatch focusmonitor LEFT");
+        core.Execute("focus-monitor LEFT");
         return core;
     }
 }

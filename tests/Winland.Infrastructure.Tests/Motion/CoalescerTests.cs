@@ -1,8 +1,9 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class CoalescerTests
 {
-    [Fact]
+    [TestMethod]
     public void ValuesPostedWhileOneIsHandledFoldIntoTheNewest()
     {
         using var first = new ManualResetEventSlim();
@@ -28,20 +29,20 @@ public class CoalescerTests
         }, TimeSpan.Zero, "test coalescer");
 
         coalescer.Post("1");
-        Assert.True(first.Wait(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(first.Wait(TimeSpan.FromSeconds(5)));
         coalescer.Post("2");
         coalescer.Post("3");
         coalescer.Post("4");
         release.Set();
 
-        Assert.True(last.Wait(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(last.Wait(TimeSpan.FromSeconds(5)));
         coalescer.Post("done");
-        Assert.True(drained.Wait(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(drained.Wait(TimeSpan.FromSeconds(5)));
         lock (handled)
-            Assert.Equal(["1", "4", "done"], handled);
+            Assert.AreSequenceEqual(["1", "4", "done"], handled);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValuesPostedDuringTheGapFoldIntoTheNewest()
     {
         using var first = new ManualResetEventSlim();
@@ -59,16 +60,16 @@ public class CoalescerTests
         }, TimeSpan.FromMilliseconds(500), "test coalescer");
 
         coalescer.Post("1");
-        Assert.True(first.Wait(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(first.Wait(TimeSpan.FromSeconds(5)));
         coalescer.Post("2");
         coalescer.Post("3");
 
-        Assert.True(last.Wait(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(last.Wait(TimeSpan.FromSeconds(5)));
         lock (handled)
-            Assert.Equal(["1", "3"], handled);
+            Assert.AreSequenceEqual(["1", "3"], handled);
     }
 
-    [Fact]
+    [TestMethod]
     public void AHandlerThatThrowsDoesNotStopTheWorker()
     {
         using var threw = new ManualResetEventSlim();
@@ -85,13 +86,13 @@ public class CoalescerTests
         }, TimeSpan.Zero, "test coalescer");
 
         coalescer.Post("bad");
-        Assert.True(threw.Wait(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(threw.Wait(TimeSpan.FromSeconds(5)));
         coalescer.Post("good");
 
-        Assert.True(handled.Wait(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(handled.Wait(TimeSpan.FromSeconds(5)));
     }
 
-    [Fact]
+    [TestMethod]
     public void AfterDisposeNothingIsHandledAndDisposingAgainDoesNothing()
     {
         var calls = 0;
@@ -102,19 +103,19 @@ public class CoalescerTests
         coalescer.Post("later");
         coalescer.Dispose();
 
-        Assert.Equal(0, Volatile.Read(ref calls));
+        Assert.AreEqual(0, Volatile.Read(ref calls));
     }
 
-    [Fact]
+    [TestMethod]
     public void NoHandlerOrNoValueIsRefused()
     {
         using var coalescer = new Coalescer<string>(_ => { }, TimeSpan.Zero, "test coalescer");
 
-        Assert.Throws<ArgumentNullException>(() => new Coalescer<string>(null!, TimeSpan.Zero, "test coalescer"));
-        Assert.Throws<ArgumentNullException>(() => coalescer.Post(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => new Coalescer<string>(null!, TimeSpan.Zero, "test coalescer"));
+        Assert.ThrowsExactly<ArgumentNullException>(() => coalescer.Post(null!));
     }
 
-    [Fact]
+    [TestMethod]
     public void ThePosterDoesNotWaitForTheHandler()
     {
         using var release = new ManualResetEventSlim();
@@ -124,7 +125,7 @@ public class CoalescerTests
         coalescer.Post("slow");
         coalescer.Post("slower");
 
-        Assert.True(Environment.TickCount64 - started < 1000);
+        Assert.IsTrue(Environment.TickCount64 - started < 1000);
         release.Set();
     }
 }

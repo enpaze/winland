@@ -1,18 +1,19 @@
 namespace Winland.Domain.Tests;
 
+[TestClass]
 public class DebugOptionsTests
 {
-    [Fact]
+    [TestMethod]
     public void LogsAreOffByDefault()
     {
-        Assert.True(DebugOptions.From(ConfigParser.Parse("")).DisableLogs);
+        Assert.IsFalse(DebugOptions.From(ConfigParser.Parse("")).LogFile);
     }
 
-    [Fact]
-    public void DisableLogsIsReadWithoutAWarningAndTheOtherDebugOptionsWarn()
+    [TestMethod]
+    public void LogFileIsReadWithoutAWarningAndTheOtherDebugOptionsWarn()
     {
         var document = ConfigParser.Parse("""
-            debug:disable_logs = false
+            log_file = true
             debug:disable_time = false
             debug:enable_stdout_logs = true
             debug:colored_stdout_logs = false
@@ -20,10 +21,10 @@ public class DebugOptionsTests
             """);
         var options = DebugOptions.From(document);
 
-        Assert.False(options.DisableLogs);
-        Assert.Contains(document.Warnings, warning => warning.Message == "Unsupported keyword 'debug:disable_time'.");
-        Assert.Contains(document.Warnings, warning => warning.Message == "Unsupported keyword 'debug:enable_stdout_logs'.");
-        Assert.Contains(document.Warnings, warning => warning.Message == "Unsupported keyword 'debug:colored_stdout_logs'.");
-        Assert.Contains(document.Warnings, warning => warning.Message == "Unsupported keyword 'debug:overlay'.");
+        Assert.IsTrue(options.LogFile);
+        Assert.Contains(warning => warning.Message == "Unsupported keyword 'debug:disable_time'.", document.Warnings);
+        Assert.Contains(warning => warning.Message == "Unsupported keyword 'debug:enable_stdout_logs'.", document.Warnings);
+        Assert.Contains(warning => warning.Message == "Unsupported keyword 'debug:colored_stdout_logs'.", document.Warnings);
+        Assert.Contains(warning => warning.Message == "Unsupported keyword 'debug:overlay'.", document.Warnings);
     }
 }

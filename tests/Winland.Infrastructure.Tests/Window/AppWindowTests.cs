@@ -3,21 +3,20 @@ using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Winland.Infrastructure.Tests;
-
-[Collection(DesktopCollection.Name)]
+[TestClass]
 public class AppWindowTests
 {
     [DesktopFact]
     public void AWindowWithoutASizingFrameIsAdoptedFloating()
     {
         using var window = new Probe(resizable: false);
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0"));
         using var adapter = new WindowAdapter(core);
         core.ReducedMotion = () => true;
 
         adapter.AdoptExisting([(nint)window.Handle]);
 
-        Assert.True(Assert.Single(core.Recovery().Clients).Floating);
+        Assert.IsTrue(Assert.ContainsSingle(core.Recovery().Clients).Floating);
     }
 
     [DesktopFact]
@@ -25,24 +24,24 @@ public class AppWindowTests
     {
         using var window = new Probe();
         var expected = ProbeNative.Visible((nint)window.Handle);
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0\nwindowrule = float, class:*"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0\nwindowrule = float, class:*"));
         using var adapter = new WindowAdapter(core);
         core.ReducedMotion = () => true;
 
         adapter.AdoptExisting([(nint)window.Handle]);
-        var first = Assert.Single(core.Recovery().Clients).Bounds!.Value;
-        Assert.Equal(expected.Width, first.Width);
-        Assert.Equal(expected.Height, first.Height);
+        var first = Assert.ContainsSingle(core.Recovery().Clients).Bounds!.Value;
+        Assert.AreEqual(expected.Width, first.Width);
+        Assert.AreEqual(expected.Height, first.Height);
         core.Handle(new WindowClosed(window.Id));
         adapter.AdoptExisting([(nint)window.Handle]);
-        Assert.Equal(first, Assert.Single(core.Recovery().Clients).Bounds);
+        Assert.AreEqual(first, Assert.ContainsSingle(core.Recovery().Clients).Bounds);
     }
 
     [DesktopFact]
     public void ADialogWhoseOwnerWinlandHidStillFloatsOnItsOwnersWorkspace()
     {
         using var owner = new Probe();
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0"));
         using var adapter = new WindowAdapter(core);
         core.ReducedMotion = () => true;
         adapter.AdoptExisting([(nint)owner.Handle]);
@@ -51,10 +50,10 @@ public class AppWindowTests
 
         adapter.AdoptExisting([(nint)dialog.Handle]);
 
-        var client = Assert.Single(core.Recovery().Clients, client => client.Window == dialog.Id);
-        Assert.True(client.Floating);
-        Assert.True(client.Hidden);
-        Assert.Equal(new WorkspaceId("1"), client.Workspace);
+        var client = Assert.ContainsSingle(client => client.Window == dialog.Id, core.Recovery().Clients);
+        Assert.IsTrue(client.Floating);
+        Assert.IsTrue(client.Hidden);
+        Assert.AreEqual(new WorkspaceId("1"), client.Workspace);
     }
 
     [DesktopFact]
@@ -67,8 +66,8 @@ public class AppWindowTests
         adapter.AdoptExisting([(nint)window.Handle]);
         adapter.Apply(core.Handle(new Dispatch("workspace", "2")));
 
-        Assert.False(core.Manages(window.Id));
-        Assert.True(PInvoke.IsWindowVisible(window.Handle));
+        Assert.IsFalse(core.Manages(window.Id));
+        Assert.IsTrue(PInvoke.IsWindowVisible(window.Handle));
     }
 
     [DesktopFact]
@@ -85,19 +84,19 @@ public class AppWindowTests
         adapter.Notice(PInvoke.EVENT_OBJECT_SHOW, (nint)window.Handle);
         adapter.Apply(core.Handle(new Dispatch("workspace", "2")));
 
-        Assert.False(core.Manages(window.Id));
-        Assert.True(PInvoke.IsWindowVisible(window.Handle));
-        Assert.Equal(expected, ProbeNative.Visible((nint)window.Handle));
-        Assert.False(((WINDOW_EX_STYLE)PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
+        Assert.IsFalse(core.Manages(window.Id));
+        Assert.IsTrue(PInvoke.IsWindowVisible(window.Handle));
+        Assert.AreEqual(expected, ProbeNative.Visible((nint)window.Handle));
+        Assert.IsFalse(((WINDOW_EX_STYLE)PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
             .HasFlag(WINDOW_EX_STYLE.WS_EX_LAYERED));
 
         PInvoke.ShowWindow(window.Handle, SHOW_WINDOW_CMD.SW_HIDE);
         adapter.Notice(PInvoke.EVENT_OBJECT_CREATE, (nint)window.Handle);
-        Assert.False(((WINDOW_EX_STYLE)PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
+        Assert.IsFalse(((WINDOW_EX_STYLE)PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
             .HasFlag(WINDOW_EX_STYLE.WS_EX_LAYERED));
         PInvoke.ShowWindow(window.Handle, SHOW_WINDOW_CMD.SW_SHOWNOACTIVATE);
         adapter.Notice(PInvoke.EVENT_OBJECT_SHOW, (nint)window.Handle);
-        Assert.False(core.Manages(window.Id));
+        Assert.IsFalse(core.Manages(window.Id));
     }
 
     [DesktopFact]
@@ -111,11 +110,11 @@ public class AppWindowTests
             previous.ReducedMotion = () => true;
             adapter.AdoptExisting([(nint)window.Handle]);
             snapshot = WindowIdentity.Annotate(previous.Recovery());
-            Assert.Single(snapshot.Clients);
+            Assert.ContainsSingle(snapshot.Clients);
         }
 
         var extended = PInvoke.GetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-        Assert.NotEqual(0, PInvoke.SetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE,
+        Assert.AreNotEqual(0, PInvoke.SetWindowLong(window.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE,
             extended | (int)WINDOW_EX_STYLE.WS_EX_TRANSPARENT));
         var expected = ProbeNative.Visible((nint)window.Handle);
         var core = new WindowManager();
@@ -124,15 +123,15 @@ public class AppWindowTests
 
         restarted.Recover(snapshot);
 
-        Assert.False(core.Manages(window.Id));
-        Assert.True(PInvoke.IsWindowVisible(window.Handle));
-        Assert.Equal(expected, ProbeNative.Visible((nint)window.Handle));
+        Assert.IsFalse(core.Manages(window.Id));
+        Assert.IsTrue(PInvoke.IsWindowVisible(window.Handle));
+        Assert.AreEqual(expected, ProbeNative.Visible((nint)window.Handle));
 
         PInvoke.ShowWindow(window.Handle, SHOW_WINDOW_CMD.SW_HIDE);
         restarted.Recover(snapshot with { Clients = [snapshot.Clients[0] with { Hidden = true }] });
 
-        Assert.False(core.Manages(window.Id));
-        Assert.True(PumpUntil(() => PInvoke.IsWindowVisible(window.Handle)));
+        Assert.IsFalse(core.Manages(window.Id));
+        Assert.IsTrue(PumpUntil(() => PInvoke.IsWindowVisible(window.Handle)));
     }
 
     [DesktopFact]
@@ -144,13 +143,13 @@ public class AppWindowTests
     private static void ShowToolWindow(string title, bool adopted)
     {
         using var window = new Probe(extended: WINDOW_EX_STYLE.WS_EX_TOOLWINDOW, title: title);
-        var core = new WindowManager(ConfigParser.Parse("general:border_size = 0\nwindowrule = float, class:*"));
+        var core = new WindowManager(ConfigParser.Parse("border_size = 0\nwindowrule = float, class:*"));
         using var adapter = new WindowAdapter(core);
         core.ReducedMotion = () => true;
 
         adapter.Notice(PInvoke.EVENT_OBJECT_SHOW, (nint)window.Handle);
 
-        Assert.Equal(adopted, core.Manages(window.Id));
+        Assert.AreEqual(adopted, core.Manages(window.Id));
     }
 
     private static bool PumpUntil(Func<bool> condition) =>
@@ -174,7 +173,7 @@ public class AppWindowTests
                 style &= ~WINDOW_STYLE.WS_THICKFRAME;
             Handle = PInvoke.CreateWindowEx(extended, "STATIC", title, style,
                 100, 100, 450, 300, owner, null, null, null);
-            Assert.False(Handle.IsNull);
+            Assert.IsFalse(Handle.IsNull);
             PInvoke.ShowWindow(Handle, SHOW_WINDOW_CMD.SW_SHOWNOACTIVATE);
         }
 

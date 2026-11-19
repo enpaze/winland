@@ -1,5 +1,6 @@
 namespace Winland.Infrastructure.Tests;
 
+[TestClass]
 public class WindowAdapterTests
 {
     private const string Config = "";
@@ -7,7 +8,7 @@ public class WindowAdapterTests
     private static bool Posted(string call, long window) =>
         call.StartsWith($"bounds {window} ", StringComparison.Ordinal) && call.EndsWith(" Post", StringComparison.Ordinal);
 
-    [Fact]
+    [TestMethod]
     public void InspectingAClientWhoseWindowIsGoneFindsNothingAndChangesNothing()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -18,11 +19,11 @@ public class WindowAdapterTests
 
         Assert.StartsWith("""{"status":"not_found","target":"selector",""", reply.Text, StringComparison.Ordinal);
         Assert.Contains("\"reason\":\"closed\"", reply.Text, StringComparison.Ordinal);
-        Assert.Empty(windows.Desktop.Calls);
-        Assert.Empty(reply.Effect.Placements);
+        Assert.IsEmpty(windows.Desktop.Calls);
+        Assert.IsEmpty(reply.Effect.Placements);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowRevealedOnExitStaysShownWhenItsWorkspaceIsHiddenAgain()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -30,17 +31,17 @@ public class WindowAdapterTests
         windows.Dispatch("workspace", "2");
         windows.Open(2);
         windows.Dispatch("workspace", "1");
-        Assert.False(windows.Desktop[2].Shown);
+        Assert.IsFalse(windows.Desktop[2].Shown);
 
         windows.Adapter.RevealHidden();
 
-        Assert.True(windows.Desktop[2].Shown);
+        Assert.IsTrue(windows.Desktop[2].Shown);
         windows.Dispatch("workspace", "2");
-        Assert.True(windows.Desktop[1].Shown);
-        Assert.True(windows.Desktop[2].Shown);
+        Assert.IsTrue(windows.Desktop[1].Shown);
+        Assert.IsTrue(windows.Desktop[2].Shown);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOutcomeAppliedAfterTheExitCleanupHidesNothing()
     {
         var windows = new TestWindows(reducedMotion: true);
@@ -53,31 +54,31 @@ public class WindowAdapterTests
 
         windows.Dispatch("workspace", "1");
 
-        Assert.True(windows.Desktop[1].Shown);
-        Assert.True(windows.Desktop[2].Shown);
-        Assert.Empty(windows.Desktop.Calls);
+        Assert.IsTrue(windows.Desktop[1].Shown);
+        Assert.IsTrue(windows.Desktop[2].Shown);
+        Assert.IsEmpty(windows.Desktop.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void ADestroyedConcealedWindowIsForgottenBeforeItsHandleIsReused()
     {
         using var windows = new TestWindows(reducedMotion: true);
         windows.Open(1);
         windows.Open(2);
         windows.Dispatch("workspace", "2");
-        Assert.False(windows.Desktop[2].Shown);
+        Assert.IsFalse(windows.Desktop[2].Shown);
         windows.Desktop.Remove(2);
 
         windows.Adapter.Notice(Windows.Win32.PInvoke.EVENT_OBJECT_DESTROY, (nint)2);
-        Assert.False(windows.Core.Manages(new WindowId(2)));
+        Assert.IsFalse(windows.Core.Manages(new WindowId(2)));
         windows.Desktop.Add(2, TestWindows.Area);
         windows.Desktop.Calls.Clear();
         windows.Adapter.Salvage();
 
-        Assert.DoesNotContain(windows.Desktop.Calls, call => call.StartsWith("show 2 ", StringComparison.Ordinal));
+        Assert.DoesNotContain(call => call.StartsWith("show 2 ", StringComparison.Ordinal), windows.Desktop.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void DropGoneClosesOnlyClientsWhoseWindowsNoLongerExist()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -87,12 +88,12 @@ public class WindowAdapterTests
 
         windows.Adapter.DropGone();
 
-        Assert.True(windows.Core.Manages(first));
-        Assert.False(windows.Core.Manages(second));
-        Assert.Equal(first, Assert.Single(windows.Core.Recovery().Clients).Window);
+        Assert.IsTrue(windows.Core.Manages(first));
+        Assert.IsFalse(windows.Core.Manages(second));
+        Assert.AreEqual(first, Assert.ContainsSingle(windows.Core.Recovery().Clients).Window);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOutcomeIsCarriedOutInTheOrderOfItsParts()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -127,12 +128,12 @@ public class WindowAdapterTests
             desktop.IndexOf("show 3 Hide"),
         };
         Assert.DoesNotContain(-1, order);
-        Assert.Equal(order.Order(), order);
+        Assert.AreSequenceEqual(order.Order(), order);
 
-        Assert.Equal(-1, desktop.IndexOf("raise 2 top"));
+        Assert.AreEqual(-1, desktop.IndexOf("raise 2 top"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOutcomeDecidedWhileAnotherWaitsToPaintLandsAfterIt()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -153,7 +154,7 @@ public class WindowAdapterTests
                 windows.Adapter.Apply(back);
             });
             other.Start();
-            Assert.True(decided.Wait(TimeSpan.FromSeconds(5)));
+            Assert.IsTrue(decided.Wait(TimeSpan.FromSeconds(5)));
 
             var deadline = Environment.TickCount64 + 5000;
             while ((other.ThreadState & (ThreadState.Stopped | ThreadState.WaitSleepJoin)) == 0 && Environment.TickCount64 < deadline)
@@ -161,39 +162,39 @@ public class WindowAdapterTests
         };
 
         windows.Dispatch("workspace", "1");
-        Assert.True(other!.Join(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(other!.Join(TimeSpan.FromSeconds(5)));
 
-        Assert.True(windows.Desktop[2].Shown);
-        Assert.False(windows.Desktop[1].Shown);
+        Assert.IsTrue(windows.Desktop[2].Shown);
+        Assert.IsFalse(windows.Desktop[1].Shown);
     }
 
-    [Fact]
+    [TestMethod]
     public void HidingTheForegroundWindowWithNothingFocusedGivesTheDesktopTheKeyboardFirst()
     {
         using var windows = new TestWindows(reducedMotion: true);
         var first = windows.Open(1);
         windows.Desktop.ForegroundWindow = first;
         var away = windows.Core.Handle(new Dispatch("workspace", "2"));
-        Assert.Null(away.Focus);
+        Assert.IsNull(away.Focus);
         windows.Desktop.Calls.Clear();
 
         windows.Apply(away);
 
         var desktop = windows.Desktop;
-        Assert.True(desktop.IndexOf("foreground desktop") >= 0);
-        Assert.True(desktop.IndexOf("foreground desktop") < desktop.IndexOf("show 1 Hide"));
+        Assert.IsTrue(desktop.IndexOf("foreground desktop") >= 0);
+        Assert.IsTrue(desktop.IndexOf("foreground desktop") < desktop.IndexOf("show 1 Hide"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AGroupsNextMemberIsShownUnderTheLastBeforeItIsHidden()
     {
         using var windows = new TestWindows(reducedMotion: true);
         var first = windows.Open(1);
-        windows.Dispatch("togglegroup", "");
+        windows.Dispatch("group");
         var second = windows.Open(2);
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("changegroupactive", "b");
+        windows.Dispatch("tab", "prev");
 
         var desktop = windows.Desktop;
         var order = new[]
@@ -203,10 +204,10 @@ public class WindowAdapterTests
             desktop.IndexOf($"show {second.Value} Hide"),
         };
         Assert.DoesNotContain(-1, order);
-        Assert.Equal(order.Order(), order);
+        Assert.AreSequenceEqual(order.Order(), order);
     }
 
-    [Fact]
+    [TestMethod]
     public void TransitionsAreTurnedOffOncePerWindowBeforeItsFirstHide()
     {
         using var windows = new TestWindows(Config);
@@ -218,13 +219,13 @@ public class WindowAdapterTests
         windows.Settle();
 
         var calls = windows.Desktop.Calls;
-        Assert.Equal(1, calls.Count(call => call == "attr 1 3=1"));
-        Assert.Equal(1, calls.Count(call => call == "attr 2 3=1"));
-        Assert.True(calls.IndexOf("attr 1 3=1") < windows.Desktop.IndexOf("show 1 Hide"));
-        Assert.True(calls.IndexOf("attr 2 3=1") < windows.Desktop.IndexOf("show 2 Hide"));
+        Assert.AreEqual(1, calls.Count(call => call == "attr 1 3=1"));
+        Assert.AreEqual(1, calls.Count(call => call == "attr 2 3=1"));
+        Assert.IsTrue(calls.IndexOf("attr 1 3=1") < windows.Desktop.IndexOf("show 1 Hide"));
+        Assert.IsTrue(calls.IndexOf("attr 2 3=1") < windows.Desktop.IndexOf("show 2 Hide"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowAWorkspaceSlidesInTakesItsFirstFrameBeforeItShows()
     {
         using var windows = new TestWindows(Config);
@@ -240,56 +241,56 @@ public class WindowAdapterTests
         var first = calls.FindIndex(call => call.StartsWith("bounds 1 ", StringComparison.Ordinal));
         Assert.EndsWith(" Wait", calls[first], StringComparison.Ordinal);
         Assert.StartsWith("bounds 1 -", calls[first], StringComparison.Ordinal);
-        Assert.True(first < windows.Desktop.IndexOf("show 1 Show"));
+        Assert.IsTrue(first < windows.Desktop.IndexOf("show 1 Show"));
     }
 
-    [Fact]
+    [TestMethod]
     public void AClientClosedAndOpenedAgainOnTheSameHandleIsPaintedAgain()
     {
         using var windows = new TestWindows(reducedMotion: true);
         windows.Open(1);
         var second = windows.Open(2);
         windows.Apply(windows.Core.Handle(new WindowClosed(second)));
-        Assert.Equal(0u, windows.Desktop[2].Attributes[3]);
+        Assert.AreEqual(0u, windows.Desktop[2].Attributes[3]);
         windows.Desktop.Remove(2);
 
         windows.Open(2);
 
-        Assert.Equal(1u, windows.Desktop[2].Attributes[3]);
+        Assert.AreEqual(1u, windows.Desktop[2].Attributes[3]);
     }
 
-    [Fact]
+    [TestMethod]
     public void TheClientsWhoseDecorationChangedArePaintedAgain()
     {
-        using var windows = new TestWindows("decoration:inactive_opacity = 0.5\n", reducedMotion: true);
+        using var windows = new TestWindows("inactive_opacity = 0.5\n", reducedMotion: true);
         windows.Open(1);
         windows.Open(2);
         windows.Open(3);
-        Assert.Equal(0x80000u, windows.Desktop[1].ExStyle & 0x80000);
+        Assert.AreEqual(0x80000u, windows.Desktop[1].ExStyle & 0x80000);
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("focuswindow", "address:0x1");
+        windows.Dispatch("focus", "address:0x1");
 
-        Assert.Equal(0u, windows.Desktop[1].ExStyle & 0x80000);
-        Assert.Equal(128, windows.Desktop[3].Alpha);
-        Assert.DoesNotContain(windows.Desktop.Calls, call => call.EndsWith(" 2", StringComparison.Ordinal) || call.Contains(" 2 ", StringComparison.Ordinal));
+        Assert.AreEqual(0u, windows.Desktop[1].ExStyle & 0x80000);
+        Assert.AreEqual(128, windows.Desktop[3].Alpha);
+        Assert.DoesNotContain(call => call.EndsWith(" 2", StringComparison.Ordinal) || call.Contains(" 2 ", StringComparison.Ordinal), windows.Desktop.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void TransitionsAreTurnedOnAgainWhenADecorationIsReset()
     {
         using var windows = new TestWindows(reducedMotion: true);
         windows.Open(1);
         var second = windows.Open(2);
-        Assert.Equal(1u, windows.Desktop[2].Attributes[3]);
+        Assert.AreEqual(1u, windows.Desktop[2].Attributes[3]);
 
         windows.Apply(windows.Core.Handle(new WindowClosed(second)));
 
-        Assert.Equal(0u, windows.Desktop[2].Attributes[3]);
-        Assert.Equal(1u, windows.Desktop[1].Attributes[3]);
+        Assert.AreEqual(0u, windows.Desktop[2].Attributes[3]);
+        Assert.AreEqual(1u, windows.Desktop[1].Attributes[3]);
     }
 
-    [Fact]
+    [TestMethod]
     public void SalvageShowsEveryWindowItHidAndEveryOneTheSnapshotHolds()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -298,21 +299,21 @@ public class WindowAdapterTests
         var second = windows.Open(2);
         windows.Dispatch("workspace", "1");
         var snapshot = windows.Adapter.Capture();
-        Assert.Equal([second], snapshot!.Clients.Where(client => client.Hidden).Select(client => client.Window));
+        Assert.AreSequenceEqual([second], snapshot!.Clients.Where(client => client.Hidden).Select(client => client.Window));
 
         windows.Dispatch("workspace", "2");
-        Assert.False(windows.Desktop[1].Shown);
+        Assert.IsFalse(windows.Desktop[1].Shown);
         windows.Desktop.Calls.Clear();
 
         windows.Adapter.Salvage();
 
-        Assert.True(windows.Desktop[1].Shown);
-        Assert.True(windows.Desktop[2].Shown);
+        Assert.IsTrue(windows.Desktop[1].Shown);
+        Assert.IsTrue(windows.Desktop[2].Shown);
         Assert.Contains("show 1 Show", windows.Desktop.Calls);
         Assert.Contains("show 2 Show", windows.Desktop.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void SalvageSkipsAWindowThatIsGone()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -325,37 +326,37 @@ public class WindowAdapterTests
 
         windows.Adapter.Salvage();
 
-        Assert.DoesNotContain(windows.Desktop.Calls, call => call.StartsWith("show 2 ", StringComparison.Ordinal));
+        Assert.DoesNotContain(call => call.StartsWith("show 2 ", StringComparison.Ordinal), windows.Desktop.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void AfterSalvageNothingIsCaptured()
     {
         using var windows = new TestWindows(reducedMotion: true);
         windows.Open(1);
-        Assert.NotNull(windows.Adapter.Capture());
+        Assert.IsNotNull(windows.Adapter.Capture());
 
         windows.Adapter.Salvage();
 
-        Assert.Null(windows.Adapter.Capture());
+        Assert.IsNull(windows.Adapter.Capture());
     }
 
-    [Fact]
+    [TestMethod]
     public void AnOutcomeThatAsksForNothingTouchesNothing()
     {
         var published = 0;
         using var windows = new TestWindows(reducedMotion: true, changed: () => published++);
         windows.Open(1);
-        Assert.Equal(1, published);
+        Assert.AreEqual(1, published);
         windows.Desktop.Calls.Clear();
 
         windows.Adapter.Apply(new Outcome([], new State([])) { IsEmpty = true });
 
-        Assert.Empty(windows.Desktop.Calls);
-        Assert.Equal(1, published);
+        Assert.IsEmpty(windows.Desktop.Calls);
+        Assert.AreEqual(1, published);
     }
 
-    [Fact]
+    [TestMethod]
     public void AHungWindowIsHiddenWithoutWaitingForIt()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -371,7 +372,7 @@ public class WindowAdapterTests
         Assert.DoesNotContain("show 1 Hide", windows.Desktop.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void AHungWindowIsPlacedWithoutWaitingForIt()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -381,12 +382,12 @@ public class WindowAdapterTests
 
         windows.Open(2);
 
-        Assert.Contains(windows.Desktop.Calls, call => Posted(call, 1));
-        Assert.DoesNotContain(windows.Desktop.Calls, call => call.StartsWith("bounds 1 ", StringComparison.Ordinal) && call.EndsWith(" Wait", StringComparison.Ordinal));
-        Assert.Contains(windows.Desktop.Calls, call => call.StartsWith("bounds 2 ", StringComparison.Ordinal) && call.EndsWith(" Wait", StringComparison.Ordinal));
+        Assert.Contains(call => Posted(call, 1), windows.Desktop.Calls);
+        Assert.DoesNotContain(call => call.StartsWith("bounds 1 ", StringComparison.Ordinal) && call.EndsWith(" Wait", StringComparison.Ordinal), windows.Desktop.Calls);
+        Assert.Contains(call => call.StartsWith("bounds 2 ", StringComparison.Ordinal) && call.EndsWith(" Wait", StringComparison.Ordinal), windows.Desktop.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void AHungWindowIsRestackedWithoutWaitingForIt()
     {
         using var windows = new TestWindows();
@@ -397,44 +398,44 @@ public class WindowAdapterTests
 
         windows.Adapter.ApplyCore(new Outcome([], new State([])) { ZOrder = [new ZOrderRequest(first, true), new ZOrderRequest(second, false)] });
 
-        Assert.Equal(["raise-async 1 top", "raise 2 bottom"], windows.Desktop.Calls);
+        Assert.AreSequenceEqual(["raise-async 1 top", "raise 2 bottom"], windows.Desktop.Calls);
     }
 
-    [Fact]
+    [TestMethod]
     public void AFloatingWindowIsHeldOnTopWhileATileTakesTheFocus()
     {
         using var windows = new TestWindows();
         windows.Open(1);
         windows.Open(2);
-        windows.Dispatch("togglefloating");
+        windows.Dispatch("float");
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("focuswindow", "address:0x1");
+        windows.Dispatch("focus", "address:0x1");
 
         var calls = windows.Desktop.Calls;
-        Assert.True(calls.IndexOf("hold 2") >= 0, string.Join(" | ", calls));
-        Assert.True(calls.IndexOf("hold 2") < calls.IndexOf("foreground 1"), string.Join(" | ", calls));
-        Assert.True(calls.IndexOf("foreground 1") < calls.IndexOf("let-go 2"), string.Join(" | ", calls));
-        Assert.Equal(0u, windows.Desktop[2].ExStyle & 0x8);
+        Assert.IsTrue(calls.IndexOf("hold 2") >= 0, string.Join(" | ", calls));
+        Assert.IsTrue(calls.IndexOf("hold 2") < calls.IndexOf("foreground 1"), string.Join(" | ", calls));
+        Assert.IsTrue(calls.IndexOf("foreground 1") < calls.IndexOf("let-go 2"), string.Join(" | ", calls));
+        Assert.AreEqual(0u, windows.Desktop[2].ExStyle & 0x8);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowItsProgramKeepsOnTopStaysTopmost()
     {
         using var windows = new TestWindows();
         windows.Open(1);
         windows.Open(2);
-        windows.Dispatch("togglefloating");
+        windows.Dispatch("float");
         windows.Desktop[2].ExStyle |= 0x8;
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("focuswindow", "address:0x1");
+        windows.Dispatch("focus", "address:0x1");
 
         Assert.DoesNotContain("let-go 2", windows.Desktop.Calls);
-        Assert.Equal(0x8u, windows.Desktop[2].ExStyle & 0x8);
+        Assert.AreEqual(0x8u, windows.Desktop[2].ExStyle & 0x8);
     }
 
-    [Fact]
+    [TestMethod]
     public void AWindowClosedWithoutAMotionIsTransparentAsItGoesAndComesBackIfItStays()
     {
         using var windows = new TestWindows(reducedMotion: true);
@@ -442,14 +443,14 @@ public class WindowAdapterTests
         windows.Open(2);
         windows.Desktop.Calls.Clear();
 
-        windows.Dispatch("killactive");
+        windows.Dispatch("close");
 
         var desktop = windows.Desktop;
-        Assert.True(desktop.IndexOf("alpha 2 0") >= 0, "The window was not made transparent.");
-        Assert.True(desktop.IndexOf("alpha 2 0") < desktop.IndexOf("close 2"));
+        Assert.IsTrue(desktop.IndexOf("alpha 2 0") >= 0, "The window was not made transparent.");
+        Assert.IsTrue(desktop.IndexOf("alpha 2 0") < desktop.IndexOf("close 2"));
 
-        Assert.Equal(0, desktop[2].Alpha);
+        Assert.AreEqual(0, desktop[2].Alpha);
         windows.Settle();
-        Assert.Equal(0u, desktop[2].ExStyle & 0x00080000);
+        Assert.AreEqual(0u, desktop[2].ExStyle & 0x00080000);
     }
 }

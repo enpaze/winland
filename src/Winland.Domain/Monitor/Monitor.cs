@@ -13,14 +13,8 @@ public sealed record Monitor(
     string Make = "",
     string Model = "",
     string Serial = "",
-    double RefreshRate = 0,
-    int PhysicalWidth = 0,
-    int PhysicalHeight = 0)
+    double RefreshRate = 0)
 {
-    public string ColorPreset { get; init; } = "";
-
-    public string MirrorOf { get; init; } = "";
-
     public int BitsPerChannel { get; init; }
 
     public bool HdrCapable { get; init; }
@@ -42,14 +36,6 @@ public sealed record Monitor(
     public float MaxLuminance { get; init; } = -1;
 
     public float MaxAvgLuminance { get; init; } = -1;
-
-    public double SdrBrightness { get; init; } = 1;
-
-    public double SdrSaturation { get; init; } = 1;
-
-    public double SdrMinLuminance { get; init; } = 0.2;
-
-    public int SdrMaxLuminance { get; init; } = 80;
 }
 
 public readonly record struct MonitorId(int Value)

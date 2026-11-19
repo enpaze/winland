@@ -24,14 +24,14 @@ public sealed partial class WindowManager
             return opened;
 
         var space = selector.LastIndexOf(' ');
-        var silent = space >= 0 && selector[space..].Contains("silent", StringComparison.Ordinal);
-        if (silent)
+        var stay = space >= 0 && selector[(space + 1)..].Equals("stay", StringComparison.OrdinalIgnoreCase);
+        if (stay)
             selector = selector[..space].Trim();
 
         if (ResolveMonitor(selector) is not LiveMonitor chosen)
             return opened;
 
-        if (!silent && chosen.Id != FocusedId())
+        if (!stay && chosen.Id != FocusedId())
             Focus(chosen.Id);
 
         return chosen;
