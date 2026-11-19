@@ -88,7 +88,7 @@ internal sealed class QuickMove
                 _recent[window] = recent = new Queue<Placed>(Remembered);
             if (recent.Count == Remembered)
                 recent.Dequeue();
-            recent.Enqueue(new Placed(placed.X, placed.Y, now));
+            recent.Enqueue(new Placed(placed.X, placed.Y, placed.Width, placed.Height, now));
         }
     }
 
@@ -108,7 +108,8 @@ internal sealed class QuickMove
             var now = _clock();
             foreach (var placed in recent)
             {
-                if (now - placed.Since <= Patience && placed.X == current.X && placed.Y == current.Y)
+                if (now - placed.Since <= Patience && placed.X == current.X && placed.Y == current.Y
+                    && current.Width <= placed.Width && current.Height <= placed.Height)
                     return true;
             }
 
@@ -141,5 +142,5 @@ internal sealed class QuickMove
 
     private readonly record struct Pending(Rectangle Requested, int Skipped, long Since, Rectangle? Next = null);
 
-    private readonly record struct Placed(int X, int Y, long Since);
+    private readonly record struct Placed(int X, int Y, int Width, int Height, long Since);
 }

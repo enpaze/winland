@@ -96,6 +96,16 @@ public class QuickMoveTests
     }
 
     [TestMethod]
+    public void AWindowThatGrowsWhereWinlandPutItIsNotWinlands()
+    {
+        var moves = new QuickMove();
+        moves.Note(Window, new Rectangle(10, 0, 400, 300), waiting: false);
+
+        Assert.IsFalse(moves.Ours(Window, new Rectangle(10, 0, 480, 350)));
+        Assert.IsFalse(moves.Ours(Window, new Rectangle(10, 0, 400, 360)));
+    }
+
+    [TestMethod]
     public void AnEarlierFrameOfAMotionIsStillWinlands()
     {
         var moves = new QuickMove();
