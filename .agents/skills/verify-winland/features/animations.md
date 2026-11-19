@@ -33,3 +33,4 @@ Preconditions:
 - The baseline config sets `animations = false`, so every other driver moves windows at once. Only this driver's line turns animations on.
 - The driver turns Animation effects off again in its cleanup. A run killed before that leaves the setting on.
 - The driver checks only a Workspace with a higher number sliding in from the right. It does not reach a Window opening or fading in, a tile moving or resizing, fullscreen, a Window closing, a lower Workspace sliding in from the left, the special workspace fade, or opacity and border blends.
+- A slide is drawn only inside its Monitor. This driver has one Monitor, so it does not check a Monitor beside it.

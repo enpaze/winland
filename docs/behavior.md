@@ -332,7 +332,7 @@ A Client that takes the foreground is handled as an activation request, which ho
 
 A Window opens from a 5 by 5 rectangle at its middle and fades in. A shown Window that changes its Layout rectangle moves from where it is to that rectangle. Keyboard resizing animates, while mouse dragging and resizing follow the pointer at once. Neighbours making room for a lifted or dropped tile animate. A Window entering or leaving fullscreen moves between its tile and Monitor, and one that stays fullscreen is placed at once.
 
-A Workspace with a higher number comes in from the right; one with a lower number comes in from the left. Each travels the Monitor's width. A special workspace also fades. A leaving Window hides when the motion ends. Opacity and border changes blend over 800 ms, with border colors blended in OkLab.
+A Workspace with a higher number comes in from the right; one with a lower number comes in from the left. Each travels the Monitor's width. The slide is drawn only inside that Monitor. A part that has left the Monitor is not drawn, so it does not appear on a Monitor beside it. A special workspace also fades. A leaving Window hides when the motion ends. Opacity and border changes blend over 800 ms, with border colors blended in OkLab.
 
 A Window Winland closes goes at once: it is made transparent and asked to close. If it stays open for 1.5 seconds it is put back on its Layout rectangle at full alpha.
 

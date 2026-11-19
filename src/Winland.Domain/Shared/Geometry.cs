@@ -18,6 +18,35 @@ public readonly record struct Rectangle(int X, int Y, int Width, int Height)
         var dy = point.Y < Y ? Y - point.Y : point.Y >= Y + Height ? point.Y - (Y + Height) : 0;
         return (dx * (double)dx) + (dy * (double)dy);
     }
+
+    public bool Overlaps(Rectangle other) =>
+        Width > 0
+        && Height > 0
+        && other.Width > 0
+        && other.Height > 0
+        && X < other.X + other.Width
+        && other.X < X + Width
+        && Y < other.Y + other.Height
+        && other.Y < Y + Height;
+
+    public bool Covers(Rectangle other) =>
+        other.Width <= 0
+        || other.Height <= 0
+        || (other.X >= X
+            && other.Y >= Y
+            && other.X + other.Width <= X + Width
+            && other.Y + other.Height <= Y + Height);
+
+    public Rectangle Intersection(Rectangle other)
+    {
+        var x = Math.Max(X, other.X);
+        var y = Math.Max(Y, other.Y);
+        var right = Math.Min(X + Width, other.X + other.Width);
+        var bottom = Math.Min(Y + Height, other.Y + other.Height);
+        var width = right - x;
+        var height = bottom - y;
+        return width <= 0 || height <= 0 ? default : new Rectangle(x, y, width, height);
+    }
 }
 
 internal enum Side

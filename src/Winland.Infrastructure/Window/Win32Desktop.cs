@@ -182,6 +182,21 @@ internal sealed class Win32Desktop : IDesktop
         if (outline.Count == 0)
             return PInvoke.SetWindowRgn(hwnd, HRGN.Null, true) != 0;
 
+        if (outline.Count == 1)
+        {
+            var empty = PInvoke.CreateRectRgn(0, 0, 0, 0);
+            if (empty.IsNull)
+                return false;
+
+            if (PInvoke.SetWindowRgn(hwnd, empty, true) == 0)
+            {
+                _ = PInvoke.DeleteObject(empty);
+                return false;
+            }
+
+            return true;
+        }
+
         var points = new System.Drawing.Point[outline.Count];
         for (var i = 0; i < outline.Count; i++)
             points[i] = new System.Drawing.Point(outline[i].X, outline[i].Y);
