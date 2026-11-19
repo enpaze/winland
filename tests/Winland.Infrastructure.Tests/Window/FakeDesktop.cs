@@ -142,6 +142,8 @@ internal sealed class FakeDesktop(Func<double> clock) : IDesktop
 
     public bool Hung(WindowId window) => _windows.TryGetValue(window, out var found) && found.Hung;
 
+    public bool InMoveSize(WindowId window) => _windows.TryGetValue(window, out var found) && found.InMoveSize;
+
     public int Dpi(WindowId window) => _windows.TryGetValue(window, out var found) ? found.Dpi : 96;
 
     public bool Repainting(WindowId window) => _windows.TryGetValue(window, out var found) && clock() < found.PaintedAt;
@@ -300,6 +302,8 @@ internal sealed class FakeWindow
     internal bool Minimized { get; set; }
 
     internal bool Hung { get; set; }
+
+    internal bool InMoveSize { get; set; }
 
     internal bool Holding { get; set; }
 
