@@ -48,6 +48,25 @@ public class WindowEventTests
     }
 
     [TestMethod]
+    public void ATiledWindowInASizeLoopIsNotPutBack()
+    {
+        using var windows = new TestWindows(reducedMotion: true);
+        var left = windows.Open(0x7041);
+        var right = windows.Open(0x7042);
+        windows.Advance(5000);
+        var neighbour = windows.Desktop[left.Value].Visible;
+        var start = windows.Desktop[right.Value].Visible;
+        var dragged = start with { X = start.X + 320, Width = start.Width - 320 };
+        windows.Desktop[right.Value].Visible = dragged;
+        windows.Desktop[right.Value].InMoveSize = true;
+
+        windows.Adapter.Notice(Events.EVENT_OBJECT_LOCATIONCHANGE, (nint)right.Value);
+
+        Assert.AreEqual(dragged, windows.Desktop[right.Value].Visible);
+        Assert.AreEqual(neighbour, windows.Desktop[left.Value].Visible);
+    }
+
+    [TestMethod]
     public void ANeighbourStillBusyDuringALiveResizeCatchesUpToTheNewestStep()
     {
         using var windows = new TestWindows(reducedMotion: true);

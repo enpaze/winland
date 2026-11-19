@@ -266,6 +266,16 @@ public sealed partial class WindowAdapter : IDisposable
                         return;
                     }
 
+                    if (_moving != window && _desktop.InMoveSize(window))
+                    {
+                        BeginMove(hwnd, window);
+                        if (_sizing == window)
+                            FollowSizing(window);
+
+                        _effects.Refit(window);
+                        return;
+                    }
+
                     if (PInvoke.IsZoomed(hwnd) && _core.Manages(window))
                     {
                         RequestMaximize((nint)window.Value);
