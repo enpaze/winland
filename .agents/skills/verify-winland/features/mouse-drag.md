@@ -38,4 +38,5 @@ Preconditions:
 - The bound button is swallowed, so the window under the pointer does not get the click.
 - The `Win` drags in the first list come from the starter config. The driver's config binds the left and right buttons with `Ctrl+Alt+Shift` instead of `Win`.
 - A neighbour that is slow to lay itself out trails a moving border by its own layout time, so the border drag driver asserts only on the gap after the border stops. It logs the gap during the drag. It drags on the primary Monitor only.
+- When Windows draws only an outline while a window is dragged, the border drag shows the window for that run and restores the previous setting. The held border moves the window only when the contents are shown.
 - The driver does not reach a tiled Client lifted and dropped, a drag onto another Monitor, a drag into or out of a Group, title-bar moves, `resize` with numbers, or a drag that ends fullscreen or maximized.
