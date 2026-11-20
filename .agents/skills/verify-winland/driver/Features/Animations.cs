@@ -59,4 +59,63 @@ public class Animations
                 _ = PInvoke.SystemParametersInfo(SYSTEM_PARAMETERS_INFO_ACTION.SPI_SETCLIENTAREAANIMATION, 0, (void*)0, 0);
         }
     }
+
+    private const int TitleBand = 48;
+
+    private const int StrayPixels = 50;
+
+    private const int BorderBlendSettlesMs = 1_200;
+
+    [VerifyFact]
+    public void ASlideIsDrawnOnlyOnItsMonitor()
+    {
+        VerifyRun.Drive(TestContext, "animations = true\nborder_size = 2\n", run =>
+        {
+            if (run.Json("get", "monitors").GetArrayLength() < 2)
+            {
+                run.Say("only one monitor: a slide beside another monitor was not driven");
+                return;
+            }
+
+            var leaving = run.OpenManaged("1");
+            run.Until("window 1 fills its monitor", () => VerifyRun.Frame(leaving).Near(VerifyRun.WorkArea(leaving), 12), 5_000);
+            var own = VerifyRun.MonitorArea(leaving);
+            var coming = run.OpenManaged("2");
+            run.Focus(coming);
+            run.Dispatch("move 2 stay");
+            run.Until("window 2 leaves for hidden workspace 2", () => !VerifyRun.Visible(coming));
+
+            var beside = run.OpenManaged("3");
+            run.Windows.PaintDark(beside);
+            run.Focus(beside);
+            run.Dispatch($"move mon:{(own.Left == 0 ? "right" : "left")}");
+            run.Until("window 3 fills the other monitor", () => VerifyRun.MonitorArea(beside) != own && VerifyRun.Frame(beside).Near(VerifyRun.WorkArea(beside), 12), 5_000);
+            var work = VerifyRun.WorkArea(beside);
+            var watched = work with { Top = work.Top + TitleBand };
+
+            run.Focus(leaving);
+            Thread.Sleep(BorderBlendSettlesMs);
+            var baseline = ScreenPixels.Capture(watched);
+            run.Say($"watching {watched} on the other monitor while monitor {own} slides");
+
+            foreach (var workspace in (string[])["2", "1"])
+            {
+                run.Dispatch($"workspace {workspace}");
+                var frames = 0;
+                var worst = (Count: 0, Bounds: default(Box), Sample: 0u);
+                var deadline = Environment.TickCount64 + 1_500;
+                while (Environment.TickCount64 < deadline)
+                {
+                    var changed = ScreenPixels.Changed(baseline, ScreenPixels.Capture(watched), watched);
+                    frames++;
+                    if (changed.Count > worst.Count)
+                        worst = changed;
+                }
+
+                run.Say($"workspace {workspace}: captured {frames} frames of the other monitor, at most {worst.Count} pixels changed in one");
+                Assert.IsTrue(worst.Count <= StrayPixels, $"Switching to workspace {workspace} drew {worst.Count} pixels on the other monitor at {worst.Bounds}, colour 0x{worst.Sample:x6}.");
+                run.Say($"saw: switching to workspace {workspace} drew no window on the other monitor");
+            }
+        });
+    }
 }

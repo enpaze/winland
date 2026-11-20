@@ -8,9 +8,11 @@ DwmGetWindowAttribute
 DwmSetWindowAttribute
 DWMWINDOWATTRIBUTE
 EnumWindows
+FillRect
 FindWindowExW
 FindWindowW
 GetClassName
+GetClientRect
 GetCurrentThreadId
 GetCursorPos
 GetExitCodeProcess
@@ -22,11 +24,13 @@ GetMessage
 GetModuleHandle
 GetMonitorInfo
 GetProcessWindowStation
+GetStockObject
 GetSystemMetrics
 GetUserObjectInformation
 GetWindowLong
 GetWindowRect
 GetWindowThreadProcessId
+InvalidateRect
 IsWindow
 IsWindowVisible
 MonitorFromWindow
@@ -45,6 +49,7 @@ ShowWindow
 SystemParametersInfo
 TerminateProcess
 TranslateMessage
+UpdateWindow
 VIRTUAL_KEY
 WaitForSingleObject
 WINDOW_EX_STYLE
