@@ -6,6 +6,7 @@ Winland moves windows to their tiles through frames instead of at once: a Window
 
 - `workspace-slide` brings a Workspace with a higher number in from the right, through several frames, across the Monitor's width.
 - `motion-ends-on-tile` leaves each window exactly on its Layout rectangle when its motion ends.
+- `slide-stays-on-monitor` draws a Workspace slide only on its own Monitor, with no backdrop past the cut.
 
 ## How to get to it (user POV)
 
@@ -27,10 +28,14 @@ Preconditions:
 - **Move it away.** The driver focuses the window with `winland focus address:<hwnd>` and runs `winland move 2 stay`. The window hides.
 - **Slide in.** The driver runs `winland workspace 2` and reads the window's left edge every 5 ms for 1.5 seconds. At least three different left edges lie between the right edge of the Monitor and a point 20 pixels right of the tile's left edge, and the driver prints `saw: the window passed through N places between the right edge and its tile`.
 - **Rest on the tile.** The window ends on its tile and fills the work area again.
+- **One Monitor.** With one Monitor, the slide-on-its-Monitor check prints `only one monitor: a slide beside another monitor was not driven` and ends.
+- **Two Monitors.** With two, the driver opens `WinlandVerify 1`, moves `WinlandVerify 2` to hidden workspace 2 with `winland move 2 stay`, paints `WinlandVerify 3` black and moves it onto the other Monitor with `winland move mon:<side>`, then focuses `WinlandVerify 1`.
+- **Watch the other Monitor.** The driver captures the other Monitor's work area below the title bars, runs `winland workspace 2` and then `winland workspace 1`, and captures that area again for 1.5 seconds after each. No capture differs from the first in more than a few pixels, and the driver prints `saw: switching to workspace N drew no window on the other monitor`.
 
 ## Gotchas
 
 - The baseline config sets `animations = false`, so every other driver moves windows at once. Only this driver's line turns animations on.
 - The driver turns Animation effects off again in its cleanup. A run killed before that leaves the setting on.
-- The driver checks only a Workspace with a higher number sliding in from the right. It does not reach a Window opening or fading in, a tile moving or resizing, fullscreen, a Window closing, a lower Workspace sliding in from the left, the special workspace fade, or opacity and border blends.
-- A slide is drawn only inside its Monitor. This driver has one Monitor, so it does not check a Monitor beside it.
+- The driver follows the frames only of a Workspace with a higher number sliding in from the right. It does not reach a Window opening or fading in, a tile moving or resizing, fullscreen, a Window closing, the special workspace fade, or opacity and border blends.
+- On one Monitor, as on CI, the driver does not check a Monitor beside a slide.
+- The other Monitor is watched below its title bars, because the incoming window's title bar is still drawn there during a slide ([#526](https://github.com/enpaze/winland/issues/526)).

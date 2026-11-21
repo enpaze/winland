@@ -81,6 +81,7 @@ internal sealed class DwmEffects
                     Fit(window, corner.Region, null);
                 else
                     _surface.TrySetRegion(window, []);
+                ShowBackdrop(window);
                 return;
             }
 
@@ -88,6 +89,7 @@ internal sealed class DwmEffects
                 return;
 
             _clips[window] = cut;
+            ShowBackdrop(window);
             PaintClip(window, cut);
         }
     }
@@ -155,16 +157,23 @@ internal sealed class DwmEffects
 
     private void ApplyBackdrop(WindowId window, uint wanted)
     {
+        var shown = _clips.ContainsKey(window) ? NoBackdrop : wanted;
         if (_backdrops.TryGetValue(window, out var backdrop))
         {
-            if (backdrop.Current != wanted && _surface.TrySetBackdrop(window, wanted))
-                _backdrops[window] = backdrop with { Current = wanted };
+            if (backdrop.Shown == shown || _surface.TrySetBackdrop(window, shown))
+                _backdrops[window] = backdrop with { Wanted = wanted, Shown = shown };
             return;
         }
 
         var original = _surface.TryReadBackdrop(window, out var read) ? read : AutoBackdrop;
-        if (_surface.TrySetBackdrop(window, wanted))
-            _backdrops[window] = new Backdrop(original, wanted);
+        if (_surface.TrySetBackdrop(window, shown))
+            _backdrops[window] = new Backdrop(original, wanted, shown);
+    }
+
+    private void ShowBackdrop(WindowId window)
+    {
+        if (_backdrops.TryGetValue(window, out var backdrop))
+            ApplyBackdrop(window, backdrop.Wanted);
     }
 
     private void ApplyRegion(WindowId window, CornerRegion region)
@@ -243,7 +252,7 @@ internal sealed class DwmEffects
         ]);
     }
 
-    private readonly record struct Backdrop(uint Original, uint Current);
+    private readonly record struct Backdrop(uint Original, uint Wanted, uint Shown);
 
     private readonly record struct Cut(CornerRegion Region, int OuterWidth, int OuterHeight, int Left, int Top, int Width, int Height);
 }

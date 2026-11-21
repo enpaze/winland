@@ -26,6 +26,38 @@ public class DwmEffectsTests
     }
 
     [TestMethod]
+    public void AClippedWindowHasNoBackdropUntilItsClipEnds()
+    {
+        var surface = new FakeSurface();
+        var effects = new DwmEffects(surface);
+        effects.Apply(Window, Decorated(blur: true));
+
+        effects.Clip(Window, new Rectangle(0, 0, 10, 10));
+        Assert.AreEqual(DwmEffects.NoBackdrop, surface.Backdrops[Window]);
+
+        effects.Apply(Window, Decorated(blur: true));
+        effects.Clip(Window, new Rectangle(0, 0, 20, 10));
+        Assert.AreEqual(DwmEffects.NoBackdrop, surface.Backdrops[Window]);
+
+        effects.Clip(Window, null);
+        Assert.AreEqual(DwmEffects.BlurBackdrop, surface.Backdrops[Window]);
+    }
+
+    [TestMethod]
+    public void ABackdropChosenDuringAClipIsTheOneItGetsAfter()
+    {
+        var surface = new FakeSurface();
+        var effects = new DwmEffects(surface);
+        effects.Apply(Window, Decorated(blur: true));
+        effects.Clip(Window, new Rectangle(0, 0, 10, 10));
+
+        effects.Apply(Window, Decorated(blur: false));
+        effects.Clip(Window, null);
+
+        Assert.AreEqual(DwmEffects.NoBackdrop, surface.Backdrops[Window]);
+    }
+
+    [TestMethod]
     public void AnUnreadableBackdropIsRestoredToTheSystemChoice()
     {
         var surface = new FakeSurface { ReadsBackdrop = false };

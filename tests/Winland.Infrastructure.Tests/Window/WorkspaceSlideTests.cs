@@ -31,6 +31,14 @@ public class WorkspaceSlideTests
         windows.Settle();
         Show(windows, from);
 
+        string? landedOutside = null;
+        windows.Desktop.OnSetBounds = id =>
+        {
+            var window = windows.Desktop[id.Value];
+            if (landedOutside is null && window.Shown && Overlaps(Drawn(window), other))
+                landedOutside = $"{name} {from}->{to}: window {id.Value} landed on the other monitor at {Text(Drawn(window))} before its clip followed.";
+        };
+
         windows.Dispatch("workspace", to);
 
         var leaving = windows.Desktop[1];
@@ -64,6 +72,7 @@ public class WorkspaceSlideTests
                 sawOutside = true;
         }
 
+        Assert.IsNull(landedOutside, landedOutside);
         Assert.IsTrue(drawnFrames > 0, $"{name} {from}->{to}: the slide was never drawn.");
         Assert.IsTrue(sawOutside, $"{name} {from}->{to}: the window never slid past the monitor edge. Its left edge stayed at {start}.");
         var higher = int.Parse(to, System.Globalization.CultureInfo.InvariantCulture) > int.Parse(from, System.Globalization.CultureInfo.InvariantCulture);

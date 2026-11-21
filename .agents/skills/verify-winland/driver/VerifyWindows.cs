@@ -13,9 +13,11 @@ internal sealed class VerifyWindows : IDisposable
 
     private const uint InvokeMessage = 0x8001;
     private const uint PositionChanging = 0x0046;
+    private const uint EraseBackground = 0x0014;
     private const int ClassAlreadyExists = 1410;
 
     private static readonly WNDPROC Proc = WindowProc;
+    private static readonly ConcurrentDictionary<HWND, bool> Dark = new();
 
     private readonly ConcurrentQueue<Action> _work = new();
     private readonly List<HWND> _opened = [];
@@ -65,6 +67,13 @@ internal sealed class VerifyWindows : IDisposable
 
         return hwnd;
     }
+
+    public unsafe void PaintDark(HWND hwnd) => Invoke(() =>
+    {
+        Dark[hwnd] = true;
+        _ = PInvoke.InvalidateRect(hwnd, (RECT*)null, true);
+        _ = PInvoke.UpdateWindow(hwnd);
+    });
 
     public void Invoke(Action work) => Invoke(() =>
     {
@@ -197,10 +206,20 @@ internal sealed class VerifyWindows : IDisposable
         return area;
     }
 
+    private static unsafe LRESULT EraseDark(HWND hwnd, HDC dc)
+    {
+        _ = PInvoke.GetClientRect(hwnd, out var client);
+        _ = PInvoke.FillRect(dc, &client, (HBRUSH)PInvoke.GetStockObject(GET_STOCK_OBJECT_FLAGS.BLACK_BRUSH).Value);
+        return new LRESULT(1);
+    }
+
     private static LRESULT WindowProc(HWND hwnd, uint message, WPARAM wParam, LPARAM lParam)
     {
         if (message == PositionChanging && _threadLayoutMs > 0)
             Thread.Sleep(_threadLayoutMs);
+
+        if (message == EraseBackground && Dark.ContainsKey(hwnd))
+            return EraseDark(hwnd, new HDC((nint)wParam.Value));
 
         return PInvoke.DefWindowProc(hwnd, message, wParam, lParam);
     }

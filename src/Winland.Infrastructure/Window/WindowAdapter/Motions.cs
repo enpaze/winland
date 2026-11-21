@@ -214,13 +214,12 @@ public sealed partial class WindowAdapter
         public void Move(WindowId window, Rectangle bounds, Rectangle content)
         {
             GroupBarHost.Moves(window, true);
+            adapter.ClipSlide(window, bounds);
             var borderless = adapter._borderless.Owns(window);
             if (!adapter._desktop.Shown(window))
                 adapter.PlaceFrame(window, bounds, borderless);
             else if (!adapter.StandFor(window, bounds, content))
                 adapter.QuickPlace(window, bounds, borderless);
-
-            adapter.ClipSlide(window, bounds);
         }
 
         public void PlaceAsync(WindowId window, Rectangle bounds)
